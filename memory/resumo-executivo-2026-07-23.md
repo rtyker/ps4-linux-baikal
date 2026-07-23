@@ -75,7 +75,8 @@ O projeto Linux Baikal no PS4 chegou a um estado de funcionalidade madura e est�
 |---|---|---|---|
 | 2026-07-22 | `bzImage-7.0-20260722-mts-clean` | 13M | Rebuild puro, sky2-gbe.patch removido |
 | 2026-07-22 | `bzImage-7.0-20260722-mts-video-fix` | 16M | CONFIG_DEBUG_INFO adicionado |
-| 2026-07-23 | **`bzImage-7.0-20260723-mts-autoeth0`** | **16M** | **← ATIVO AGORA** — mts.ko autoload, netconsole configurado |
+| 2026-07-23 | `bzImage-7.0-20260723-mts-autoeth0` | 16M | mts.ko autoload, netconsole configurado |
+| 2026-07-23 | **`bzImage-7.0-20260723-RELEASE`** | **15.8M** | **← ATIVO AGORA** — initramfs RELEASE (systemd, monta rootfs), vídeo OK, console OK, telnet OK, build+burn validados ao vivo |
 
 ---
 

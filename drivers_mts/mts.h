@@ -20,7 +20,7 @@
 /* ---------------- registradores da BAR0 (4 KB) ---------------- */
 
 /* MDIO Clause 45 — comando e status no mesmo registrador.  [RE dc5a2680] */
-#define MTS_MDIO		0x00
+#define MTS_MDIO			0x00
 #define MTS_MDIO_CLEAR_BUSY	0x8000
 #define MTS_MDIO_OP_ADDR	0x20	/* fase de endereço */
 #define MTS_MDIO_OP_READ	0xe0	/* fase de leitura */
@@ -84,6 +84,14 @@
 #define MTS_PHY_1D4		0x1d4
 #define MTS_PHY_200		0x200
 
+/* Offsets Glue (pervasive 00:14.4) lidos pela calibração PHY (dc5a0ba0) */
+#define MTS_GLUE_CALIB_0	0x5c
+#define MTS_GLUE_CALIB_1	0x60
+#define MTS_GLUE_CALIB_2	0x68
+#define MTS_GLUE_CALIB_3	0x6c
+#define MTS_GLUE_CALIB_4	0x100
+
+
 /* Contadores de estatística — CLEAR-ON-READ. [MEDIDO: não-zero na 1ª leitura,
  * zero nas seguintes; 0x100/0x104 deram 554 pacotes / 289.664 bytes] */
 #define MTS_CNT_PKTS		0x100
@@ -99,17 +107,32 @@
 
 #define MTS_DESC_OWN		BIT(31)		/* pertence ao hardware */
 #define MTS_DESC_WRAP		BIT(30)		/* último descritor do anel */
+#define MTS_DESC_SOP		BIT(29)		/* start of packet (TX) */
+#define MTS_DESC_EOP		BIT(28)		/* end of packet (TX) */
 #define MTS_DESC_LEN_MASK	0x7ff
 
 #define MTS_RX_BUF_SIZE		0x600		/* 1536 bytes por buffer */
 #define MTS_RX_BUF_TOTAL	(MTS_RING_SIZE * MTS_RX_BUF_SIZE) /* 384 KB */
+
+/* Status de link em BAR0+0x04. [RE fcn.ffffffffdc5a2bd0] */
+#define MTS_LINK_STATUS		0x04
+#define MTS_LINK_UP		BIT(0)
+#define MTS_LINK_SPEED_MASK	(0x3 << 2)
+#define MTS_LINK_SPEED_10	(0x0 << 2)
+#define MTS_LINK_SPEED_100	(0x1 << 2)
+#define MTS_LINK_SPEED_1000	(0x2 << 2)
+#define MTS_LINK_DUPLEX_FULL	BIT(6)
 
 /* ---------------- estado do driver ---------------- */
 
 struct mts_priv {
 	struct pci_dev		*pdev;
 	struct net_device	*dev;
-	void __iomem		*regs;
+	void __iomem		*regs;		/* BAR0 */
+
+	/* BAR2 (glue/pervasive) — para parâmetros de calibração PHY */
+	void __iomem		*regs_glue;	/* ioremap(0xc8800000) */
+	phys_addr_t		glue_phys;
 
 	void			*tx_ring;
 	dma_addr_t		tx_ring_dma;
@@ -120,7 +143,31 @@ struct mts_priv {
 
 	u32			tx_idx;
 	u32			rx_idx;
+	u32			tx_clean;
 	unsigned long		irq_count;
+
+	/* NAPI + polling por software */
+	struct napi_struct	napi;
+	struct timer_list	poll_timer;
+	bool			napi_enabled;
+	unsigned int		poll_interval_ms;
+
+	/* Carrier detection */
+	u32			link_last_raw;
+	bool			link_up;
+	unsigned int		link_speed;
+	unsigned int		link_duplex;
+	bool			enable_carrier;
+	bool			enable_rx;
+	bool			enable_tx;
+
+	/* TX tracking */
+	struct sk_buff		**tx_skb;
+	dma_addr_t		*tx_skb_dma;
+	size_t			*tx_skb_len;
+
+	/* PHY calibration */
+	bool			phy_calib_done;
 };
 
 #endif /* _MTS_H */

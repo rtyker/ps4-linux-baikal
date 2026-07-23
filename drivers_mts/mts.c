@@ -71,9 +71,10 @@ MODULE_PARM_DESC(force_mac_reset,
 	"Escreve a rotina de stop antes do init (default off)");
 
 /* Module params para habilitação progressiva (fases A/B/C do plano) */
-static bool enable_carrier = false;
+static bool enable_carrier = true;
 module_param(enable_carrier, bool, 0644);
-MODULE_PARM_DESC(enable_carrier, "Habilita detecção de carrier/link (default false)");
+MODULE_PARM_DESC(enable_carrier, "Habilita detecção de carrier/link (default true)");
+
 
 static bool enable_rx = true;
 module_param(enable_rx, bool, 0644);

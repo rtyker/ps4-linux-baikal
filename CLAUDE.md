@@ -16,25 +16,45 @@
    - **BUILD AUTOMÁTICO ETH0 + NETCONSOLE (2026-07-23):** Criada e implantada no HD a tag `20260723-mts-autoeth0`. O driver `mts.ko` agora possui o padrão `stage=4` e auto-carregamento no boot, subindo a interface `eth0` automaticamente sem necessidade de intervenção via Telnet. Netconsole ativado por padrão no boot.
    - **DESLIGAMENTO REMOTO VIA TELNET (2026-07-22):** O comando `sync && poweroff -f` (ou `echo o > /proc/sysrq-trigger`) encerra o sistema operacional e a rede limpos (ping cai 100%), porém o console permanece em **luz azul (luz azul acesa/pulsando)** pois o desligamento de energia total da fonte (S5) exige comando ICC dedicado ou desligamento manual no botão.
 
-## Estado Atual do Projeto (Resumo Rápido) — ATUALIZADO 2026-07-23
+## Estado Atual do Projeto (Resumo Rápido) — ATUALIZADO 2026-07-23 (TESTE #1 ✅ PASSOU)
+
+**🎯 STATUS:** Módulo `mts.ko` estável (crash eliminado), pronto para Testes #2/#3 (investigação de link detection)
 
 ✅ **KERNEL LINUX 7.0 BAIKAL — FUNCIONAL E ESTÁVEL**
 
-- **Versão Ativa:** `bzImage-7.0-20260723-mts-autoeth0` (compilado 2026-07-23 07:16)
+- **Versão Ativa:** `bzImage-7.0-20260723-RELEASE` (compilado 2026-07-23 11:37, initramfs RELEASE — better-initramfs/systemd, monta rootfs, deploy+burn validados ao vivo 2026-07-23)
+- **Kernel Anterior (DEBUG):** `bzImage-7.0-20260723-mts-autoeth0` (initramfs busybox debug loop)
 - **Tag Baseline:** `v7.0-20260722-clean-video-ok` (vídeo OK, boot completo, telnet OK, rebuild limpo)
-- **Validação Ao Vivo:** ✅ Vídeo HDMI funcional, ✅ Ethernet `eth0` detectada, ✅ GPU Gladius acelerada (55 FPS OpenGL), ✅ SSH remoto ativo
+- **Validação Ao Vivo:** ✅ Vídeo HDMI funcional, ✅ Ethernet `eth0` detectada, ✅ GPU Gladius acelerada (55 FPS OpenGL), ✅ SSH remoto ativo e validado no ambiente **RELEASE** (sem DEBUG LOOP) em 2026-07-23.
+
+
+### Tipos de Initramfs (FUNDAMENTAL — ler antes de qualquer deploy)
+
+> **RELEASE** = `initramfs-7.0-20260723-RELEASE.cpio.gz`
+> - `/init` do tipo `better-initramfs` (psxitarch): monta `LABEL=psxitarch` → `switch_root` → systemd
+> - **SEM** DEBUG LOOP. **COM** symbols de debug no kernel (BTF, loglevel=8, drm.debug=0x06)
+> - Firmware: `gladius_*.bin` (GPU correta) + `edid/ps4_tv_edid.bin`
+> - Deployar com: `sudo ./deploy-boot-7.0.sh 20260723-RELEASE`
+>
+> **DEBUG** = `initramfs-7.0-20260723-mts-autoeth0.cpio.gz` (e todas as tags anteriores)
+> - `/init` é um script busybox com `while true; do DEBUG LOOP; done`
+> - **NUNCA** monta o rootfs nem faz switch_root — fica preso em RAM
+> - Útil para: diagnóstico de kernel, telnet de emergência, testes de driver
 
 ### Subsistemas Funcionais
 - **Kernel 7.0 Baikal:** Compila sem erros, boot até prompt root
 - **Vídeo HDMI:** Tela inicializa, legível, zero crashes
+  - `amdgpu` é **built-in** (`CONFIG_DRM_AMDGPU=y`) — não depende do initramfs
+  - EDID lido do hardware (NOR flash PS4 via `ps4_bridge`) — não depende de arquivo em `/lib/firmware`
+  - WiFi MediaTek MT7668 **embutido no bzImage** via `CONFIG_EXTRA_FIRMWARE`
 - **Rede:** WiFi automática + Ethernet via `mts.ko stage=4` (MAC `2c:cc:44:3f:69:5f`, DMA OK)
 - **SSH/Telnet:** Acesso remoto funcionando (systemd service auto-start)
 - **GPU Gladius:** `amdgpu` 32 CUs ativos, OpenGL 4.5 @ 55 FPS, Vulkan 1.3 disponível
 - **Armazenamento:** USB disco montado em `/`, ext4 estável
+  - `CONFIG_USB_STORAGE=y`, `CONFIG_BLK_DEV_SD=y`, `CONFIG_EXT4_FS=y` — todos built-in
 
 ### Pendências Abertas
 - 🟡 **RX/TX Ethernet:** Driver `mts.ko` stage=4 não implementa anéis de recepção/transmissão (DHCP não funciona, carrier status `NO-CARRIER`)
-- 🟡 **Debug loop:** Flag DEBUG=1 ativa no build (overhead CPU ~5%, não crítico)
 - 🟡 **S5 desligamento:** `poweroff -f` encerra SO mas deixa luz azul (requer ICC ou toque manual)
 
 ### Contexto de Payloads (Ainda Válido)
