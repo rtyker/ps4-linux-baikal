@@ -1,0 +1,33 @@
+# Logs e arquivos de execução temporários
+*.log
+*.tmp
+__pycache__/
+.megatmp.*
+netconsole_ps4.log
+dmesg.log
+
+# Dumps brutos e imagens temporárias pesadas
+*.tar
+dummy_mem.bin
+fake_mem
+
+# Arquivos de ambiente e sidecars temporários
+.claude/
+.claude-memory.yml
+
+# Ignorar binários compilados grandes mantendo a estrutura de scripts das distros
+distros/arch_minimal_v2/boot_referencia/*.cpio.gz
+distros/arch_minimal_v2/boot_referencia/bzImage*
+
+# Ignorar sub-repositórios incorporados e ferramentas externas
+OpenOrbis/
+all-ps4-payloads/
+archive/
+gbe_hw_dumper/
+kmem_dumper_sources/
+orbis-hw-dumper/
+ps4-linux-payloads/
+ps4-payload-sdk/
+ps4-pup-unpacker/
+scene-kernel-dumper/
+scene-kmem-dumper/

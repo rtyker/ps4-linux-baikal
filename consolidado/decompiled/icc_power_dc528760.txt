@@ -1,0 +1,33 @@
+
+void fcn.ffffffffdc528600(void)
+
+{
+    code *pcVar1;
+    int64_t var_810h;
+    ushort var_808h;
+    uchar var_804h;
+    int64_t var_20h;
+    
+    var_20h = *0xffffffffdeaacea0;
+    fcn.ffffffffdc574150(0,0xffffffffdcafffdd,0xffffffffdc528760,0xffffffffdcafffef,0,0);
+    fcn.ffffffffdc574150(0,0xffffffffdcb0000b,0xffffffffdc528790,0xffffffffdcb0001e,0,0);
+    fcn.ffffffffdc574150(0,0xffffffffdcb0003b,0xffffffffdc5288a0,0xffffffffdcb0004a,0,20000);
+    fcn.ffffffffdc574150(0,0xffffffffdcb00063,0xffffffffdc5288a0,0xffffffffdcb0004a,0,20000);
+    fcn.ffffffffdc574150(0,0xffffffffdcb00072,0xffffffffdc528c10,0xffffffffdcb00080,0,10000);
+    fcn.ffffffffdc528d10(0);
+    fcn.ffffffffdc797f00(4,0,0xffffffffdc528ef0,0);
+    fcn.ffffffffdc60d400(&var_810h,0x7f0);
+    var_810h._1_1_ = 4;
+    var_810h._2_2_ = 4;
+    var_808h = 0x20;
+    var_804h = 1;
+    fcn.ffffffffdc797090(&var_810h,&var_810h);
+    if (*0xffffffffdeaacea0 == var_20h) {
+        return;
+    }
+    fcn.ffffffffdca17ba0();
+    //WARNING: Does not return
+    pcVar1 = invalidInstructionException();
+    (*pcVar1)();
+}
+

@@ -1,0 +1,87 @@
+
+ulong fcn.ffffffffdc5ba5e0(int64_t arg1,int64_t arg2,int64_t arg3)
+
+{
+    uint uVar1;
+    int64_t *piVar2;
+    int64_t iVar3;
+    int iVar4;
+    int64_t *piVar5;
+    int64_t iVar6;
+    int64_t iVar7;
+    int iVar8;
+    int64_t var_50h;
+    int64_t var_48h;
+    int64_t var_40h;
+    int64_t var_38h;
+    int64_t var_30h;
+    
+    if (*arg2 != -1) {
+        iVar4 = 1;
+        iVar7 = 0;
+        do {
+            *(arg3 + iVar7 * 8) = 0;
+            iVar7 = iVar4;
+            iVar4 = iVar4 + 1;
+        } while (*(arg2 + iVar7 * 0xc) != -1);
+        iVar4 = *arg2;
+        if (iVar4 != -1) {
+            iVar8 = 1;
+            iVar7 = 0;
+            do {
+                piVar2 = *(arg1 + 0x28);
+                if (piVar2 == NULL) {
+                    *(arg3 + iVar7 * 8) = 0;
+code_r0xffffffffdc5ba658:
+                    if (-1 < *(arg2 + 8 + iVar7 * 0xc)) {
+                        iVar4 = *arg2;
+                        if (iVar4 == -1) {
+                            return 6;
+                        }
+                        iVar8 = 1;
+                        iVar7 = 0;
+                        do {
+                            iVar6 = *(arg3 + iVar7 * 8);
+                            if (iVar6 != 0) {
+                                piVar2 = *(arg1 + 0x28);
+                                if (piVar2 != NULL) {
+                                    uVar1 = *(arg2 + 4 + iVar7 * 0xc);
+                                    iVar3 = *piVar2;
+                                    piVar5 = *(iVar3 + *0xffffffffdddb2df0 * 8);
+                                    if (*piVar5 != -0x2224d210) {
+                                        piVar5 = func_0xffffffffdc4ebcf0
+                                                           (*(iVar3 + 0x800),iVar3 + *0xffffffffdddb2df0 * 8,
+                                                            0xffffffffdddb2df0);
+                                    }
+                                    (*piVar5[1])(piVar2,arg1,iVar4,uVar1,iVar6);
+                                }
+                                *(arg3 + iVar7 * 8) = 0;
+                            }
+                            iVar7 = iVar8;
+                            iVar8 = iVar8 + 1;
+                            iVar4 = *(arg2 + iVar7 * 0xc);
+                        } while (iVar4 != -1);
+                        return 6;
+                    }
+                }
+                else {
+                    iVar6 = *piVar2;
+                    uVar1 = *(arg2 + 8 + iVar7 * 0xc);
+                    piVar5 = *(iVar6 + *0xffffffffdddb2d70 * 8);
+                    if (*piVar5 != -0x2224d290) {
+                        piVar5 = func_0xffffffffdc4ebcf0
+                                           (*(iVar6 + 0x800),iVar6 + *0xffffffffdddb2d70 * 8,0xffffffffdddb2d70);
+                    }
+                    iVar6 = (*piVar5[1])(piVar2,arg1,iVar4,arg2 + 4 + iVar7 * 0xc,0,0xffffffffffffffff,1,uVar1);
+                    *(arg3 + iVar7 * 8) = iVar6;
+                    if (iVar6 == 0) goto code_r0xffffffffdc5ba658;
+                }
+                iVar7 = iVar8;
+                iVar8 = iVar8 + 1;
+                iVar4 = *(arg2 + iVar7 * 0xc);
+            } while (iVar4 != -1);
+        }
+    }
+    return 0;
+}
+

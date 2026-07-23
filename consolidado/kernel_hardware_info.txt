@@ -1,0 +1,260 @@
+IcC8H
+IcCHA
+IcCLL
+GbE1
+icc_max
+liverpool_icc_max
+icc_available
+get_icc_max
+%s: icc_nvs_read error %d
+icc_sc_config
+shutdown_hook: icc_nvs_write failed: %d
+gbe0
+icc_nvs
+iccnvs
+SceIccnvs
+W:\Build\J02690760\sys\freebsd\sys\dev\scesb\icc\icc_nvs.c
+icc_nvs_task
+icc_nvs: bio_cmd %d is not implemented
+iccnvs td is not ktd
+cannot stop iccnvs td on suspend
+failed to resume iccnvs_thread
+W:\Build\J02690760\sys\freebsd\sys\dev\scesb\icc\icc_sc_fw_update.c
+icc:failed to %s power button notification: %04x
+icc:failed to %s eject button notification: %04x
+icc:failed to %s reset button notification: %04x
+W:\Build\J02690760\sys\freebsd\sys\dev\scesb\icc\icc_buttons.c
+gbe0
+Aeolia GBE controller
+Belize GBE controller
+gbe:ctrl
+gbe:phy
+gbe:rmu
+gbe:mdelay
+kthread_suspend_async failed (gbe:ctrl)
+kthread_suspend_wait failed (gbe:ctrl)
+kthread_resume failed (gbe:ctrl)
+%s GBE Id:0x%02x Rev:0x%02x
+SceGbeMskCtrl
+gbe0.1
+gbe0.2
+gbe_ctrl
+W:\Build\J02690760\sys\freebsd\sys\dev\scesb\icc\icc_snvs.c
+iccnvs
+no syscon update
+icc_power_shutdown_pre_sync
+icc_power_shutdown_post_sync
+icc_power_shutdown_final
+icc_available
+icc_power_suspend (%s eap) (keep 0x%X)
+icc_power_shutdown failed(%d)
+icc_power
+icc post sync:Thermal alert LED off
+ICC: howto:%08x depth:%d cause:%02x hand:%02x
+ICC: Boot alt CPU.
+ICC: Shutdown.
+ICC: Fatal shutdown.
+ICC: Boot diagOS.
+ICC: Reboot.
+icc_configuration_load_context failed: %d
+icc_configuration_save_context failed: %d
+W:\Build\J02690760\sys\freebsd\sys\dev\scesb\icc\icc_power.c
+%s icc_nvs_read failed %d
+%s: icc is not available %d
+RTC: icc save context fail %d
+%s: icc nvs write error %d
+RTC: icc load context fail %d
+Baikal GBE controller
+gbe:ctrl
+gbe:phy
+gbe:phy_ctrl
+gbe:rmu
+kthread_suspend_async failed (gbe:ctrl)
+kthread_suspend_wait failed (gbe:ctrl)
+kthread_suspend_async failed (gbe:phy_ctrl)
+kthread_suspend_wait failed (gbe:phy_ctrl)
+kthread_resume failed (gbe:ctrl)
+kthread_resume failed (gbe:phy_ctrl)
+%s GBE
+SceGbeMtsCtrl
+SceGbeMtsPhyCtrl
+gbe0.1
+gbe0.2
+gbe_ctrl
+gbe_phy_ctrl
+_icc_register_notification_handler
+icc: unknown notification: 0x%X
+W:\Build\J02690760\sys\freebsd\sys\dev\scesb\icc\icc_notification.c
+icc_notification_handler
+iccnotif
+SceIccNotification
+icc notif td is not ktd
+cannot stop icc notif td on suspend
+failed to resume icc notif thread
+?icc_thermal
+SceIccThermal
+icc:kproc_create failed(%d)
+icc:%s thermal notification
+icc:failed to %s thermal notification: %04x
+icc:fail to read hwconf
+W:\Build\J02690760\sys\freebsd\sys\dev\scesb\icc\icc_thermal.c
+icc_thermal td is not ktd
+cannot stop icc_thermal td on suspend
+failed to resume icc_thermal td
+icc_indicator_set_buzzer
+icc_indicator
+icc_indicator_get_dynamic_led
+icc_indicator_check_thermal_on_boot
+icc_configuration
+syscon
+SYSCON version major
+SYSCON version minor
+SYSCON version branch
+SYSCON version revision
+SYSCON version modify
+SYSCON version edition
+SYSCON version sec_dsc
+SYSCON version reserved
+Maximum number of elements in an I/O vector; sysconf(_SC_IOV_MAX)
+bpcie intr lock
+bpcie_pci
+pci/bpcie
+bpcie
+icc_fan
+icc_fan_get_fan_manual_duty
+ICC error: not available
+icc_query_nowait
+ICC %02x-%02x nowait
+%s: icc_send returned %d
+icc_pci
+pci/icc
+Aeolia ICC
+Belize ICC
+Baikal ICC
+W:\Build\J02690760\sys\freebsd\sys\dev\scesb\icc\icc.c
+icc(s): unexpected reply:
+icc: unknown query:
+icc:Although interrupt occurs, EMW has not been set!
+icc: unexpected msg (recv %02x-%04x %04x, wait %02x-%04x %04x)
+#### ICC DUMP ####
+icc: wait %02x-%04x %04x
+icc: wait no msg
+unknown icc device vid:0x%X, did:0x%X
+icc:cannot get resource
+icc:cannot find the required SPM resource
+g_icc_is_available: %d
+icc_suspend_phase3
+icc_resume_phase4
+icc_available
+icc top-level tree
+Error: icc_query_critical is not allowed
+icc_send error %d
+icc%02x-%02x %04x
+iccq
+ICC snd & rcv history:
+icc:checksum err %02x,%02x
+ICC %02x-%02x polling
+icc_send: sow: %04x, sor: %04x, emw: %04x, emr: %04x
+icc:handshake failed
+W:\Build\J02690760\sys\freebsd\sys\dev\scesb\icc\icc_device_power.c
+icc_device_power_get_bd_power_state failed %d
+Bug 120652: icc_device_power_control(%d->%d) failed %d(%x)
+icc_device_power_control(%d->%d) failed %d(%x)
+icc_device_power
+icc_devpow
+icc_dev_pow
+icc_device_power_get_bd_power_state failed
+icc_available
+eGBeF
+icc_nvs_read error=0x%08x
+icc_nvs_read error=0x%08x
+delayedPanicCb
+ERROR: %s(%d) icc_snvs_get_write_count %d
+ERROR: %s(%d) icc_snvs_write_sector %d
+ERROR: %s(%d) icc_snvs_read_sector %d
+dipsw: icc_nvs_write error = 0x%x
+icc_available
+[HDMI ERROR] : %s:%i - Get HDMI Configuration : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - Get HDMI Configuration : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - Get Aksv : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - Get Aksv : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - Set BackToUnplugged Sequence : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - Set BackToUnplugged Sequence : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - sceSetWaitPwOnSequence : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - sceSetWaitPwOnSequence : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - Hdmi OutputMode : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - Hdmi OutputMode : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - Video Mute Control : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - Video Mute Control : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - Control Video Resolution : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - Control Video Resolution : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - Video Config : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - Video Config : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - Video Basic Config : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - Video Basic Config : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - Video Additional Config : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - Video Additional Config : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - Init Video : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - Init Video : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - Direct CSC : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - Direct CSC : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - Audio Config : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - Audio Config : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - Audio Basic Config : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - Audio Basic Config : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - Audio Additional Config : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - Audio Additional Config : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - Audio Copy Control : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - Audio Copy Control : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - Set Audio Sample Packt : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - Set Audio Sample Packt : ICC Query Failed (status=%d)
+[CEC ERROR] : %s:%i - Control CEC : ICC Resut[0x%x 0x%x] 
+[CEC ERROR] : %s:%i - Control CEC : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - CEC Message : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - CEC Message : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - Set EDID Read Request : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - Set EDID Read Request : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - Read EDID Data: ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - Read EDID Data : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - Start EMC HDMI service : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - Start EMC HDMI service : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - Ctrl Event : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - Ctrl Event : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - EMC FW Version : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - EMC FW Version : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - Service Version : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - Service Version : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - checkCEAExtension : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - checkCEAExtension : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - Read Aksv : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - Read Aksv  : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - getDisplayPortEqualizerStatus : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - getDisplayPortEqualizerStatus : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - HotPlug Status : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - HotPlug Status : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - Read DP Reset Status : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - Read DP Reset Status  : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - Get DP Link Status : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - Get DP Link Status : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - Stop HDCP HW : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - Stop HDCP HW : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - sceHdmiTransmitCecSignal : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - sceHdmiTransmitCecSignal : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - Set HDCP Version Request : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - Set HDCP Version Request : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - Read DDC Data: ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - Read EDID Data : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - Disable Encode : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - Disable Encode : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - sceHdmiControlEncryption : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - sceHdmiControlEncryption : ICC Query Failed (status=%d)
+[HDMI ERROR] : %s:%i - Ctrl HDCP : ICC Resut[0x%x 0x%x] 
+[HDMI ERROR] : %s:%i - Ctrl HDCP : ICC Query Failed (status=%d)
+Error! invalid digbe_id %d
+SceMusicCoreServer
+basicConstraints
+setAttr-TokICCsig
+ICC or token signature
+GBEu
+f"icC
+GbEG

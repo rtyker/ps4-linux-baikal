@@ -1,0 +1,53 @@
+
+ulong fcn.ffffffffdc718d20(int64_t arg1)
+
+{
+    code *pcVar1;
+    int16_t iVar2;
+    int16_t iVar3;
+    int64_t *piVar4;
+    int64_t *piVar5;
+    int64_t iVar6;
+    ulong uVar7;
+    int64_t var_38h;
+    int64_t var_30h;
+    
+    var_30h = *0xffffffffdeaacea0;
+    piVar4 = func_0xffffffffdc5b7a20();
+    iVar6 = *piVar4;
+    piVar5 = *(iVar6 + *0xffffffffdddb2cd0 * 8);
+    if (*piVar5 != -0x2224d330) {
+        piVar5 = func_0xffffffffdc4ebcf0(*(iVar6 + 0x800),iVar6 + *0xffffffffdddb2cd0 * 8,0xffffffffdddb2cd0);
+    }
+    (*piVar5[1])(piVar4,arg1,2,&var_38h);
+    iVar2 = var_38h;
+    piVar4 = func_0xffffffffdc5b7a20(arg1);
+    iVar6 = *piVar4;
+    piVar5 = *(iVar6 + *0xffffffffdddb2cd0 * 8);
+    if (*piVar5 != -0x2224d330) {
+        piVar5 = func_0xffffffffdc4ebcf0(*(iVar6 + 0x800),iVar6 + *0xffffffffdddb2cd0 * 8,0xffffffffdddb2cd0);
+    }
+    (*piVar5[1])(piVar4,arg1,3,&var_38h);
+    iVar3 = var_38h;
+    piVar4 = func_0xffffffffdc5b7a20(arg1);
+    iVar6 = *piVar4;
+    piVar5 = *(iVar6 + *0xffffffffdddb2cd0 * 8);
+    if (*piVar5 != -0x2224d330) {
+        piVar5 = func_0xffffffffdc4ebcf0(*(iVar6 + 0x800),iVar6 + *0xffffffffdddb2cd0 * 8,0xffffffffdddb2cd0);
+    }
+    (*piVar5[1])(piVar4,arg1,0xe,&var_38h);
+    iVar6 = func_0xffffffffdc5b7d80(arg1);
+    uVar7 = 6;
+    if ((((iVar2 == 0x104d) && (iVar3 == -0x6f25)) && (var_38h == '\x04')) && (*(iVar6 + 0x120) == 0)) {
+        func_0xffffffffdc5b7c30(arg1,0xffffffffdcb3fc77);
+        uVar7 = 0;
+    }
+    if (*0xffffffffdeaacea0 != var_30h) {
+        func_0xffffffffdca17ba0();
+    //WARNING: Does not return
+        pcVar1 = invalidInstructionException();
+        (*pcVar1)();
+    }
+    return uVar7;
+}
+

@@ -1,0 +1,20 @@
+
+[38;2;58;150;221mulong[0m [38;2;193;156;0mfcn.ffffffffdc95a950[0m([38;2;58;150;221mint64_t[0m [0marg1[0m)
+
+{
+    [38;2;58;150;221mcode[0m *[0mpcVar1[0m;
+    [38;2;58;150;221mint[0m [0miVar2[0m;
+    [38;2;58;150;221mint64_t[0m [0munaff_RBX[0m;
+    
+    [0miVar2[0m = [38;2;193;156;0mfcn.ffffffffdc524470[0m(*([0marg1[0m + [38;2;19;161;14m0x138[0m));
+    [38;2;136;23;152mif[0m ([0miVar2[0m == [38;2;19;161;14m0[0m) {
+        [38;2;136;23;152mreturn[0m [38;2;19;161;14m0[0m;
+    }
+    [38;2;193;156;0mfcn.ffffffffdcabbf00[0m();
+    [38;2;193;156;0mfcn.ffffffffdcabc690[0m([38;2;19;161;14m0xffffffffdc95a96e[0m,[38;2;19;161;14m0xffffffffdce304f1[0m,[38;2;19;161;14m0x21b[0m,[0miVar2[0m);
+    [38;2;193;156;0mfcn.ffffffffdc460780[0m([0munaff_RBX[0m);
+    [38;2;197;15;31m//[0m[38;2;197;15;31mWARNING:[0m [38;2;197;15;31mDoes[0m [38;2;197;15;31mnot[0m [38;2;197;15;31mreturn[0m
+    [0mpcVar1[0m = [38;2;193;156;0minvalidInstructionException[0m();
+    (*[0mpcVar1[0m)();
+}
+
