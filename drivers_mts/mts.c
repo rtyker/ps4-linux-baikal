@@ -1063,12 +1063,16 @@ static void mts_tx_reclaim(struct mts_priv *mp)
 		__le32 *d = mp->tx_ring + clean * MTS_DESC_SIZE;
 		u32 ctl = le32_to_cpu(d[0]);
 
-		if (!(ctl & MTS_DESC_OWN))
-			break; /* ainda em transito — hardware nao concluiu */
+		/* OWN==1: descritor ainda em posse do driver (não processado pelo hardware) */
+		if (ctl & MTS_DESC_OWN)
+			break;
 
-		/* OWN=1: hardware devolveu o descritor — libera o skb */
+		/* OWN==0: hardware completou a transmissão — libera o skb */
 		if (mp->tx_skb[clean]) {
 			struct sk_buff *skb = mp->tx_skb[clean];
+
+			dev->stats.tx_packets++;
+			dev->stats.tx_bytes += skb->len;
 
 			dma_unmap_single(&mp->pdev->dev, mp->tx_skb_dma[clean],
 					 skb->len, DMA_TO_DEVICE);
@@ -1076,8 +1080,8 @@ static void mts_tx_reclaim(struct mts_priv *mp)
 			mp->tx_skb[clean] = NULL;
 		}
 
-		/* OWN=1 ja foi setado pelo hardware (e o que libera o slot);
-		 * so precisamos restaurar o padrao ocioso de desc[2] */
+		/* Restaura o padrão ocioso (OWN=1) para reutilização */
+		d[0] = cpu_to_le32(MTS_DESC_OWN);
 		d[2] = cpu_to_le32(0xffff0000);
 
 		clean = (clean + 1) & (MTS_RING_SIZE - 1);
