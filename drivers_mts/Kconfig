@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: GPL-2.0
+config NET_VENDOR_SONY
+	bool "Sony devices"
+	default y
+	depends on PCI && X86_PS4
+	help
+	  Suporte a dispositivos de rede dos southbridges Sony (PS4).
+
+if NET_VENDOR_SONY
+
+config MTS_GBE
+	tristate "Sony Baikal GBE (MTS) support"
+	depends on PCI && X86_PS4_BAIKAL
+	select CRC32
+	help
+	  Driver para a Gigabit Ethernet do southbridge Baikal (PS4 Pro),
+	  que usa o controlador MTS -- NAO e um Marvell Yukon, entao o
+	  driver sky2 nao serve.
+
+endif # NET_VENDOR_SONY
