@@ -11,7 +11,11 @@
   - Patch `sky2-baikal-gbe.patch` removido (travava vídeo)
   - `CONFIG_DEBUG_INFO_BTF=y` obrigatório (desabilitar quebra boot — tela preta)
   - `JOBS=2` em `MAKE_OPTS` (pahole usa muita memória)
-- **Ethernet:** `eth0` via `mts.ko stage=4` — registrada com MAC real `2c:cc:44:3f:69:5f`, DMA funcional, **zero Kernel Panics**. **RX/TX e detecção de carrier NÃO implementados ainda** — `NO-CARRIER` é esperado mesmo com cabo conectado, não é bug de rede. Ver [mts-driver-stage4-incompleto-e-srcversion-mismatch](mts-driver-stage4-incompleto-e-srcversion-mismatch.md).
+- **Ethernet:** `eth0` via `mts.ko stage=4` — registrada com MAC real `2c:cc:44:3f:69:5f`, DMA funcional, **zero Kernel Panics**. Confirmada comunicação **MDIO Clause 45** (`ret=0`), refutada Clause 22 (timeout). Registradores do Glue lidos via 2 MB ioremap (`0x140000=0x10206333`). Tabela de calibração segura (128 elementos) executou todas as **66 iterações com sucesso** e ativou **`Link UP: 1000 Mbps Full duplex`**. Ver [teste-3-resultado-2026-07-23](teste-3-resultado-2026-07-23.md), [plano-teste-4-phy-power-up-2026-07-23](plano-teste-4-phy-power-up-2026-07-23.md), [teste-4-resultado-glue-2026-07-23](teste-4-resultado-glue-2026-07-23.md), [teste-5-resultado-calibracao-tabela-2026-07-23](teste-5-resultado-calibracao-tabela-2026-07-23.md) e [teste-6-habilitar-rx-tx-padrao](teste-6-habilitar-rx-tx-padrao.md).
+
+
+
+
 - **Acesso remoto:** SSH automático no boot (systemd service) validado em ambiente **RELEASE** (sem `DEBUG LOOP`). Ver [sessao-2026-07-23-ssh-sem-debug-loop-sucesso](sessao-2026-07-23-ssh-sem-debug-loop-sucesso.md). WiFi + Ethernet cabeada funcionando.
 
 - **GPU Gladius (RESOLVIDO & TESTADO):** `amdgpu` detecta Gladius (`0x1002:0x9924`), 32 CUs ativados (`active_cu_number 32`), `/dev/dri/card0` e `/dev/dri/renderD128` funcionais. Aceleração 3D OpenGL 4.5 (55.26 FPS cravados no `glxgears`) e Vulkan 1.3 (`radv`) validadas ao vivo. Firmwares genuínos e pacotes gráficos integrados no script oficial `01-build-image-7.0.sh`. Ver [marco-2026-07-23-gpu-gladius-firmware-real](marco-2026-07-23-gpu-gladius-firmware-real.md) e `consolidado/INTEGRACAO_IMAGEM_7.0_GLADIUS_E_WIFI.md`.
