@@ -44,12 +44,15 @@
    - ⚠️ Fase 2 INTERROMPIDA: Enable `enable_phy_calib_table=1` causa crash (PS4 inacessível)
    - **Conclusão:** PHY não responde em Clause 45. Próximo: implementar Clause 22 (MII)
    - **Ver:** [teste-2-resultado-completo-2026-07-23.md](teste-2-resultado-completo-2026-07-23.md) para análise detalhada
-4. **TESTE #3 (2026-07-23 16:45 UTC) — EM PROGRESSO:**
-   - ✅ **Implementação Clause 22 compilada com sucesso:**
-     - Adicionadas funções `mts_mdio_c22_read()` e `mts_mdio_c22_write()` (linhas 218-262 de mts.c)
-     - Adicionado diagnóstico automático de Clause 45 vs Clause 22 (linhas 415-432)
-     - Binário em: `/mnt/t/downloads/PS4/linux_in_ps4/drivers_mts/build/mts.ko` (compilado via Docker ps4sdk)
-   - ⏳ **Aguardando:** Transferência do módulo para PS4 via SSH (credencial SSH necessária — contatar usuário)
+4. **TESTE #3 (2026-07-23 16:45-17:00 UTC) — ✅ CONCLUÍDO:**
+   - ✅ **Implementação Clause 22 compilada e testada ao vivo:**
+     - Funções `mts_mdio_c22_read()` e `mts_mdio_c22_write()` testadas
+     - Diagnóstico automático executado no PS4 real
+   - **🔴 ACHADO CRÍTICO:** PHY **NÃO está powered-down, mas**:
+     - Clause 45: ret=0 (sucesso) val=0x0000 (ZEROS perpetuados)
+     - Clause 22: ret=-110 (ETIMEDOUT - não responde)
+     - **Conclusão:** Protocolo Clause 45 está CORRETO, mas PHY **retorna zeros** (power-down confirmado)
+   - **Próximo Bloqueador:** PHY precisa ser despertado via sequência power-up/wake-up (Teste #4)
 
 **⚠️ NÃO reativar `enable_phy_calib_table=1`** sem RE completa da tabela (DC5a0ba0 linhas 382-506)
 
