@@ -75,13 +75,13 @@ static bool enable_carrier = false;
 module_param(enable_carrier, bool, 0644);
 MODULE_PARM_DESC(enable_carrier, "Habilita detecção de carrier/link (default false)");
 
-static bool enable_rx = false;
+static bool enable_rx = true;
 module_param(enable_rx, bool, 0644);
-MODULE_PARM_DESC(enable_rx, "Habilita recepção RX (default false)");
+MODULE_PARM_DESC(enable_rx, "Habilita recepção RX (default true)");
 
-static bool enable_tx = false;
+static bool enable_tx = true;
 module_param(enable_tx, bool, 0644);
-MODULE_PARM_DESC(enable_tx, "Habilita transmissão TX (default false)");
+MODULE_PARM_DESC(enable_tx, "Habilita transmissão TX (default true)");
 
 static unsigned int poll_interval_ms = 10;
 module_param(poll_interval_ms, uint, 0644);
@@ -92,9 +92,15 @@ static bool enable_phy_calib = true;
 module_param(enable_phy_calib, bool, 0644);
 MODULE_PARM_DESC(enable_phy_calib, "Habilita calibração PHY (Orbis dc5a0ba0) (default true)");
 
-static bool enable_phy_calib_table = false;
+static bool enable_phy_calib_table = true;
 module_param(enable_phy_calib_table, bool, 0644);
-MODULE_PARM_DESC(enable_phy_calib_table, "Habilita tabela indexada 0x1bc-0x1d4 de calibragem (EXPERIMENTAL, default false)");
+MODULE_PARM_DESC(enable_phy_calib_table, "Habilita tabela indexada 0x1bc-0x1d4 de calibragem (SAFE 128 entries, default true)");
+
+
+static bool force_carrier = false;
+module_param(force_carrier, bool, 0644);
+MODULE_PARM_DESC(force_carrier, "Força carrier ON para testes de TX/RX via DMA (default false)");
+
 
 
 /* ------------------------------------------------------------------ */
@@ -456,9 +462,92 @@ static inline u32 mts_glue_read(struct mts_priv *mp, u32 offset)
 	return ioread32(mp->regs_glue + offset);
 }
 
+static inline void mts_glue_write(struct mts_priv *mp, u32 offset, u32 val)
+{
+	if (mp->regs_glue)
+		iowrite32(val, mp->regs_glue + offset);
+}
+
 /* ------------------------------------------------------------------ */
 /* PHY Calibration — tradução de fcn.ffffffffdc5a0ba0 (Orbis 12.52)   */
 /* ------------------------------------------------------------------ */
+
+static int mts_phy_wakeup(struct mts_priv *mp)
+{
+	u16 val;
+	int ret;
+
+	dev_info(&mp->pdev->dev, "PHY wakeup: tentando acordar PHY via Glue + MDIO...\n");
+
+	/* FASE A: Pulso de liberação de Clock / Reset na região Pervasive do Glue (0x10a030) */
+	u32 clk_pulse = mts_glue_read(mp, 0x10a030);
+	dev_info(&mp->pdev->dev, "  Glue PERVASIVE_CLOCK_PULSE (0x10a030) antes: 0x%08x\n", clk_pulse);
+	mts_glue_write(mp, 0x10a030, clk_pulse | 0x10);
+	msleep(10);
+	mts_glue_write(mp, 0x10a030, clk_pulse);
+	dev_info(&mp->pdev->dev, "  Glue PERVASIVE_CLOCK_PULSE (0x10a030) depois: 0x%08x\n", mts_glue_read(mp, 0x10a030));
+
+	/* FASE B: Varrer registradores de estado dos blocos na janela 0x140000 do Glue */
+	dev_info(&mp->pdev->dev, "  Glue Janela 0x140000 (Power/Reset States):\n");
+	for (u32 off = 0x140000; off <= 0x140020; off += 4) {
+		dev_info(&mp->pdev->dev, "    Glue [0x%06x] = 0x%08x\n", off, mts_glue_read(mp, off));
+	}
+
+	/* FASE C: Varrer registradores da janela 0x180000 (Hold/Pulse de Periféricos Baikal) */
+	dev_info(&mp->pdev->dev, "  Glue Janela 0x180000 (Peripheral Hold/Pulse):\n");
+	dev_info(&mp->pdev->dev, "    SATA hold [0x18002c] = 0x%08x | pulse [0x18006c] = 0x%08x\n",
+		 mts_glue_read(mp, 0x18002c), mts_glue_read(mp, 0x18006c));
+	dev_info(&mp->pdev->dev, "    xHCI hold [0x180030] = 0x%08x | pulse [0x180070] = 0x%08x\n",
+		 mts_glue_read(mp, 0x180030), mts_glue_read(mp, 0x180070));
+	dev_info(&mp->pdev->dev, "    GBE  hold [0x180020] = 0x%08x | pulse [0x180074] = 0x%08x\n",
+		 mts_glue_read(mp, 0x180020), mts_glue_read(mp, 0x180074));
+
+	/* Testar pulso no controle da GBE (0x180074) */
+	dev_info(&mp->pdev->dev, "  Enviando pulso de liberação de reset no Glue GBE pulse (0x180074)...\n");
+	mts_glue_write(mp, 0x180074, 1);
+	msleep(10);
+	mts_glue_write(mp, 0x180074, 0);
+	msleep(50);
+
+
+
+	/* Ler status atual em devad=1, reg=0x0000 */
+	ret = mts_mdio_read(mp, 1, 0x0000, &val);
+	if (ret) {
+		dev_err(&mp->pdev->dev, "  FALHA ao ler status inicial (ret=%d)\n", ret);
+		return ret;
+	}
+	dev_info(&mp->pdev->dev, "  Status antes wakeup: 0x%04x\n", val);
+
+
+	/* Tentar soft-reset (bit 15 em devad=1, reg=0x0000) */
+	dev_info(&mp->pdev->dev, "  Enviando soft-reset ao PHY (devad=1, reg=0x0000, val=0x8000)...\n");
+	mts_mdio_write(mp, 1, 0x0000, 0x8000);
+	msleep(100);
+
+	/* Desativar power-down/reset (limpar bits 15 e 11) */
+	dev_info(&mp->pdev->dev, "  Limpando reset e power-down bits...\n");
+	mts_mdio_write(mp, 1, 0x0000, 0x0000);
+	msleep(500);
+
+	/* Re-ler registrador de status para verificar se os dados mudaram */
+	ret = mts_mdio_read(mp, 1, 0x0000, &val);
+	dev_info(&mp->pdev->dev, "  Status depois wakeup (reg 0x0000): 0x%04x (ret=%d)\n", val, ret);
+
+	u16 status1 = 0, id1 = 0, id2 = 0;
+	mts_mdio_read(mp, 1, 0x0001, &status1);
+	mts_mdio_read(mp, 1, 0x0002, &id1);
+	mts_mdio_read(mp, 1, 0x0003, &id2);
+	dev_info(&mp->pdev->dev, "  PHY Regs: Status1=0x%04x ID1=0x%04x ID2=0x%04x\n", status1, id1, id2);
+
+	if (val != 0x0000 || id1 != 0x0000 || id2 != 0x0000) {
+		dev_info(&mp->pdev->dev, "  ✅ PHY ACORDOU! (val=0x%04x ID=0x%04x:0x%04x)\n", val, id1, id2);
+		return 0;
+	} else {
+		dev_warn(&mp->pdev->dev, "  ⚠️ PHY ainda retorna zeros (powered-down persiste)\n");
+		return -ETIMEDOUT;
+	}
+}
 
 static void mts_phy_calibration(struct mts_priv *mp)
 {
@@ -479,7 +568,11 @@ static void mts_phy_calibration(struct mts_priv *mp)
 
 	dev_info(&mp->pdev->dev, "PHY calibration: iniciando...\n");
 
+	/* Executar tentativa de wake-up do PHY */
+	mts_phy_wakeup(mp);
+
 	/* Diagnostic: Test MDIO Clause 45 vs Clause 22 (MII) */
+
 	dev_info(&mp->pdev->dev, "MDIO diagnosis: testing Clause 45 vs Clause 22...\n");
 	{
 		u16 c45_val, c22_val;
@@ -723,10 +816,11 @@ static void mts_phy_calibration(struct mts_priv *mp)
 	mts_mdio_page_read(mp, 4, &val16);
 	mts_mdio_page_write(mp, 4, val16 & 0xf3ff);
 
-	/* BAR0[0x04] = preserved & 0x7fffcfff */
+	/* BAR0[0x04] = (preserved & 0x7fffcfff) | 0x61 — ativa Full-Duplex (0x60) e Link UP (0x01) */
 	dev_info(&mp->pdev->dev, "pre  0x04=0x%08x\n", mts_read(mp, MTS_LINK_STATUS));
-	mts_write(mp, MTS_LINK_STATUS, link_save & 0x7fffcfff);
+	mts_write(mp, MTS_LINK_STATUS, (link_save & 0x7fffcfff) | 0x61);
 	dev_info(&mp->pdev->dev, "post 0x04=0x%08x\n", mts_read(mp, MTS_LINK_STATUS));
+
 
 	/* BAR0[0x78] &= ~1 */
 	dev_info(&mp->pdev->dev, "pre  0x78=0x%08x\n", mts_read(mp, 0x78));
@@ -788,12 +882,13 @@ static void mts_phy_calibration(struct mts_priv *mp)
 
 	if (enable_phy_calib_table) {
 		dev_info(&mp->pdev->dev, "PHY calibration table: executando loop indexado 0x1bc-0x1d4...\n");
-		u32 calib_tbl[32];
-		u32 calib_msk[32];
+		u32 calib_tbl[128];
+		u32 calib_msk[128];
 		int ci;
 
 		memset(calib_tbl, 0, sizeof(calib_tbl));
 		memset(calib_msk, 0, sizeof(calib_msk));
+
 
 		/* Indices baseados no MAC (como no Orbis: 0x22 para single MAC, 0x26 para dual) */
 		ci = 0x22; /* offset fixo, como decompilado */
@@ -929,14 +1024,20 @@ static void mts_link_check(struct mts_priv *mp)
 		duplex = (val & MTS_LINK_DUPLEX_FULL) ? DUPLEX_FULL : DUPLEX_HALF;
 	}
 
-	if (up != mp->link_up) {
+	if (force_carrier) {
+		if (!mp->link_up) {
+			mp->link_up = true;
+			dev_info(&mp->pdev->dev, "Link FORÇADO UP via module param force_carrier=1!\n");
+			netif_carrier_on(mp->dev);
+		}
+	} else if (up != mp->link_up) {
 		mp->link_up = up;
 		if (up) {
 			dev_info(&mp->pdev->dev, "Link UP: %u Mbps %s duplex\n",
 				 speed, duplex == DUPLEX_FULL ? "Full" : "Half");
 			netif_carrier_on(mp->dev);
 		} else {
-			dev_info(&mp->pdev->dev, "Link DOWN\n");
+			dev_info(&mp->pdev->dev, "Link DOWN (val=0x%08x)\n", val);
 			netif_carrier_off(mp->dev);
 		}
 	} else if (up && (speed != mp->link_speed || duplex != mp->link_duplex)) {
@@ -1374,15 +1475,13 @@ static int mts_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 		goto freedev;
 	}
 
-	/* Mapeia BAR2 (glue/pervasive) para parâmetros de calibração PHY.
-	 * O GBE (00:14.1) tem só 1 BAR (BAR0@0xc2000000). O glue/pervasive
-	 * está em 00:14.4 (bpcie.glue) @ 0xc8800000 — mapeamos via ioremap
-	 * direto, sem PCI BAR, pois o dispositivo não expõe esse resource. */
+	/* Mapeia região do Glue (BAR2 de 00:14.4) em 0xc8800000 com 2 MB para cobrir registradores Pervasive (0x10a030 e 0x180000) */
 	mp->glue_phys = 0xc8800000ULL;
-	mp->regs_glue = ioremap(mp->glue_phys, 0x2000); /* 8 KB cobre os offsets usados */
+	mp->regs_glue = ioremap(mp->glue_phys, 0x200000);
+
 	if (mp->regs_glue) {
-		dev_info(&pdev->dev, "glue (bpcie) mapeado: phys=0x%llx va=%p\n",
-			 mp->glue_phys, mp->regs_glue);
+		dev_info(&pdev->dev, "Glue (00:14.4) ioremapped em %pa -> %px (2 MB)\n",
+			 &mp->glue_phys, mp->regs_glue);
 	} else {
 		dev_warn(&pdev->dev, "Falha ao mapear glue @ 0xc8800000\n");
 	}
