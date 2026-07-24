@@ -174,6 +174,7 @@ struct mts_priv {
 
 	/* IRQ storm guard */
 	unsigned long		irq_storm_jiffies;
+	unsigned int		irq_window_count;
 };
 
 #endif /* _MTS_H */

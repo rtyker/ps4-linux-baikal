@@ -108,10 +108,15 @@ static unsigned int irq_mask = 0x0;
 module_param(irq_mask, uint, 0644);
 MODULE_PARM_DESC(irq_mask, "Valor de IMR (0x54) para habilitar interrupções (default 0x0 = tudo mascarado)");
 
-/* Phase 2: IRQ storm guard */
+/* Phase 2: IRQ storm guard — desabilita IRQ se mais de irq_storm_max_count
+ * interrupcoes chegarem dentro de uma janela de irq_storm_threshold_ms. */
 static unsigned int irq_storm_threshold_ms = 0;
 module_param(irq_storm_threshold_ms, uint, 0644);
-MODULE_PARM_DESC(irq_storm_threshold_ms, "Tempo em ms para desabilitar IRQ se storm detectado (0 = desabilitado, default 0)");
+MODULE_PARM_DESC(irq_storm_threshold_ms, "Duracao da janela em ms para contagem de storm (0 = guarda desabilitada, default 0)");
+
+static unsigned int irq_storm_max_count = 5000;
+module_param(irq_storm_max_count, uint, 0644);
+MODULE_PARM_DESC(irq_storm_max_count, "Numero maximo de IRQs permitido dentro da janela antes de desabilitar (default 5000)");
 
 
 /* ------------------------------------------------------------------ */
@@ -1599,21 +1604,29 @@ static irqreturn_t mts_interrupt(int irq, void *dev_id)
 	 * handler apenas contabiliza e devolve HANDLED para nao travar a linha.
 	 */
 
-	/* Phase 2: IRQ storm guard */
+	/* Phase 2: IRQ storm guard — conta quantas IRQs chegam dentro da
+	 * janela de irq_storm_threshold_ms; só dispara apos passar de
+	 * irq_storm_max_count NA MESMA janela (nao a cada duas IRQs
+	 * proximas, que seria falso-positivo em trafego normal). */
 	if (irq_storm_threshold_ms > 0) {
 		unsigned long now = jiffies;
-		unsigned long threshold = msecs_to_jiffies(irq_storm_threshold_ms);
+		unsigned long window = msecs_to_jiffies(irq_storm_threshold_ms);
 
-		if (time_after(now, mp->irq_storm_jiffies + threshold)) {
+		if (time_after(now, mp->irq_storm_jiffies + window)) {
+			/* nova janela: reinicia contador */
 			mp->irq_storm_jiffies = now;
+			mp->irq_window_count = 1;
 		} else {
-			/* storm detectado: desabilita IRQ e volta para polling */
-			dev_warn(&mp->pdev->dev,
-				 "IRQ storm (%lu em %d ms) — desabilitando IRQ, voltando para polling\n",
-				 mp->irq_count, irq_storm_threshold_ms);
-			disable_irq_nosync(irq);
-			mp->enable_carrier = false; /* link check via polling apenas */
-			return IRQ_HANDLED;
+			mp->irq_window_count++;
+			if (mp->irq_window_count > irq_storm_max_count) {
+				/* storm detectado: desabilita IRQ e volta para polling */
+				dev_warn(&mp->pdev->dev,
+					 "IRQ storm (%u em %d ms) — desabilitando IRQ, voltando para polling\n",
+					 mp->irq_window_count, irq_storm_threshold_ms);
+				disable_irq_nosync(irq);
+				mp->enable_carrier = false; /* link check via polling apenas */
+				return IRQ_HANDLED;
+			}
 		}
 	}
 
