@@ -419,11 +419,9 @@ static void mts_setup_rings(struct mts_priv *mp)
 		if (i == MTS_RING_SIZE - 1)
 			ctl |= MTS_DESC_WRAP;
 
+		/* RX: inicializa com OWN=1 (buffer vazio, pronto para hardware) */
 		d[0] = cpu_to_le32(ctl);
 		d[1] = cpu_to_le32(mp->rx_buf_dma + i * MTS_RX_BUF_SIZE);
-		/* o original limpa OWN depois de montar: o descritor comeca
-		 * em posse do hardware (OWN=0), aguardando o pacote chegar */
-		d[0] = cpu_to_le32(ctl & ~MTS_DESC_OWN);
 	}
 
 	mp->tx_idx = 0;
@@ -1126,10 +1124,19 @@ static int mts_rx_clean(struct mts_priv *mp, int budget)
 		__le32 *d = mp->rx_ring + mp->rx_idx * MTS_DESC_SIZE;
 		u32 ctl = le32_to_cpu(d[0]);
 
-		/* OWN==1 = hardware devolveu pacote pronto para processar;
-		 * OWN==0 = buffer vazio (ainda em posse do driver) */
-		if (!(ctl & MTS_DESC_OWN))
-			break; /* nada novo */
+		/* DEBUG: log condicional (apenas primeiros 10 OU a cada 1000 chamadas de poll) */
+		if (mp->rx_debug_logs < 10 || (mp->rx_debug_logs % 1000) == 0) {
+			dev_info(&mp->pdev->dev,
+				"RX_CLEAN idx=%u ctl=0x%08x OWN=%d len=%u cleaned=%u\n",
+				mp->rx_idx, ctl,
+				(ctl & MTS_DESC_OWN) ? 1 : 0,
+				ctl & MTS_DESC_LEN_MASK, mp->rx_debug_logs);
+		}
+		mp->rx_debug_logs++;
+
+		/* OWN==0 = hardware preencheu (pacote pronto); OWN==1 = buffer vazio (driver) */
+		if (ctl & MTS_DESC_OWN)
+			break; /* buffer vazio — nada novo */
 
 		/* Hardware devolveu o buffer — processa o pacote */
 		u32 len = ctl & MTS_DESC_LEN_MASK;
@@ -1151,8 +1158,8 @@ static int mts_rx_clean(struct mts_priv *mp, int budget)
 			dev->stats.rx_errors++;
 		}
 
-		/* devolve descritor ao hardware: limpa OWN (0), mantem WRAP se for o ultimo */
-		u32 new_ctl = MTS_RX_BUF_SIZE; /* OWN=0 = volta para o hardware */
+		/* devolve descritor ao hardware: seta OWN (1), mantem WRAP se for o ultimo */
+		u32 new_ctl = MTS_DESC_OWN | MTS_RX_BUF_SIZE; /* OWN=1 = buffer vazio para hardware */
 		if (mp->rx_idx == MTS_RING_SIZE - 1)
 			new_ctl |= MTS_DESC_WRAP;
 		d[0] = cpu_to_le32(new_ctl);
@@ -1162,6 +1169,9 @@ static int mts_rx_clean(struct mts_priv *mp, int budget)
 	}
 
 	wmb();
+	/* avisa o hardware: novos buffers vazios prontos (tail pointer = índice) */
+	if (cleaned > 0)
+		mts_write(mp, MTS_RX_RING_PTR, mp->rx_idx);
 	return cleaned;
 }
 
@@ -1255,6 +1265,9 @@ static netdev_tx_t mts_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	mp->tx_idx = (idx + 1) & (MTS_RING_SIZE - 1);
 
+	/* avisa o hardware: novo descritor pronto (tail pointer = apenas o índice) */
+	mts_write(mp, MTS_TX_RING_PTR, mp->tx_idx);
+
 	/* tenta reclamar TX completos de forma oportunista */
 	mts_tx_reclaim(mp);
 
@@ -1306,6 +1319,173 @@ static void mts_dump_regs(struct mts_priv *mp)
 		 mts_read(mp, MTS_CNT_PKTS), mts_read(mp, MTS_CNT_BYTES),
 		 mts_read(mp, MTS_CNT_PKTS2), mts_read(mp, MTS_CNT_BYTES2));
 }
+
+/* ------------------------------------------------------------------ */
+/* Diagnostico sysfs (mts_regs) — leitura ao vivo de registradores,    */
+/* aneis e buffers RX. Exposto em /sys/bus/pci/devices/0000:00:14.1/   */
+/* mts_regs e acessivel via /sys/class/net/eth0/device/mts_regs.       */
+/* ------------------------------------------------------------------ */
+
+static ssize_t mts_regs_show(struct device *dev,
+			     struct device_attribute *attr, char *buf)
+{
+	struct net_device *netdev = dev_get_drvdata(dev);
+	struct mts_priv *mp;
+	int len = 0;
+	int i;
+	u16 phy_val;
+	int ret;
+
+	if (!netdev)
+		return -ENODEV;
+	mp = netdev_priv(netdev);
+	if (!mp || !mp->regs)
+		return -ENODEV;
+
+	static const u32 regs_key[] = {
+		0x00, 0x04, 0x34, 0x38, 0x50, 0x54, 0x5c, 0x70, 0x7c
+	};
+
+	len += scnprintf(buf + len, PAGE_SIZE - len,
+			 "=== BAR0 Registradores-chave ===\n");
+	for (i = 0; i < ARRAY_SIZE(regs_key); i++)
+		len += scnprintf(buf + len, PAGE_SIZE - len,
+				 "  +0x%03x = 0x%08x\n",
+				 regs_key[i], mts_read(mp, regs_key[i]));
+
+	/* Labels claros para 0x34/0x38 (escrito=1, lido=0/8) */
+	len += scnprintf(buf + len, PAGE_SIZE - len,
+			 "\n  Labels: 0x34=MAC_EN1 (wo)  0x38=MAC_EN2 (ro=8 when enabled)\n");
+
+	len += scnprintf(buf + len, PAGE_SIZE - len,
+			 "\n=== PHY Clause 45 (live, MMD=1 PMA/PMD + MMD=7 AN) ===\n");
+
+	/* Helper: try read PHY reg, return "timeout" or formatted value */
+	#define MTS_PHY_READ(devad, reg, label) \
+		do { \
+			ret = mts_mdio_read(mp, devad, reg, &phy_val); \
+			if (ret) \
+				len += scnprintf(buf + len, PAGE_SIZE - len, "  %s: timeout\n", label); \
+			else \
+				len += scnprintf(buf + len, PAGE_SIZE - len, "  %s: 0x%04x\n", label, phy_val); \
+		} while (0)
+
+	MTS_PHY_READ(0x01, 0x0000, "PMA/PMD Control1  (devad=0x01, reg=0x0000)");
+	MTS_PHY_READ(0x01, 0x0001, "PMA/PMD Status1   (devad=0x01, reg=0x0001)");
+	MTS_PHY_READ(0x01, 0x0002, "PMA/PMD ID1       (devad=0x01, reg=0x0002)");
+	MTS_PHY_READ(0x01, 0x0003, "PMA/PMD ID2       (devad=0x01, reg=0x0003)");
+
+	/* AN Status (devad=7, reg=0x0001) - bit2=link, bit5=AN complete */
+	ret = mts_mdio_read(mp, 0x07, 0x0001, &phy_val);
+	if (ret)
+		len += scnprintf(buf + len, PAGE_SIZE - len,
+				 "  AN Status         (devad=0x07, reg=0x0001): timeout\n");
+	else
+		len += scnprintf(buf + len, PAGE_SIZE - len,
+				 "  AN Status         (devad=0x07, reg=0x0001): 0x%04x (link=%d AN_complete=%d)\n",
+				 phy_val, (phy_val & 0x0004) ? 1 : 0, (phy_val & 0x0020) ? 1 : 0);
+
+	/* 1000BASE-T AN Status (devad=7, reg=0x000a) - best effort */
+	ret = mts_mdio_read(mp, 0x07, 0x000a, &phy_val);
+	if (ret)
+		len += scnprintf(buf + len, PAGE_SIZE - len,
+				 "  1000BASE-T AN St  (devad=0x07, reg=0x000a): timeout/N/A\n");
+	else
+		len += scnprintf(buf + len, PAGE_SIZE - len,
+				 "  1000BASE-T AN St  (devad=0x07, reg=0x000a): 0x%04x\n", phy_val);
+
+	#undef MTS_PHY_READ
+
+	len += scnprintf(buf + len, PAGE_SIZE - len,
+			 "\n=== Contadores HW (clear-on-read) ===\n");
+	len += scnprintf(buf + len, PAGE_SIZE - len,
+			 "  MTS_CNT_PKTS  (0x100) = %u\n",
+			 mts_read(mp, MTS_CNT_PKTS));
+	len += scnprintf(buf + len, PAGE_SIZE - len,
+			 "  MTS_CNT_BYTES (0x104) = %u\n",
+			 mts_read(mp, MTS_CNT_BYTES));
+	len += scnprintf(buf + len, PAGE_SIZE - len,
+			 "  MTS_CNT_PKTS2 (0x128) = %u\n",
+			 mts_read(mp, MTS_CNT_PKTS2));
+	len += scnprintf(buf + len, PAGE_SIZE - len,
+			 "  MTS_CNT_BYTES2(0x12c) = %u\n",
+			 mts_read(mp, MTS_CNT_BYTES2));
+
+	len += scnprintf(buf + len, PAGE_SIZE - len,
+			 "\n=== Estado dos aneis (SW) ===\n");
+	len += scnprintf(buf + len, PAGE_SIZE - len,
+			 "  tx_idx=%u  tx_clean=%u  rx_idx=%u\n",
+			 mp->tx_idx, mp->tx_clean, mp->rx_idx);
+
+	if (!mp->tx_ring || !mp->rx_ring)
+		return len;
+
+	len += scnprintf(buf + len, PAGE_SIZE - len,
+			 "\n=== Descritores TX (0-3) ===\n");
+	for (i = 0; i < 4 && i < MTS_RING_SIZE; i++) {
+		__le32 *d = mp->tx_ring + i * MTS_DESC_SIZE;
+		len += scnprintf(buf + len, PAGE_SIZE - len,
+				 "  TX[%03u] ctl=0x%08x addr=0x%08x d2=0x%08x d3=0x%08x\n",
+				 i, le32_to_cpu(d[0]), le32_to_cpu(d[1]),
+				 le32_to_cpu(d[2]), le32_to_cpu(d[3]));
+	}
+
+	len += scnprintf(buf + len, PAGE_SIZE - len,
+			 "\n=== Descritores RX (0-3) ===\n");
+	for (i = 0; i < 4 && i < MTS_RING_SIZE; i++) {
+		__le32 *d = mp->rx_ring + i * MTS_DESC_SIZE;
+		len += scnprintf(buf + len, PAGE_SIZE - len,
+				 "  RX[%03u] ctl=0x%08x addr=0x%08x\n",
+				 i, le32_to_cpu(d[0]), le32_to_cpu(d[1]));
+	}
+
+	len += scnprintf(buf + len, PAGE_SIZE - len,
+			 "\n=== Descritores RX ao redor de rx_idx=%u ===\n",
+			 mp->rx_idx);
+	for (i = -3; i <= 3; i++) {
+		int idx = (mp->rx_idx + i) & (MTS_RING_SIZE - 1);
+		__le32 *d = mp->rx_ring + idx * MTS_DESC_SIZE;
+		len += scnprintf(buf + len, PAGE_SIZE - len,
+				 "  RX[%03u] ctl=0x%08x addr=0x%08x %s\n",
+				 idx, le32_to_cpu(d[0]), le32_to_cpu(d[1]),
+				 (idx == mp->rx_idx) ? "<--- ATUAL" : "");
+	}
+
+	if (!mp->rx_buf)
+		return len;
+
+	len += scnprintf(buf + len, PAGE_SIZE - len,
+			 "\n=== Hexdump buffers RX (64B cada) ===\n");
+	for (i = -1; i <= 1; i++) {
+		int idx = (mp->rx_idx + i) & (MTS_RING_SIZE - 1);
+		u8 *buf_ptr = mp->rx_buf + idx * MTS_RX_BUF_SIZE;
+		int j;
+
+		len += scnprintf(buf + len, PAGE_SIZE - len,
+				 "  Buffer RX[%03u]:\n", idx);
+		for (j = 0; j < 64; j += 16) {
+			int k;
+
+			len += scnprintf(buf + len, PAGE_SIZE - len,
+					 "    %04x: ", j);
+			for (k = 0; k < 16; k++)
+				len += scnprintf(buf + len, PAGE_SIZE - len,
+						 "%02x ", buf_ptr[j + k]);
+			len += scnprintf(buf + len, PAGE_SIZE - len, " |");
+			for (k = 0; k < 16; k++) {
+				char c = buf_ptr[j + k];
+
+				len += scnprintf(buf + len, PAGE_SIZE - len, "%c",
+						 (c >= 32 && c <= 126) ? c : '.');
+			}
+			len += scnprintf(buf + len, PAGE_SIZE - len, "|\n");
+		}
+	}
+
+	return len;
+}
+
+static DEVICE_ATTR_RO(mts_regs);
 
 /* ------------------------------------------------------------------ */
 /* MAC address — mesma fonte que o sky2 usa no Aeolia: SPM da funcao   */
@@ -1516,6 +1696,11 @@ static int mts_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 			goto unmap;
 		mts_setup_rings(mp);
 		mts_program_rings(mp);
+
+		err = device_create_file(&pdev->dev, &dev_attr_mts_regs);
+		if (err)
+			dev_warn(&pdev->dev,
+				 "falha ao criar sysfs mts_regs: %d\n", err);
 	}
 
 	if (stage >= 3) {
@@ -1596,6 +1781,10 @@ static void mts_remove(struct pci_dev *pdev)
 	if (!dev)
 		return;
 	mp = netdev_priv(dev);
+
+	/* Remover sysfs ANTES de unregister_netdev para evitar deadlock */
+	if (stage >= 2)
+		device_remove_file(&pdev->dev, &dev_attr_mts_regs);
 
 	if (dev->reg_state == NETREG_REGISTERED) {
 		unregister_netdev(dev);

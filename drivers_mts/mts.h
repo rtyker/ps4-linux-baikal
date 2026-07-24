@@ -168,6 +168,9 @@ struct mts_priv {
 
 	/* PHY calibration */
 	bool			phy_calib_done;
+
+	/* RX debug log throttling */
+	u32			rx_debug_logs;
 };
 
 #endif /* _MTS_H */
