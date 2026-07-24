@@ -383,7 +383,7 @@ MODULES=(ext4 ahci sd_mod btmtksdio amdgpu snd-hda-intel sky2 usbhid uas usb_sto
 BINARIES=()
 FILES=(/lib/firmware/edid/ps4_tv_edid.bin)
 HOOKS=(base udev modconf block filesystems keyboard fsck)
-COMPRESSION="zstd"
+COMPRESSION="gzip"
 MKEOF
 
 # Copiar EDID firmware
