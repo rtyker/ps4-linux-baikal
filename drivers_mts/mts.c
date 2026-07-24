@@ -103,6 +103,16 @@ module_param(force_carrier, bool, 0644);
 MODULE_PARM_DESC(force_carrier, "Força carrier ON para testes de TX/RX via DMA (default false)");
 
 
+/* Phase 1: IMR value para tentar irq real (default 0x0 = tudo mascarado) */
+static unsigned int irq_mask = 0x0;
+module_param(irq_mask, uint, 0644);
+MODULE_PARM_DESC(irq_mask, "Valor de IMR (0x54) para habilitar interrupções (default 0x0 = tudo mascarado)");
+
+/* Phase 2: IRQ storm guard */
+static unsigned int irq_storm_threshold_ms = 0;
+module_param(irq_storm_threshold_ms, uint, 0644);
+MODULE_PARM_DESC(irq_storm_threshold_ms, "Tempo em ms para desabilitar IRQ se storm detectado (0 = desabilitado, default 0)");
+
 
 /* ------------------------------------------------------------------ */
 /* Acesso a registrador                                               */
@@ -1456,8 +1466,8 @@ static ssize_t mts_regs_show(struct device *dev,
 	len += scnprintf(buf + len, PAGE_SIZE - len,
 			 "\n=== Estado dos aneis (SW) ===\n");
 	len += scnprintf(buf + len, PAGE_SIZE - len,
-			 "  tx_idx=%u  tx_clean=%u  rx_idx=%u\n",
-			 mp->tx_idx, mp->tx_clean, mp->rx_idx);
+			 "  tx_idx=%u  tx_clean=%u  rx_idx=%u  irq_count=%lu\n",
+			 mp->tx_idx, mp->tx_clean, mp->rx_idx, mp->irq_count);
 
 	if (!mp->tx_ring || !mp->rx_ring)
 		return len;
@@ -1588,6 +1598,25 @@ static irqreturn_t mts_interrupt(int irq, void *dev_id)
 	 * — so a mascara (0x54) esta identificada. Ate isso ser mapeado, o
 	 * handler apenas contabiliza e devolve HANDLED para nao travar a linha.
 	 */
+
+	/* Phase 2: IRQ storm guard */
+	if (irq_storm_threshold_ms > 0) {
+		unsigned long now = jiffies;
+		unsigned long threshold = msecs_to_jiffies(irq_storm_threshold_ms);
+
+		if (time_after(now, mp->irq_storm_jiffies + threshold)) {
+			mp->irq_storm_jiffies = now;
+		} else {
+			/* storm detectado: desabilita IRQ e volta para polling */
+			dev_warn(&mp->pdev->dev,
+				 "IRQ storm (%lu em %d ms) — desabilitando IRQ, voltando para polling\n",
+				 mp->irq_count, irq_storm_threshold_ms);
+			disable_irq_nosync(irq);
+			mp->enable_carrier = false; /* link check via polling apenas */
+			return IRQ_HANDLED;
+		}
+	}
+
 	mp->irq_count++;
 	return IRQ_HANDLED;
 }
@@ -1747,8 +1776,9 @@ static int mts_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 
 	if (stage >= 3) {
 		mts_mac_enable(mp);
-		mts_write(mp, MTS_IMR, MTS_IMR_DEFAULT);
-		dev_info(&pdev->dev, "IMR (0x54) = 0x%08x\n", mts_read(mp, MTS_IMR));
+		mts_write(mp, MTS_IMR, irq_mask);
+		dev_info(&pdev->dev, "IMR (0x54) = 0x%08x (irq_mask=0x%x)\n",
+			 mts_read(mp, MTS_IMR), irq_mask);
 	}
 
 	if (stage < 4) {

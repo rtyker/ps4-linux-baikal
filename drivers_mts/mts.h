@@ -171,6 +171,9 @@ struct mts_priv {
 
 	/* RX debug log throttling */
 	u32			rx_debug_logs;
+
+	/* IRQ storm guard */
+	unsigned long		irq_storm_jiffies;
 };
 
 #endif /* _MTS_H */
