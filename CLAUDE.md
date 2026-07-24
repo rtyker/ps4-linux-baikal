@@ -16,9 +16,9 @@
    - **BUILD AUTOMÁTICO ETH0 + NETCONSOLE (2026-07-23):** Criada e implantada no HD a tag `20260723-mts-autoeth0`. O driver `mts.ko` agora possui o padrão `stage=4` e auto-carregamento no boot, subindo a interface `eth0` automaticamente sem necessidade de intervenção via Telnet. Netconsole ativado por padrão no boot.
    - **DESLIGAMENTO REMOTO VIA TELNET (2026-07-22):** O comando `sync && poweroff -f` (ou `echo o > /proc/sysrq-trigger`) encerra o sistema operacional e a rede limpos (ping cai 100%), porém o console permanece em **luz azul (luz azul acesa/pulsando)** pois o desligamento de energia total da fonte (S5) exige comando ICC dedicado ou desligamento manual no botão.
 
-## Estado Atual do Projeto (Resumo Rápido) — ATUALIZADO 2026-07-23 (TESTE #1 ✅ PASSOU)
+## Estado Atual do Projeto (Resumo Rápido) — ATUALIZADO 2026-07-23 NOITE (causa raiz RX confirmada: PHY não acorda)
 
-**🎯 STATUS:** Módulo `mts.ko` estável (crash eliminado), pronto para Testes #2/#3 (investigação de link detection)
+**🎯 STATUS:** Módulo `mts.ko` estável (crash eliminado), TX funcional (~95%), RX bloqueado — causa raiz é o PHY nunca sair de power-down (não é mais bug de software/anéis). Próxima pista: reabilitar IRQ real (`IMR` não-zero), já que a única sessão com duplex genuinamente correto (`Full duplex`, `memory/teste-5-...md`) tinha IRQ habilitada.
 
 ✅ **KERNEL LINUX 7.0 BAIKAL — FUNCIONAL E ESTÁVEL**
 
@@ -54,7 +54,8 @@
   - `CONFIG_USB_STORAGE=y`, `CONFIG_BLK_DEV_SD=y`, `CONFIG_EXT4_FS=y` — todos built-in
 
 ### Pendências Abertas
-- 🟡 **RX/TX Ethernet:** Driver `mts.ko` stage=4 não implementa anéis de recepção/transmissão (DHCP não funciona, carrier status `NO-CARRIER`)
+- 🔴 **RX Ethernet não recebe frames — causa raiz confirmada 2026-07-23 noite:** anéis RX/TX e lógica de software (bit OWN, tail pointers) estão corretos e testados; TX funciona (~95%). RX permanece em zero (`MTS_CNT_PKTS=0`, ping 100% perda em `192.168.0.1↔192.168.0.2`) porque **o PHY nunca sai de power-down** — nem Clause 45 (MMD1/MMD7, todos `0x0000`) nem Clause 22 (BMCR, scan completo `phy_addr` 0-31: 0-15 timeout, 16-31 residual zero) conseguem tirar sinal real do chip. O registrador de status do MAC (`0x04`, "Link UP 1000Mbps Half duplex") é MAC-interno e não reflete negociação física real (escrita forçada nele é no-op comprovado). `MTS_MAC_EN2` (0x38) descartado como suspeito — não retém o bit desde a primeira escrita, independente de calibração. Ver `memory/mac-en2-descartado-phy-nunca-acorda-2026-07-23.md`.
+  - **Achado arqueológico importante:** uma versão anterior (não capturada em nenhum commit deste repo) do mesmo driver alcançou `"Link UP: 1000 Mbps Full duplex"` de verdade (`memory/teste-5-resultado-calibracao-tabela-2026-07-23.md`), com IRQ real habilitada (`"interrupt habilitada, IMR=0x0000007d"`) em vez do `IMR=0x00000000` (tudo mascarado) + timer de polling de 10ms usado hoje. Essa versão parece ter sido perdida em algum refactor não commitado — não encontrada em nenhum commit deste repo (`git log -S` vazio para essas strings) nem em backups conhecidos (`/mnt/hdauxiliar/temp/kbuild_backup_180042`). **Hipótese mais promissora para a próxima sessão:** reabilitar IRQ real (`IMR` não-zero) em vez de manter tudo mascarado, já que a única evidência histórica de duplex genuinamente correto coincide com IRQ habilitada.
 - 🟡 **S5 desligamento:** `poweroff -f` encerra SO mas deixa luz azul (requer ICC ou toque manual)
 
 ### Contexto de Payloads (Ainda Válido)

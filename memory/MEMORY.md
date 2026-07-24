@@ -2,8 +2,9 @@
 
 > 🗄️ **BANCO DE DADOS SQLITE OFICIAL:** `/mnt/t/downloads/PS4/linux_in_ps4/consolidado/ps4_hardware_memory.db` armazena **671 registradores validados** com `safe_to_read = 1` (BAR0 GbE, BAR0 xHCI, BAR2 Glue, BAR4 Efuse, BAR5 AHCI, ECAM) e tabelas estruturadas.
 > 🛠️ **SCRIPT OFICIAL DE TESTES:** `harness_gbe.py` (raiz do projeto) — único script para diagnósticos via Telnet. Marca `safe_to_read = 1` no SQLite para registradores validados.
-> ⚠️ **IP PS4 ATUAL:** `192.168.6.128` (Ethernet cabeada, via `mts.ko`).
+> ⚠️ **CORRIGIDO 2026-07-23 noite — NÃO CONFUNDIR:** `192.168.6.128` (WiFi, `wlan0`) é **só para telnet/administração**. A Ethernet cabeada sob teste (`eth0`, driver `mts.ko`) tem **IP FIXO `192.168.0.2`**, host de teste em `192.168.0.1` via `enp60s0`. Ver `AGENTS.md` na raiz do projeto (regra de topologia, prioridade alta) — testar `eth0` na subnet do WiFi não prova nada sobre ele.
 > ⚠️ **NUNCA fazer probe TCP manual nas portas 9090/9020 do PS4** (ping é OK, connect não) — consome o `accept()` único e trava a injeção.
+> 🔴 **RX Ethernet: causa raiz confirmada 2026-07-23 noite — PHY nunca sai de power-down** (Clause 45 e Clause 22 MDIO não dão sinal algum). Ver [mac-en2-descartado-phy-nunca-acorda-2026-07-23](mac-en2-descartado-phy-nunca-acorda-2026-07-23.md) — inclui achado arqueológico de uma versão perdida do driver com Full-duplex real (IRQ habilitada, `IMR=0x7d`), próxima pista mais promissora.
 
 ## Estado Atual Confirmado (2026-07-23)
 
