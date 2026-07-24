@@ -482,6 +482,17 @@ static inline void mts_glue_write(struct mts_priv *mp, u32 offset, u32 val)
 		iowrite32(val, mp->regs_glue + offset);
 }
 
+/* BAR4 da mesma funcao glue (00:14.4) — efuse real de calibracao do PHY,
+ * mesmo recurso PCI que bpcie_baikal_sata_phy_init() ja usa em producao
+ * (drivers/ps4/ps4-bpcie.c: sc->bar4 + 0xC000 + offset). BAR2 (acima) NAO
+ * tem o efuse — so os pulsos de clock/reset pervasive. */
+static inline u32 mts_glue_bar4_read(struct mts_priv *mp, u32 offset)
+{
+	if (!mp->regs_glue_bar4)
+		return 0;
+	return ioread32(mp->regs_glue_bar4 + offset);
+}
+
 /* ------------------------------------------------------------------ */
 /* PHY Calibration — tradução de fcn.ffffffffdc5a0ba0 (Orbis 12.52)   */
 /* ------------------------------------------------------------------ */
@@ -624,21 +635,28 @@ static void mts_phy_calibration(struct mts_priv *mp)
 	/* BAR0[0xac] = 9 — ativação do PHY */
 	mts_write(mp, 0xac, 9);
 
-	/* ===== FASE 4: CALIBRAÇÃO MDIO (loop complexo baseado em BAR2) ===== */
-	/* Lê parâmetros de BAR2 (glue/pervasive) */
-	p0 = mts_glue_read(mp, MTS_GLUE_CALIB_3);  /* 0x6c */
-	p1 = mts_glue_read(mp, MTS_GLUE_CALIB_2);  /* 0x68 */
-	p2 = mts_glue_read(mp, MTS_GLUE_CALIB_1);  /* 0x60 */
-	p3 = mts_glue_read(mp, MTS_GLUE_CALIB_0);  /* 0x5c */
-	p4 = mts_glue_read(mp, MTS_GLUE_CALIB_4);  /* 0x100 */
+	/* ===== FASE 4: CALIBRAÇÃO MDIO (loop complexo baseado no efuse) ===== */
+	/* Lê parâmetros do efuse real em BAR4+0xC000+offset — mesmo recurso
+	 * PCI que bpcie_baikal_sata_phy_init() ja usa com sucesso em producao
+	 * (ps4-bpcie.c:601-602). BAR2 (usado antes aqui) NAO tem o efuse; só
+	 * os pulsos de clock/reset pervasive, por isso a condicao abaixo nunca
+	 * batia e o bloco de tuning analogico do PHY nunca rodava. */
+	p0 = mts_glue_bar4_read(mp, 0xC000 + MTS_GLUE_CALIB_3);  /* 0x6c */
+	p1 = mts_glue_bar4_read(mp, 0xC000 + MTS_GLUE_CALIB_2);  /* 0x68 */
+	p2 = mts_glue_bar4_read(mp, 0xC000 + MTS_GLUE_CALIB_1);  /* 0x60 */
+	p3 = mts_glue_bar4_read(mp, 0xC000 + MTS_GLUE_CALIB_0);  /* 0x5c */
+	p4 = mts_glue_bar4_read(mp, 0xC000 + MTS_GLUE_CALIB_4);  /* 0x100 */
 
 
 	dev_info(&mp->pdev->dev,
-		 "PHY calibration: BAR2 params: 0x6c=0x%08x 0x68=0x%08x 0x60=0x%08x 0x5c=0x%08x 0x100=0x%08x\n",
+		 "PHY calibration: BAR4 params: 0x6c=0x%08x 0x68=0x%08x 0x60=0x%08x 0x5c=0x%08x 0x100=0x%08x\n",
 		 p0, p1, p2, p3, p4);
 
 	/* Grupo 1: baseado em 0x6c e 0x68 */
 	if ((p0 & 0x80800000) == 0x80800000) {
+		dev_info(&mp->pdev->dev,
+			 "PHY calibration: condicao efuse bateu (p0=0x%08x) — executando tuning analogico\n",
+			 p0);
 		/* 0x201e devad=1 */
 		field = (p1 & 0x3f) << 8;
 		mts_mdio_write_packed(mp, (0x01 << 16) | 0x201e, field);
@@ -748,6 +766,10 @@ static void mts_phy_calibration(struct mts_priv *mp)
 		mts_mdio_read_packed(mp, 0x171001e, &val16);
 		val16 &= 0xfe7f;
 		mts_mdio_write_packed(mp, 0x171001e, val16);
+	} else {
+		dev_info(&mp->pdev->dev,
+			 "PHY calibration: condicao efuse NAO bateu (p0=0x%08x) — tuning analogico pulado\n",
+			 p0);
 	} /* fim do if (p0 & 0x80800000) */
 
 	/* ===== CÓDIGO QUE SEMPRE RODA (após if-block, dc5a0ba0 linhas 196-528) ===== */
@@ -1755,6 +1777,35 @@ static int mts_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 		dev_warn(&pdev->dev, "Falha ao mapear glue @ 0xc8800000\n");
 	}
 
+	/* BAR4 da mesma funcao glue (00:14.4) — contem o efuse real usado pela
+	 * calibracao do PHY (bpcie_baikal_sata_phy_init ja le esse mesmo BAR4
+	 * com sucesso em todo boot para o SATA). Preferir obter via pci_get_slot
+	 * (deriva o endereco fisico certo); fallback no fisico ja confirmado
+	 * ao vivo (0xc9000000, 2 MB) se o pci_get_slot falhar por algum motivo. */
+	{
+		unsigned int glue_devfn = PCI_DEVFN(PCI_SLOT(pdev->devfn),
+						    BAIKAL_FUNC_ID_PCIE);
+		struct pci_dev *glue_dev = pci_get_slot(pdev->bus, glue_devfn);
+
+		if (glue_dev) {
+			mp->glue_bar4_phys = pci_resource_start(glue_dev, 4);
+			mp->regs_glue_bar4 = pci_ioremap_bar(glue_dev, 4);
+			pci_dev_put(glue_dev);
+		}
+
+		if (!mp->regs_glue_bar4) {
+			mp->glue_bar4_phys = 0xc9000000ULL;
+			mp->regs_glue_bar4 = ioremap(mp->glue_bar4_phys, 0x200000);
+		}
+
+		if (mp->regs_glue_bar4) {
+			dev_info(&pdev->dev, "Glue BAR4 (00:14.4) ioremapped em %pa -> %px (efuse calibracao PHY)\n",
+				 &mp->glue_bar4_phys, mp->regs_glue_bar4);
+		} else {
+			dev_warn(&pdev->dev, "Falha ao mapear glue BAR4 — calibracao PHY usara efuse zerado\n");
+		}
+	}
+
 	dev_info(&pdev->dev, "%s %s: BAR0 %pa len 0x%llx, stage=%d\n",
 		 DRV_NAME, DRV_VERSION, &pdev->resource[0].start,
 		 (unsigned long long)pci_resource_len(pdev, 0), stage);
@@ -1848,6 +1899,8 @@ freerings:
 unmap:
 	if (mp->regs_glue)
 		iounmap(mp->regs_glue);
+	if (mp->regs_glue_bar4)
+		iounmap(mp->regs_glue_bar4);
 	pci_iounmap(pdev, mp->regs);
 freedev:
 	free_netdev(dev);
@@ -1884,6 +1937,8 @@ static void mts_remove(struct pci_dev *pdev)
 	mts_free_rings(mp);
 	if (mp->regs_glue)
 		iounmap(mp->regs_glue);
+	if (mp->regs_glue_bar4)
+		iounmap(mp->regs_glue_bar4);
 	pci_iounmap(pdev, mp->regs);
 	free_netdev(dev);
 	pci_release_regions(pdev);

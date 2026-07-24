@@ -130,9 +130,14 @@ struct mts_priv {
 	struct net_device	*dev;
 	void __iomem		*regs;		/* BAR0 */
 
-	/* BAR2 (glue/pervasive) — para parâmetros de calibração PHY */
+	/* BAR2 (glue/pervasive) — pulsos de clock/reset (0x10a030, 0x180074) */
 	void __iomem		*regs_glue;	/* ioremap(0xc8800000) */
 	phys_addr_t		glue_phys;
+
+	/* BAR4 (glue, mesma funcao 00:14.4) — efuse real de calibracao do PHY,
+	 * mesmo padrao usado por bpcie_baikal_sata_phy_init() (bar4+0xC000+off) */
+	void __iomem		*regs_glue_bar4;
+	phys_addr_t		glue_bar4_phys;
 
 	void			*tx_ring;
 	dma_addr_t		tx_ring_dma;
