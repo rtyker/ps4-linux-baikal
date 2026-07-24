@@ -4,7 +4,9 @@
 > 🛠️ **SCRIPT OFICIAL DE TESTES:** `harness_gbe.py` (raiz do projeto) — único script para diagnósticos via Telnet. Marca `safe_to_read = 1` no SQLite para registradores validados.
 > ⚠️ **CORRIGIDO 2026-07-23 noite — NÃO CONFUNDIR:** `192.168.6.128` (WiFi, `wlan0`) é **só para telnet/administração**. A Ethernet cabeada sob teste (`eth0`, driver `mts.ko`) tem **IP FIXO `192.168.0.2`**, host de teste em `192.168.0.1` via `enp60s0`. Ver `AGENTS.md` na raiz do projeto (regra de topologia, prioridade alta) — testar `eth0` na subnet do WiFi não prova nada sobre ele.
 > ⚠️ **NUNCA fazer probe TCP manual nas portas 9090/9020 do PS4** (ping é OK, connect não) — consome o `accept()` único e trava a injeção.
-> 🔴 **RX Ethernet: causa raiz confirmada 2026-07-23 noite — PHY nunca sai de power-down** (Clause 45 e Clause 22 MDIO não dão sinal algum). Ver [mac-en2-descartado-phy-nunca-acorda-2026-07-23](mac-en2-descartado-phy-nunca-acorda-2026-07-23.md) — inclui achado arqueológico de uma versão perdida do driver com Full-duplex real (IRQ habilitada, `IMR=0x7d`), próxima pista mais promissora.
+> 🔴 **RX Ethernet: causa raiz e correções 2026-07-23 noite:** BAR4 EFUSE (`0xc9000000`) corrigida (liberou tuning MDIO), decodificador de endereços packed MDIO corrigido (`devad = packed_addr & 0xff`), e tabela LUT de 64 bytes da Sony extraída do dump Orbis 12.52. Módulo 100% estável. Ver [sessao-2026-07-23-bar4-efuse-e-mdio-packed-fix](sessao-2026-07-23-bar4-efuse-e-mdio-packed-fix.md).
+> ⚠️ **CORRIGIDO 2026-07-24: `01-build-image-7.0.sh` sobrescrevia o initramfs recém-gerado pelo DEBUG loop de ontem** (rotulado incorretamente como "oficial") — todo rootfs/mts.ko novo gravado nunca era montado no boot. Corrigido para usar o initramfs do próprio `mkinitcpio`. Ver [bug-01-build-sobrescrevia-initramfs-com-debug-loop](bug-01-build-sobrescrevia-initramfs-com-debug-loop.md).
+
 
 ## Estado Atual Confirmado (2026-07-23)
 
