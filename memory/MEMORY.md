@@ -34,6 +34,7 @@
 5. **Testes ao vivo sempre com autorização explícita do usuário** antes de injetar
 6. **PROIBIDO rodar `make`, `make bzImage`, ou qualquer comando de compilação/build sem autorização/confirmação prévia e explícita do usuário** — alteração de código ou plano NÃO autoriza a execução automática de build.
 7. **Linha de energia (S5) exige ICC dedicado ou toque manual** — `poweroff -f` encerra SO mas deixa luz azul. Causa raiz confirmada em código 2026-07-23: `pm_power_off` já chama `icc_shutdown()` (major=4/minor=1, `ps4-bpcie-icc.c:404-414`), mas o próprio driver tem `WARN_ON(1)` após 3s esperando o corte de energia — sinal de que esse comando sozinho não é suficiente nesse hardware. Ver [icc-shutdown-s5-incompleto](icc-shutdown-s5-incompleto.md).
+8. **`mkinitcpio.conf` do initramfs 7.0 SEMPRE `COMPRESSION="gzip"`, NUNCA `"zstd"`** — o kernel 7.0 Baikal (`config-7.0`) não tem `CONFIG_RD_ZSTD` habilitado (só `GZIP/BZIP2/LZMA/XZ/LZO/LZ4`). Usar zstd faz o kernel processar só o segmento `early_cpio` e falhar em descomprimir o payload principal, resultando em "Cannot open root device" / "RAMDISK: Couldn't find valid RAM disk image" no boot — sem crash, sem log de erro óbvio do initramfs, só root nunca monta. Antes de gravar, conferir `xxd boot_referencia/initramfs-7.0.cpio.gz | head -1` → tem que começar com `1f8b 0800` (gzip) já no primeiro byte. Ver [bug-initramfs-zstd-incompativel-com-kernel-2026-07-24](bug-initramfs-zstd-incompativel-com-kernel-2026-07-24.md).
 
 ## Análise Atual — PHY Carrier Detection (2026-07-23 — STATUS: TESTE #3 EM PROGRESSO)
 
