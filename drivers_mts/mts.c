@@ -989,6 +989,13 @@ static void mts_mac_enable(struct mts_priv *mp)
 
 	/* PHY Calibration (Orbis dc5a0ba0) — necessária para carrier detection */
 	mts_phy_calibration(mp);
+
+	/* Bisecção: confirma se a calibração altera o estado de EN1/EN2/0x50/0x70
+	 * observado logo acima, antes de qualquer calibração rodar. */
+	dev_info(&mp->pdev->dev,
+		 "MAC enable (pos-calib): 0x34=0x%08x 0x38=0x%08x 0x50=0x%08x 0x70=0x%08x\n",
+		 mts_read(mp, MTS_MAC_EN1), mts_read(mp, MTS_MAC_EN2),
+		 mts_read(mp, 0x50), mts_read(mp, 0x70));
 }
 
 /* ------------------------------------------------------------------ */
@@ -1395,6 +1402,19 @@ static ssize_t mts_regs_show(struct device *dev,
 				 "  1000BASE-T AN St  (devad=0x07, reg=0x000a): 0x%04x\n", phy_val);
 
 	#undef MTS_PHY_READ
+
+	/* BMCR (Clause 22, phy_addr=0x00, reg=0x00) — mesmo endereco usado no
+	 * diagnostico de wakeup (mts_mdio_probe); tentativa de re-leitura
+	 * pos-link, ja que Clause 45 nao deu sinal algum do PHY. */
+	ret = mts_mdio_c22_read(mp, 0x00, 0x00, &phy_val);
+	if (ret)
+		len += scnprintf(buf + len, PAGE_SIZE - len,
+				 "  BMCR (C22 phy=0x00, reg=0x00): timeout (ret=%d)\n", ret);
+	else
+		len += scnprintf(buf + len, PAGE_SIZE - len,
+				 "  BMCR (C22 phy=0x00, reg=0x00): 0x%04x (reset=%d powerdown=%d duplex=%d)\n",
+				 phy_val, (phy_val & 0x8000) ? 1 : 0,
+				 (phy_val & 0x0800) ? 1 : 0, (phy_val & 0x0100) ? 1 : 0);
 
 	len += scnprintf(buf + len, PAGE_SIZE - len,
 			 "\n=== Contadores HW (clear-on-read) ===\n");
