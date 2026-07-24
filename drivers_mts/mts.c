@@ -118,6 +118,11 @@ static unsigned int irq_storm_max_count = 5000;
 module_param(irq_storm_max_count, uint, 0644);
 MODULE_PARM_DESC(irq_storm_max_count, "Numero maximo de IRQs permitido dentro da janela antes de desabilitar (default 5000)");
 
+/* Phase 4: hold/pulse value for GBE PHY wakeup (default 0x1) */
+static unsigned int hold_val = 0x1;
+module_param(hold_val, uint, 0644);
+MODULE_PARM_DESC(hold_val, "Valor escrito nos registradores de hold/pulse do GBE (hold=0x180020, pulse=0x180074), default 0x1");
+
 
 /* ------------------------------------------------------------------ */
 /* Acesso a registrador                                               */
@@ -225,19 +230,40 @@ static int mts_mdio_page_read(struct mts_priv *mp, u8 page, u16 *out)
 	return mts_mdio_read(mp, page, 0x0000, out);
 }
 
-/* Helper para escrita MDIO usando endereço empacotado (formato Orbis: bits 15:0=reg, 23:16=devad, 31:24=page) */
+/* Helper para escrita MDIO usando endereço empacotado (formato Orbis: bits 7:0=devad, bits 31:8=reg) */
 static int mts_mdio_write_packed(struct mts_priv *mp, u32 packed_addr, u16 val)
 {
-	u8 devad = (packed_addr >> 16) & 0xff;
-	u16 reg = packed_addr & 0xffff;
+	u8 devad = packed_addr & 0xff;
+	u16 reg = (packed_addr >> 8) & 0xffff;
 	return mts_mdio_write(mp, devad, reg, val);
 }
 
 static int mts_mdio_read_packed(struct mts_priv *mp, u32 packed_addr, u16 *out)
 {
-	u8 devad = (packed_addr >> 16) & 0xff;
-	u16 reg = packed_addr & 0xffff;
+	u8 devad = packed_addr & 0xff;
+	u16 reg = (packed_addr >> 8) & 0xffff;
 	return mts_mdio_read(mp, devad, reg, out);
+}
+
+/* Tabela de Lookup do Orbis 12.52 extraída diretamente de kmem_dump_1252.bin (0xffffffffdcb0db40) */
+static const u8 gbe_phy_calib_lut[64] = {
+	0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f,
+	0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f,
+	0x7b, 0x7a, 0x75, 0x73, 0x70, 0x67, 0x64, 0x62,
+	0x57, 0x55, 0x53, 0x51, 0x48, 0x46, 0x44, 0x42,
+	0x40, 0x37, 0x35, 0x34, 0x32, 0x31, 0x30, 0x26,
+	0x24, 0x23, 0x22, 0x21, 0x20, 0x16, 0x15, 0x14,
+	0x13, 0x12, 0x11, 0x10, 0x07, 0x06, 0x05, 0x04,
+	0x03, 0x02, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
+};
+
+static u8 gbe_phy_calib_lookup(u8 idx)
+{
+	if (idx < 1)
+		idx = 1;
+	if (idx > 0x3f)
+		idx = 0x3f;
+	return gbe_phy_calib_lut[idx - 1];
 }
 
 /* ================================================================ */
@@ -248,22 +274,39 @@ static int mts_mdio_read_packed(struct mts_priv *mp, u32 packed_addr, u16 *out)
 #define MTS_MDIO_C22_OP_READ    0x02
 #define MTS_MDIO_C22_OP_WRITE   0x01
 
+static int mts_mdio_wait_write(struct mts_priv *mp)
+{
+	int i;
+
+	for (i = 0; i < MTS_MDIO_RETRIES; i++) {
+		if (!(mts_read(mp, MTS_MDIO) & 0x8000))
+			return 0;
+		udelay(10);
+	}
+	return -ETIMEDOUT;
+}
+
 static int mts_mdio_c22_read(struct mts_priv *mp, u8 phy_addr, u8 reg, u16 *out)
 {
 	int ret;
 	u32 cmd;
 
-	/* Formato Clause 22: [4:0]=opcode, [8:5]=reg, [12:9]=phy */
-	cmd = (phy_addr & 0x1f) << 9 | (reg & 0x1f) << 5 | MTS_MDIO_C22_OP_READ;
+	/*
+	 * Formato de Leitura Clause 22 do Orbis (decompilado em fcn.dc5a2840):
+	 * cmd = ((reg & 0x1f) << 8) | 0x4000
+	 * Aguarda bit 15 (BUSY) ser ZERADO pelo hardware (jns em dc5a28e7).
+	 * Dado retornado fica nos bits altos [31:16] (shr eax, 0x10 em dc5a2919).
+	 */
+	cmd = ((u32)(reg & 0x1f) << 8) | 0x4000;
 
 	mts_write(mp, MTS_MDIO, MTS_MDIO_CLEAR_BUSY);
 	mts_write(mp, MTS_MDIO, cmd);
 
-	ret = mts_mdio_wait(mp);
+	ret = mts_mdio_wait_write(mp);
 	if (ret)
 		return ret;
 
-	*out = mts_read(mp, MTS_MDIO) >> 16;
+	*out = (mts_read(mp, MTS_MDIO) >> 16) & 0xffff;
 	return 0;
 }
 
@@ -272,13 +315,17 @@ static int mts_mdio_c22_write(struct mts_priv *mp, u8 phy_addr, u8 reg, u16 val)
 	int ret;
 	u32 cmd;
 
-	/* Formato Clause 22 */
-	cmd = (phy_addr & 0x1f) << 9 | (reg & 0x1f) << 5 | MTS_MDIO_C22_OP_WRITE;
+	/*
+	 * Formato de Escrita Clause 22 do Orbis (decompilado em fcn.dc5a2950):
+	 * cmd = ((val & 0xffff) << 16) | ((reg & 0x1f) << 8) | 0x2000
+	 * Aguarda bit 15 (BUSY) ser ZERADO pelo hardware (jns em dc5a29f7).
+	 */
+	cmd = ((u32)val << 16) | ((u32)(reg & 0x1f) << 8) | 0x2000;
 
 	mts_write(mp, MTS_MDIO, MTS_MDIO_CLEAR_BUSY);
-	mts_write(mp, MTS_MDIO, ((u32)val << 16) | cmd);
+	mts_write(mp, MTS_MDIO, cmd);
 
-	ret = mts_mdio_wait(mp);
+	ret = mts_mdio_wait_write(mp);
 	if (ret)
 		return ret;
 
@@ -502,15 +549,7 @@ static int mts_phy_wakeup(struct mts_priv *mp)
 	u16 val;
 	int ret;
 
-	dev_info(&mp->pdev->dev, "PHY wakeup: tentando acordar PHY via Glue + MDIO...\n");
-
-	/* FASE A: Pulso de liberação de Clock / Reset na região Pervasive do Glue (0x10a030) */
-	u32 clk_pulse = mts_glue_read(mp, 0x10a030);
-	dev_info(&mp->pdev->dev, "  Glue PERVASIVE_CLOCK_PULSE (0x10a030) antes: 0x%08x\n", clk_pulse);
-	mts_glue_write(mp, 0x10a030, clk_pulse | 0x10);
-	msleep(10);
-	mts_glue_write(mp, 0x10a030, clk_pulse);
-	dev_info(&mp->pdev->dev, "  Glue PERVASIVE_CLOCK_PULSE (0x10a030) depois: 0x%08x\n", mts_glue_read(mp, 0x10a030));
+	dev_info(&mp->pdev->dev, "PHY wakeup: tentando acordar PHY via MDIO...\n");
 
 	/* FASE B: Varrer registradores de estado dos blocos na janela 0x140000 do Glue */
 	dev_info(&mp->pdev->dev, "  Glue Janela 0x140000 (Power/Reset States):\n");
@@ -524,17 +563,8 @@ static int mts_phy_wakeup(struct mts_priv *mp)
 		 mts_glue_read(mp, 0x18002c), mts_glue_read(mp, 0x18006c));
 	dev_info(&mp->pdev->dev, "    xHCI hold [0x180030] = 0x%08x | pulse [0x180070] = 0x%08x\n",
 		 mts_glue_read(mp, 0x180030), mts_glue_read(mp, 0x180070));
-	dev_info(&mp->pdev->dev, "    GBE  hold [0x180020] = 0x%08x | pulse [0x180074] = 0x%08x\n",
-		 mts_glue_read(mp, 0x180020), mts_glue_read(mp, 0x180074));
-
-	/* Testar pulso no controle da GBE (0x180074) */
-	dev_info(&mp->pdev->dev, "  Enviando pulso de liberação de reset no Glue GBE pulse (0x180074)...\n");
-	mts_glue_write(mp, 0x180074, 1);
-	msleep(10);
-	mts_glue_write(mp, 0x180074, 0);
-	msleep(50);
-
-
+	dev_info(&mp->pdev->dev, "    GBE  hold [0x180020] = 0x%08x | pulse [0x180074] = 0x%08x | (bloco 0x3c00, nao-GBE) [0x180034] = 0x%08x\n",
+		 mts_glue_read(mp, 0x180020), mts_glue_read(mp, 0x180074), mts_glue_read(mp, 0x180034));
 
 	/* Ler status atual em devad=1, reg=0x0000 */
 	ret = mts_mdio_read(mp, 1, 0x0000, &val);
@@ -587,39 +617,114 @@ static void mts_phy_calibration(struct mts_priv *mp)
 	}
 
 	if (mp->phy_calib_done) {
-		dev_dbg(&mp->pdev->dev, "PHY calibration já executada\n");
+		dev_dbg(&mp->pdev->dev, "PHY calibration ja executada\n");
 		return;
 	}
 
 	dev_info(&mp->pdev->dev, "PHY calibration: iniciando...\n");
 
+	/* ===== ICC cmd 4 0x38: GBE Power-on via Syscon (Southbridge) =====
+	 * Orbis envia este comando ICC durante o attach da GBE.
+	 * decompile dc5a41d0: func(4, 0x38, 1, &reply_byte) — espera reply==1.
+	 * Se ret!=0 (timeout), tenta ate 100 vezes com sleep progressivo.
+	 */
+	{
+		u8 pwr_on = 1;
+		u8 reply_byte = 0;
+		int icc_ret;
+		int icc_tries;
+		for (icc_tries = 0; icc_tries < 100; icc_tries++) {
+			icc_ret = bpcie_icc_cmd(4, 0x38, &pwr_on, 1, &reply_byte, 1);
+			if (icc_ret >= 0 && reply_byte == 1)
+				break;
+			msleep(50);
+		}
+		dev_info(&mp->pdev->dev, "ICC cmd 4 0x38 (GBE power-on): ret=%d reply=%02x tries=%d\n",
+			 icc_ret, reply_byte, icc_tries + 1);
+		if (icc_ret < 0 || reply_byte != 1)
+			dev_warn(&mp->pdev->dev, "ICC cmd 4 0x38: GBE power-on NAO funcionou!\n");
+		else
+			dev_info(&mp->pdev->dev, "ICC cmd 4 0x38: GBE power-on CONFIRMADO (reply=0x01)\n");
+		msleep(500);
+	}
+
+	/* NCC: A varredura de ICC minors com data=1 CAUSA CRASH/REBOOT do PS4.
+	 * NÃO tentar scan ICC ao vivo. Dados documentados em ICC_GBE_TEST_LOG.md */
+
+	/* ===== GBE Clock Config (BAR2 Pervasive) =====
+	 * Orbis baikal_pcie.c escreve (reg & 0xfffffe07) | 0xd8 no registrador
+	 * 0x10A030 do Pervasive/Glue durante o attach. Esse registrador configura
+	 * o clock do bloco GBE (bits [8:3] = 0x1b). Sem essa escrita, o clock
+	 * pode estar desligado e o hold/pulse não ter efeito.
+	 */
+	u32 clock_val = mts_glue_read(mp, 0x10a030);
+	dev_info(&mp->pdev->dev, "GBE clock config: 0x10a030 before=0x%08x\n", clock_val);
+	mts_glue_write(mp, 0x10a030, (clock_val & 0xfffffe07) | 0xd8);
+	clock_val = mts_glue_read(mp, 0x10a030);
+	dev_info(&mp->pdev->dev, "GBE clock config: 0x10a030 after=0x%08x\n", clock_val);
+
+	/* ===== GBE Hold/Pulse Sequence (BAR2 Glue) =====
+	 * Based on SATA pattern (bpcie_baikal_sata_phy_init):
+	 * 1. pulse=1, hold=1
+	 * 2. pulse=0
+	 * 3. ... PHY calibration via MDIO ...
+	 * 4. hold=0 (release)
+	 *
+	 * Offsets para GBE: hold=0x180020, pulse=0x180074.
+	 *
+	 * CORRIGIDO 2026-07-25: a decompilacao real de fcn.ffffffffdc6df850
+	 * (Orbis, tabela de quiesce de todos os blocos Baikal,
+	 * consolidado/decompiled/baikal_glue_block_reset_dc6df.txt) mostra
+	 * literalmente `fcn.ffffffffdc59fe10(); fcn.ffffffffdc6dfb60(0x2000);
+	 * fcn.ffffffffdc718710(0x20,1); fcn.ffffffffdc718710(0x74,1);` -- ou
+	 * seja, a rotina de STOP do MAC da GBE (dc59fe10, ja confirmada por RE
+	 * anterior via o global de softc compartilhado com mtsc_pci_attach) e
+	 * chamada IMEDIATAMENTE ANTES do bloco 0x2000, cujo par hold/pulse e
+	 * (0x20, 0x74) nessa ordem -- confirma que o bloco 0x2000 e a GBE.
+	 * O valor anterior (hold=0x180034) veio de uma INFERENCIA POR PADRAO
+	 * ("hold = pulse - 0x40", ver AGENTS.md/LICOES_APRENDIDAS antigos) que
+	 * nunca foi cruzada com essa descompilacao -- 0x34 pertence a um bloco
+	 * DIFERENTE e nao identificado (0x3c00), que so tem UMA chamada
+	 * dc718710 (sem par de pulse), nao dois. AGENTS.md/LICOES_APRENDIDAS
+	 * corrigidos na mesma sessao.
+	 */
+	dev_info(&mp->pdev->dev, "0x50 pre-hold=0x%08x\n", mts_read(mp, 0x50));
+
+	dev_info(&mp->pdev->dev, "GBE hold/pulse: asserting pulse (0x180074) and hold (0x180020) with val=0x%02x...\n", hold_val);
+	mts_glue_write(mp, 0x180074, hold_val);  /* pulse = hold_val */
+	mts_glue_write(mp, 0x180020, hold_val);  /* hold = hold_val (corrigido de 0x180034) */
+	mts_glue_write(mp, 0x180074, 0);          /* pulse = 0 */
+
+	/* ===== GBE Glue Block Control (BAR2 + 0x142020 = 0x140000 + 0x2000 + 0x20) =====
+	 * Descoberta de RE em fcn.ffffffffdc6df850 (bloco 0x2000, GBE):
+	 * O Orbis lê 0x142020, zera bit 0 (& ~1), e zera bit 4 (& ~0x10) para desassinalar
+	 * o gate de clock/reset do bloco Pervasive da GBE.
+	 */
+	{
+		u32 ctrl_2020 = mts_glue_read(mp, 0x142020);
+		dev_info(&mp->pdev->dev, "GBE glue block ctrl [0x142020] pre=0x%08x\n", ctrl_2020);
+		mts_glue_write(mp, 0x142020, ctrl_2020 & ~1);
+		ctrl_2020 = mts_glue_read(mp, 0x142020);
+		mts_glue_write(mp, 0x142020, ctrl_2020 & ~0x10);
+		dev_info(&mp->pdev->dev, "GBE glue block ctrl [0x142020] post=0x%08x\n",
+			 mts_glue_read(mp, 0x142020));
+	}
+
+	/* Diagnostic: read back hold/pulse registers to verify retention */
+	dev_info(&mp->pdev->dev, "  GBE hold readback [0x180020]=0x%08x pulse [0x180074]=0x%08x\n",
+		 mts_glue_read(mp, 0x180020), mts_glue_read(mp, 0x180074));
+
+	dev_info(&mp->pdev->dev, "0x50 pos-hold=0x%08x\n", mts_read(mp, 0x50));
+
+	msleep(10);  /* allow hardware to stabilize */
+
 	/* Executar tentativa de wake-up do PHY */
 	mts_phy_wakeup(mp);
 
-	/* Diagnostic: Test MDIO Clause 45 vs Clause 22 (MII) */
-
-	dev_info(&mp->pdev->dev, "MDIO diagnosis: testing Clause 45 vs Clause 22...\n");
-	{
-		u16 c45_val, c22_val;
-		int ret_c45 = mts_mdio_read(mp, 0x01, 0x0000, &c45_val);
-		int ret_c22 = mts_mdio_c22_read(mp, 0x00, 0x00, &c22_val);
-
-		dev_info(&mp->pdev->dev, "  Clause 45: ret=%d val=0x%04x\n", ret_c45, ret_c45 ? 0xffff : c45_val);
-		dev_info(&mp->pdev->dev, "  Clause 22: ret=%d val=0x%04x\n", ret_c22, ret_c22 ? 0xffff : c22_val);
-
-		if (ret_c45 != 0 && ret_c22 == 0) {
-			dev_info(&mp->pdev->dev, "  ✅ PHY responds to Clause 22 (MII), will use fallback\n");
-		} else if (ret_c45 == 0 && ret_c22 != 0) {
-			dev_info(&mp->pdev->dev, "  ✅ PHY responds to Clause 45, continuing normal path\n");
-		} else if (ret_c45 == 0 && ret_c22 == 0) {
-			dev_info(&mp->pdev->dev, "  ⚠️  Both Clause 45 and Clause 22 return data, PHY may work\n");
-		} else {
-			dev_warn(&mp->pdev->dev, "  ⚠️  PHY not responding to either Clause 45 or Clause 22!\n");
-		}
-	}
-
 	/* ===== FASE 1: INIT ===== */
-	/* BAR0[0x200] = 0 — desabilita I/O */
+	/* BAR0[0x200] = 0 — habilita acesso MDIO ao PHY (Orbis dc5a0ba0).
+	 * O MAC enable (dc5a31f0) restaura 0x200=1 antes de ativar o MAC.
+	 * Sem 0x200=0, MDIO retorna sempre 0x0000 porque o PHY fica isolado. */
 	mts_write(mp, 0x200, 0);
 
 	/* BAR0[0x50] = BAR0[0x50] — read-modify-write para confirmar estado */
@@ -634,6 +739,7 @@ static void mts_phy_calibration(struct mts_priv *mp)
 	/* ===== FASE 3: ENABLE PHY ===== */
 	/* BAR0[0xac] = 9 — ativação do PHY */
 	mts_write(mp, 0xac, 9);
+	msleep(10);
 
 	/* ===== FASE 4: CALIBRAÇÃO MDIO (loop complexo baseado no efuse) ===== */
 	/* Lê parâmetros do efuse real em BAR4+0xC000+offset — mesmo recurso
@@ -657,33 +763,41 @@ static void mts_phy_calibration(struct mts_priv *mp)
 		dev_info(&mp->pdev->dev,
 			 "PHY calibration: condicao efuse bateu (p0=0x%08x) — executando tuning analogico\n",
 			 p0);
-		/* 0x201e devad=1 */
+		/* 0xe0001e (devad=0x1e, reg=0x0e00) */
 		field = (p1 & 0x3f) << 8;
-		mts_mdio_write_packed(mp, (0x01 << 16) | 0x201e, field);
+		mts_mdio_write_packed(mp, 0xe0001e, field);
 
-		/* 0x211f devad=1 */
+		/* 0x115001f (devad=0x1f, reg=0x1150) */
 		field = (p1 >> 6) & 7;
-		mts_mdio_write_packed(mp, (0x01 << 16) | 0x211f, field);
+		mts_mdio_write_packed(mp, 0x115001f, field);
 
-		/* 0x161e, 0x171e, 0x181e, 0x191e devad=1 — com lookup table */
-		/* O código original usa lookup table em -0x234f24c0; usamos fallback simples */
-		mts_mdio_write_packed(mp, (0x01 << 16) | 0x161e, 0x8001);
-		mts_mdio_write_packed(mp, (0x01 << 16) | 0x171e, 0x0081);
-		mts_mdio_write_packed(mp, (0x01 << 16) | 0x181e, 0x8001);
-		mts_mdio_write_packed(mp, (0x01 << 16) | 0x191e, 0x0081);
+		/* 0x174001e (high byte) baseado em p2 (0x60) */
+		u8 idx1 = p2 & 0x7f;
+		u8 lut1 = gbe_phy_calib_lookup(idx1);
+		mts_mdio_read_packed(mp, 0x174001e, &val16);
+		val16 = (val16 & 0x00ff) | ((u16)lut1 << 8) | 0x8000;
+		mts_mdio_write_packed(mp, 0x174001e, val16);
 
-		/* Segundo grupo com 0x207e, 0x217e, 0x267e, 0x277e, 0x291e, 0x2a1e */
-		mts_mdio_write_packed(mp, (0x01 << 16) | 0x207e, 0x8001);
-		mts_mdio_write_packed(mp, (0x01 << 16) | 0x217e, 0x0081);
-		mts_mdio_write_packed(mp, (0x01 << 16) | 0x267e, 0x8001);
-		mts_mdio_write_packed(mp, (0x01 << 16) | 0x277e, 0x0081);
-		mts_mdio_write_packed(mp, (0x01 << 16) | 0x291e, 0x8001);
-		mts_mdio_write_packed(mp, (0x01 << 16) | 0x2a1e, 0x0081);
+		/* 0x174001e (low byte) baseado em p2 >> 19 */
+		u8 idx2 = (p2 >> 19) & 0x7f;
+		u8 lut2 = gbe_phy_calib_lookup(idx2);
+		mts_mdio_read_packed(mp, 0x174001e, &val16);
+		val16 = (val16 & 0xff00) | lut2 | 0x80;
+		mts_mdio_write_packed(mp, 0x174001e, val16);
 
-		/* Grupo baseado em 0x60 (p2) e 0x100 (p4) */
-		/* 0x174001e, 0x175001e - usando endereços empacotados do Orbis */
-		mts_mdio_write_packed(mp, 0x174001e, 0x8001);
-		mts_mdio_write_packed(mp, 0x175001e, 0x8001);
+		/* 0x175001e (high byte) baseado em p4 (0x100) >> 6 */
+		u8 idx3 = (p4 >> 6) & 0x7f;
+		u8 lut3 = gbe_phy_calib_lookup(idx3);
+		mts_mdio_read_packed(mp, 0x175001e, &val16);
+		val16 = (val16 & 0x00ff) | ((u16)lut3 << 8) | 0x8000;
+		mts_mdio_write_packed(mp, 0x175001e, val16);
+
+		/* 0x175001e (low byte) baseado em p4 >> 1 */
+		u8 idx4 = (p4 >> 1) & 0x7f;
+		u8 lut4 = gbe_phy_calib_lookup(idx4);
+		mts_mdio_read_packed(mp, 0x175001e, &val16);
+		val16 = (val16 & 0xff00) | lut4 | 0x80;
+		mts_mdio_write_packed(mp, 0x175001e, val16);
 
 		/* 0x172001e baseado em 0x5c e 0x60 */
 		field = (p3 >> 12) & 0x3f00;
@@ -989,50 +1103,334 @@ static void mts_phy_calibration(struct mts_priv *mp)
 		dev_info(&mp->pdev->dev, "PHY calibration table (0x1bc-0x1d4): desabilitada via module param (default)\n");
 	}
 
+	/* Orbis dc5a0ba0: espera bit 0 de BAR0+0x1d0 ficar 1 (calibração completa) */
+	dev_info(&mp->pdev->dev, "Aguardando calibração PHY completar (0x1d0 bit 0)...\n");
+	for (int wait = 0; wait < 5000; wait++) {
+		if (mts_read(mp, 0x1d0) & 1) {
+			dev_info(&mp->pdev->dev, "Calibração PHY completa (0x1d0 = 0x%08x)\n", mts_read(mp, 0x1d0));
+			break;
+		}
+		udelay(10);
+	}
+
 	mp->phy_calib_done = true;
 
 	dev_info(&mp->pdev->dev, "PHY calibration: concluída\n");
+	dev_info(&mp->pdev->dev, "0x50 pos-tuning=0x%08x\n", mts_read(mp, 0x50));
+
+	/* ===== GBE Hold/Pulse: Release Hold (SATA pattern) =====
+	 * SATA does: pulse/hold/pulse=0 -> calibration -> release hold -> poll for ready
+	 *
+	 * MOVIDO (2026-07-25) para ANTES do diagnostico MDIO pos-calibracao:
+	 * a ordem anterior testava Clause 45/22 com o hold ainda asserted,
+	 * o que pode ter sido a razao do PHY nunca responder com dado real.
+	 * Ver PLANO_FASES_GBE_2026-07-25.md Fase 1 item 3 (testado -- essa
+	 * hipotese da ordem foi refutada, mas a ordem correta foi mantida).
+	 */
+	dev_info(&mp->pdev->dev, "GBE hold/pulse: releasing hold (0x180020 = 0), polling PHY...\n");
+	mts_glue_write(mp, 0x180020, 0);
+
+	/*
+	 * Sequência de Trigger de Hardware do Orbis (descoberta em fcn.dc5a4950):
+	 * 1. BAR0+0x10: ativa bit 4 (carrier control).
+	 * 2. BAR0+0x1c: escreve 0x80000000 e faz poll no bit 17 (0x20000).
+	 * 3. BAR0+0x1c: limpa tabela de hash multicast de 256 entradas (0x7000 | i).
+	 */
+	{
+		u32 r1c_val;
+		int k;
+
+		mts_set(mp, 0x10, BIT(4));
+
+		mts_write(mp, 0x1c, 0x80000000);
+		for (k = 0; k < 100; k++) {
+			r1c_val = mts_read(mp, 0x1c);
+			if (r1c_val & 0x20000) {
+				dev_info(&mp->pdev->dev, "BAR0+0x1c trigger ACK na iteracao %d (val=0x%08x)\n",
+					 k, r1c_val);
+				break;
+			}
+			usleep_range(200, 500);
+		}
+
+		/* Limpeza das 256 entradas da tabela de hash multicast */
+		for (k = 0; k < 256; k++)
+			mts_write(mp, 0x1c, 0x7000 | k);
+
+		/*
+		 * Execução da Sequência Clause 22 PHY Auto-Negotiation (decompilada em fcn.dc5a44c0):
+		 * 1. Reg 9 |= 0x0200 (1000BASE-T Full Duplex Advertisement).
+		 * 2. Reg 4 |= 0x0180 (100BASE-TX Full/Half Duplex Advertisement).
+		 * 3. Reg 0  = 0x1200 (Clears Software Reset Bit 15, Enables Auto-Neg 0x1000, Restarts Auto-Neg 0x0200).
+		 */
+		{
+			u16 r4 = 0, r9 = 0, bmcr = 0;
+			mts_mdio_c22_read(mp, 0, 9, &r9);
+			mts_mdio_c22_write(mp, 0, 9, r9 | 0x0200);
+			mts_mdio_c22_read(mp, 0, 4, &r4);
+			mts_mdio_c22_write(mp, 0, 4, r4 | 0x0180);
+			mts_mdio_c22_write(mp, 0, 0, 0x1200);
+			mts_mdio_c22_read(mp, 0, 0, &bmcr);
+			dev_info(&mp->pdev->dev, "PHY Clause 22 AN restart executado: BMCR=0x%04x (reset_bit15=%d AN_en=%d)\n",
+				 bmcr, (bmcr & 0x8000) ? 1 : 0, (bmcr & 0x1000) ? 1 : 0);
+		}
+	}
+
+	/* Poll for PHY ready via MDIO. CORRIGIDO 2026-07-25: estendido de 50x10ms
+	 * (500ms) para 201x100ms (~20s), copiando fielmente o loop real da
+	 * thread gbe_phy_ctrl do Orbis (fcn.ffffffffdc5a44c0, decompilado em
+	 * consolidado/decompiled_gbe_phy_attach.txt linhas 83-116):
+	 *   iVar10 = 0x4e84 (20100); loop decrementa de 100 em 100 (201 voltas);
+	 *   cada volta le devad=1 reg=0x0000 (mesmo registrador que ja liamos)
+	 *   e testa BIT 2 (var_38h._6_2_ & 4) para sair do loop -- nao "qualquer
+	 *   valor != 0/0xffff" como o codigo anterior testava. O delay por volta
+	 *   e literalmente (hz*100+999)/1000 = conversao ms->ticks de 100ms.
+	 * Todo teste anterior deste projeto esperou no maximo ~500ms-1s -- essa
+	 * e a primeira vez que se espera pelo tempo real que o codigo original
+	 * espera. Loga a cada 20 voltas (nao as 201) pra nao inundar o dmesg. */
+	{
+		bool phy_bit2_set = false;
+		bool phy_any_data = false;
+		u16 last_val = 0;
+		int i;
+
+		for (i = 0; i < 201; i++) {
+			u16 val;
+			int ret = mts_mdio_read(mp, 1, 0x0000, &val);
+
+			if (ret == 0)
+				last_val = val;
+
+			if ((i < 5) || (i % 20 == 0) || (ret == 0 && (val & 0x4)))
+				dev_info(&mp->pdev->dev, "  poll pos-release [%d/201]: ret=%d val=0x%04x\n",
+					 i, ret, ret ? 0xffff : val);
+
+			if (ret == 0 && (val & 0x4)) {
+				dev_info(&mp->pdev->dev, "PHY ready (bit2 setado, igual ao Orbis) apos %d tentativas: reg0=0x%04x\n", i, val);
+				phy_bit2_set = true;
+				break;
+			}
+			if (ret == 0 && val != 0x0000 && val != 0xffff)
+				phy_any_data = true;
+
+			msleep(100);
+		}
+
+		if (!phy_bit2_set)
+			dev_warn(&mp->pdev->dev,
+				 "GBE hold/pulse: 201/201 tentativas (~20s) esgotadas SEM bit2 setar (ultimo val=0x%04x, algum dado real visto=%d)\n",
+				 last_val, phy_any_data);
+	}
+
+	dev_info(&mp->pdev->dev, "0x50 pos-release=0x%08x\n", mts_read(mp, 0x50));
+
+	/* Diagnostic Pos-Calibracao: Test MDIO Clause 45 vs Clause 22 (MII).
+	 * Roda AGORA (depois do release do hold acima), nao mais antes. */
+	dev_info(&mp->pdev->dev, "MDIO diagnosis (POST-calibration, POST-hold-release): testing Clause 45 vs Clause 22...\n");
+	{
+		u16 c45_val, c22_val;
+		int ret_c45 = mts_mdio_read(mp, 0x01, 0x0000, &c45_val);
+		int ret_c22 = mts_mdio_c22_read(mp, 0x00, 0x00, &c22_val);
+
+		dev_info(&mp->pdev->dev, "  Post-calib Clause 45: ret=%d val=0x%04x\n", ret_c45, ret_c45 ? 0xffff : c45_val);
+		dev_info(&mp->pdev->dev, "  Post-calib Clause 22: ret=%d val=0x%04x\n", ret_c22, ret_c22 ? 0xffff : c22_val);
+
+		if (ret_c45 != 0 && ret_c22 == 0) {
+			dev_info(&mp->pdev->dev, "  ✅ Post-calib: PHY responds to Clause 22 (MII)\n");
+		} else if (ret_c45 == 0 && ret_c22 != 0 && c45_val != 0x0000 && c45_val != 0xffff) {
+			dev_info(&mp->pdev->dev, "  ✅ Post-calib: PHY responds to Clause 45 com dado real (0x%04x)!\n", c45_val);
+		} else if (ret_c45 == 0 && (c45_val == 0x0000 || c45_val == 0xffff)) {
+			dev_warn(&mp->pdev->dev,
+				 "  ⚠️ Post-calib: Clause 45 completou sem timeout mas valor e residuo (0x%04x) — barramento MDIO responde, PHY nao tem dado real\n",
+				 c45_val);
+		} else if (ret_c45 == 0 && ret_c22 == 0) {
+			dev_info(&mp->pdev->dev, "  ⚠️ Post-calib: Both Clause 45 and Clause 22 return data!\n");
+		} else {
+			dev_warn(&mp->pdev->dev, "  ⚠️ Post-calib: PHY still not responding to either Clause 45 or Clause 22\n");
+		}
+	}
+
+	/* Restaura 0x200=1 para que MAC enable funcione (Orbis dc5a31f0) */
+	mts_write(mp, 0x200, 1);
 }
 
 /* ------------------------------------------------------------------ */
 /* Enable / stop do MAC                                                */
 /* ------------------------------------------------------------------ */
 
-/* fcn.dc5a3060 (stop) mexe nos mesmos 0x34/0x38/0x54 */
+static void mts_tx_drain_force(struct mts_priv *mp);
+
+/* fcn.dc5a3060 (stop) — escreve bit 1 (soft-reset) em 0x34/0x38 e
+ * aguarda o hardware limpa-lo (ACK). NUNCA escrever 0 (clear bit 0):
+ * isso corrompe o estado de enable permanentemente apos alguns ciclos.
+ *
+ * Sequencia decompilada:
+ *   1. IMR = 0x7ffffa  (mascara todas as interrupcoes)
+ *   2. 0x34 = 2, espera bit 1 zerar
+ *   3. 0x38 = 2, espera bit 1 zerar
+ *   4. Libera todos os buffers TX/RX
+ *   5. 0x1c8 &= ~0x440 */
 static void mts_mac_stop(struct mts_priv *mp)
 {
-	mts_write(mp, MTS_IMR, 0);
-	mts_clear(mp, MTS_MAC_EN1, MTS_MAC_ENABLE);
-	mts_clear(mp, MTS_MAC_EN2, MTS_MAC_ENABLE);
+	int i;
+
+	mts_write(mp, MTS_IMR, 0x7ffffa);
+
+	mts_write(mp, MTS_MAC_EN1, 2);
+	for (i = 0; i < 1000000; i++) {
+		if (!(mts_read(mp, MTS_MAC_EN1) & 2))
+			break;
+		udelay(1);
+	}
+	if (i == 1000000)
+		dev_warn(&mp->pdev->dev, "MAC_EN1 soft-reset timeout\n");
+
+	mts_write(mp, MTS_MAC_EN2, 2);
+	for (i = 0; i < 1000000; i++) {
+		if (!(mts_read(mp, MTS_MAC_EN2) & 2))
+			break;
+		udelay(1);
+	}
+	if (i == 1000000)
+		dev_warn(&mp->pdev->dev, "MAC_EN2 soft-reset timeout\n");
+
+	mts_tx_drain_force(mp);
+	mts_clear(mp, 0x1c8, 0x440);
+}
+
+/*
+ * Reconstrucao do frame de gerenciamento de 34 bytes que o Orbis envia pro
+ * firmware RMU embarcado do controller Marvell Yukon, extraida byte a byte
+ * de fcn.ffffffffdc5a5ec0 (consolidado/decompiled_dc5a5ec0.txt linhas
+ * 131-148) cruzada com as constantes reais lidas de
+ * consolidado/dumps_orbis/kmem_dump_1252.bin:
+ *
+ *   [0:6]   "destino"      -- ROM @0xffffffffdcb0e02c = 01 50 43 00 00 00
+ *   [6:12]  "origem"       -- softc+0x30d6, campo condicional (so populado
+ *                             se *(softc+0x30dc)!=0, config rara de dual-GBE
+ *                             ausente neste hardware) -- assumido zero
+ *   [12:14] campo fixo     -- ROM @0xffffffffdcb0e01f = 91 00
+ *   [14:16] zero
+ *   [16:18] MAGIC          -- 0xfa42 (little-endian: 42 fa)
+ *   [18]    0x0f
+ *   [19]    sequencia      -- softc+0x3108, incrementa a cada envio (1..255,
+ *                             nunca 0)
+ *   [20:22] zero
+ *   [22:24] campo fixo     -- ROM @0xffffffffdcb0e032 = 00 00
+ *   [24:26] campo fixo     -- ROM @0xffffffffdcb0e034 = 00 00
+ *   [26:30] zero (softc vars locais, tambem zeradas no Orbis)
+ *   [30:34] zero
+ *
+ * O Orbis so envia isso depois de ver bit0 de BAR0+4 setado (nosso driver
+ * ja forca esse bit na calibracao) e so considera resposta valida via um
+ * contador softc+0x3108/+0x3109 incrementado pelo handler de RX -- que
+ * nao temos implementado. Este envio e so uma SONDA: manda o frame exato
+ * e observa se algo muda (RX, MDIO, BAR0+4), sem validar handshake completo.
+ */
+static void mts_send_rmu_frame(struct mts_priv *mp, u16 payload_cmd)
+{
+	static const u8 rmu_frame_template[34] = {
+		0x01, 0x50, 0x43, 0x00, 0x00, 0x00,	/* destino (ROM) */
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00,	/* origem (softc, assumido zero) */
+		0x91, 0x00,				/* campo fixo (ROM) */
+		0x00, 0x00,				/* zero */
+		0x42, 0xfa,				/* magic 0xfa42 (LE) */
+		0x0f,
+		0x01,					/* sequencia (sobrescrita abaixo) */
+		0x00, 0x00,				/* zero */
+		0x00, 0x00,				/* campo fixo (ROM) */
+		0x00, 0x00,				/* campo fixo (ROM) */
+		0x00, 0x00,				/* zero */
+		0x00, 0x00,				/* zero (payload_cmd 0x800b aqui no offset 28 em Phase 2) */
+		0x00, 0x00, 0x00, 0x00,		/* zero */
+	};
+	static u8 rmu_seq = 1;
+	u8 *buf;
+	dma_addr_t dma;
+	u32 idx, new_ctl;
+	__le32 *d;
+
+	if (!mp->tx_ring) {
+		dev_warn(&mp->pdev->dev, "RMU frame: aneis TX nao alocados, abortando\n");
+		return;
+	}
+
+	idx = mp->tx_idx;
+	d = mp->tx_ring + idx * MTS_DESC_SIZE;
+	if (!(le32_to_cpu(d[0]) & MTS_DESC_OWN)) {
+		dev_warn(&mp->pdev->dev, "RMU frame: descritor TX ocupado, abortando\n");
+		return;
+	}
+
+	buf = kmalloc(sizeof(rmu_frame_template), GFP_KERNEL);
+	if (!buf)
+		return;
+	memcpy(buf, rmu_frame_template, sizeof(rmu_frame_template));
+	buf[19] = rmu_seq++;
+	if (!rmu_seq)
+		rmu_seq = 1;
+
+	if (payload_cmd == 0x9807) {
+		/* Sub-header 0x9807 descoberto na RE de fcn.dc5a5200 (offset 26/27) */
+		buf[26] = 0x07;
+		buf[27] = 0x98;
+	} else if (payload_cmd) {
+		/* Phase 2: fcn.ffffffffdc5a6290 (linha rbp - 0x54, offset 28 em base rbp - 0x70) */
+		buf[28] = lower_32_bits(payload_cmd) & 0xff;
+		buf[29] = (payload_cmd >> 8) & 0xff;
+	}
+
+	dma = dma_map_single(&mp->pdev->dev, buf, sizeof(rmu_frame_template), DMA_TO_DEVICE);
+	if (dma_mapping_error(&mp->pdev->dev, dma)) {
+		kfree(buf);
+		return;
+	}
+
+	d[1] = cpu_to_le32(lower_32_bits(dma));
+	d[2] = cpu_to_le32(0xffff0000);
+	new_ctl = sizeof(rmu_frame_template) | MTS_DESC_SOP | MTS_DESC_EOP;
+	if (idx == MTS_RING_SIZE - 1)
+		new_ctl |= MTS_DESC_WRAP;
+
+	wmb();
+	d[0] = cpu_to_le32(new_ctl);
+	mp->tx_idx = (idx + 1) & (MTS_RING_SIZE - 1);
+
+	mts_write(mp, MTS_TX_RING_PTR, lower_32_bits(mp->tx_ring_dma + mp->tx_idx * MTS_DESC_SIZE));
+
+	dev_info(&mp->pdev->dev, "RMU frame enviado: seq=%u magic=0xfa42 cmd=0x%04x 34 bytes (BAR0+4=0x%08x antes)\n",
+		 buf[19], payload_cmd, mts_read(mp, MTS_LINK_STATUS));
+
+	msleep(100);
+
+	if (le32_to_cpu(d[0]) & MTS_DESC_OWN)
+		dev_info(&mp->pdev->dev, "RMU frame: descritor completou (OWN de volta ao driver)\n");
+	else
+		dev_warn(&mp->pdev->dev, "RMU frame: descritor NAO completou (OWN ainda no hardware)\n");
 }
 
 static void mts_mac_enable(struct mts_priv *mp)
 {
-	u32 a34, a38;
-
-	mts_set(mp, MTS_MAC_EN1, MTS_MAC_ENABLE);
-	mts_set(mp, MTS_MAC_EN2, MTS_MAC_ENABLE);
-
-	a34 = mts_read(mp, MTS_MAC_EN1);
-	a38 = mts_read(mp, MTS_MAC_EN2);
-
 	/*
-	 * Confirmado ao vivo: 0x34 nao retem o valor escrito (le 0) mas produz
-	 * efeito; o estado aparece em 0x38 (escrito 1, le 8) e em 0x50/0x70.
-	 * Nao tratar "0x34 == 0" como falha.
+	 * Habilita os MAC cores. Orbis dc5a31f0 escreve 1 (bit 0) em
+	 * 0x34 e 0x38. O stop usa bit 1 (soft-reset, dc5a3060) e nunca
+	 * clear bit 0 — o Orbis nunca escreve 0 nestes registradores.
 	 */
-	dev_info(&mp->pdev->dev, "MAC enable: 0x34=0x%08x 0x38=0x%08x 0x50=0x%08x 0x70=0x%08x\n",
-		 a34, a38, mts_read(mp, 0x50), mts_read(mp, 0x70));
+	mts_write(mp, MTS_MAC_EN1, MTS_MAC_ENABLE);
+	mts_write(mp, MTS_MAC_EN2, MTS_MAC_ENABLE);
 
-	/* PHY Calibration (Orbis dc5a0ba0) — necessária para carrier detection */
+	/* Configuração Permanente do MAC (2026-07-25):
+	 * BAR0+0x50 |= 0x03 (Tx Enable bit 0, Rx Enable bit 1)
+	 * BAR0+0x5c |= 0x200 (1000Mbps Gigabit RGMII Speed bit 9)
+	 */
+	mts_set(mp, 0x50, BIT(0) | BIT(1));
+	mts_set(mp, 0x5c, BIT(9));
+
 	mts_phy_calibration(mp);
 
-	/* Bisecção: confirma se a calibração altera o estado de EN1/EN2/0x50/0x70
-	 * observado logo acima, antes de qualquer calibração rodar. */
-	dev_info(&mp->pdev->dev,
-		 "MAC enable (pos-calib): 0x34=0x%08x 0x38=0x%08x 0x50=0x%08x 0x70=0x%08x\n",
+	dev_info(&mp->pdev->dev, "MAC enable: 0x34=0x%08x 0x38=0x%08x 0x50=0x%08x 0x5c=0x%08x 0x70=0x%08x\n",
 		 mts_read(mp, MTS_MAC_EN1), mts_read(mp, MTS_MAC_EN2),
-		 mts_read(mp, 0x50), mts_read(mp, 0x70));
+		 mts_read(mp, 0x50), mts_read(mp, 0x5c), mts_read(mp, 0x70));
 }
 
 /* ------------------------------------------------------------------ */
@@ -1309,8 +1707,8 @@ static netdev_tx_t mts_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	mp->tx_idx = (idx + 1) & (MTS_RING_SIZE - 1);
 
-	/* avisa o hardware: novo descritor pronto (tail pointer = apenas o índice) */
-	mts_write(mp, MTS_TX_RING_PTR, mp->tx_idx);
+	/* avisa o hardware: novo descritor pronto (tail pointer = endereço completo do descritor) */
+	mts_write(mp, MTS_TX_RING_PTR, lower_32_bits(mp->tx_ring_dma + mp->tx_idx * MTS_DESC_SIZE));
 
 	/* tenta reclamar TX completos de forma oportunista */
 	mts_tx_reclaim(mp);
@@ -1387,7 +1785,8 @@ static ssize_t mts_regs_show(struct device *dev,
 		return -ENODEV;
 
 	static const u32 regs_key[] = {
-		0x00, 0x04, 0x34, 0x38, 0x50, 0x54, 0x5c, 0x70, 0x7c
+		0x00, 0x04, 0x34, 0x38, 0x50, 0x54, 0x5c, 0x70, 0x7c,
+		0x118
 	};
 
 	len += scnprintf(buf + len, PAGE_SIZE - len,
@@ -1399,7 +1798,7 @@ static ssize_t mts_regs_show(struct device *dev,
 
 	/* Labels claros para 0x34/0x38 (escrito=1, lido=0/8) */
 	len += scnprintf(buf + len, PAGE_SIZE - len,
-			 "\n  Labels: 0x34=MAC_EN1 (wo)  0x38=MAC_EN2 (ro=8 when enabled)\n");
+			 "\n  Labels: 0x34=MAC_EN1 (wo)  0x38=MAC_EN2 (ro=8 when enabled)  0x118=CHIP_ID(bytes[1:0])\n");
 
 	len += scnprintf(buf + len, PAGE_SIZE - len,
 			 "\n=== PHY Clause 45 (live, MMD=1 PMA/PMD + MMD=7 AN) ===\n");
@@ -1566,6 +1965,493 @@ static ssize_t mts_regs_show(struct device *dev,
 
 static DEVICE_ATTR_RO(mts_regs);
 
+static ssize_t trigger_rmu_show(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	return scnprintf(buf, PAGE_SIZE,
+			 "Uso do gatilho RMU:\n"
+			 "  echo 1 > trigger_rmu  : Envia quadro RMU Fase 1 (magic 0xfa42, cmd 0x0000, 34B) + doorbell BAR0+0x34|=4\n"
+			 "  echo 2 > trigger_rmu  : Envia quadro RMU Fase 2 (magic 0xfa42, cmd 0x800b, 34B) + doorbell BAR0+0x34|=4\n"
+			 "  echo 3 > trigger_rmu  : Comuta bit 4 de BAR0+0x10 (registrador carrier/link da GBE em dc5a4950)\n"
+			 "  echo 4 > trigger_rmu  : Envia quadro RMU com sub-header 0x9807 (descoberto na RE de dc5a5200)\n");
+}
+
+static ssize_t trigger_rmu_store(struct device *dev,
+				 struct device_attribute *attr,
+				 const char *buf, size_t count)
+{
+	struct pci_dev *pdev = to_pci_dev(dev);
+	struct net_device *netdev = pci_get_drvdata(pdev);
+	struct mts_priv *mp;
+	int val = 0;
+	u16 mdio_pre, mdio_post;
+	u32 link_pre, link_post;
+
+	if (!netdev)
+		return count;
+	mp = netdev_priv(netdev);
+
+	if (kstrtoint(buf, 10, &val) < 0)
+		return count;
+
+	link_pre = mts_read(mp, MTS_LINK_STATUS);
+	mts_mdio_read(mp, 1, 0x0000, &mdio_pre);
+
+	if (val == 1) {
+		dev_info(&pdev->dev, "sysfs trigger_rmu: Disparando RMU Fase 1 (cmd=0x0000)...\n");
+		mts_set(mp, MTS_MAC_EN1, BIT(2));
+		mts_send_rmu_frame(mp, 0x0000);
+	} else if (val == 2) {
+		dev_info(&pdev->dev, "sysfs trigger_rmu: Disparando RMU Fase 2 (cmd=0x800b)...\n");
+		mts_set(mp, MTS_MAC_EN1, BIT(2));
+		mts_send_rmu_frame(mp, 0x800b);
+	} else if (val == 3) {
+		u32 r10 = mts_read(mp, 0x10);
+		u32 new_r10 = r10 ^ BIT(4);
+		dev_info(&pdev->dev, "sysfs trigger_rmu: BAR0+0x10 pre=0x%08x -> comutando bit4 para 0x%08x\n",
+			 r10, new_r10);
+		mts_write(mp, 0x10, new_r10);
+	} else if (val == 4) {
+		dev_info(&pdev->dev, "sysfs trigger_rmu: Disparando RMU com sub-header 0x9807 (dc5a5200)...\n");
+		mts_set(mp, MTS_MAC_EN1, BIT(2));
+		mts_send_rmu_frame(mp, 0x9807);
+	}
+
+	msleep(200);
+
+	link_post = mts_read(mp, MTS_LINK_STATUS);
+	mts_mdio_read(mp, 1, 0x0000, &mdio_post);
+
+	dev_info(&pdev->dev, "sysfs trigger_rmu resultado: link(0x04) 0x%08x -> 0x%08x | MDIO 0x%04x -> 0x%04x\n",
+		 link_pre, link_post, mdio_pre, mdio_post);
+
+	return count;
+}
+
+static DEVICE_ATTR_RW(trigger_rmu);
+
+static ssize_t trigger_pci_show(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	return scnprintf(buf, PAGE_SIZE,
+			 "Uso do gatilho PCI Reset / PM:\n"
+			 "  echo 1 > trigger_pci  : Dump da Config Space PCI de 00:14.0 (Bridge) e 00:14.1 (GBE)\n"
+			 "  echo 2 > trigger_pci  : Forca D0 e re-afirma PCI_COMMAND_MEMORY|MASTER em 00:14.1 (GBE)\n"
+			 "  echo 3 > trigger_pci  : Re-afirma PCI_COMMAND_MEMORY|MASTER em 00:14.0 (Bridge)\n");
+}
+
+static ssize_t trigger_pci_store(struct device *dev,
+				 struct device_attribute *attr,
+				 const char *buf, size_t count)
+{
+	struct pci_dev *pdev = to_pci_dev(dev);
+	struct net_device *netdev = pci_get_drvdata(pdev);
+	struct mts_priv *mp;
+	struct pci_dev *bridge_dev;
+	int val = 0;
+	u16 cmd_gbe, stat_gbe, cmd_br, stat_br, br_ctl;
+	u32 cfg_dword;
+	int i;
+
+	if (!netdev)
+		return count;
+	mp = netdev_priv(netdev);
+
+	if (kstrtoint(buf, 10, &val) < 0)
+		return count;
+
+	bridge_dev = pci_get_slot(pdev->bus, (pdev->devfn & ~7) | BAIKAL_FUNC_ID_PCIE);
+
+	if (val == 1) {
+		dev_info(&pdev->dev, "=== DUMP PCI CONFIG SPACE 00:14.1 (GBE MAC) ===\n");
+		for (i = 0; i < 16; i++) {
+			pci_read_config_dword(pdev, i * 4, &cfg_dword);
+			dev_info(&pdev->dev, "  GBE CFG [0x%02x] = 0x%08x\n", i * 4, cfg_dword);
+		}
+
+		if (bridge_dev) {
+			dev_info(&pdev->dev, "=== DUMP PCI CONFIG SPACE 00:14.0 (PCI Bridge) ===\n");
+			for (i = 0; i < 16; i++) {
+				pci_read_config_dword(bridge_dev, i * 4, &cfg_dword);
+				dev_info(&pdev->dev, "  BRIDGE CFG [0x%02x] = 0x%08x\n", i * 4, cfg_dword);
+			}
+			pci_read_config_word(bridge_dev, 0x3e, &br_ctl);
+			dev_info(&pdev->dev, "  BRIDGE CONTROL (0x3e) = 0x%04x (Bus Reset bit6=%d)\n",
+				 br_ctl, (br_ctl & BIT(6)) ? 1 : 0);
+		}
+	} else if (val == 2) {
+		dev_info(&pdev->dev, "=== RE-AFIRMANDO PCI D0 & COMMAND FLAGS EM 00:14.1 ===\n");
+		pci_set_power_state(pdev, PCI_D0);
+		pci_read_config_word(pdev, PCI_COMMAND, &cmd_gbe);
+		pci_read_config_word(pdev, PCI_STATUS, &stat_gbe);
+		dev_info(&pdev->dev, "  GBE CMD pre=0x%04x STATUS pre=0x%04x\n", cmd_gbe, stat_gbe);
+		cmd_gbe |= (PCI_COMMAND_MEMORY | PCI_COMMAND_MASTER);
+		pci_write_config_word(pdev, PCI_COMMAND, cmd_gbe);
+		pci_read_config_word(pdev, PCI_COMMAND, &cmd_gbe);
+		dev_info(&pdev->dev, "  GBE CMD post=0x%04x\n", cmd_gbe);
+	} else if (val == 3) {
+		if (bridge_dev) {
+			dev_info(&pdev->dev, "=== RE-AFIRMANDO PCI COMMAND FLAGS EM 00:14.0 (Bridge) ===\n");
+			pci_read_config_word(bridge_dev, PCI_COMMAND, &cmd_br);
+			pci_read_config_word(bridge_dev, PCI_STATUS, &stat_br);
+			dev_info(&pdev->dev, "  BRIDGE CMD pre=0x%04x STATUS pre=0x%04x\n", cmd_br, stat_br);
+			cmd_br |= (PCI_COMMAND_MEMORY | PCI_COMMAND_MASTER);
+			pci_write_config_word(bridge_dev, PCI_COMMAND, cmd_br);
+			pci_read_config_word(bridge_dev, PCI_COMMAND, &cmd_br);
+			dev_info(&pdev->dev, "  BRIDGE CMD post=0x%04x\n", cmd_br);
+		}
+	}
+
+	if (bridge_dev)
+		pci_dev_put(bridge_dev);
+
+	return count;
+}
+
+static DEVICE_ATTR_RW(trigger_pci);
+
+static void mts_send_test_frame(struct mts_priv *mp)
+{
+	static const u8 test_pkt[64] = {
+		0xff, 0xff, 0xff, 0xff, 0xff, 0xff,	/* Dest: Broadcast */
+		0x2c, 0xcc, 0x44, 0x3f, 0x69, 0x5f,	/* Src: PS4 MAC */
+		0x08, 0x06,				/* EtherType: ARP */
+		0x00, 0x01, 0x08, 0x00, 0x06, 0x04, 0x00, 0x01,
+		0x2c, 0xcc, 0x44, 0x3f, 0x69, 0x5f,
+		192, 168, 0, 2,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		192, 168, 0, 1,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+	};
+	u8 *buf;
+	dma_addr_t dma;
+	u32 idx, new_ctl;
+	__le32 *d;
+
+	if (!mp->tx_ring) {
+		dev_warn(&mp->pdev->dev, "Test frame: aneis TX nao alocados\n");
+		return;
+	}
+
+	idx = mp->tx_idx;
+	d = mp->tx_ring + idx * MTS_DESC_SIZE;
+	if (!(le32_to_cpu(d[0]) & MTS_DESC_OWN)) {
+		dev_warn(&mp->pdev->dev, "Test frame: descritor TX ocupado\n");
+		return;
+	}
+
+	buf = kmemdup(test_pkt, sizeof(test_pkt), GFP_KERNEL);
+	if (!buf)
+		return;
+
+	dma = dma_map_single(&mp->pdev->dev, buf, sizeof(test_pkt), DMA_TO_DEVICE);
+	if (dma_mapping_error(&mp->pdev->dev, dma)) {
+		kfree(buf);
+		return;
+	}
+
+	d[1] = cpu_to_le32(lower_32_bits(dma));
+	d[2] = cpu_to_le32(0xffff0000);
+	new_ctl = sizeof(test_pkt) | MTS_DESC_SOP | MTS_DESC_EOP;
+	if (idx == MTS_RING_SIZE - 1)
+		new_ctl |= MTS_DESC_WRAP;
+
+	wmb();
+	d[0] = cpu_to_le32(new_ctl);
+	mp->tx_idx = (idx + 1) & (MTS_RING_SIZE - 1);
+
+	mts_write(mp, MTS_TX_RING_PTR, lower_32_bits(mp->tx_ring_dma + mp->tx_idx * MTS_DESC_SIZE));
+	dev_info(&mp->pdev->dev, "Test frame (64B ARP) enviado para TX ring via DMA\n");
+
+	msleep(50);
+	dma_unmap_single(&mp->pdev->dev, dma, sizeof(test_pkt), DMA_TO_DEVICE);
+	kfree(buf);
+}
+
+static ssize_t trigger_loopback_show(struct device *dev,
+				     struct device_attribute *attr, char *buf)
+{
+	return scnprintf(buf, PAGE_SIZE,
+			 "Uso do gatilho MAC Loopback:\n"
+			 "  echo 1 > trigger_loopback  : Envia frame de teste 64B no modo padrao\n"
+			 "  echo 2 > trigger_loopback  : Ativa BAR0+0x50 bit 1, envia frame 64B e testa RX clean\n"
+			 "  echo 3 > trigger_loopback  : Ativa BAR0+0x5c bit 1, envia frame 64B e testa RX clean\n"
+			 "  echo 4 > trigger_loopback  : Ativa BAR0+0x70 bit 1, envia frame 64B e testa RX clean\n");
+}
+
+static ssize_t trigger_loopback_store(struct device *dev,
+				      struct device_attribute *attr,
+				      const char *buf, size_t count)
+{
+	struct pci_dev *pdev = to_pci_dev(dev);
+	struct net_device *netdev = pci_get_drvdata(pdev);
+	struct mts_priv *mp;
+	int val = 0;
+	u64 rx_pkts_before, rx_bytes_before;
+	u64 rx_pkts_after, rx_bytes_after;
+	u32 hw_pkts, hw_bytes;
+
+	if (!netdev)
+		return count;
+	mp = netdev_priv(netdev);
+
+	if (kstrtoint(buf, 10, &val) < 0)
+		return count;
+
+	rx_pkts_before = netdev->stats.rx_packets;
+	rx_bytes_before = netdev->stats.rx_bytes;
+
+	if (val == 2) {
+		dev_info(&pdev->dev, "trigger_loopback: Ativando BAR0+0x50 bit 1 (0x50 pre=0x%08x)\n", mts_read(mp, 0x50));
+		mts_set(mp, 0x50, BIT(1));
+	} else if (val == 3) {
+		dev_info(&pdev->dev, "trigger_loopback: Ativando BAR0+0x5c bit 1 (0x5c pre=0x%08x)\n", mts_read(mp, 0x5c));
+		mts_set(mp, 0x5c, BIT(1));
+	} else if (val == 4) {
+		dev_info(&pdev->dev, "trigger_loopback: Ativando BAR0+0x70 bit 1 (0x70 pre=0x%08x)\n", mts_read(mp, 0x70));
+		mts_set(mp, 0x70, BIT(1));
+	}
+
+	dev_info(&pdev->dev, "trigger_loopback: Transmitindo frame de teste de 64 bytes...\n");
+	mts_send_test_frame(mp);
+	msleep(100);
+
+	/* Tenta limpa anel RX */
+	if (mp->enable_rx)
+		mts_rx_clean(mp, 16);
+
+	rx_pkts_after = netdev->stats.rx_packets;
+	rx_bytes_after = netdev->stats.rx_bytes;
+	hw_pkts = mts_read(mp, MTS_CNT_PKTS);
+	hw_bytes = mts_read(mp, MTS_CNT_BYTES);
+
+	dev_info(&pdev->dev, "trigger_loopback resultado: software RX pkts %llu -> %llu | bytes %llu -> %llu | HW MAC cnt_pkts=%u cnt_bytes=%u\n",
+		 rx_pkts_before, rx_pkts_after, rx_bytes_before, rx_bytes_after, hw_pkts, hw_bytes);
+
+	return count;
+}
+
+static DEVICE_ATTR_RW(trigger_loopback);
+
+static ssize_t trigger_phy_trigger_show(struct device *dev,
+					struct device_attribute *attr, char *buf)
+{
+	return scnprintf(buf, PAGE_SIZE,
+			 "Uso do gatilho PHY/MAC Trigger 0x1c / Clause 22 (RE Orbis):\n"
+			 "  echo 1 > trigger_phy_trigger  : Escreve 0x80000000 em BAR0+0x1c e faz poll de bit 17 (0x20000)\n"
+			 "  echo 2 > trigger_phy_trigger  : Comuta BAR0+0x10 bit 4 (carrier control)\n"
+			 "  echo 3 > trigger_phy_trigger  : Sequencia completa Orbis: BAR0+0x10 |= 0x10 -> BAR0+0x1c = 0x80000000 + poll\n"
+			 "  echo 4 > trigger_phy_trigger  : Orbis Clause 22 AN restart: Reg 9 |= 0x200, Reg 4 |= 0x180, Reg 0 = 0x1200 (limpa reset bit 15!)\n"
+			 "  echo 7 > trigger_phy_trigger  : Forca 10Mbps FD (BMCR=0x0100) + netif_carrier_on\n"
+			 "  echo 9 > trigger_phy_trigger  : Escreve BAR0+0x04 |= 1 (forca bit 0 Link UP no registrador)\n"
+			 "  echo 10 > trigger_phy_trigger : Dump dos registradores especificos Marvell PHY (16 a 31)\n"
+			 "  echo 11 > trigger_phy_trigger : Ativa RGMII RX Clock Delay no Marvell PHY Reg 20 (0x9080) + Soft Reset\n");
+}
+
+static ssize_t trigger_phy_trigger_store(struct device *dev,
+					 struct device_attribute *attr,
+					 const char *buf, size_t count)
+{
+	struct pci_dev *pdev = to_pci_dev(dev);
+	struct net_device *netdev = pci_get_drvdata(pdev);
+	struct mts_priv *mp;
+	int val = 0;
+	u32 r1c_pre, r1c_post = 0, r10_pre, r10_post;
+	u32 link_pre, link_post;
+	u16 mdio_pre = 0, mdio_post = 0;
+	u16 bmcr_pre = 0, bmcr_post = 0;
+	u16 reg4_val = 0, reg9_val = 0;
+	int i;
+	bool poll_ok = false;
+
+	if (!netdev)
+		return count;
+	mp = netdev_priv(netdev);
+
+	if (kstrtoint(buf, 10, &val) < 0)
+		return count;
+
+	link_pre = mts_read(mp, MTS_LINK_STATUS);
+	mts_mdio_read(mp, 1, 0x0000, &mdio_pre);
+	mts_mdio_c22_read(mp, 0, 0, &bmcr_pre);
+	r1c_pre = mts_read(mp, 0x1c);
+	r10_pre = mts_read(mp, 0x10);
+
+	dev_info(&pdev->dev, "=== TRIGGER PHY 0x1c / 0x10 / C22 (val=%d) ===\n", val);
+	dev_info(&pdev->dev, "  Pre: BAR0+0x1c=0x%08x BAR0+0x10=0x%08x LINK=0x%08x BMCR=0x%04x MDIO45=0x%04x carrier=%d 0x50=0x%08x 0x5c=0x%08x\n",
+		 r1c_pre, r10_pre, link_pre, bmcr_pre, mdio_pre, netif_carrier_ok(netdev) ? 1 : 0,
+		 mts_read(mp, 0x50), mts_read(mp, 0x5c));
+
+	if (val == 2 || val == 3) {
+		r10_post = r10_pre ^ BIT(4);
+		mts_write(mp, 0x10, r10_post);
+		dev_info(&pdev->dev, "  BAR0+0x10 comutado: 0x%08x -> 0x%08x\n", r10_pre, r10_post);
+	}
+
+	if (val == 1 || val == 3) {
+		dev_info(&pdev->dev, "  Escrevendo 0x80000000 em BAR0+0x1c...\n");
+		mts_write(mp, 0x1c, 0x80000000);
+
+		for (i = 0; i < 100; i++) {
+			r1c_post = mts_read(mp, 0x1c);
+			if (r1c_post & 0x20000) {
+				poll_ok = true;
+				dev_info(&pdev->dev, "  BAR0+0x1c poll SUCESSO na iteracao %d: 0x%08x (bit 17 set!)\n",
+					 i, r1c_post);
+				break;
+			}
+			usleep_range(500, 1000);
+		}
+
+		if (!poll_ok)
+			dev_info(&pdev->dev, "  BAR0+0x1c poll TIMEOUT apos 100 iteracoes: 0x%08x\n", r1c_post);
+	}
+
+	if (val == 4) {
+		u16 regs[16];
+		int r;
+
+		dev_info(&pdev->dev, "  Executando Orbis PHY Clause 22 Restart & Auto-Negotiation (0x1200)...\n");
+		mts_mdio_c22_read(mp, 0, 9, &reg9_val);
+		mts_mdio_c22_write(mp, 0, 9, reg9_val | 0x0200);
+
+		mts_mdio_c22_read(mp, 0, 4, &reg4_val);
+		mts_mdio_c22_write(mp, 0, 4, reg4_val | 0x0180);
+
+		mts_mdio_c22_write(mp, 0, 0, 0x1200);
+		msleep(100);
+
+		dev_info(&pdev->dev, "  Dump dos registradores PHY Clause 22 (0 a 15):\n");
+		for (r = 0; r < 16; r++) {
+			mts_mdio_c22_read(mp, 0, r, &regs[r]);
+			dev_info(&pdev->dev, "    Reg[%02d] = 0x%04x\n", r, regs[r]);
+		}
+	} else if (val == 5) {
+		dev_info(&pdev->dev, "  Forcando 100Mbps Full Duplex no PHY (BMCR=0x2100) + netif_carrier_on...\n");
+		mts_mdio_c22_write(mp, 0, 0, 0x2100);
+		netif_carrier_on(netdev);
+		msleep(50);
+		mts_mdio_c22_read(mp, 0, 0, &bmcr_post);
+		dev_info(&pdev->dev, "  BMCR pos-escrita (0x2100): 0x%04x -> 0x%04x | carrier=%d\n",
+			 bmcr_pre, bmcr_post, netif_carrier_ok(netdev) ? 1 : 0);
+	} else if (val == 6) {
+		dev_info(&pdev->dev, "  Forcando 1000Mbps Full Duplex no PHY (BMCR=0x0140) + netif_carrier_on...\n");
+		mts_mdio_c22_write(mp, 0, 0, 0x0140);
+		netif_carrier_on(netdev);
+		msleep(50);
+		mts_mdio_c22_read(mp, 0, 0, &bmcr_post);
+		dev_info(&pdev->dev, "  BMCR pos-escrita (0x0140): 0x%04x -> 0x%04x | carrier=%d\n",
+			 bmcr_pre, bmcr_post, netif_carrier_ok(netdev) ? 1 : 0);
+	} else if (val == 7) {
+		dev_info(&pdev->dev, "  Forcando 10Mbps Full Duplex no PHY (BMCR=0x0100) + netif_carrier_on...\n");
+		mts_mdio_c22_write(mp, 0, 0, 0x0100);
+		netif_carrier_on(netdev);
+		msleep(50);
+		mts_mdio_c22_read(mp, 0, 0, &bmcr_post);
+		dev_info(&pdev->dev, "  BMCR pos-escrita (0x0100): 0x%04x -> 0x%04x | carrier=%d\n",
+			 bmcr_pre, bmcr_post, netif_carrier_ok(netdev) ? 1 : 0);
+	} else if (val == 8) {
+		u32 r50 = mts_read(mp, 0x50);
+		u32 r5c = mts_read(mp, 0x5c);
+		u32 new_r5c = r5c | 0x200; /* Gigabit speed bit */
+		u32 new_r50 = r50 | 0x03;  /* Tx & Rx Enable */
+		dev_info(&pdev->dev, "  Configurando MAC speed: 0x5c=0x%08x -> 0x%08x | 0x50=0x%08x -> 0x%08x\n",
+			 r5c, new_r5c, r50, new_r50);
+		mts_write(mp, 0x5c, new_r5c);
+		mts_write(mp, 0x50, new_r50);
+		netif_carrier_on(netdev);
+	} else if (val == 9) {
+		dev_info(&pdev->dev, "  Escrevendo BAR0+0x04 (LINK_STATUS) |= 1...\n");
+		mts_set(mp, MTS_LINK_STATUS, 1);
+		netif_carrier_on(netdev);
+	} else if (val == 10) {
+		u16 regs[16];
+		int r;
+		dev_info(&pdev->dev, "  Dump dos registradores especificos Marvell PHY (16 a 31):\n");
+		for (r = 16; r < 32; r++) {
+			mts_mdio_c22_read(mp, 0, r, &regs[r - 16]);
+			dev_info(&pdev->dev, "    Reg[%02d] = 0x%04x\n", r, regs[r - 16]);
+		}
+	} else if (val == 11) {
+		u16 reg20_page1_pre = 0, reg20_page1_post = 0;
+		dev_info(&pdev->dev, "  Ativando RGMII RX Clock Delay no Marvell PHY Page 1 Reg 20...\n");
+		/* Seleciona Page 1 via Reg 22 */
+		mts_mdio_c22_write(mp, 0, 22, 1);
+		mts_mdio_c22_read(mp, 0, 20, &reg20_page1_pre);
+
+		/* Seta Bit 7 (RGMII RX Clock Delay) em Page 1 Reg 20 */
+		mts_mdio_c22_write(mp, 0, 20, reg20_page1_pre | 0x80);
+		mts_mdio_c22_read(mp, 0, 20, &reg20_page1_post);
+
+		/* Restaura Page 0 via Reg 22 */
+		mts_mdio_c22_write(mp, 0, 22, 0);
+
+		/* Soft Reset no BMCR (Page 0 Reg 0) para aplicar o delay */
+		mts_mdio_c22_write(mp, 0, 0, 0x9140);
+		msleep(100);
+
+		dev_info(&pdev->dev, "  Marvell Page 1 Reg 20: 0x%04x -> 0x%04x (rx_delay_bit7=%d)\n",
+			 reg20_page1_pre, reg20_page1_post, (reg20_page1_post & 0x80) ? 1 : 0);
+		netif_carrier_on(netdev);
+	}
+
+	msleep(200);
+
+	link_post = mts_read(mp, MTS_LINK_STATUS);
+	mts_mdio_read(mp, 1, 0x0000, &mdio_post);
+
+	dev_info(&pdev->dev, "  Post: LINK=0x%08x -> 0x%08x | MDIO=0x%04x -> 0x%04x\n",
+		 link_pre, link_post, mdio_pre, mdio_post);
+
+	return count;
+}
+
+static DEVICE_ATTR_RW(trigger_phy_trigger);
+
+static ssize_t trigger_rx_clean_show(struct device *dev,
+				     struct device_attribute *attr, char *buf)
+{
+	return scnprintf(buf, PAGE_SIZE, "Uso: echo 1 > trigger_rx_clean para forcar drenagem do anel RX\n");
+}
+
+static ssize_t trigger_rx_clean_store(struct device *dev,
+				      struct device_attribute *attr,
+				      const char *buf, size_t count)
+{
+	struct pci_dev *pdev = to_pci_dev(dev);
+	struct net_device *netdev = pci_get_drvdata(pdev);
+	struct mts_priv *mp;
+	u64 pkts_pre, pkts_post;
+	u32 cleaned;
+	int i;
+
+	if (!netdev)
+		return count;
+	mp = netdev_priv(netdev);
+
+	pkts_pre = netdev->stats.rx_packets;
+	cleaned = mts_rx_clean(mp, 64);
+	pkts_post = netdev->stats.rx_packets;
+
+	dev_info(&pdev->dev, "trigger_rx_clean: limpos %u pacotes (stats rx %llu -> %llu, rx_idx=%u)\n",
+		 cleaned, pkts_pre, pkts_post, mp->rx_idx);
+
+	/* Dump dos primeiros 8 descritores RX */
+	for (i = 0; i < 8; i++) {
+		__le32 *d = mp->rx_ring + i * MTS_DESC_SIZE;
+		u32 ctl = le32_to_cpu(d[0]);
+		u32 addr = le32_to_cpu(d[1]);
+		dev_info(&pdev->dev, "  RX[%03d] ctl=0x%08x (OWN=%d len=%u) addr=0x%08x\n",
+			 i, ctl, (ctl & MTS_DESC_OWN) ? 1 : 0, ctl & 0xffff, addr);
+	}
+
+	return count;
+}
+
+static DEVICE_ATTR_RW(trigger_rx_clean);
+
 /* ------------------------------------------------------------------ */
 /* MAC address — mesma fonte que o sky2 usa no Aeolia: SPM da funcao   */
 /* MEM do southbridge (00:14.6 no Baikal).                             */
@@ -1673,9 +2559,10 @@ static int mts_open(struct net_device *dev)
 		 stage, mp->enable_carrier, mp->enable_rx, mp->enable_tx);
 
 	mp->link_last_raw = ~0U; /* força primeira leitura a disparar mudança */
-	mp->link_up = true;      /* inverte para que a primeira leitura (link down=0) sempre gere notificação */
-	mp->link_speed = 0;
-	mp->link_duplex = 0;
+	mp->link_up = false;      /* false para que primeira detecção de link up (true != false) dispare carrier on */
+	/* Configuração do Hardware MAC na abertura da interface (ifconfig up) */
+	mts_set(mp, 0x50, BIT(0) | BIT(1)); /* BAR0+0x50 |= 0x03 (Tx & Rx Enable) */
+	mts_set(mp, 0x5c, BIT(9));          /* BAR0+0x5c |= 0x200 (1000Mbps Gigabit RGMII) */
 
 	netif_carrier_off(dev);
 
@@ -1739,6 +2626,11 @@ static int mts_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	err = pci_enable_device(pdev);
 	if (err)
 		return err;
+
+	/* Garante estado D0 ativo e salva a tabela de registradores PCI config */
+	pci_set_power_state(pdev, PCI_D0);
+	pci_enable_wake(pdev, PCI_D0, false);
+	pci_save_state(pdev);
 
 	err = pci_request_regions(pdev, DRV_NAME);
 	if (err)
@@ -1836,6 +2728,31 @@ static int mts_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 		if (err)
 			dev_warn(&pdev->dev,
 				 "falha ao criar sysfs mts_regs: %d\n", err);
+
+		err = device_create_file(&pdev->dev, &dev_attr_trigger_rmu);
+		if (err)
+			dev_warn(&pdev->dev,
+				 "falha ao criar sysfs trigger_rmu: %d\n", err);
+
+		err = device_create_file(&pdev->dev, &dev_attr_trigger_pci);
+		if (err)
+			dev_warn(&pdev->dev,
+				 "falha ao criar sysfs trigger_pci: %d\n", err);
+
+		err = device_create_file(&pdev->dev, &dev_attr_trigger_loopback);
+		if (err)
+			dev_warn(&pdev->dev,
+				 "falha ao criar sysfs trigger_loopback: %d\n", err);
+
+		err = device_create_file(&pdev->dev, &dev_attr_trigger_phy_trigger);
+		if (err)
+			dev_warn(&pdev->dev,
+				 "falha ao criar sysfs trigger_phy_trigger: %d\n", err);
+
+		err = device_create_file(&pdev->dev, &dev_attr_trigger_rx_clean);
+		if (err)
+			dev_warn(&pdev->dev,
+				 "falha ao criar sysfs trigger_rx_clean: %d\n", err);
 	}
 
 	if (stage >= 3) {
@@ -1921,8 +2838,14 @@ static void mts_remove(struct pci_dev *pdev)
 	mp = netdev_priv(dev);
 
 	/* Remover sysfs ANTES de unregister_netdev para evitar deadlock */
-	if (stage >= 2)
+	if (stage >= 2) {
 		device_remove_file(&pdev->dev, &dev_attr_mts_regs);
+		device_remove_file(&pdev->dev, &dev_attr_trigger_rmu);
+		device_remove_file(&pdev->dev, &dev_attr_trigger_pci);
+		device_remove_file(&pdev->dev, &dev_attr_trigger_loopback);
+		device_remove_file(&pdev->dev, &dev_attr_trigger_phy_trigger);
+		device_remove_file(&pdev->dev, &dev_attr_trigger_rx_clean);
+	}
 
 	if (dev->reg_state == NETREG_REGISTERED) {
 		unregister_netdev(dev);
@@ -1931,8 +2854,8 @@ static void mts_remove(struct pci_dev *pdev)
 		pci_clear_master(pdev);
 	}
 
-	if (stage >= 3)
-		mts_mac_stop(mp);
+	/* Orbis dc5a3060: soft-reset via bit 1 (nao clear bit 0) */
+	mts_mac_stop(mp);
 
 	mts_free_rings(mp);
 	if (mp->regs_glue)
