@@ -1416,6 +1416,28 @@ static ssize_t mts_regs_show(struct device *dev,
 				 phy_val, (phy_val & 0x8000) ? 1 : 0,
 				 (phy_val & 0x0800) ? 1 : 0, (phy_val & 0x0100) ? 1 : 0);
 
+	/* Scan Clause 22 phy_addr 0-31 for BMCR (reg=0x00) */
+	len += scnprintf(buf + len, PAGE_SIZE - len,
+			 "\n=== PHY Clause 22 BMCR scan (phy_addr 0-31) ===\n");
+	for (i = 0; i < 32; i++) {
+		ret = mts_mdio_c22_read(mp, i, 0x00, &phy_val);
+		if (ret == 0 && phy_val != 0x0000 && phy_val != 0xffff) {
+			len += scnprintf(buf + len, PAGE_SIZE - len,
+					 "  phy_addr=%02d: 0x%04x (reset=%d powerdown=%d duplex=%d speed_msb=%d)\n",
+					 i, phy_val,
+					 (phy_val & 0x8000) ? 1 : 0,
+					 (phy_val & 0x0800) ? 1 : 0,
+					 (phy_val & 0x0100) ? 1 : 0,
+					 (phy_val & 0x2000) ? 1 : 0);
+		} else if (ret == 0) {
+			len += scnprintf(buf + len, PAGE_SIZE - len,
+					 "  phy_addr=%02d: 0x%04x (ret=0, likely residual)\n", i, phy_val);
+		} else {
+			len += scnprintf(buf + len, PAGE_SIZE - len,
+					 "  phy_addr=%02d: timeout (ret=%d)\n", i, ret);
+		}
+	}
+
 	len += scnprintf(buf + len, PAGE_SIZE - len,
 			 "\n=== Contadores HW (clear-on-read) ===\n");
 	len += scnprintf(buf + len, PAGE_SIZE - len,
