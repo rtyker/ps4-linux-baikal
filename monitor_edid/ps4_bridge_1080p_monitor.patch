@@ -1,0 +1,68 @@
+# Patch para suporte a 1080p em monitores no PS4 Linux (kernel Neocine)
+# Aplica em: drivers/gpu/drm/amd/amdgpu/ps4_bridge.c
+# 
+# Problema: Bridge PS4 (MN86471A/29) lê HPD via TMONREG@0x7008 bit 3.
+# Monitores lentos para levantar HPD fazem bridge retornar "disconnected".
+# Force enable (video=...@60e) não ajuda pois bridge roda antes do DRM core.
+#
+# Solução: 
+# 1. ps4_bridge_detect(): retornar connected se DRM force enable
+# 2. ps4_bridge_get_modes(): ler EDID real em vez de zerar
+# 3. ps4_bridge_mode_valid(): permitir todos VICs do EDID
+
+--- a/drivers/gpu/drm/amd/amdgpu/ps4_bridge.c
++++ b/drivers/gpu/drm/amd/amdgpu/ps4_bridge.c
+@@ -729,6 +729,18 @@ enum drm_connector_status ps4_bridge_detect(struct drm_connector *connector,
+ 	struct amdgpu_connector_atom_dig *amdgpu_dig_connector = amdgpu_connector->con_priv;
+ 
+ 	amdgpu_dig_connector->dp_sink_type = CONNECTOR_OBJECT_ID_DISPLAYPORT;
++	amdgpu_atombios_dp_get_dpcd(amdgpu_connector);
++
++	/* Se DRM core está forçando o conector (video=...@60e), ignorar HPD */
++	if (connector->force == DRM_FORCE_ON || connector->force == DRM_FORCE_ON_DIGITAL) {
++		DRM_DEBUG_KMS("PS4 bridge: force enable ativo, ignorando HPD\n");
++		return connector_status_connected;
++	}
++
+ 	mutex_lock(&mn_bridge->mutex);
+ 	cq_init(&mn_bridge->cq, 4);
+ 	cq_read(&mn_bridge->cq, TMONREG, 1);
+@@ -765,7 +777,7 @@ int ps4_bridge_mode_valid(struct drm_connector *connector,
+ 
+ 	/* Allow anything that we can match up to a VIC (CEA modes) */
+ 	if (!vic || (vic != 16 && vic != 4)) {
+-		return MODE_BAD;
++		/* Permitir qualquer VIC suportado pelo EDID do monitor */
++		DRM_DEBUG_KMS("PS4 bridge: modo VIC %d não hardcoded, mas permitido via EDID\n", vic);
++		return MODE_OK;
+ 	}
+ 
+ 	return MODE_OK;
+@@ -709,8 +721,25 @@ int ps4_bridge_get_modes(struct drm_connector *connector)
+ 	struct drm_device *dev = connector->dev;
+ 	struct drm_display_mode *newmode;
+ 	/* This is usually excessive logging for most */
+ 	pr_debug("ps4_bridge_get_modes\n");
+ 
+-	newmode = drm_mode_duplicate(dev, &mode_1080p);
+-	drm_mode_probed_add(connector, newmode);
+-
+-	drm_connector_update_edid_property(connector, NULL);
++	/* Ler EDID do monitor (se disponível via firmware ou DDC) */
++	struct edid *edid = drm_get_edid(connector, NULL);
++	if (edid) {
++		drm_connector_update_edid_property(connector, edid);
++		drm_add_edid_modes(connector, edid);
++		kfree(edid);
++		DRM_DEBUG_KMS("PS4 bridge: %d modos adicionados do EDID\n",
++			      connector->display_info.num_modes);
++	} else {
++		/* Fallback: modo 1080p60 hardcoded se não houver EDID */
++		newmode = drm_mode_duplicate(dev, &mode_1080p);
++		drm_mode_probed_add(connector, newmode);
++		drm_connector_update_edid_property(connector, NULL);
++		DRM_DEBUG_KMS("PS4 bridge: sem EDID, usando fallback 1080p60\n");
++	}
+ 
+ 	return 0;
+ }

@@ -1,0 +1,125 @@
+// Extraido por Ghidra PyGhidra (consolidate_decompiled_lacunas.py)
+// addr: 0xffffffffdc5a5200  name: FUN_ffffffffdc5a5200  size: 865
+// escopo: lacuna MTS/GBE/ICC/glue identificada em testes ao vivo
+// chamadores (4):
+//   FUN_ffffffffdc5a65e0 @ 0x-000000023a59a20
+//   FUN_ffffffffdc5a5050 @ 0x-000000023a5afb0
+//   FUN_ffffffffdc5a4e90 @ 0x-000000023a5b170
+//   FUN_ffffffffdc5a6290 @ 0x-000000023a59d70
+// chamadas (7):
+//   FUN_ffffffffdca17ba0 @ 0x-0000000235e8460
+//   FUN_ffffffffdc60d4c0 @ 0x-0000000239f2b40
+//   FUN_ffffffffdc3f3950 @ 0x-000000023c0c6b0
+//   FUN_ffffffffdc3f3660 @ 0x-000000023c0c9a0
+//   FUN_ffffffffdc4afb10 @ 0x-000000023b504f0
+//   FUN_ffffffffdc5a58d0 @ 0x-000000023a5a730
+//   FUN_ffffffffdc60d400 @ 0x-0000000239f2c00
+
+
+ulong FUN_ffffffffdc5a5200(long param_1,int param_2,uint param_3)
+
+{
+  long lVar1;
+  char cVar2;
+  int iVar3;
+  undefined2 uVar4;
+  ulong uVar5;
+  int iVar6;
+  undefined2 local_7a;
+  undefined1 local_78 [6];
+  undefined1 local_72 [6];
+  undefined1 local_6c [2];
+  undefined1 local_6a [2];
+  undefined2 local_68;
+  undefined1 local_66;
+  char local_65;
+  undefined1 local_64 [2];
+  undefined1 local_62 [2];
+  undefined1 local_60 [2];
+  undefined1 local_5e [2];
+  undefined2 local_5c;
+  ushort local_5a;
+  long local_38;
+  
+  param_3 = param_2 << 5 | param_3;
+  local_38 = DAT_ffffffffdeaacea0;
+  FUN_ffffffffdc3f3660
+            (param_1 + 0x30e8,0,"W:\\Build\\J02690760\\sys\\freebsd\\sys\\dev\\mts\\if_mts.c",0xadc)
+  ;
+  local_7a = 0x20;
+  FUN_ffffffffdc60d4c0(local_78,&DAT_ffffffffdcb0e02c,6);
+  lVar1 = param_1 + 0x30d6;
+  FUN_ffffffffdc60d4c0(local_72,lVar1,6);
+  FUN_ffffffffdc60d4c0(local_6c,&DAT_ffffffffdcb0e01f,2);
+  FUN_ffffffffdc60d400(local_6a,2);
+  local_68 = 0xfa42;
+  local_66 = 0xf;
+  local_65 = *(char *)(param_1 + 0x3108) + '\x01';
+  if (local_65 == '\0') {
+    local_65 = '\x01';
+  }
+  *(char *)(param_1 + 0x3108) = local_65;
+  FUN_ffffffffdc60d400(local_64,2);
+  FUN_ffffffffdc60d4c0(local_62,&DAT_ffffffffdcb0e028,2);
+  FUN_ffffffffdc60d4c0(local_60,&DAT_ffffffffdcb0e02a,2);
+  FUN_ffffffffdc60d4c0(local_5e,&local_7a,2);
+  local_5c = 0x9807;
+  local_5a = CONCAT11((char)param_3,(char)(param_3 >> 8)) | 0x98;
+  FUN_ffffffffdc5a58d0(param_1,local_78,0x20);
+  iVar6 = 10;
+  do {
+    local_7a = 0x20;
+    FUN_ffffffffdc60d4c0(local_78,&DAT_ffffffffdcb0e02c,6);
+    FUN_ffffffffdc60d4c0(local_72,lVar1,6);
+    FUN_ffffffffdc60d4c0(local_6c,&DAT_ffffffffdcb0e01f,2);
+    FUN_ffffffffdc60d400(local_6a,2);
+    local_68 = 0xfa42;
+    local_66 = 0xf;
+    local_65 = *(char *)(param_1 + 0x3108) + '\x01';
+    if (local_65 == '\0') {
+      local_65 = '\x01';
+    }
+    *(char *)(param_1 + 0x3108) = local_65;
+    FUN_ffffffffdc60d400(local_64,2);
+    FUN_ffffffffdc60d4c0(local_62,&DAT_ffffffffdcb0e028,2);
+    FUN_ffffffffdc60d4c0(local_60,&DAT_ffffffffdcb0e02a,2);
+    FUN_ffffffffdc60d4c0(local_5e,&local_7a,2);
+    local_5c = 0x980b;
+    iVar3 = FUN_ffffffffdc5a58d0(param_1,local_78,0x20);
+    if ((iVar3 != 0) || (-1 < (char)local_5a)) break;
+    FUN_ffffffffdc4afb10(1);
+    iVar6 = iVar6 + -1;
+  } while (iVar6 != 0);
+  local_7a = 0x20;
+  FUN_ffffffffdc60d4c0(local_78,&DAT_ffffffffdcb0e02c,6);
+  FUN_ffffffffdc60d4c0(local_72,lVar1,6);
+  FUN_ffffffffdc60d4c0(local_6c,&DAT_ffffffffdcb0e01f,2);
+  FUN_ffffffffdc60d400(local_6a,2);
+  local_68 = 0xfa42;
+  local_66 = 0xf;
+  cVar2 = *(char *)(param_1 + 0x3108) + '\x01';
+  local_65 = '\x01';
+  if (cVar2 != '\0') {
+    local_65 = cVar2;
+  }
+  *(char *)(param_1 + 0x3108) = local_65;
+  FUN_ffffffffdc60d400(local_64,2);
+  FUN_ffffffffdc60d4c0(local_62,&DAT_ffffffffdcb0e028,2);
+  FUN_ffffffffdc60d4c0(local_60,&DAT_ffffffffdcb0e02a,2);
+  FUN_ffffffffdc60d4c0(local_5e,&local_7a,2);
+  local_5c = 0x990b;
+  iVar6 = FUN_ffffffffdc5a58d0(param_1,local_78,0x20);
+  uVar4 = swap_bytes(local_5a);
+  uVar5 = CONCAT62((int6)((ulong)param_1 >> 0x10),uVar4) & 0xffffffff;
+  if (iVar6 != 0) {
+    uVar5 = 0;
+  }
+  FUN_ffffffffdc3f3950
+            (param_1 + 0x30e8,"W:\\Build\\J02690760\\sys\\freebsd\\sys\\dev\\mts\\if_mts.c",0xae9);
+  if (DAT_ffffffffdeaacea0 == local_38) {
+    return uVar5;
+  }
+                    /* WARNING: Subroutine does not return */
+  FUN_ffffffffdca17ba0();
+}
+

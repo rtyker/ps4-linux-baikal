@@ -1,0 +1,306 @@
+# RTC `rtc_mvl.c` — driver do Real-Time Clock Baikal (Marvell)
+
+> RE do kernel Orbis 12.52 — módulo `sys/dev/scesb/rtc/rtc_mvl.c`
+> Dump: `consolidado/dumps_orbis/kmem_dump_1252.bin` (32.2 MB)
+> Kernel base ELF (PHDR LOAD R+E): `0xffffffffdc350000`
+> Família `_mvl` = Marvell = Baikal (ver `KERNEL_DUMP_HARDWARE_INVENTORY.md` seção "_mvl vs _mtk")
+
+---
+
+## 1. Mapa de strings do módulo `rtc_mvl.c`
+
+Strings em `0xffffffffdcb13800`-`0xffffffffdcb13990` (offset físico `0x7c3800`-`0x7c3990`):
+
+| vaddr | offset | string | uso |
+|---|---|---|---|
+| `0xffffffffdcb1380c` | `0x7c380c` | `hwpci` | — |
+| `0xffffffffdcb13812` | `0x7c3812` | `_ADR` | ACPI _ADR matching |
+| `0xffffffffdcb13817` | `0x7c3817` | `%s: cannnot allocate resource` | erro de resource alloc (probe) |
+| `0xffffffffdcb13835` | `0x7c3835` | `rtc_mvl_attach` | nome do caller em mensagens de erro |
+| `0xffffffffdcb13844` | `0x7c3844` | `rtc_mvl` | nome do device (device_set_desc) |
+| `0xffffffffdcb1384c` | `0x7c384c` | `WARNING: Battery failure indication` | log status erro |
+| `0xffffffffdcb13871` | `0x7c3871` | `Status:%X, Time:%X` | format do log |
+| `0xffffffffdcb13885` | `0x7c3885` | `WARNING: Clock failure indication` | log status erro |
+| `0xffffffffdcb138a8` | `0x7c38a8` | `[Bug 142260] Status:%X, Time:%X` | bug reference |
+| `0xffffffffdcb138c9` | `0x7c38c9` | `W:\Build\J02690760\sys\freebsd\sys\dev\scesb\rtc\rtc_mvl.c` | `__FILE__` para `mtx_assert`/assert |
+| `0xffffffffdcb13904` | `0x7c3904` | `read_aeolia_rtc: retry %d times. %08x != %08x` | retry na leitura estável |
+| `0xffffffffdcb13933` | `0x7c3933` | `[Bug 55086] read_aeolia_rtc: retry %d times. %08x != %08x` | retry debug |
+| `0xffffffffdcb1396e` | `0x7c396e` | `[Bug 55086] retry error, timeout` | timeout das retries |
+
+Fim do módulo marcado por `apic` / `clock` / `LAPIC` (próximo módulo).
+
+---
+
+## 2. Funções decompiladas
+
+Quatro funções contíguas no segmento `.text`, endereçadas por ponteiros absolutos em
+`0xffffffffdd452a58..0xffffffffdd452a78` (jump / method table):
+
+| vaddr iniciar | offset | tamanho | nome provável | strings referenciadas |
+|---|---|---|---|---|
+| `0xffffffffdc5d63f0` | `0x2863f0` | 89 B | **`rtc_mvl_probe`** | `rtc_mvl_attach`, `rtc_mvl`, `%s: cannnot allocate resource` |
+| `0xffffffffdc5d6450` | `0x286450` | 427 B | **`rtc_mvl_attach`** (com health-check de status) | `Battery/Clock failure`, `Status:%X, Time:%X`, `[Bug 142260] ...` |
+| `0xffffffffdc5d6600` | `0x286660` | 619 B | **`read_aeolia_rtc`** (leitura básica, retry simples) | `__FILE__:0x6d`, `read_aeolia_rtc: retry` |
+| `0xffffffffdc5d6870` | `0x286870` | 644 B | **`rtc_mvl_gettime`** (leitura estável + status + extra) | `__FILE__:0xa1/0xce`, `[Bug 55086] ...`, todos acima |
+
+A função `0xffffffffdc5d65c4` (162 B, "início real" segundo r2) **não é uma função** — é
+o byte inicial de bloco de continuação apontado por `goto code_r0xffffffffdc5d6559`
+ dentro de `rtc_mvl_attach` (pseudo-C do r2 fragmenta o fluxo). Deve ser lida junto
+com `rtc_mvl_attach`.
+
+---
+
+### 2.1 `rtc_mvl_probe` @ `0xffffffffdc5d63f0` (89 B)
+
+```c
+ulong rtc_mvl_probe(int64_t dev)
+{
+    int64_t res;
+    ulong   rv = 0;
+
+    res = func_0xffffffffdc5661b0();        // bus_alloc_resource_any / rman_get_resource
+    *(dev + 0x28) = res;                    // softc->ri_rid = res  (guarda resource)
+    if (res == 0) {
+        // device_printf(dev, "%s: cannnot allocate resource", "rtc_mvl_attach");
+        func_0xffffffffdc630420("%s: cannnot allocate resource", "rtc_mvl_attach");
+        rv = 6;                              // ENXIO
+    } else {
+        // device_set_desc(dev+8, "rtc_mvl", 0, 0);
+        func_0xffffffffdc6c8d70(dev + 8, "rtc_mvl", 0, 0);
+    }
+    return rv;                               // 0 = OK, 6 = ENXIO
+}
+```
+
+Prólogo padrão FreeBSD (`push rbp; mov rbp,rsp; push r14; push rbx`).
+A função `0xffffffffdc5661b0` é o allocator de resource — também chamada por outros
+drivers Baikal com o mesmo padrão. O nome "rtc_mvl_attach" hard-coded na mensagem de
+erro é apenas o `__func__` do caller em printf logs.
+
+---
+
+### 2.2 `rtc_mvl_attach` @ `0xffffffffdc5d6450` (427 B)
+
+```c
+ulong rtc_mvl_attach(int64_t dev)
+{
+    uint32_t *base  = *(*(dev + 0x28) + 0x10);   // softc->res.bsh (bus_space handle)
+    uint32_t *stat  = base + 0x100;              // status register
+    int       is_mmio = *(*(dev + 0x28) + 8);    // bus_space_tag flag (0 = port I/O)
+
+    uint32_t s = is_mmio ? *stat          : in(stat);    // read STATUS
+    uint32_t status_extra, time_extra;
+    char    *fmt;
+
+    if ((s & 0x100) != 0) {                       // bit 8: Battery failure indication
+        if ((s & 0x4) != 0)  return 0;            // bit 2: tudo OK → sai silencioso
+        // WARNING: Clock failure indication
+        device_printf(*dev, "WARNING: Clock failure indication");
+        fmt = "[Bug 142260] Status:%X, Time:%X";
+    } else {
+        // WARNING: Battery failure indication
+        device_printf(*dev, "WARNING: Battery failure indication");
+        fmt = "Status:%X, Time:%X";
+    }
+    // Lê 4 registradores sequenciais do "time+status" : 0x130,0x134,0x138,0x13c
+    uint32_t t0 = R(base, 0x130);
+    uint32_t t1 = R(base, 0x134);
+    uint32_t t2 = R(base, 0x138);
+    uint32_t t3 = R(base, 0x13c);      // último = STATUS extra / Time༣ high
+    // device_printf(*dev, fmt, s, t3);
+    device_printf(*dev, fmt, s, t3);
+    return 0x16;                       // 22 = EINVAL (attach falhou, dispositivo não saudável)
+}
+```
+
+Onde `R(base, off)` lê com `in()` se `is_mmio==0` ou `*(base+off)` se MMIO.
+
+**Registradores do RTC Aeolia/Marvell** (BAR/mapping em `softc+0x28+0x10`):
+
+| offset | leitura | papel |
+|---|---|---|
+| `0x100` | STATUS | bit 2 = OK; bit 8 = "battery failure indication" (clock OK mas sem bateria) |
+| `0x130` | TIME[0] | byte 0 do timestamp (LSB) — lido por `read_aeolia_rtc` para retry |
+| `0x134` | TIME[1] | byte 1 |
+| `0x138` | TIME[2] | byte 2 |
+| `0x13c` | TIME[3] | byte 3 (MSB) — também exibido no log "Time:%X" |
+| `0x160` | extra  | lido em `rtc_mvl_gettime` |
+| `0x164` | extra  | lido em `rtc_mvl_gettime` |
+
+Padrão `Bug 142260` é um número de bug interno da Sony — aparece em 14 outras funções do kernel
+(swiotlb, gpu, idle, etc.); parece denotar workaround de silicon.
+
+---
+
+### 2.3 `read_aeolia_rtc` (básica) @ `0xffffffffdc5d6600` (619 B)
+
+```c
+ulong read_aeolia_rtc(int64_t dev, uint32_t *out)
+{
+    mtx_lock_or_assert(dev+8, "rtc_mvl.c", 0x6d);   // func_0xffffffffdc6c8300
+    uint32_t v0 = R4(base, 0x130,0x134,0x138,0x13c);   // primeiro snapshot (32-bit BE)
+
+    uint32_t prev = v0;
+    uint32_t i = 1;
+    for (;;) {
+        func_0xffffffffdc4afb10(100);     // DELAY(100) microseconds
+        uint32_t cur = R4(base, 0x130,0x134,0x138,0x13c);
+
+        if (prev == cur) {                 // leitura estável
+            *out = cur;
+            mtx_unlock(dev+8, "rtc_mvl.c", 0x95);
+            return 0;
+        }
+        if ((i % 10) == 1) {               // logaritmic logging
+            device_printf("read_aeolia_rtc: retry %d times. %08x != %08x", i, cur, cur);
+            // (BUG na decompilação: ambos args 4 = cur; na verdade são prev != cur)
+        }
+        i++;
+        prev = cur;
+    }
+}
+```
+
+`R4` é a montagem de 4 reads `in()` / `*(p)` concatenados (low→high):
+`v = t3<<24 | t2<<16 | t1<<8 | t0`. Note que o `0x13c` é o **MSB** (shift `<<0x18`).
+
+Loop clássico de "leitura viajando" — protege contra o caso de o timestamp
+mudar exatamente durante a leitura dos 4 bytes, re-le até duas leituras consecutivas baterem.
+DELAY 100 us entre tentativas. Logging de progressão logarítmica (i%10==1).
+
+---
+
+### 2.4 `rtc_mvl_gettime` @ `0xffffffffdc5d6870` (644 B)
+
+```c
+ulong rtc_mvl_gettime(int64_t dev, struct timespec *ts /* arg2 */)
+{
+    uint32_t s   = R(base, 0x100);   // STATUS primeiro snapshot
+    ts->sec   = s;                   // !? guardou status em sec? (provavelmente nome simbólico confuso)
+
+    mtx_lock_or_assert(dev+8, "rtc_mvl.c", 0xa1);
+
+    uint32_t prev = R4(base, 0x130,0x134,0x138,0x13c);   // primeira leitura 32-bit BE
+    uint32_t i = 1;
+    for (;;) {
+        DELAY(100);  // func_0xffffffffdc4afb10(100)
+        uint32_t cur = R4(base, 0x130,0x134,0x138,0x13c);
+
+        if (prev == cur) break;
+
+        if ((i % 10) == 1)
+            device_printf("[Bug 55086] read_aeolia_rtc: retry %d times. %08x != %08x", i, cur, cur);
+            // (mesma BUG na decompilação mostrada — provavelmente prev,cur)
+
+        i++;
+        prev = cur;
+        if (i == 0x15) {                      // 21 tentativas
+            device_printf("[Bug 55086] retry error, timeout");
+            break;
+        }
+    }
+    ts->sec = prev;                            // offset 4
+
+    mtx_unlock(dev+8, "rtc_mvl.c", 0xce);
+
+    ts->nsec = R(base, 0x160);                 // offset 8  — campo "extra" 0x160
+    ts->pad  = R(base, 0x164);                 // offset 12 — campo "extra" 0x164
+
+    return 0;
+}
+```
+
+Diferencia de `read_aeolia_rtc` (2.3) por:
+- Também ler **STATUS** primeiro e armazenar em offset 0 do output (`ts->status_provavel`).
+- Ser chamada pelo `clock_gettime` do kernel — tem **timeout** máximo (21 tentativas × 100 us = 2.1 ms).
+- Após a leitura estável, ainda lê `0x160` e `0x164` — provavelmente **sub-segundos / tick counter**.
+- Usa strings "Bug 55086" (mantém identidade histórica de bug).
+- `mtx_lock_or_assert` aparece DUAS vezes: linha 0xa1 e 0xce — i.e. `mtx_lock` + `mtx_unlock`.
+
+---
+
+## 3. Diagrama do softc (deduzido)
+
+```
+struct rtc_mvl_softc {
+    ...
+    void    *ri_dev;            // +0x00   dev_t
+    void    *ri_label;          // +0x08   "rtc_mvl"
+    void    *ri_pad;            // +0x10..0x27
+    struct resource *ri_res;    // +0x28   bus_alloc_resource
+        // resource: +0x08 bus_space_tag, +0x10 bus_space_handle
+    ...
+};
+```
+
+`softc->ri_res` é a estrutura FreeBSD `struct resource`. Campos conhecidos:
+- `+0x08` = `r_bustag` (não-zero se MMIO, zero se port I/O)
+- `+0x10` = `r_bushandle` (ponteiro/base do mapping)
+
+O teste `if (*(softc+0x28)+0x08 == 0)` desambigua between `in()` e `*(p)` — ou seja o
+ driver é compatível com port I/O **e** MMIO; o Baikal usa MMIO.
+
+---
+
+## 4. Tabela de ponteiros (jump/method table)
+
+`0xffffffffdd452a58`-`0xffffffffdd452a78`: vetor de 4 ponteiros para as funções acima:
+
+| offset físico | vaddr | aponta para |
+|---|---|---|
+| `0x1102a58` | `0xffffffffdd452a58` | `0xffffffffdc5d63f0` — probe |
+| `0x1102a60` | `0xffffffffdd452a60` | `0xffffffffdc5d6450` — attach (com health check) |
+| `0x1102a68` | `0xffffffffdd452a68` | `0xffffffffdc5d6600` — read_aeolia_rtc básica |
+| `0x1102a70` | `0xffffffffdd452a70` | `0xffffffffdc5d6870` — gettime (completa) |
+
+> ⚠️ Não é uma `device_method_t` clássica FreeBSD (que seria par `{char* name, void* impl}`).
+> Aqui são somente ponteiros — pode ser uma `driver_t` simplificada ou um trecho da
+> `.rodata` que ordena funções para uma busca por nome. **Não encontrado** o `cfdriver`
+> ou `devclass` correspondente — pendente de RE adicional se necessário.
+
+Próximo módulo na memória (`0xffffffffdd452a88`) já aponta para `0xffffffffdc512610` —
+são 6 ponteiros para a família "SMI/NMI/INIT" (`apic`/`clock` do próximo módulo visto
+nas strings). Logo após vêm tabelas `OBJT_*` (vm pager).
+
+---
+
+## 5. Lacunas / pendências
+
+| Função | Origem da referência | Estado |
+|---|---|---|
+| `0xffffffffdc5d6600` revisita | —— | revisado neste arquivo (assume read básica) |
+| `0xffffffffdc5d660b` dentro de read_aeolia_rtc | sub-rotina | pode ser inline |
+| `settime` (`rtc_settime`) | ausente neste cluster | possível função fora do range 0x2863?? — não há strings `settime`/`write_aeolia_rtc` no módulo, sugerindo que este driver **não implementa escrita no RTC** (somente read + gettime) |
+| detach | ausente | sem string `_detach` — driver sem detach explícito (sempre attach-only) |
+
+Implicação importante: o RTC Aeolia Marvell do PS4 é **read-only** no driver FreeBSD
+Orbis — nenhuma função de settime ou write foi localizada nas strings do módulo.
+Isso é consistente com o `BOOTARGS.md` do projeto Linux, que injeta tempo via `time=`
+cmdline em vez de escrever no hardware.
+
+---
+
+## 6. Como reproduzir esta decompilação
+
+```bash
+# Localizar prólogo real de um endereço (validado):
+./consolidado/tools/re_find_func.sh consolidado/dumps_orbis/kmem_dump_1252.bin 0xffffffffdc5d6450
+
+# Decompilar com r2ghidra:
+r2 -q -e bin.relocs.apply=true -e scr.color=0 \
+   -c "af @ 0xffffffffdc5d6870; pdg @ 0xffffffffdc5d6870" \
+   consolidado/dumps_orbis/kmem_dump_1252.bin > saida.c
+```
+
+Base ELF: `0xffffffffdc350000` (confirmado via `readelf -l kmem_dump_1252.bin` — PHDR
+LOAD R+E começa em vaddr `0xffffffffdc350000`).
+
+---
+
+## 7. Strings relacionadas (não diretamente do RTC, mas usadas)
+
+| string | contexto | onde aparece |
+|---|---|---|
+| `BUG 142260` | workaround de silicon do Baikal | logging em 14 lugares do kernel |
+| `BUG 55086` | workaround de leitura estável RTC | logging em retry |
+| `aeolia` | codinome do southbridge Sony | nome do RTC = "Aeolia RTC" → é o codinome do SC (southbridge) |

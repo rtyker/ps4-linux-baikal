@@ -1,0 +1,55 @@
+~ # find /sys/bus/usb/devices -maxdepth 1 -exec sh -c 'echo "-- {} --"; cat {}/i
+dVendor 2>/dev/null; cat {}/idProduct 2>/dev/null; cat {}/product 2>/dev/null; c
+at {}/manufacturer 2>/dev/null' \; ; echo USB_END
+-- /sys/bus/usb/devices --
+-- /sys/bus/usb/devices/usb3 --
+1d6b
+0002
+xHCI Host Controller
+Linux 7.0.8-Strawberry-ThinLTO-Baikal-+ xhci-hcd
+-- /sys/bus/usb/devices/1-2:1.0 --
+-- /sys/bus/usb/devices/usb1 --
+1d6b
+0002
+xHCI Host Controller
+Linux 7.0.8-Strawberry-ThinLTO-Baikal-+ xhci-hcd
+-- /sys/bus/usb/devices/3-0:1.0 --
+-- /sys/bus/usb/devices/1-2.2:1.1 --
+-- /sys/bus/usb/devices/1-2.2 --
+046d
+c31c
+USB Keyboard
+Logitech
+-- /sys/bus/usb/devices/2-2:1.0 --
+-- /sys/bus/usb/devices/1-1 --
+152d
+2329
+USB to ATA/ATAPI bridge
+JMicron
+-- /sys/bus/usb/devices/4-0:1.0 --
+-- /sys/bus/usb/devices/usb4 --
+1d6b
+0003
+xHCI Host Controller
+Linux 7.0.8-Strawberry-ThinLTO-Baikal-+ xhci-hcd
+-- /sys/bus/usb/devices/2-2 --
+054c
+0c87
+4-Port USB 3.0 Hub
+Generic
+-- /sys/bus/usb/devices/usb2 --
+1d6b
+0003
+xHCI Host Controller
+Linux 7.0.8-Strawberry-ThinLTO-Baikal-+ xhci-hcd
+-- /sys/bus/usb/devices/1-0:1.0 --
+-- /sys/bus/usb/devices/1-2 --
+054c
+0c88
+4-Port USB 2.0 Hub
+Generic
+-- /sys/bus/usb/devices/1-1:1.0 --
+-- /sys/bus/usb/devices/1-2.2:1.0 --
+-- /sys/bus/usb/devices/2-0:1.0 --
+USB_END
+~ # 

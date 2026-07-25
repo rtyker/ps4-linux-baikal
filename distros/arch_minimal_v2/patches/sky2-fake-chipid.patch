@@ -1,0 +1,14 @@
+--- a/drivers/net/ethernet/marvell/sky2.c
++++ b/drivers/net/ethernet/marvell/sky2.c
+@@ -5016,6 +5016,11 @@
+ 	hw->chip_id = sky2_read8(hw, B2_CHIP_ID);
+ 	hw->chip_rev = (sky2_read8(hw, B2_MAC_CFG) >> 4) & 0xf;
+ 
++	if (sky2_is_baikal_gbe(pdev)) {
++		hw->chip_id = CHIP_ID_YUKON_OPT;
++		hw->chip_rev = 0;
++	}
++
+ 	switch (hw->chip_id) {
+ 	case CHIP_ID_YUKON_XL:
+ 		hw->flags = SKY2_HW_GIGABIT | SKY2_HW_NEWER_PHY;

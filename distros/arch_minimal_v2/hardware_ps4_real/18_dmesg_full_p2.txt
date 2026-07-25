@@ -1,0 +1,801 @@
+~ # dmesg | tail -798; echo CHUNK2_END
+[    1.162971]  deferred_probe_work_func+0x8b/0xc0
+[    1.162979]  process_scheduled_works+0x1a3/0x340
+[    1.162989]  worker_thread+0x23a/0x2d0
+[    1.162998]  kthread+0x147/0x160
+[    1.163005]  ? pr_cont_work+0x1c0/0x1c0
+[    1.163014]  ? kthread_blkcg+0x30/0x30
+[    1.163021]  ret_from_fork+0xa8/0x220
+[    1.163030]  ? kthread_blkcg+0x30/0x30
+[    1.163037]  ret_from_fork_asm+0x11/0x20
+[    1.163048]  </TASK>
+[    1.163053] ---[ end trace 0000000000000000 ]---
+[    1.163080] ------------[ cut here ]------------
+[    1.163086] WARNING: drivers/gpu/drm/amd/amdgpu/amdgpu_irq.c:703 at amdgpu_irq_put+0x119/0x120, CPU#3: kworker/u32:2/88
+[    1.163101] Modules linked in:
+[    1.163108] CPU: 3 UID: 0 PID: 88 Comm: kworker/u32:2 Tainted: G        W           7.0.8-Strawberry-ThinLTO-Baikal-+ #6 PREEMPT(full) 
+[    1.163120] Tainted: [W]=WARN
+[    1.163124] Hardware name:  , BIOS unde Wed 09/22/2021 16:2
+[    1.163130] Workqueue: events_unbound deferred_probe_work_func
+[    1.163139] RIP: 0010:amdgpu_irq_put+0x119/0x120
+[    1.163150] Code: 10 4c 89 ff 4c 89 f6 89 da ff 10 89 c3 4c 89 e7 48 8b 75 d0 e8 48 2e d9 00 89 d8 48 83 c4 08 5b 41 5c 41 5d 41 5e 41 5f 5d c3 <0f> 0b eb ed cc cc cc 55 48 89 e5 41 56 53 48 83 ec 68 48 89 fb 48
+[    1.163163] RSP: 0018:ffff888140e3bb60 EFLAGS: 00010246
+[    1.163170] RAX: 00000000ffffffea RBX: 0000000000000003 RCX: ffff888140f30b80
+[    1.163177] RDX: ffffffff83139378 RSI: ffff888144225880 RDI: ffff888144200000
+[    1.163184] RBP: ffff888140e3bb90 R08: ffffffff838819b8 R09: 0000000000000000
+[    1.163190] R10: ffff8881423a0d00 R11: 00000000fffdffff R12: ffff888140e3bba0
+[    1.163197] R13: 0000000000000003 R14: ffff888144225880 R15: ffff888144200000
+[    1.163204] FS:  0000000000000000(0000) GS:ffff8882f2663000(0000) knlGS:0000000000000000
+[    1.163213] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[    1.163219] CR2: 0000000000000000 CR3: 0000000008611000 CR4: 00000000000406f0
+[    1.163226] Call Trace:
+[    1.163231]  <TASK>
+[    1.163235]  amdgpu_fence_driver_hw_fini+0x2d/0x140
+[    1.163246]  amdgpu_device_fini_hw+0x248/0x500
+[    1.163255]  amdgpu_driver_unload_kms+0xdd/0x100
+[    1.163264]  amdgpu_driver_load_kms+0x5a/0x80
+[    1.163272]  amdgpu_pci_probe+0x27c/0x620
+[    1.163283]  pci_device_probe.llvm.11969351017067438397+0x7d/0xf0
+[    1.163292]  really_probe+0xc5/0x2f0
+[    1.163300]  driver_probe_device+0xa9/0x1e0
+[    1.163308]  __device_attach_driver+0xfd/0x110
+[    1.163316]  ? coredump_store+0x40/0x40
+[    1.163323]  bus_for_each_drv+0x113/0x140
+[    1.163334]  __device_attach.llvm.6397071845485793410+0xa7/0x110
+[    1.163343]  device_initial_probe+0x2f/0x50
+[    1.163350]  bus_probe_device+0x9e/0x110
+[    1.163360]  deferred_probe_work_func+0x8b/0xc0
+[    1.163368]  process_scheduled_works+0x1a3/0x340
+[    1.163378]  worker_thread+0x23a/0x2d0
+[    1.163387]  kthread+0x147/0x160
+[    1.163394]  ? pr_cont_work+0x1c0/0x1c0
+[    1.163402]  ? kthread_blkcg+0x30/0x30
+[    1.163410]  ret_from_fork+0xa8/0x220
+[    1.163419]  ? kthread_blkcg+0x30/0x30
+[    1.163426]  ret_from_fork_asm+0x11/0x20
+[    1.163437]  </TASK>
+[    1.163442] ---[ end trace 0000000000000000 ]---
+[    1.163469] ------------[ cut here ]------------
+[    1.163474] WARNING: drivers/gpu/drm/amd/amdgpu/amdgpu_irq.c:703 at amdgpu_irq_put+0x119/0x120, CPU#3: kworker/u32:2/88
+[    1.163490] Modules linked in:
+[    1.163496] CPU: 3 UID: 0 PID: 88 Comm: kworker/u32:2 Tainted: G        W           7.0.8-Strawberry-ThinLTO-Baikal-+ #6 PREEMPT(full) 
+[    1.163508] Tainted: [W]=WARN
+[    1.163513] Hardware name:  , BIOS unde Wed 09/22/2021 16:2
+[    1.163519] Workqueue: events_unbound deferred_probe_work_func
+[    1.163528] RIP: 0010:amdgpu_irq_put+0x119/0x120
+[    1.163538] Code: 10 4c 89 ff 4c 89 f6 89 da ff 10 89 c3 4c 89 e7 48 8b 75 d0 e8 48 2e d9 00 89 d8 48 83 c4 08 5b 41 5c 41 5d 41 5e 41 5f 5d c3 <0f> 0b eb ed cc cc cc 55 48 89 e5 41 56 53 48 83 ec 68 48 89 fb 48
+[    1.163551] RSP: 0018:ffff888140e3bb60 EFLAGS: 00010246
+[    1.163558] RAX: 00000000ffffffea RBX: 0000000000000004 RCX: ffff888140f30b80
+[    1.163565] RDX: ffffffff83139378 RSI: ffff888144225880 RDI: ffff888144200000
+[    1.163572] RBP: ffff888140e3bb90 R08: ffffffff838819b8 R09: 0000000000000000
+[    1.163579] R10: ffff8881423a0d00 R11: 00000000fffdffff R12: ffff888140e3bba0
+[    1.163585] R13: 0000000000000004 R14: ffff888144225880 R15: ffff888144200000
+[    1.163592] FS:  0000000000000000(0000) GS:ffff8882f2663000(0000) knlGS:0000000000000000
+[    1.163601] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[    1.163607] CR2: 0000000000000000 CR3: 0000000008611000 CR4: 00000000000406f0
+[    1.163614] Call Trace:
+[    1.163619]  <TASK>
+[    1.163624]  amdgpu_fence_driver_hw_fini+0x2d/0x140
+[    1.163635]  amdgpu_device_fini_hw+0x248/0x500
+[    1.163643]  amdgpu_driver_unload_kms+0xdd/0x100
+[    1.163652]  amdgpu_driver_load_kms+0x5a/0x80
+[    1.163661]  amdgpu_pci_probe+0x27c/0x620
+[    1.163671]  pci_device_probe.llvm.11969351017067438397+0x7d/0xf0
+[    1.163681]  really_probe+0xc5/0x2f0
+[    1.163688]  driver_probe_device+0xa9/0x1e0
+[    1.163696]  __device_attach_driver+0xfd/0x110
+[    1.163704]  ? coredump_store+0x40/0x40
+[    1.163711]  bus_for_each_drv+0x113/0x140
+[    1.163722]  __device_attach.llvm.6397071845485793410+0xa7/0x110
+[    1.163731]  device_initial_probe+0x2f/0x50
+[    1.163738]  bus_probe_device+0x9e/0x110
+[    1.163748]  deferred_probe_work_func+0x8b/0xc0
+[    1.163756]  process_scheduled_works+0x1a3/0x340
+[    1.163766]  worker_thread+0x23a/0x2d0
+[    1.163775]  kthread+0x147/0x160
+[    1.163782]  ? pr_cont_work+0x1c0/0x1c0
+[    1.163790]  ? kthread_blkcg+0x30/0x30
+[    1.163798]  ret_from_fork+0xa8/0x220
+[    1.163806]  ? kthread_blkcg+0x30/0x30
+[    1.163814]  ret_from_fork_asm+0x11/0x20
+[    1.163825]  </TASK>
+[    1.163829] ---[ end trace 0000000000000000 ]---
+[    1.163857] ------------[ cut here ]------------
+[    1.163862] WARNING: drivers/gpu/drm/amd/amdgpu/amdgpu_irq.c:703 at amdgpu_irq_put+0x119/0x120, CPU#3: kworker/u32:2/88
+[    1.163877] Modules linked in:
+[    1.163884] CPU: 3 UID: 0 PID: 88 Comm: kworker/u32:2 Tainted: G        W           7.0.8-Strawberry-ThinLTO-Baikal-+ #6 PREEMPT(full) 
+[    1.163896] Tainted: [W]=WARN
+[    1.163900] Hardware name:  , BIOS unde Wed 09/22/2021 16:2
+[    1.163906] Workqueue: events_unbound deferred_probe_work_func
+[    1.163915] RIP: 0010:amdgpu_irq_put+0x119/0x120
+[    1.163925] Code: 10 4c 89 ff 4c 89 f6 89 da ff 10 89 c3 4c 89 e7 48 8b 75 d0 e8 48 2e d9 00 89 d8 48 83 c4 08 5b 41 5c 41 5d 41 5e 41 5f 5d c3 <0f> 0b eb ed cc cc cc 55 48 89 e5 41 56 53 48 83 ec 68 48 89 fb 48
+[    1.163939] RSP: 0018:ffff888140e3bb60 EFLAGS: 00010246
+[    1.163946] RAX: 00000000ffffffea RBX: 0000000000000005 RCX: ffff888140f30b80
+[    1.163953] RDX: ffffffff83139378 RSI: ffff888144225880 RDI: ffff888144200000
+[    1.163959] RBP: ffff888140e3bb90 R08: ffffffff838819b8 R09: 0000000000000000
+[    1.163966] R10: ffff8881423a0d00 R11: 00000000fffdffff R12: ffff888140e3bba0
+[    1.163973] R13: 0000000000000005 R14: ffff888144225880 R15: ffff888144200000
+[    1.163980] FS:  0000000000000000(0000) GS:ffff8882f2663000(0000) knlGS:0000000000000000
+[    1.163988] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[    1.163995] CR2: 0000000000000000 CR3: 0000000008611000 CR4: 00000000000406f0
+[    1.164002] Call Trace:
+[    1.164006]  <TASK>
+[    1.164011]  amdgpu_fence_driver_hw_fini+0x2d/0x140
+[    1.164022]  amdgpu_device_fini_hw+0x248/0x500
+[    1.164030]  amdgpu_driver_unload_kms+0xdd/0x100
+[    1.164039]  amdgpu_driver_load_kms+0x5a/0x80
+[    1.164048]  amdgpu_pci_probe+0x27c/0x620
+[    1.164058]  pci_device_probe.llvm.11969351017067438397+0x7d/0xf0
+[    1.164068]  really_probe+0xc5/0x2f0
+[    1.164076]  driver_probe_device+0xa9/0x1e0
+[    1.164084]  __device_attach_driver+0xfd/0x110
+[    1.164092]  ? coredump_store+0x40/0x40
+[    1.164099]  bus_for_each_drv+0x113/0x140
+[    1.164109]  __device_attach.llvm.6397071845485793410+0xa7/0x110
+[    1.164119]  device_initial_probe+0x2f/0x50
+[    1.164126]  bus_probe_device+0x9e/0x110
+[    1.164136]  deferred_probe_work_func+0x8b/0xc0
+[    1.164144]  process_scheduled_works+0x1a3/0x340
+[    1.164154]  worker_thread+0x23a/0x2d0
+[    1.164163]  kthread+0x147/0x160
+[    1.164170]  ? pr_cont_work+0x1c0/0x1c0
+[    1.164178]  ? kthread_blkcg+0x30/0x30
+[    1.164186]  ret_from_fork+0xa8/0x220
+[    1.164194]  ? kthread_blkcg+0x30/0x30
+[    1.164202]  ret_from_fork_asm+0x11/0x20
+[    1.164213]  </TASK>
+[    1.164217] ---[ end trace 0000000000000000 ]---
+[    1.164245] ------------[ cut here ]------------
+[    1.164251] WARNING: drivers/gpu/drm/amd/amdgpu/amdgpu_irq.c:703 at amdgpu_irq_put+0x119/0x120, CPU#3: kworker/u32:2/88
+[    1.164266] Modules linked in:
+[    1.164272] CPU: 3 UID: 0 PID: 88 Comm: kworker/u32:2 Tainted: G        W           7.0.8-Strawberry-ThinLTO-Baikal-+ #6 PREEMPT(full) 
+[    1.164284] Tainted: [W]=WARN
+[    1.164289] Hardware name:  , BIOS unde Wed 09/22/2021 16:2
+[    1.164295] Workqueue: events_unbound deferred_probe_work_func
+[    1.164304] RIP: 0010:amdgpu_irq_put+0x119/0x120
+[    1.164314] Code: 10 4c 89 ff 4c 89 f6 89 da ff 10 89 c3 4c 89 e7 48 8b 75 d0 e8 48 2e d9 00 89 d8 48 83 c4 08 5b 41 5c 41 5d 41 5e 41 5f 5d c3 <0f> 0b eb ed cc cc cc 55 48 89 e5 41 56 53 48 83 ec 68 48 89 fb 48
+[    1.164327] RSP: 0018:ffff888140e3bb60 EFLAGS: 00010246
+[    1.164334] RAX: 00000000ffffffea RBX: 0000000000000000 RCX: ffff888140f30b40
+[    1.164341] RDX: ffffffff83139690 RSI: ffff88814422d2a0 RDI: ffff888144200000
+[    1.164348] RBP: ffff888140e3bb90 R08: ffffffff838819b8 R09: 0000000000000000
+[    1.164355] R10: ffff8881423a0d00 R11: 00000000fffdffff R12: ffff888140e3bba0
+[    1.164362] R13: 0000000000000000 R14: ffff88814422d2a0 R15: ffff888144200000
+[    1.164369] FS:  0000000000000000(0000) GS:ffff8882f2663000(0000) knlGS:0000000000000000
+[    1.164377] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[    1.164384] CR2: 0000000000000000 CR3: 0000000008611000 CR4: 00000000000406f0
+[    1.164391] Call Trace:
+[    1.164395]  <TASK>
+[    1.164400]  amdgpu_fence_driver_hw_fini+0x2d/0x140
+[    1.164412]  amdgpu_device_fini_hw+0x248/0x500
+[    1.164421]  amdgpu_driver_unload_kms+0xdd/0x100
+[    1.164430]  amdgpu_driver_load_kms+0x5a/0x80
+[    1.164438]  amdgpu_pci_probe+0x27c/0x620
+[    1.164449]  pci_device_probe.llvm.11969351017067438397+0x7d/0xf0
+[    1.164459]  really_probe+0xc5/0x2f0
+[    1.164466]  driver_probe_device+0xa9/0x1e0
+[    1.164474]  __device_attach_driver+0xfd/0x110
+[    1.164482]  ? coredump_store+0x40/0x40
+[    1.164489]  bus_for_each_drv+0x113/0x140
+[    1.164499]  __device_attach.llvm.6397071845485793410+0xa7/0x110
+[    1.164508]  device_initial_probe+0x2f/0x50
+[    1.164516]  bus_probe_device+0x9e/0x110
+[    1.164525]  deferred_probe_work_func+0x8b/0xc0
+[    1.164533]  process_scheduled_works+0x1a3/0x340
+[    1.164543]  worker_thread+0x23a/0x2d0
+[    1.164552]  kthread+0x147/0x160
+[    1.164559]  ? pr_cont_work+0x1c0/0x1c0
+[    1.164567]  ? kthread_blkcg+0x30/0x30
+[    1.164575]  ret_from_fork+0xa8/0x220
+[    1.164583]  ? kthread_blkcg+0x30/0x30
+[    1.164591]  ret_from_fork_asm+0x11/0x20
+[    1.164602]  </TASK>
+[    1.164606] ---[ end trace 0000000000000000 ]---
+[    1.164646] ------------[ cut here ]------------
+[    1.164653] WARNING: drivers/gpu/drm/amd/amdgpu/amdgpu_irq.c:703 at amdgpu_irq_put+0x119/0x120, CPU#3: kworker/u32:2/88
+[    1.164668] Modules linked in:
+[    1.164675] CPU: 3 UID: 0 PID: 88 Comm: kworker/u32:2 Tainted: G        W           7.0.8-Strawberry-ThinLTO-Baikal-+ #6 PREEMPT(full) 
+[    1.164687] Tainted: [W]=WARN
+[    1.164692] Hardware name:  , BIOS unde Wed 09/22/2021 16:2
+[    1.164698] Workqueue: events_unbound deferred_probe_work_func
+[    1.164707] RIP: 0010:amdgpu_irq_put+0x119/0x120
+[    1.164717] Code: 10 4c 89 ff 4c 89 f6 89 da ff 10 89 c3 4c 89 e7 48 8b 75 d0 e8 48 2e d9 00 89 d8 48 83 c4 08 5b 41 5c 41 5d 41 5e 41 5f 5d c3 <0f> 0b eb ed cc cc cc 55 48 89 e5 41 56 53 48 83 ec 68 48 89 fb 48
+[    1.164730] RSP: 0018:ffff888140e3bb60 EFLAGS: 00010246
+[    1.164737] RAX: 00000000ffffffea RBX: 0000000000000001 RCX: ffff888140f30b40
+[    1.164744] RDX: ffffffff83139690 RSI: ffff88814422d2a0 RDI: ffff888144200000
+[    1.164751] RBP: ffff888140e3bb90 R08: ffffffff838819b8 R09: 0000000000000000
+[    1.164757] R10: ffff8881423a0d00 R11: 00000000fffdffff R12: ffff888140e3bba0
+[    1.164764] R13: 0000000000000001 R14: ffff88814422d2a0 R15: ffff888144200000
+[    1.164771] FS:  0000000000000000(0000) GS:ffff8882f2663000(0000) knlGS:0000000000000000
+[    1.164779] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[    1.164786] CR2: 0000000000000000 CR3: 0000000008611000 CR4: 00000000000406f0
+[    1.164793] Call Trace:
+[    1.164797]  <TASK>
+[    1.164802]  amdgpu_fence_driver_hw_fini+0x2d/0x140
+[    1.164813]  amdgpu_device_fini_hw+0x248/0x500
+[    1.164822]  amdgpu_driver_unload_kms+0xdd/0x100
+[    1.164830]  amdgpu_driver_load_kms+0x5a/0x80
+[    1.164839]  amdgpu_pci_probe+0x27c/0x620
+[    1.164849]  pci_device_probe.llvm.11969351017067438397+0x7d/0xf0
+[    1.164859]  really_probe+0xc5/0x2f0
+[    1.164866]  driver_probe_device+0xa9/0x1e0
+[    1.164874]  __device_attach_driver+0xfd/0x110
+[    1.164882]  ? coredump_store+0x40/0x40
+[    1.164889]  bus_for_each_drv+0x113/0x140
+[    1.164899]  __device_attach.llvm.6397071845485793410+0xa7/0x110
+[    1.164908]  device_initial_probe+0x2f/0x50
+[    1.164916]  bus_probe_device+0x9e/0x110
+[    1.164926]  deferred_probe_work_func+0x8b/0xc0
+[    1.164933]  process_scheduled_works+0x1a3/0x340
+[    1.164943]  worker_thread+0x23a/0x2d0
+[    1.164952]  kthread+0x147/0x160
+[    1.164959]  ? pr_cont_work+0x1c0/0x1c0
+[    1.164967]  ? kthread_blkcg+0x30/0x30
+[    1.164975]  ret_from_fork+0xa8/0x220
+[    1.164983]  ? kthread_blkcg+0x30/0x30
+[    1.164991]  ret_from_fork_asm+0x11/0x20
+[    1.165002]  </TASK>
+[    1.165006] ---[ end trace 0000000000000000 ]---
+[    1.166147] ------------[ cut here ]------------
+[    1.166153] WARNING: drivers/gpu/drm/amd/amdgpu/amdgpu_irq.c:703 at amdgpu_irq_put+0x119/0x120, CPU#3: kworker/u32:2/88
+[    1.166168] Modules linked in:
+[    1.166175] CPU: 3 UID: 0 PID: 88 Comm: kworker/u32:2 Tainted: G        W           7.0.8-Strawberry-ThinLTO-Baikal-+ #6 PREEMPT(full) 
+[    1.166188] Tainted: [W]=WARN
+[    1.166192] Hardware name:  , BIOS unde Wed 09/22/2021 16:2
+[    1.166198] Workqueue: events_unbound deferred_probe_work_func
+[    1.166207] RIP: 0010:amdgpu_irq_put+0x119/0x120
+[    1.166217] Code: 10 4c 89 ff 4c 89 f6 89 da ff 10 89 c3 4c 89 e7 48 8b 75 d0 e8 48 2e d9 00 89 d8 48 83 c4 08 5b 41 5c 41 5d 41 5e 41 5f 5d c3 <0f> 0b eb ed cc cc cc 55 48 89 e5 41 56 53 48 83 ec 68 48 89 fb 48
+[    1.166231] RSP: 0018:ffff888140e3bb88 EFLAGS: 00010246
+[    1.166238] RAX: 00000000ffffffea RBX: 0000000000000000 RCX: ffff8881415d4510
+[    1.166245] RDX: ffffffff83142620 RSI: ffff888144200c60 RDI: ffff888144200000
+[    1.166251] RBP: ffff888140e3bbb8 R08: 0000000000000003 R09: 0000000000000003
+[    1.166258] R10: ffff8881423a0d00 R11: 00000000fffdffff R12: 0000000000000006
+[    1.166265] R13: 0000000000000000 R14: ffff888144200c60 R15: ffff888144200000
+[    1.166272] FS:  0000000000000000(0000) GS:ffff8882f2663000(0000) knlGS:0000000000000000
+[    1.166280] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[    1.166287] CR2: 0000000000000000 CR3: 0000000008611000 CR4: 00000000000406f0
+[    1.166294] Call Trace:
+[    1.166298]  <TASK>
+[    1.166303]  gmc_v7_0_hw_fini.llvm.14826171144466456046+0x1a/0xa0
+[    1.166314]  amdgpu_device_fini_hw+0x42b/0x500
+[    1.166323]  amdgpu_driver_unload_kms+0xdd/0x100
+[    1.166331]  amdgpu_driver_load_kms+0x5a/0x80
+[    1.166340]  amdgpu_pci_probe+0x27c/0x620
+[    1.166350]  pci_device_probe.llvm.11969351017067438397+0x7d/0xf0
+[    1.166360]  really_probe+0xc5/0x2f0
+[    1.166367]  driver_probe_device+0xa9/0x1e0
+[    1.166375]  __device_attach_driver+0xfd/0x110
+[    1.166383]  ? coredump_store+0x40/0x40
+[    1.166390]  bus_for_each_drv+0x113/0x140
+[    1.166400]  __device_attach.llvm.6397071845485793410+0xa7/0x110
+[    1.166409]  device_initial_probe+0x2f/0x50
+[    1.166417]  bus_probe_device+0x9e/0x110
+[    1.166427]  deferred_probe_work_func+0x8b/0xc0
+[    1.166435]  process_scheduled_works+0x1a3/0x340
+[    1.166444]  worker_thread+0x23a/0x2d0
+[    1.166453]  kthread+0x147/0x160
+[    1.166460]  ? pr_cont_work+0x1c0/0x1c0
+[    1.166469]  ? kthread_blkcg+0x30/0x30
+[    1.166481]  ret_from_fork+0xa8/0x220
+[    1.166491]  ? kthread_blkcg+0x30/0x30
+[    1.166499]  ret_from_fork_asm+0x11/0x20
+[    1.166510]  </TASK>
+[    1.166514] ---[ end trace 0000000000000000 ]---
+[    1.166697] amdgpu 0000:00:01.0: probe with driver amdgpu failed with error -110
+[    1.167012] amdgpu 0000:00:01.0:  ttm finalized
+[    1.167541] ahci 0000:00:14.2: DMA bits = 32
+[    1.167554] ahci 0000:00:14.2: DMA enable
+[    1.167582] ahci 0000:00:14.2: AHCI vers 0001.0300, 32 command slots, 3 Gbps, unknown mode
+[    1.167594] ahci 0000:00:14.2: 1/1 ports implemented (port mask 0x1)
+[    1.167602] ahci 0000:00:14.2: flags: ncq sntf pm clo only pmp pio slum part ccc apst 
+[    1.167956] scsi host1: ahci
+[    1.168055] ata2: SATA max UDMA/133 abar m32768@0xc4000000 port 0xc4000100 irq 35 lpm-pol 1 ext
+[    1.168131] netconsole: netconsole: local port 6665
+[    1.168143] netconsole: netconsole: local IPv4 address 192.168.0.2
+[    1.168153] netconsole: netconsole: interface name 'eth0'
+[    1.168159] netconsole: netconsole: local ethernet address 'ff:ff:ff:ff:ff:ff'
+[    1.168168] netconsole: netconsole: remote port 6666
+[    1.168174] netconsole: netconsole: remote IPv4 address 192.168.0.1
+[    1.168181] netconsole: netconsole: remote ethernet address b4:45:06:6c:f6:4f
+[    1.168189] netpoll: netconsole: eth0 doesn't exist, aborting
+[    1.168196] netconsole: Not enabling netconsole for cmdline0. Netpoll setup failed
+[    1.168347] printk: console [netcon0] enabled
+[    1.168358] netconsole: network logging started
+[    1.168501] cfg80211: Loading compiled-in X.509 certificates for regulatory database
+[    1.169433] Loaded X.509 cert 'sforshee: 00b28ddf47aef9cea7'
+[    1.169995] Loaded X.509 cert 'wens: 61c038651aabdcf94bd0ac7ff06c7248db18c600'
+[    1.170022] clk: Disabling unused clocks
+[    1.170034] ALSA device list:
+[    1.170041]   #0: HD-Audio Generic at 0xe4840000 irq 34
+[    1.170160] faux_driver regulatory: Direct firmware load for regulatory.db failed with error -2
+[    1.170179] cfg80211: failed to load regulatory.db
+[    1.176445] usb usb4-port1: over-current condition
+[    1.221072] usb 1-1: New USB device found, idVendor=152d, idProduct=2329, bcdDevice= 1.00
+[    1.221094] usb 1-1: New USB device strings: Mfr=1, Product=2, SerialNumber=5
+[    1.221105] usb 1-1: Product: USB to ATA/ATAPI bridge
+[    1.221115] usb 1-1: Manufacturer: JMicron
+[    1.221122] usb 1-1: SerialNumber: 50026B724C07
+[    1.221823] usb-storage 1-1:1.0: USB Mass Storage device detected
+[    1.221993] usb-storage 1-1:1.0: Quirks match for vid 152d pid 2329: 8020
+[    1.222087] scsi host2: usb-storage 1-1:1.0
+[    1.307017] ata1: SATA link up 3.0 Gbps (SStatus 123 SControl 300)
+[    1.340586] usb 2-2: new SuperSpeed USB device number 2 using xhci_aeolia
+[    1.357073] ata1.00: ATA-10: TOSHIBA MQ04ABF100, JU0G0A, max UDMA/100
+[    1.358684] ata1.00: 1953525168 sectors, multi 16: LBA48 NCQ (depth 32), AA
+[    1.361914] ata1.00: Features: HIPM DIPM
+[    1.367158] usb 2-2: New USB device found, idVendor=054c, idProduct=0c87, bcdDevice= 1.04
+[    1.367182] usb 2-2: New USB device strings: Mfr=1, Product=2, SerialNumber=0
+[    1.367192] usb 2-2: Product: 4-Port USB 3.0 Hub
+[    1.367200] usb 2-2: Manufacturer: Generic
+[    1.397445] ata1.00: configured for UDMA/100
+[    1.397755] scsi 0:0:0:0: Direct-Access     ATA      TOSHIBA MQ04ABF1 0A   PQ: 0 ANSI: 5
+[    1.398355] sd 0:0:0:0: Attached scsi generic sg0 type 0
+[    1.398478] sd 0:0:0:0: [sda] Drive-managed SMR disk
+[    1.398504] sd 0:0:0:0: [sda] 1953525168 512-byte logical blocks: (1.00 TB/932 GiB)
+[    1.398519] sd 0:0:0:0: [sda] 4096-byte physical blocks
+[    1.398555] sd 0:0:0:0: [sda] Write Protect is off
+[    1.398570] sd 0:0:0:0: [sda] Mode Sense: 00 3a 00 00
+[    1.398620] sd 0:0:0:0: [sda] Write cache: enabled, read cache: enabled, doesn't support DPO or FUA
+[    1.398707] sd 0:0:0:0: [sda] Preferred minimum I/O size 4096 bytes
+[    1.400162] hub 2-2:1.0: USB hub found
+[    1.400947] hub 2-2:1.0: 2 ports detected
+[    1.480435] usb 1-2: new high-speed USB device number 3 using xhci_aeolia
+[    1.626486] usb 1-2: New USB device found, idVendor=054c, idProduct=0c88, bcdDevice= 1.04
+[    1.626508] usb 1-2: New USB device strings: Mfr=1, Product=2, SerialNumber=0
+[    1.626519] usb 1-2: Product: 4-Port USB 2.0 Hub
+[    1.626529] usb 1-2: Manufacturer: Generic
+[    1.644394] ata2: SATA link up 1.5 Gbps (SStatus 113 SControl 300)
+[    1.644842] ata2.00: ATAPI: SONY    PS-SYSTEM   420R, 6141, max UDMA/133
+[    1.645569] ata2.00: configured for UDMA/133
+[    1.661072] scsi 1:0:0:0: CD-ROM            SONY     PS-SYSTEM   420R 6141 PQ: 0 ANSI: 5
+[    1.669633] hub 1-2:1.0: USB hub found
+[    1.670200] hub 1-2:1.0: 2 ports detected
+[    1.680762] sr 1:0:0:0: [sr0] scsi3-mmc drive: 0x/0x cd/rw xa/form2 cdda tray
+[    1.680781] cdrom: Uniform CD-ROM driver Revision: 3.20
+[    1.688872] sr 1:0:0:0: Attached scsi CD-ROM sr0
+[    1.688997] sr 1:0:0:0: Attached scsi generic sg1 type 5
+[    1.708370] clocksource: tsc: mask: 0xffffffffffffffff max_cycles: 0x16fa00e7d19, max_idle_ns: 440795227561 ns
+[    1.708450] clocksource: Switched to clocksource tsc
+[    1.992587] [wlan][43]wlanAdapterStart:(INIT WARN) Send a Dummy CMD as workaround
+[    1.992751] [wlan][43]wlanQueryNicCapability:(INIT WARN) wlanQueryNicCapability: skip unexpected event ID[0x27]
+[    1.999118] [wlan][43]wlanAdapterStart:(INIT WARN) wlanAdapterStart: load manufacture data fail
+[    2.013780] usb 1-2.2: new low-speed USB device number 4 using xhci_aeolia
+[    2.125066] usb 1-2.2: New USB device found, idVendor=046d, idProduct=c31c, bcdDevice=49.00
+[    2.125102] usb 1-2.2: New USB device strings: Mfr=1, Product=2, SerialNumber=0
+[    2.125114] usb 1-2.2: Product: USB Keyboard
+[    2.125122] usb 1-2.2: Manufacturer: Logitech
+[    2.180171] [wlan][43]mtk_reg_notify:(RLM WARN) County Code is not assigned. Use default WW.
+[    2.180206] [wlan][43]rlmDomainSearchRegdomainFromLocalDataBase:(RLM ERROR) rlmDomainSearchRegdomainFromLocalDataBase(): Error, Cannot find the correct RegDomain. country = 00.
+[    2.181328] [wlan][139]wlanBindBssIdxToNetInterface:(INIT ERROR) Array index out of bound, ucBssIndex=4
+[    2.181353] [wlan][139]p2pRoleFsmStateTransition:(P2P STATE) [P2P_ROLE][0]TRANSITION(Bss1): [P2P_ROLE_STATE_IDLE] -> [P2P_ROLE_STATE_IDLE]
+[    2.181391] [wlan][139]wlanBindBssIdxToNetInterface:(INIT ERROR) Array index out of bound, ucBssIndex=4
+[    2.181413] [wlan][139]p2pRoleFsmStateTransition:(P2P STATE) [P2P_ROLE][1]TRANSITION(Bss2): [P2P_ROLE_STATE_IDLE] -> [P2P_ROLE_STATE_IDLE]
+[    2.181432] [wlan][139]wlanProcessCommandQueue:(INIT WARN) NO Res CMD TYPE[1] ID[0x11] SEQ[29]
+[    2.181795] [wlan][140]halPrintMailbox:(INIT ERROR) MailBox Status = 0x0003005A, 0x00FF00FF
+[    2.181891] [wlan][140]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0053136
+[    2.181936] [wlan][140]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE8
+[    2.181983] [wlan][140]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[    2.182028] [wlan][140]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE4
+[    2.182074] [wlan][140]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[    2.182148] [wlan][139]wlanProcessCommandQueue:(INIT WARN) NO Res CMD TYPE[1] ID[0x70] SEQ[34]
+[    2.182165] [wlan][139]wlanProcessCommandQueue:(INIT WARN) NO Res CMD TYPE[1] ID[0x70] SEQ[34]
+[    2.182186] [wlan][139]wlanProcessCommandQueue:(INIT WARN) NO Res CMD TYPE[1] ID[0x70] SEQ[34]
+[    2.182445] [wlan][140]halPrintMailbox:(INIT ERROR) MailBox Status = 0x0003005A, 0x00FF00FF
+[    2.182494] [wlan][140]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[    2.182537] [wlan][140]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[    2.182583] [wlan][140]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[    2.182627] [wlan][140]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DF6
+[    2.182671] [wlan][140]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DF6
+[    2.182817] [wlan][139]wlanProcessCommandQueue:(INIT WARN) NO Res CMD TYPE[1] ID[0x70] SEQ[35]
+[    2.182983] [wlan][140]halPrintMailbox:(INIT ERROR) MailBox Status = 0x0003005A, 0x00FF00FF
+[    2.183032] [wlan][140]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[    2.183075] [wlan][140]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE4
+[    2.183119] [wlan][140]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[    2.183163] [wlan][140]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[    2.183206] [wlan][140]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[    2.184177] [wlan][139]wlanProcessCommandQueue:(INIT WARN) NO Res CMD TYPE[1] ID[0x70] SEQ[36]
+[    2.184321] [wlan][140]halPrintMailbox:(INIT ERROR) MailBox Status = 0x0003005A, 0x00FF00FF
+[    2.184368] [wlan][140]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[    2.184412] [wlan][140]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[    2.184456] [wlan][140]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[    2.184499] [wlan][140]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[    2.184543] [wlan][140]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[    2.185746] [wlan][139]wlanoidSetGtkRekeyData:(REQ INFO) wlanoidSetGtkRekeyData
+[    2.185762] [wlan][139]wlanoidSetGtkRekeyData:(REQ INFO) ucCmdSeqNum = 41
+[    2.187174] Bluetooth: hci0: Firmware already downloaded
+[    2.210740] Bluetooth: hci0: Device setup in 23491 usecs
+[    2.220572] input: Logitech USB Keyboard as /devices/pci0000:00/0000:00:14.7/usb1/1-2/1-2.2/1-2.2:1.0/0003:046D:C31C.0001/input/input3
+[    2.250223] scsi 2:0:0:0: Direct-Access     KINGSTON  SV300S37A120G        PQ: 0 ANSI: 2 CCS
+[    2.250512] sd 2:0:0:0: Attached scsi generic sg2 type 0
+[    2.257396] sd 2:0:0:0: [sdb] 234441648 512-byte logical blocks: (120 GB/112 GiB)
+[    2.257816] sd 2:0:0:0: [sdb] Write Protect is off
+[    2.257832] sd 2:0:0:0: [sdb] Mode Sense: 28 00 00 00
+[    2.258135] sd 2:0:0:0: [sdb] No Caching mode page found
+[    2.258150] sd 2:0:0:0: [sdb] Assuming drive cache: write through
+[    2.270331]  sdb: sdb1 sdb2
+[    2.270615] sd 2:0:0:0: [sdb] Attached SCSI disk
+[    2.274368] hid-generic 0003:046D:C31C.0001: input,hidraw0: USB HID v1.10 Keyboard [Logitech USB Keyboard] on usb-0000:00:14.7-2.2/input0
+[    2.277591] input: Logitech USB Keyboard as /devices/pci0000:00/0000:00:14.7/usb1/1-2/1-2.2/1-2.2:1.1/0003:046D:C31C.0002/input/input4
+[    2.330063] hid-generic 0003:046D:C31C.0002: input,hidraw1: USB HID v1.10 Device [Logitech USB Keyboard] on usb-0000:00:14.7-2.2/input1
+[    7.209793] [wlan][139]wlanProcessCommandQueue:(INIT WARN) NO Res CMD TYPE[1] ID[0x14] SEQ[49]
+[    7.210282] [wlan][140]halPrintMailbox:(INIT ERROR) MailBox Status = 0x0003005A, 0x00FF00FF
+[    7.210359] [wlan][140]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DF2
+[    7.210408] [wlan][140]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[    7.210454] [wlan][140]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[    7.210500] [wlan][140]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DEE
+[    7.210545] [wlan][140]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DF6
+[   32.049954] ata1.00: exception Emask 0x0 SAct 0x400000 SErr 0x0 action 0x6 frozen
+[   32.049990] ata1.00: failed command: READ FPDMA QUEUED
+[   32.049999] ata1.00: cmd 60/08:b0:00:00:00/00:00:00:00:00/40 tag 22 ncq dma 4096 in
+[   32.049999]          res 40/00:00:00:00:00/00:00:00:00:00/00 Emask 0x4 (timeout)
+[   32.050026] ata1.00: status: { DRDY }
+[   32.050039] ata1: hard resetting link
+[   32.517777] ata1: SATA link up 3.0 Gbps (SStatus 123 SControl 300)
+[   37.673817] ata1.00: qc timeout after 5000 msecs (cmd 0xec)
+[   37.673858] ata1.00: failed to IDENTIFY (I/O error, err_mask=0x4)
+[   37.673869] ata1.00: revalidation failed (errno=-5)
+[   37.673879] ata1: hard resetting link
+[   38.141771] ata1: SATA link up 3.0 Gbps (SStatus 123 SControl 300)
+[   48.169768] ata1.00: qc timeout after 10000 msecs (cmd 0xec)
+[   48.169815] ata1.00: failed to IDENTIFY (I/O error, err_mask=0x4)
+[   48.169826] ata1.00: revalidation failed (errno=-5)
+[   48.169837] ata1: limiting SATA link speed to 1.5 Gbps
+[   48.169852] ata1: hard resetting link
+[   48.637829] ata1: SATA link up 1.5 Gbps (SStatus 113 SControl 310)
+[   79.145805] ata1.00: qc timeout after 30000 msecs (cmd 0xec)
+[   79.145848] ata1.00: failed to IDENTIFY (I/O error, err_mask=0x4)
+[   79.145859] ata1.00: revalidation failed (errno=-5)
+[   79.145869] ata1.00: disable device
+[   79.613771] ata1: SATA link up 1.5 Gbps (SStatus 113 SControl 310)
+[   79.613843] ata1: EH complete
+[   79.614062] sd 0:0:0:0: [sda] tag#0 UNKNOWN(0x2003) Result: hostbyte=0x04 driverbyte=DRIVER_OK cmd_age=78s
+[   79.614087] sd 0:0:0:0: [sda] tag#0 CDB: opcode=0x28 28 00 00 00 00 00 00 00 08 00
+[   79.614099] I/O error, dev sda, sector 0 op 0x0:(READ) flags 0x800000 phys_seg 1 prio class 2
+[   79.614113] Buffer I/O error on dev sda, logical block 0, async page read
+[   79.614212] sd 0:0:0:0: [sda] tag#23 UNKNOWN(0x2003) Result: hostbyte=0x04 driverbyte=DRIVER_OK cmd_age=0s
+[   79.614247] sd 0:0:0:0: [sda] tag#23 CDB: opcode=0x28 28 00 00 00 00 00 00 00 08 00
+[   79.614261] I/O error, dev sda, sector 0 op 0x0:(READ) flags 0x800000 phys_seg 1 prio class 2
+[   79.614276] Buffer I/O error on dev sda, logical block 0, async page read
+[   79.614304]  sda: unable to read partition table
+[   79.614351] sd 0:0:0:0: [sda] Attached SCSI disk
+[   79.614978] Freeing unused kernel image (initmem) memory: 1176K
+[   79.615009] Write protecting the kernel read-only data: 38912k
+[   79.615845] Freeing unused kernel image (text/rodata gap) memory: 1028K
+[   79.616673] Freeing unused kernel image (rodata/data gap) memory: 1716K
+[   79.616714] Run /init as init process
+[   79.616724]   with arguments:
+[   79.616731]     /init
+[   79.616739]   with environment:
+[   79.616747]     HOME=/
+[   79.616755]     TERM=linux
+[   79.629246] === PS4 DEBUG INITRAMFS v2 (wifi+telnet) ALIVE ===
+[   79.630424] === DEBUG LOOP 1 ===
+[   79.630573] === DEBUG: wlan0 detectada, subindo wpa_supplicant ===
+[   79.631263] [wlan][139]wlanoidSetCurrentPacketFilter:(REQ INFO) wlanoidSetCurrentPacketFilter
+[   79.631280] [wlan][139]wlanoidSetCurrentPacketFilter:(REQ INFO) New packet filter: 0x00000c
+[   79.937739] random: crng init done
+[   79.970286] [wlan][139]wlanoidSetPmkid:(REQ INFO) wlanoidSetPmkid
+[   79.970330] [wlan][139]wlanoidSetPmkid:(REQ INFO) Count 0
+[   80.005046] warning: `cat' uses wireless extensions which will stop working for Wi-Fi 7 hardware; use nl80211
+[   80.070945] [wlan][159]mtk_cfg80211_scan:(REQ INFO) scan channel num = 39
+[   80.070982] [wlan][159]mtk_cfg80211_scan:(REQ WARN) scan channel num (39) exceeds 32, do a full scan instead
+[   80.071043] [wlan][139]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [IDLE] -> [SCAN]
+[   80.829491] [wlan][139]rlmModifyVhtBwPara:(RLM WARN) S1=42, S2=50
+[   80.829527] [wlan][139]rlmModifyVhtBwPara:(RLM WARN) [BW160][new spec] S1 change to 50
+[   80.945739] [wlan][139]rlmModifyVhtBwPara:(RLM WARN) S1=58, S2=50
+[   80.945777] [wlan][139]rlmModifyVhtBwPara:(RLM WARN) [BW160][new spec] S1 change to 50
+[   80.945821] [wlan][139]rlmModifyVhtBwPara:(RLM WARN) S1=58, S2=50
+[   80.945834] [wlan][139]rlmModifyVhtBwPara:(RLM WARN) [BW160][new spec] S1 change to 50
+[   81.591259] [wlan][139]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [SCAN] -> [IDLE]
+[   81.593046] [wlan][139]wlanoidSetWapiAssocInfo:(REQ LOUD) 
+[   81.593071] [wlan][159]mtk_cfg80211_connect:(SEC WARN) [wapi] set wapi assoc info error:c0010014
+[   81.593112] [wlan][139]wlanoidSetEncryptionStatus:(REQ INFO) ENCRYPTION_STATUS 6
+[   81.593150] [wlan][139]aisFsmRunEventAbort:(AIS STATE) EVENT-ABORT: Current State IDLE, ucReasonOfDisconnect:4
+[   81.593167] [wlan][139]aisFsmRunEventAbort:(AIS STATE) ucReasonOfDisconnect:4
+[   81.593178] [wlan][139]aisFsmStateAbort:(AIS STATE) aisFsmStateAbort DiscReason[4], CurState[0]
+[   81.593196] [wlan][139]roamingFsmRunEventAbort:(ROAMING EVENT) EVENT-ROAMING ABORT: Current Time = 4294748556
+[   81.593212] [wlan][139]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [IDLE] -> [IDLE]
+[   81.593225] [wlan][139]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [IDLE] -> [SEARCH]
+[   81.593245] [wlan][139]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [SEARCH] -> [REQ_CHANNEL_JOIN]
+[   81.822564] [wlan][139]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [REQ_CHANNEL_JOIN] -> [JOIN]
+[   81.822609] [wlan][139]cnmStaSendUpdateCmd:(REQ INFO) Update StaRec[0] WIDX[3] State[0] Type[65] BssIdx[0] AID[0]
+[   81.822623] [wlan][139]cnmStaSendUpdateCmd:(REQ INFO) Update StaRec[0] QoS[0] UAPSD[0]
+[   81.822638] [wlan][139]cnmStaSendUpdateCmd:(REQ INFO) Update StaRec[0] WIDX[3] State[0] Type[65] BssIdx[0] AID[0]
+[   81.822652] [wlan][139]cnmStaSendUpdateCmd:(REQ INFO) Update StaRec[0] QoS[1] UAPSD[1]
+[   81.822667] [wlan][139]saaFsmSteps:(SAA STATE) [SAA]TRANSITION: [AA_IDLE] -> [SAA_SEND_AUTH1]
+[   81.822681] [wlan][139]cnmStaSendUpdateCmd:(REQ INFO) Update StaRec[0] WIDX[3] State[0] Type[65] BssIdx[0] AID[0]
+[   81.822694] [wlan][139]cnmStaSendUpdateCmd:(REQ INFO) Update StaRec[0] QoS[1] UAPSD[1]
+[   81.831457] [wlan][139]saaFsmSteps:(SAA STATE) [SAA]TRANSITION: [SAA_SEND_AUTH1] -> [SAA_WAIT_AUTH2]
+[   81.832469] [wlan][139]saaFsmSteps:(SAA STATE) [SAA]TRANSITION: [SAA_WAIT_AUTH2] -> [SAA_SEND_ASSOC1]
+[   81.835916] [wlan][139]saaFsmSteps:(SAA STATE) [SAA]TRANSITION: [SAA_SEND_ASSOC1] -> [SAA_WAIT_ASSOC2]
+[   81.836922] [wlan][139]saaFsmSteps:(SAA STATE) [SAA]TRANSITION: [SAA_WAIT_ASSOC2] -> [AA_IDLE]
+[   81.836944] [wlan][139]nicQmUpdateWmmParms:(QM EVENT) sizeof(AC_QUE_PARMS_T): 10
+[   81.836956] [wlan][139]nicQmUpdateWmmParms:(QM EVENT) sizeof(CMD_UPDATE_WMM_PARMS): 44
+[   81.836966] [wlan][139]nicQmUpdateWmmParms:(QM EVENT) sizeof(WIFI_CMD_T): 64
+[   81.836985] [wlan][139]rlmModifyVhtBwPara:(RLM WARN) S1=42, S2=50
+[   81.836997] [wlan][139]rlmModifyVhtBwPara:(RLM WARN) [BW160][new spec] S1 change to 50
+[   81.837005] [wlan][139]rlmModifyVhtBwPara:(RLM WARN) S1=42, S2=50
+[   81.837015] [wlan][139]rlmModifyVhtBwPara:(RLM WARN) [BW160][new spec] S1 change to 50
+[   81.837031] [wlan][139]cnmStaSendUpdateCmd:(REQ INFO) Update StaRec[0] WIDX[3] State[2] Type[65] BssIdx[0] AID[18]
+[   81.837046] [wlan][139]cnmStaSendUpdateCmd:(REQ INFO) Update StaRec[0] QoS[1] UAPSD[1]
+[   81.837102] [wlan][139]roamingFsmRunEventStart:(ROAMING EVENT) EVENT-ROAMING START: Current Time = 4294748800
+[   81.837118] [wlan][139]roamingFsmSteps:(ROAMING STATE) [ROAMING]TRANSITION: [IDLE] -> [DECISION]
+[   81.837131] [wlan][139]aisFsmSteps:(AIS STATE) [AIS]TRANSITION: [JOIN] -> [NORMAL_TR]
+[   81.846543] [wlan][139]wlanoidSetAddKey:(REQ LOUD) 
+[   81.846573] [wlan][139]wlanoidSetAddKey:(REQ INFO) ucCmdSeqNum = 70
+[   81.846743] [wlan][139]wlanoidSetAddKey:(REQ LOUD) 
+[   81.846756] [wlan][139]wlanoidSetAddKey:(REQ INFO) ucCmdSeqNum = 71
+[   81.847054] [wlan][139]wlanoidSetCurrentPacketFilter:(REQ INFO) wlanoidSetCurrentPacketFilter
+[   81.847061] [wlan][139]wlanoidSetCurrentPacketFilter:(REQ INFO) New packet filter: 0x00000c
+[   81.850042] [wlan][139]nicEventAddPkeyDone:(RSN EVENT) EVENT_ID_ADD_PKEY_DONE BSSIDX=0 62:fa:c4:ea:34:9b
+[   81.850085] [wlan][139]nicEventAddPkeyDone:(RSN EVENT) STA 62:fa:c4:ea:34:9b Add Key Done!!
+[   81.851988] [wlan][139]nicEventAddPkeyDone:(RSN EVENT) EVENT_ID_ADD_PKEY_DONE BSSIDX=0 ff:ff:ff:ff:ff:ff
+[   81.859211] [wlan][139]rlmModifyVhtBwPara:(RLM WARN) S1=42, S2=50
+[   81.859246] [wlan][139]rlmModifyVhtBwPara:(RLM WARN) [BW160][new spec] S1 change to 50
+[   81.859270] [wlan][139]rlmModifyVhtBwPara:(RLM WARN) S1=42, S2=50
+[   81.859281] [wlan][139]rlmModifyVhtBwPara:(RLM WARN) [BW160][new spec] S1 change to 50
+[   81.859292] [wlan][139]rlmModifyVhtBwPara:(RLM WARN) S1=42, S2=50
+[   81.859301] [wlan][139]rlmModifyVhtBwPara:(RLM WARN) [BW160][new spec] S1 change to 50
+[   81.955989] [wlan][139]rlmModifyVhtBwPara:(RLM WARN) S1=42, S2=50
+[   81.956027] [wlan][139]rlmModifyVhtBwPara:(RLM WARN) [BW160][new spec] S1 change to 50
+[   81.956047] [wlan][139]rlmModifyVhtBwPara:(RLM WARN) S1=42, S2=50
+[   81.956055] [wlan][139]rlmModifyVhtBwPara:(RLM WARN) [BW160][new spec] S1 change to 50
+[   81.956063] [wlan][139]rlmModifyVhtBwPara:(RLM WARN) S1=42, S2=50
+[   81.956073] [wlan][139]rlmModifyVhtBwPara:(RLM WARN) [BW160][new spec] S1 change to 50
+[   81.956093] [wlan][139]nicQmUpdateWmmParms:(QM EVENT) sizeof(AC_QUE_PARMS_T): 10
+[   81.956104] [wlan][139]nicQmUpdateWmmParms:(QM EVENT) sizeof(CMD_UPDATE_WMM_PARMS): 44
+[   81.956114] [wlan][139]nicQmUpdateWmmParms:(QM EVENT) sizeof(WIFI_CMD_T): 64
+[   86.274220] === DEBUG LOOP 2 ===
+[   86.277446] === DEBUG: WiFi ASSOCIADO, pedindo DHCP ===
+[   86.279601] [wlan][139]wlanoidSetCurrentPacketFilter:(REQ INFO) wlanoidSetCurrentPacketFilter
+[   86.279618] [wlan][139]wlanoidSetCurrentPacketFilter:(REQ INFO) New packet filter: 0x00000c
+[   86.321368] [wlan][139]qmProcessBarFrame:(QM WARN) QM: (Warning) BAR for a NULL ReorderQueParm
+[   86.402163] === DEBUG: wlan0 IP 192.168.6.128 gw 192.168.6.1 ===
+[   86.975643] [wlan][139]qmProcessBarFrame:(QM WARN) QM: (Warning) BAR for a NULL ReorderQueParm
+[   92.566686] === DEBUG LOOP 3 ===
+[   92.568677] === DEBUG: TELNETD ATIVO em 192.168.6.128:23 ===
+[   98.879369] === DEBUG LOOP 4 ===
+[  105.172799] === DEBUG LOOP 5 ===
+[  111.465706] === DEBUG LOOP 6 ===
+[  117.754958] === DEBUG LOOP 7 ===
+[  124.042105] === DEBUG LOOP 8 ===
+[  130.331038] === DEBUG LOOP 9 ===
+[  136.616494] === DEBUG LOOP 10 ===
+[  142.902109] === DEBUG LOOP 11 ===
+[  149.191276] === DEBUG LOOP 12 ===
+[  155.483205] === DEBUG LOOP 13 ===
+[  161.770118] === DEBUG LOOP 14 ===
+[  168.054494] === DEBUG LOOP 15 ===
+[  174.339227] === DEBUG LOOP 16 ===
+[  180.635324] === DEBUG LOOP 17 ===
+[  186.923526] === DEBUG LOOP 18 ===
+[  193.216835] === DEBUG LOOP 19 ===
+[  199.504499] === DEBUG LOOP 20 ===
+[  205.795717] === DEBUG LOOP 21 ===
+[  212.081770] === DEBUG LOOP 22 ===
+[  218.368329] === DEBUG LOOP 23 ===
+[  224.662632] === DEBUG LOOP 24 ===
+[  230.948706] === DEBUG LOOP 25 ===
+[  237.238490] === DEBUG LOOP 26 ===
+[  243.525876] === DEBUG LOOP 27 ===
+[  249.816850] === DEBUG LOOP 28 ===
+[  256.107532] === DEBUG LOOP 29 ===
+[  262.402805] === DEBUG LOOP 30 ===
+[  268.697601] === DEBUG LOOP 31 ===
+[  274.984976] === DEBUG LOOP 32 ===
+[  281.280207] === DEBUG LOOP 33 ===
+[  287.573141] === DEBUG LOOP 34 ===
+[  293.862647] === DEBUG LOOP 35 ===
+[  300.151481] === DEBUG LOOP 36 ===
+[  306.436388] === DEBUG LOOP 37 ===
+[  312.728059] === DEBUG LOOP 38 ===
+[  319.018959] === DEBUG LOOP 39 ===
+[  325.307649] === DEBUG LOOP 40 ===
+[  331.596547] === DEBUG LOOP 41 ===
+[  337.880183] === DEBUG LOOP 42 ===
+[  344.172869] === DEBUG LOOP 43 ===
+[  350.464418] === DEBUG LOOP 44 ===
+[  356.754607] === DEBUG LOOP 45 ===
+[  363.045993] === DEBUG LOOP 46 ===
+[  369.348897] === DEBUG LOOP 47 ===
+[  375.636691] === DEBUG LOOP 48 ===
+[  381.937242] === DEBUG LOOP 49 ===
+[  388.224169] === DEBUG LOOP 50 ===
+[  394.508389] === DEBUG LOOP 51 ===
+[  399.479099] seq_file: buggy .next function procEfuseDump_next did not update position index
+[  399.481923] seq_file: buggy .next function procEfuseDump_next did not update position index
+[  399.485860] seq_file: buggy .next function procEfuseDump_next did not update position index
+[  399.489665] seq_file: buggy .next function procEfuseDump_next did not update position index
+[  399.493655] seq_file: buggy .next function procEfuseDump_next did not update position index
+[  399.497302] seq_file: buggy .next function procEfuseDump_next did not update position index
+[  399.501111] seq_file: buggy .next function procEfuseDump_next did not update position index
+[  399.504939] seq_file: buggy .next function procEfuseDump_next did not update position index
+[  399.508736] seq_file: buggy .next function procEfuseDump_next did not update position index
+[  399.512552] seq_file: buggy .next function procEfuseDump_next did not update position index
+[  400.824475] === DEBUG LOOP 52 ===
+[  407.138344] === DEBUG LOOP 53 ===
+[  413.434693] === DEBUG LOOP 54 ===
+[  419.755633] === DEBUG LOOP 55 ===
+[  422.047112] seq_read_iter: 36 callbacks suppressed
+[  422.047139] seq_file: buggy .next function procEfuseDump_next did not update position index
+[  422.049815] seq_file: buggy .next function procEfuseDump_next did not update position index
+[  422.052674] seq_file: buggy .next function procEfuseDump_next did not update position index
+[  422.056462] seq_file: buggy .next function procEfuseDump_next did not update position index
+[  422.060248] seq_file: buggy .next function procEfuseDump_next did not update position index
+[  422.063941] seq_file: buggy .next function procEfuseDump_next did not update position index
+[  422.067785] seq_file: buggy .next function procEfuseDump_next did not update position index
+[  422.071449] seq_file: buggy .next function procEfuseDump_next did not update position index
+[  422.074152] seq_file: buggy .next function procEfuseDump_next did not update position index
+[  422.076982] seq_file: buggy .next function procEfuseDump_next did not update position index
+[  426.081468] === DEBUG LOOP 56 ===
+[  432.409917] === DEBUG LOOP 57 ===
+[  438.739407] === DEBUG LOOP 58 ===
+[  445.066751] === DEBUG LOOP 59 ===
+[  451.394520] === DEBUG LOOP 60 ===
+[  457.723995] === DEBUG LOOP 61 ===
+[  464.051937] === DEBUG LOOP 62 ===
+[  470.383086] === DEBUG LOOP 63 ===
+[  476.713848] === DEBUG LOOP 64 ===
+[  483.044042] === DEBUG LOOP 65 ===
+[  489.369845] === DEBUG LOOP 66 ===
+[  495.697236] === DEBUG LOOP 67 ===
+[  502.027409] === DEBUG LOOP 68 ===
+[  508.357301] === DEBUG LOOP 69 ===
+[  514.686903] === DEBUG LOOP 70 ===
+[  521.017363] === DEBUG LOOP 71 ===
+[  527.348957] === DEBUG LOOP 72 ===
+[  533.679448] === DEBUG LOOP 73 ===
+[  540.005531] === DEBUG LOOP 74 ===
+[  546.331252] === DEBUG LOOP 75 ===
+[  552.634986] === DEBUG LOOP 76 ===
+[  558.935962] === DEBUG LOOP 77 ===
+[  565.241481] === DEBUG LOOP 78 ===
+[  571.539859] === DEBUG LOOP 79 ===
+[  577.854911] === DEBUG LOOP 80 ===
+[  584.152699] === DEBUG LOOP 81 ===
+[  590.450956] === DEBUG LOOP 82 ===
+[  596.749002] === DEBUG LOOP 83 ===
+[  603.058999] === DEBUG LOOP 84 ===
+[  609.364374] === DEBUG LOOP 85 ===
+[  615.671310] === DEBUG LOOP 86 ===
+[  621.973852] === DEBUG LOOP 87 ===
+[  628.286400] === DEBUG LOOP 88 ===
+[  634.622402] === DEBUG LOOP 89 ===
+[  640.931783] === DEBUG LOOP 90 ===
+[  647.240907] === DEBUG LOOP 91 ===
+[  653.541981] === DEBUG LOOP 92 ===
+[  659.844056] === DEBUG LOOP 93 ===
+[  666.144314] === DEBUG LOOP 94 ===
+[  672.446501] === DEBUG LOOP 95 ===
+[  678.746602] === DEBUG LOOP 96 ===
+[  685.048508] === DEBUG LOOP 97 ===
+[  691.349972] === DEBUG LOOP 98 ===
+[  697.649912] === DEBUG LOOP 99 ===
+[  703.951101] === DEBUG LOOP 100 ===
+[  710.258596] === DEBUG LOOP 101 ===
+[  716.566450] === DEBUG LOOP 102 ===
+[  722.867736] === DEBUG LOOP 103 ===
+[  729.172976] === DEBUG LOOP 104 ===
+[  735.481747] === DEBUG LOOP 105 ===
+[  741.787771] === DEBUG LOOP 106 ===
+[  748.095100] === DEBUG LOOP 107 ===
+[  754.398667] === DEBUG LOOP 108 ===
+[  760.699212] === DEBUG LOOP 109 ===
+[  767.004056] === DEBUG LOOP 110 ===
+[  773.308637] === DEBUG LOOP 111 ===
+[  779.613366] === DEBUG LOOP 112 ===
+[  785.918387] === DEBUG LOOP 113 ===
+[  792.227029] === DEBUG LOOP 114 ===
+[  798.539398] === DEBUG LOOP 115 ===
+[  804.846330] === DEBUG LOOP 116 ===
+[  811.152846] === DEBUG LOOP 117 ===
+[  817.463984] === DEBUG LOOP 118 ===
+[  823.775386] === DEBUG LOOP 119 ===
+[  830.092554] === DEBUG LOOP 120 ===
+[  836.403528] === DEBUG LOOP 121 ===
+[  842.715250] === DEBUG LOOP 122 ===
+[  849.025975] === DEBUG LOOP 123 ===
+[  855.336613] === DEBUG LOOP 124 ===
+[  861.647839] === DEBUG LOOP 125 ===
+[  867.955627] === DEBUG LOOP 126 ===
+[  874.266671] === DEBUG LOOP 127 ===
+[  880.578212] === DEBUG LOOP 128 ===
+[  886.887639] === DEBUG LOOP 129 ===
+[  893.202897] === DEBUG LOOP 130 ===
+[  899.521887] === DEBUG LOOP 131 ===
+[  905.835750] === DEBUG LOOP 132 ===
+[  912.143285] === DEBUG LOOP 133 ===
+[  918.456226] === DEBUG LOOP 134 ===
+[  924.768161] === DEBUG LOOP 135 ===
+[  931.082240] === DEBUG LOOP 136 ===
+[  937.394657] === DEBUG LOOP 137 ===
+[  943.710662] === DEBUG LOOP 138 ===
+[  950.025280] === DEBUG LOOP 139 ===
+[  956.339181] === DEBUG LOOP 140 ===
+[  962.653717] === DEBUG LOOP 141 ===
+[  968.968943] === DEBUG LOOP 142 ===
+[  975.287163] === DEBUG LOOP 143 ===
+[  981.601229] === DEBUG LOOP 144 ===
+[  987.918267] === DEBUG LOOP 145 ===
+[  994.237194] === DEBUG LOOP 146 ===
+[ 1000.578999] === DEBUG LOOP 147 ===
+[ 1006.906359] === DEBUG LOOP 148 ===
+[ 1013.222776] === DEBUG LOOP 149 ===
+[ 1019.561574] === DEBUG LOOP 150 ===
+[ 1025.903534] === DEBUG LOOP 151 ===
+[ 1032.225763] === DEBUG LOOP 152 ===
+[ 1038.542515] === DEBUG LOOP 153 ===
+[ 1044.864191] === DEBUG LOOP 154 ===
+[ 1051.185150] === DEBUG LOOP 155 ===
+[ 1057.507072] === DEBUG LOOP 156 ===
+[ 1063.832379] === DEBUG LOOP 157 ===
+[ 1070.155559] === DEBUG LOOP 158 ===
+[ 1076.479059] === DEBUG LOOP 159 ===
+[ 1082.796535] === DEBUG LOOP 160 ===
+[ 1089.119541] === DEBUG LOOP 161 ===
+[ 1095.442407] === DEBUG LOOP 162 ===
+[ 1101.766948] === DEBUG LOOP 163 ===
+[ 1108.090009] === DEBUG LOOP 164 ===
+[ 1114.415736] === DEBUG LOOP 165 ===
+[ 1120.730643] === DEBUG LOOP 166 ===
+[ 1127.048734] === DEBUG LOOP 167 ===
+[ 1133.367621] === DEBUG LOOP 168 ===
+[ 1139.684516] === DEBUG LOOP 169 ===
+[ 1146.006552] === DEBUG LOOP 170 ===
+[ 1152.328803] === DEBUG LOOP 171 ===
+[ 1158.646343] === DEBUG LOOP 172 ===
+[ 1164.971005] === DEBUG LOOP 173 ===
+[ 1171.291569] === DEBUG LOOP 174 ===
+[ 1177.616117] === DEBUG LOOP 175 ===
+[ 1183.939416] === DEBUG LOOP 176 ===
+[ 1190.259824] === DEBUG LOOP 177 ===
+[ 1196.573632] === DEBUG LOOP 178 ===
+[ 1202.895834] === DEBUG LOOP 179 ===
+[ 1209.215700] === DEBUG LOOP 180 ===
+[ 1215.533524] === DEBUG LOOP 181 ===
+[ 1221.852847] === DEBUG LOOP 182 ===
+[ 1228.172295] === DEBUG LOOP 183 ===
+[ 1234.500471] === DEBUG LOOP 184 ===
+[ 1240.820184] === DEBUG LOOP 185 ===
+[ 1247.140714] === DEBUG LOOP 186 ===
+[ 1253.463708] === DEBUG LOOP 187 ===
+[ 1259.784995] === DEBUG LOOP 188 ===
+[ 1263.419169] sd 0:0:0:0: [sda] tag#1 UNKNOWN(0x2003) Result: hostbyte=0x04 driverbyte=DRIVER_OK cmd_age=0s
+[ 1263.419206] sd 0:0:0:0: [sda] tag#1 CDB: opcode=0x28 28 00 74 70 6d 00 00 00 08 00
+[ 1263.419219] I/O error, dev sda, sector 1953524992 op 0x0:(READ) flags 0x880700 phys_seg 1 prio class 2
+[ 1263.419269] sd 0:0:0:0: [sda] tag#2 UNKNOWN(0x2003) Result: hostbyte=0x04 driverbyte=DRIVER_OK cmd_age=0s
+[ 1263.419287] sd 0:0:0:0: [sda] tag#2 CDB: opcode=0x28 28 00 74 70 6d 00 00 00 08 00
+[ 1263.419299] I/O error, dev sda, sector 1953524992 op 0x0:(READ) flags 0x800000 phys_seg 1 prio class 2
+[ 1263.419315] Buffer I/O error on dev sda, logical block 244190624, async page read
+[ 1263.419478] sd 0:0:0:0: [sda] tag#24 UNKNOWN(0x2003) Result: hostbyte=0x04 driverbyte=DRIVER_OK cmd_age=0s
+[ 1263.419499] sd 0:0:0:0: [sda] tag#24 CDB: opcode=0x28 28 00 00 00 00 00 00 00 20 00
+[ 1263.419512] I/O error, dev sda, sector 0 op 0x0:(READ) flags 0x880700 phys_seg 4 prio class 2
+[ 1263.419560] sd 0:0:0:0: [sda] tag#25 UNKNOWN(0x2003) Result: hostbyte=0x04 driverbyte=DRIVER_OK cmd_age=0s
+[ 1263.419577] sd 0:0:0:0: [sda] tag#25 CDB: opcode=0x28 28 00 00 00 00 00 00 00 08 00
+[ 1263.419590] I/O error, dev sda, sector 0 op 0x0:(READ) flags 0x800000 phys_seg 1 prio class 2
+[ 1263.419604] Buffer I/O error on dev sda, logical block 0, async page read
+[ 1266.106868] === DEBUG LOOP 189 ===
+[ 1272.439471] === DEBUG LOOP 190 ===
+[ 1278.766927] === DEBUG LOOP 191 ===
+[ 1285.095284] === DEBUG LOOP 192 ===
+[ 1291.426359] === DEBUG LOOP 193 ===
+[ 1297.757732] === DEBUG LOOP 194 ===
+[ 1304.089159] === DEBUG LOOP 195 ===
+[ 1310.414659] === DEBUG LOOP 196 ===
+[ 1316.747384] === DEBUG LOOP 197 ===
+[ 1323.079630] === DEBUG LOOP 198 ===
+[ 1329.407206] === DEBUG LOOP 199 ===
+[ 1335.740543] === DEBUG LOOP 200 ===
+[ 1342.067994] === DEBUG LOOP 201 ===
+[ 1348.396221] === DEBUG LOOP 202 ===
+[ 1354.728844] === DEBUG LOOP 203 ===
+[ 1361.066571] === DEBUG LOOP 204 ===
+[ 1367.406519] === DEBUG LOOP 205 ===
+[ 1373.766722] === DEBUG LOOP 206 ===
+[ 1380.096144] === DEBUG LOOP 207 ===
+[ 1386.433196] === DEBUG LOOP 208 ===
+[ 1392.764032] === DEBUG LOOP 209 ===
+[ 1399.099799] === DEBUG LOOP 210 ===
+[ 1405.433978] === DEBUG LOOP 211 ===
+[ 1411.769005] === DEBUG LOOP 212 ===
+CHUNK2_END
+~ # 

@@ -327,6 +327,41 @@ else
   echo "Aviso: Módulo local mts.ko não encontrado em $MTS_LOCAL_KO. Mantendo versão padrão."
 fi
 
+# --- Mesa patchado PS4 Gladius/Liverpool (correção de corrupção visual) ----
+# O pacote "mesa" instalado via pacman acima (linha ~153) é o binário oficial
+# do Arch, que NÃO reconhece CHIP_GLADIUS/CHIP_LIVERPOOL (ver
+# consolidado/MESA_GLADIUS_LIVERPOOL_FIX.md) -- causa a corrupção visual em
+# qualquer coisa renderizada via OpenGL/radeonsi (Xorg+Cinnamon, jogos, etc).
+# Em vez de sobrescrever os arquivos do pacote pacman (frágil: nomes de
+# arquivo dependem do sufixo de versão "-archX.Y" do build oficial, e
+# "pacman -Syu" reverteria a troca), instalamos o Mesa patchado num prefixo
+# próprio e apontamos o sistema pra ele via /etc/environment -- exatamente o
+# método validado ao vivo em 2026-07-24 (glxinfo confirmou "gladius", sem
+# AMD_DEBUG=notiling).
+MESA_PATCHED_TAR="$SCRIPT_DIR/../../mesa/mesa-ps4-gladius-liverpool-latest.tar.xz"
+echo "=== Instalando Mesa patchado PS4 Gladius/Liverpool (opcional) ==="
+if [ -f "$MESA_PATCHED_TAR" ]; then
+  MESA_DEST="$ROOTFS_DIR/opt/mesa-ps4-patched"
+  mkdir -p "$MESA_DEST"
+  tar xJf "$MESA_PATCHED_TAR" -C "$MESA_DEST"
+  echo "Mesa patchado extraido para /opt/mesa-ps4-patched no rootfs."
+
+  # Persistir via /etc/environment (lido por pam_env em todo login, inclusive
+  # sessoes X/Wayland -- confirmado funcionando ao vivo 2026-07-24).
+  ENV_FILE="$ROOTFS_DIR/etc/environment"
+  touch "$ENV_FILE"
+  grep -q '^LD_LIBRARY_PATH=' "$ENV_FILE" || \
+    echo 'LD_LIBRARY_PATH=/opt/mesa-ps4-patched/lib' >> "$ENV_FILE"
+  grep -q '^LIBGL_DRIVERS_PATH=' "$ENV_FILE" || \
+    echo 'LIBGL_DRIVERS_PATH=/opt/mesa-ps4-patched/lib/dri' >> "$ENV_FILE"
+  echo "Variaveis LD_LIBRARY_PATH/LIBGL_DRIVERS_PATH persistidas em /etc/environment."
+else
+  echo "AVISO: $MESA_PATCHED_TAR nao encontrado -- rode mesa/01-build-mesa.sh antes"
+  echo "       desta imagem pra incluir a correcao. Prosseguindo SEM o Mesa"
+  echo "       patchado (fica valendo o mesa oficial do Arch, com o bug de"
+  echo "       corrupção visual conhecido em CHIP_GLADIUS/CHIP_LIVERPOOL)."
+fi
+
 
 # Verificar módulos essenciais para Baikal
 # Formato: "nome_modulo:config_option"
@@ -447,7 +482,7 @@ cp "$ROOTFS_DIR/boot/initramfs-$KVER_FULL.img" "$BOOT_DIR/initramfs-7.0.cpio.gz"
 
 echo "=== Criando bootargs-7.0.txt ==="
 cat > "$BOOT_DIR/bootargs-7.0.txt" << 'CMDLINEEOF'
-panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0 drm.debug=0x06 console=tty0 earlyprintk=efi,keep loglevel=8 root=LABEL=psxitarch rw rootdelay=10 systemd.unified_cgroup_hierarchy=0 systemd.legacy_systemd_cgroup_controller=yes audit=0 amdgpu.audio=1 usbcore.autosuspend=-1 video=HDMI-A-1:1920x1080@60 mitigations=off zswap.enabled=1 log_buf_len=4M netconsole=@192.168.0.2/eth0,6666@192.168.0.1/ff:ff:ff:ff:ff:ff
+panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0 drm.debug=0x06 console=tty0 earlyprintk=efi,keep loglevel=8 root=LABEL=psxitarch rw rootdelay=10 systemd.unified_cgroup_hierarchy=0 systemd.legacy_systemd_cgroup_controller=yes audit=0 amdgpu.audio=1 usbcore.autosuspend=-1 video=HDMI-A-1:1920x1080@60 mitigations=off zswap.enabled=1 log_buf_len=4M libata.force=1.00:3.0Gbps,noncq ahci.mobile_lpm_policy=1 netconsole=@192.168.0.2/eth0,6666@192.168.0.1/ff:ff:ff:ff:ff:ff
 CMDLINEEOF
 
 echo "=== Copiando vram.txt ==="
@@ -465,5 +500,10 @@ echo "Initramfs: $BOOT_DIR/initramfs-7.0.cpio.gz"
 echo "Bootargs: $BOOT_DIR/bootargs-7.0.txt"
 echo "Config: $BOOT_DIR/config-7.0"
 echo "bzImage: $BOOT_DIR/bzImage-7.0"
+if [ -f "$MESA_PATCHED_TAR" ]; then
+  echo "Mesa patchado (Gladius/Liverpool): INCLUIDO em /opt/mesa-ps4-patched + /etc/environment"
+else
+  echo "Mesa patchado (Gladius/Liverpool): NAO incluido (rode mesa/01-build-mesa.sh antes)"
+fi
 echo ""
 echo "Próximo passo: sudo ./02-burn-image.sh /dev/sda"

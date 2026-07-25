@@ -1,0 +1,66 @@
+// Extraido por Ghidra PyGhidra (consolidate_decompiled_lacunas.py)
+// addr: 0xffffffffdc5a2950  name: FUN_ffffffffdc5a2950  size: 241
+// escopo: lacuna MTS/GBE/ICC/glue identificada em testes ao vivo
+// chamadores (4):
+//   FUN_ffffffffdc5a65e0 @ 0x-000000023a59a20
+//   FUN_ffffffffdc5a0ba0 @ 0x-000000023a5f460
+//   FUN_ffffffffdc5a3810 @ 0x-000000023a5c7f0
+//   FUN_ffffffffdc5a44c0 @ 0x-000000023a5bb40
+// chamadas (4):
+//   FUN_ffffffffdc6c8300 @ 0x-000000023937d00
+//   FUN_ffffffffdc6c85b0 @ 0x-000000023937a50
+//   FUN_ffffffffdc4afb10 @ 0x-000000023b504f0
+//   FUN_ffffffffdc630420 @ 0x-0000000239cfbe0
+
+
+void FUN_ffffffffdc5a2950(long param_1,uint param_2,int param_3)
+
+{
+  undefined4 *puVar1;
+  int *piVar2;
+  short sVar3;
+  undefined4 uVar4;
+  int iVar5;
+  
+  FUN_ffffffffdc6c8300
+            (param_1 + 0x3180,0,"W:\\Build\\J02690760\\sys\\freebsd\\sys\\dev\\mts\\if_mts.c",0x58e)
+  ;
+  puVar1 = *(undefined4 **)(*(long *)(param_1 + 0x3068) + 0x10);
+  if (*(long *)(*(long *)(param_1 + 0x3068) + 8) == 0) {
+    out((short)puVar1,0x8000);
+  }
+  else {
+    *puVar1 = 0x8000;
+  }
+  iVar5 = (param_2 & 0x1f) * 0x100 + 0x2000 + param_3 * 0x10000;
+  piVar2 = *(int **)(*(long *)(param_1 + 0x3068) + 0x10);
+  if (*(long *)(*(long *)(param_1 + 0x3068) + 8) == 0) {
+    out((short)piVar2,iVar5);
+  }
+  else {
+    *piVar2 = iVar5;
+  }
+  iVar5 = 10000;
+  while( true ) {
+    puVar1 = *(undefined4 **)(*(long *)(param_1 + 0x3068) + 0x10);
+    if (*(long *)(*(long *)(param_1 + 0x3068) + 8) == 0) {
+      uVar4 = in((short)puVar1);
+      sVar3 = (short)uVar4;
+    }
+    else {
+      sVar3 = (short)*puVar1;
+    }
+    if (sVar3 < 0) break;
+    FUN_ffffffffdc4afb10(1);
+    iVar5 = iVar5 + -1;
+    if (iVar5 == 0) {
+                    /* WARNING: Subroutine does not return */
+      FUN_ffffffffdc630420("phy write timeout.\n");
+    }
+  }
+  FUN_ffffffffdc6c85b0
+            (param_1 + 0x3180,0,"W:\\Build\\J02690760\\sys\\freebsd\\sys\\dev\\mts\\if_mts.c",0x5a0)
+  ;
+  return;
+}
+

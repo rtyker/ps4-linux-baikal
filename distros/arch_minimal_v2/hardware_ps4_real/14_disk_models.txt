@@ -1,0 +1,15 @@
+~ # for d in sda sdb; do echo "== $d =="; cat /sys/block/$d/device/model 2>/dev/
+null; cat /sys/block/$d/device/vendor 2>/dev/null; cat /sys/block/$d/device/rev 
+2>/dev/null; cat /sys/block/$d/size 2>/dev/null; done; echo DISK_END
+== sda ==
+TOSHIBA MQ04ABF1
+ATA     
+0A  
+1953525168
+== sdb ==
+ SV300S37A120G  
+KINGSTON
+    
+234441648
+DISK_END
+~ # 

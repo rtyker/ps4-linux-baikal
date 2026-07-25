@@ -1,7 +1,7 @@
 # Status Atual - PS4 Linux (Baikal/Arch Minimal v2)
 
-**Última atualização**: 2026-07-20  
-**Versão**: Arch Minimal v2 - Kernel 5.4.247-neocine-1.1
+**Última atualização**: 2026-07-25  
+**Versão**: Arch Minimal v2 - Kernel 7.0 Baikal (`7.0.8-Strawberry-ThinLTO-Baikal-+`), baseline `v7.0-20260722-clean-video-ok`, ativo `bzImage-7.0-20260723-RELEASE`
 
 ---
 
@@ -13,7 +13,7 @@
 | **SSH** | root/ps4 em 192.168.6.128 (Dropbear/OpenSSH) |
 | **Vídeo HDMI** | 1920x1080@60 forçado, ps4_bridge VIC mode 16 |
 | **EDID Persistente** | Firmware override `/lib/firmware/edid/ps4_tv_edid.bin` |
-| **Rede** | ✅ Ethernet GBE funcional via driver `mts.ko` (`eth0`, MAC real `2c:cc:44:3f:69:5f`), netconsole ativo por padrão |
+| **Rede** | ⚠️ WiFi/SSH 100% funcionais. Ethernet cabeada (`eth0`, driver próprio `mts.ko`, MAC real `2c:cc:44:3f:69:5f`) parcial: MAC core ligado via ICC + TX por software (~95%, doorbell corrigido em 2026-07-25, pendente validação ao vivo); **PHY nunca sai de power-down** (MDIO Clause 45/22 sempre zero/timeout) e **RX está morto** — bloqueador ativo, ver `PLANO_FASES_GBE_2026-07-25.md`. Netconsole ativo por padrão. |
 | **Áudio HDMI** | snd_hda_intel (1002:9921) |
 | **RTC/Time** | Payload injeta `time=UNIX_TS`, hook early seta relógio |
 | **VRAM Control** | `vram.txt` (FAT32) lido pelo payload, default 1024MB |
@@ -21,7 +21,7 @@
 | **Build System** | 3 scripts: build-kernel, build-image, burn-image |
 | **NOR Dump (Orbis)** | `nor_sflash0.bin` (32MB) dumpado do PS4 real via ps4-sflash0-dumper. Partição `C0020001` (WiFi calibration) extraída. |
 | **sd8797_uapsta.bin** | ✅ Obtido do feeRnt/ps4-linux-initramfs — Orbis custom (443 KB) confirmado vs upstream (522 KB) |
-| **Kernel Dump 12.52** | 🔄 `scene-kmem-dumper` TCP (porta 9020) em teste — dumper USB descartado (open() falha no 12.52 por rootvnode corrompido) |
+| **Kernel Dump 12.52** | ✅ Concluído em 2026-07-20 via `scene-kmem-dumper` TCP (porta 9020): 32.2 MB, 3s, 11.3 MB/s, zero corrupção (tag `milestone-dump-success`). Dumper USB antigo descartado (open() falhava no 12.52 por rootvnode corrompido). |
 | **CoreOS/SLB2** | ✅ Analisado: 4 contêineres SLB2 extraídos, build#1281815, kernel cifrado via SAMU (dump offline inviável) |
 
 ---
@@ -61,7 +61,7 @@ bootlog.txt          # vazio (payload escreve)
 | GPU Gladius (1002:9924) | amdgpu (CIK) | ✅ |
 | Display DCE v8.0 | amdgpu DC/DCN1 | ✅ |
 | HDMI Bridge | ps4_bridge (custom) | ✅ |
-| Ethernet | sky2 (5.4) / stmmac (7.0) | ❌ GBE power-gated — precisa ICC power-on |
+| Ethernet | mts.ko (driver próprio, não é sky2) | ⚠️ MAC ligado via ICC power-on (0x004=0xb19), TX por software funcional (~95%, doorbell corrigido 2026-07-25); PHY continua power-gated (MDIO Clause 45/22 sempre zero/timeout) e RX morto |
 | USB 3.0 | xhci_aeolia | ✅ |
 | SATA AHCI | ahci | ✅ |
 | SD/MMC | sdhci | ✅ |
@@ -128,16 +128,7 @@ cat /sys/class/drm/card0-HDMI-A-1/{status,enabled,modes}
 
 ## 📋 PRÓXIMOS PASSOS
 
-> Pendências que não bloqueiam nada agora ficam em **[`BACKLOG.md`](BACKLOG.md)** (com prioridade).
-> O trabalho ativo da GBE está em **[`GBE_ACTION_PLAN.md`](GBE_ACTION_PLAN.md)**.
-
-1. **Kernel Dump 12.52** — Recompilar `scene-kmem-dumper` via Docker `ps4sdk` (toolchain gcc 15.2.0) e capturar dump TCP completo
-2. **Análise do Kernel Orbis** — Ghidra/IDA no dump: power-gate GBE e Syscon ICC
-3. **WiFi/BT** - Adicionar firmware `mt7668pr2h.bin` no kernel
-4. **UART Console** - Cabo JST-SH 3.3V, testar isolado (sem vídeo)
-5. **Power Management** - Reativar DPM com testes de estresse
-6. **Mesa/Vulkan** - radv para CIK (Gladius)
-7. **Kernel Mainline** - Migrar para 6.x quando suporte PS4 amadurecer
+> A lista completa e priorizada de pendências vive **exclusivamente em [`BACKLOG.md`](BACKLOG.md)** — não duplicar aqui. O item de maior prioridade ativo hoje é a GBE (PHY mudo), com plano detalhado em [`PLANO_FASES_GBE_2026-07-25.md`](../../PLANO_FASES_GBE_2026-07-25.md).
 
 ---
 

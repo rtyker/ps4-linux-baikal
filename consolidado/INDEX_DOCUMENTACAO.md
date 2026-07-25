@@ -118,7 +118,7 @@
 
 | Arquivo | Conteúdo | Casos de Uso |
 |---------|----------|-------------|
-| **CABO_UART.md** | Pinout UART Baikal (J1/J2), adaptador USB-serial | Debug headless |
+| **obsoleto/CABO_UART.md** | Pinout UART Baikal (J1/J2), adaptador USB-serial (OBSOLETO — sem cabo UART no projeto) | Debug headless |
 | **COMUNICACAO_PS4.md** | SSH, netconsole, remote boot | Debug remoto |
 | **TODO_NETCONSOLE.md** | Implementação de netconsole | Logs kernel UDP |
 | **TESTES_LOG.md** | Log de testes e resultados | Referência histórica |
@@ -347,24 +347,24 @@ cat /sys/kernel/debug/dri/0/amdgpu_vram_mm 2>/dev/null
 
 ## 📝 NOTAS IMPORTANTES
 
-### ✅ O QUE DEVE ESTAR AQUI
-- ✅ Boot completo (kernel 5.4.247-neocine-1.1)
-- ✅ SSH funcional (192.168.6.128)
+### ✅ O QUE DEVE ESTAR AQUI (atualizado 2026-07-25 — bloco anterior descrevia a era kernel 5.4, obsoleto)
+- ✅ Boot completo (kernel 7.0 Baikal, `7.0.8-Strawberry-ThinLTO-Baikal-+`, baseline `v7.0-20260722-clean-video-ok`)
+- ✅ WiFi + SSH funcional (192.168.6.128)
 - ✅ Vídeo HDMI 1080p60 + EDID firmware
 - ✅ Áudio HDMI (snd_hda_intel)
 - ✅ RTC via time= no payload
 - ✅ SATA, USB 3.0, SD/MMC
+- ✅ GPU Gladius (amdgpu, 32 CUs, OpenGL 4.5 @ 55 FPS)
+- ✅ Kernel Dump 12.52 via TCP (`scene-kmem-dumper` porta 9020) — concluído 2026-07-20
 
 ### ❌ O QUE NÃO FUNCIONA AINDA
-- ❌ WiFi/BT MT7668 (firmware ausente)
 - ❌ UART + vídeo simultaneamente (conflito Baikal)
-- ❌ Dumper USB para kernel 12.52 (`jailbreak()` corrompe `rootvnode`)
-- ❌ Ethernet GBE (sky2 probe falha `unsupported chip type 0x0` — GBE power-gated, precisa ICC/Syscon power-on)
+- ❌ Dumper USB para kernel 12.52 (`jailbreak()` corrompe `rootvnode` — irrelevante agora, substituído pelo dumper TCP)
+- ❌ Ethernet GBE — RX (bloqueador atual: PHY nunca sai de power-down, MDIO Clause 45/22 sempre zero/timeout)
 
 ### 🔄 EM PROGRESSO
-- 🔄 Kernel Dump 12.52 via TCP (`scene-kmem-dumper` porta 9020)
-- 🔄 Ethernet GBE (power-gate ICC/Syscon)
-- 🔄 Kernel 7.0 (Strawberry/rmuxnet — bleeding edge)
+- 🔄 Ethernet GBE — driver próprio `mts.ko` (não é `sky2`; MAC ligado via ICC, TX por software ~95%, PHY mudo é o bloqueador). Ver `../../PLANO_FASES_GBE_2026-07-25.md`.
+- 🔄 WiFi/BT: dados de manufatura/regdomain (baixa prioridade)
 - 🔄 Mesa/Vulkan RADV otimizado
 
 ---

@@ -1,0 +1,57 @@
+~ # cat /proc/iomem; echo IOMEM_END
+00000000-00000fff : Reserved
+00001000-00007fff : System RAM
+00008000-0007ffff : Reserved
+00080000-00099fff : System RAM
+0009a000-000bffff : Reserved
+000c0000-000c7fff : Video ROM
+000e0000-000effff : ACPI Tables
+000f0000-000fffff : System ROM
+00100000-003fffff : System RAM
+00400000-0047ffff : Reserved
+00480000-0067ffff : System RAM
+00680000-006fffff : Reserved
+00700000-7efe7fff : System RAM
+  06000000-078fe8d7 : Kernel code
+  07a00000-08452fff : Kernel rodata
+  08600000-08711f3f : Kernel data
+  08891000-0892afff : Kernel bss
+7efe8000-7efeffff : ACPI Non-volatile Storage
+7eff0000-7effffff : ACPI Tables
+7f000000-7fffffff : System RAM
+80000000-fbffffff : Reserved
+  80000000-bfffffff : 0000:00:14.6
+  c2000000-c2000fff : 0000:00:14.1
+  c4000000-c4007fff : 0000:00:14.2
+    c4000000-c4007fff : ahci
+  c6000000-c6000fff : 0000:00:14.3
+    c6000000-c6000fff : mmc0
+  c8000000-c8001fff : 0000:00:14.4
+  c8800000-c89fffff : 0000:00:14.4
+    c8800000-c89fffff : bpcie.glue
+  c9000000-c91fffff : 0000:00:14.4
+    c9000000-c91fffff : bpcie.chipid
+  ca000000-ca000fff : 0000:00:14.5
+  ca800000-ca800fff : 0000:00:14.5
+  cc000000-cc000fff : 0000:00:14.6
+  cd000000-cd0fffff : 0000:00:14.6
+  cd400000-cd43ffff : 0000:00:14.6
+    cd42c000-cd42cfff : spm.icc
+  ce000000-ce3fffff : 0000:00:14.7
+    ce000000-ce3fffff : xhci-hcd
+  ce800000-ce80ffff : 0000:00:14.7
+    ce800000-ce80ffff : xhci-ahci.mem
+  cf000000-cf7fffff : 0000:00:14.7
+    cf000000-cf7fffff : xhci-hcd
+  e0000000-e3ffffff : 0000:00:01.0
+  e4000000-e47fffff : 0000:00:01.0
+  e4800000-e483ffff : 0000:00:01.0
+  e4840000-e4843fff : 0000:00:01.1
+    e4840000-e4843fff : ICH HD audio
+  f8000000-fbffffff : PCI ECAM 0000 [bus 00-3f]
+100000000-13fffffff : Reserved
+140000000-27effffff : System RAM
+27f000000-27fffffff : RAM buffer
+fdf8000000-fdf9ffffff : 0000:00:14.0
+IOMEM_END
+~ # 

@@ -1,0 +1,97 @@
+diff --git a/drivers/net/ethernet/stmicro/stmmac/stmmac_main.c b/drivers/net/ethernet/stmicro/stmmac/stmmac_main.c
+index 81a6ab19a..59a70aa88 100644
+--- a/drivers/net/ethernet/stmicro/stmmac/stmmac_main.c
++++ b/drivers/net/ethernet/stmicro/stmmac/stmmac_main.c
+@@ -1405,6 +1405,14 @@ static int stmmac_phylink_setup(struct stmmac_priv *priv)
+ 	if (IS_ERR(phylink))
+ 		return PTR_ERR(phylink);
+ 
++	if (priv->plat->force_fixed_link) {
++		int ret = phylink_set_fixed_link(phylink,
++						 &priv->plat->fixed_link_state);
++		if (ret)
++			dev_warn(priv->device,
++				 "failed to force fixed link: %d\n", ret);
++	}
++
+ 	priv->phylink = phylink;
+ 	return 0;
+ }
+diff --git a/drivers/net/ethernet/stmicro/stmmac/stmmac_pci.c b/drivers/net/ethernet/stmicro/stmmac/stmmac_pci.c
+index 270ad066c..07f1c368c 100644
+--- a/drivers/net/ethernet/stmicro/stmmac/stmmac_pci.c
++++ b/drivers/net/ethernet/stmicro/stmmac/stmmac_pci.c
+@@ -103,6 +103,49 @@ static const struct stmmac_pci_info snps_gmac5_pci_info = {
+ 	.setup = snps_gmac5_default_data,
+ };
+ 
++/* PS4 Pro Baikal GBE (Sony 104d:90d8, PCI_DEVICE_ID_SONY_BAIKAL_GBE).
++ * stmmac_mdio_register() fails with -EIO on this silicon (2026-07-17,
++ * tag 20260717-stmmacfix, tested live on real hardware) - no discrete
++ * MDIO-accessible PHY responds. Skip MDIO bus registration entirely
++ * (stmmac_mdio_register() returns 0 immediately when mdio_bus_data is
++ * NULL) so probe() doesn't abort.
++ *
++ * Follow-up (tag 20260717-stmmacfix2, also tested live): netdev now
++ * registers cleanly, but stmmac_init_phy() still logs "no phy found"
++ * and the link never comes up, because phylink still expects a PHY
++ * (phylink_expects_phy() only returns false for MLO_AN_FIXED). Force a
++ * fixed link via plat->force_fixed_link / fixed_link_state, applied in
++ * stmmac_phylink_setup() (stmmac_main.c) right after phylink_create().
++ * Speed/duplex here (1000/full) is a first guess based on phy_interface
++ * = GMII from snps_gmac5_default_data() (gigabit-capable electrical
++ * interface) - there is no datasheet for this silicon, so this may need
++ * adjustment (check `ethtool eth0` / actual throughput on next test).
++ */
++static int sony_baikal_gbe_default_data(struct pci_dev *pdev,
++					 struct plat_stmmacenet_data *plat)
++{
++	int ret;
++
++	ret = snps_gmac5_default_data(pdev, plat);
++	if (ret)
++		return ret;
++
++	plat->mdio_bus_data = NULL;
++
++	plat->force_fixed_link = true;
++	plat->fixed_link_state.interface = plat->phy_interface;
++	plat->fixed_link_state.speed = SPEED_1000;
++	plat->fixed_link_state.duplex = DUPLEX_FULL;
++	plat->fixed_link_state.link = 1;
++	plat->fixed_link_state.an_complete = 1;
++
++	return 0;
++}
++
++static const struct stmmac_pci_info sony_baikal_gbe_pci_info = {
++	.setup = sony_baikal_gbe_default_data,
++};
++
+ /**
+  * stmmac_pci_probe
+  *
+@@ -206,6 +249,7 @@ static void stmmac_pci_remove(struct pci_dev *pdev)
+ #define PCI_DEVICE_ID_SYNOPSYS_GMAC5_ID		0x7102
+ 
+ static const struct pci_device_id stmmac_id_table[] = {
++	{ PCI_DEVICE_DATA(SONY, BAIKAL_GBE, &sony_baikal_gbe_pci_info) }, /* PS4 Pro Baikal GBE */
+ 	{ PCI_DEVICE_DATA(STMMAC, STMMAC, &stmmac_pci_info) },
+ 	{ PCI_DEVICE_DATA(STMICRO, MAC, &stmmac_pci_info) },
+ 	{ PCI_DEVICE_DATA(SYNOPSYS, GMAC5_ID, &snps_gmac5_pci_info) },
+diff --git a/include/linux/stmmac.h b/include/linux/stmmac.h
+index 32352a216..3769987bc 100644
+--- a/include/linux/stmmac.h
++++ b/include/linux/stmmac.h
+@@ -224,6 +224,11 @@ struct plat_stmmacenet_data {
+ 	 */
+ 	phy_interface_t phy_interface;
+ 	struct stmmac_mdio_bus_data *mdio_bus_data;
++	/* Force a fixed link (no PHY/MDIO autoneg) via phylink_set_fixed_link()
++	 * once phylink_create() has run - for platforms with no MDIO-reachable
++	 * PHY (see stmmac_pci.c sony_baikal_gbe_default_data()). */
++	bool force_fixed_link;
++	struct phylink_link_state fixed_link_state;
+ 	struct device_node *phy_node;
+ 	struct fwnode_handle *port_node;
+ 	struct device_node *mdio_node;

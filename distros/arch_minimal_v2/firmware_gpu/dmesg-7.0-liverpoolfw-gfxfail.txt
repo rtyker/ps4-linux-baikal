@@ -1,0 +1,1476 @@
+[    0.000000] ps4: x86_ps4_early_setup: PS4 early setup
+[    0.000000] Linux version 7.0.8-Strawberry-ThinLTO-Baikal-+ (root@adsv2) (clang version 22.1.8, LLD 22.1.8) #4 SMP PREEMPT_DYNAMIC Thu Jul 16 13:25:13 -03 2026
+[    0.000000] 
+[    0.000000]   _________ __                       ___.
+[    0.000000]  /   _____//  |_____________ __  _  _\_ |__   __________________ ___.__.
+[    0.000000]  \_____  \\   __\_  __ \__  \\ \/ \/ /| __ \_/ __ \_  __ \_  __ <   |  |
+[    0.000000]  /        \|  |  |  | \// __ \\     / | \_\ \  ___/|  | \/|  | \/\___  |
+[    0.000000] /_______  /|__|  |__|  (____  /\/\_/  |___  /\___  >__|   |__|   / ____|
+[    0.000000]         \/                  \/            \/     \/              \/
+[    0.000000] 
+[    0.000000]   Strawberry PS4 Linux
+[    0.000000]   Platform  : Sony PlayStation 4
+[    0.000000]   Focus     : BAIKAL
+[    0.000000]   Release   : 7.0.8-Strawberry-ThinLTO-Baikal-+
+[    0.000000]   Builder   : root@adsv2
+[    0.000000]   Toolchain : clang version 22.1.8, LLD 22.1.8
+[    0.000000]   Build     : #4 SMP PREEMPT_DYNAMIC Thu Jul 16 13:25:13 -03 2026
+[    0.000000] 
+[    0.000000] Command line: panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0 drm.debug=0x06 console=tty0 earlyprintk=efi,keep loglevel=8 root=/dev/sda2 rw rootdelay=10 systemd.unified_cgroup_hierarchy=0 systemd.legacy_systemd_cgroup_controller=yes audit=0 amdgpu.audio=1 usbcore.autosuspend=-1 video=HDMI-A-1:1920x1080@60 mitigations=off zswap.enabled=1 netconsole=6665@192.168.0.2/eth0,6666@192.168.0.1/b4:45:06:6c:f6:4f log_buf_len=4M
+[    0.000000] KERNEL supported cpus:
+[    0.000000]   AMD AuthenticAMD
+[    0.000000] BIOS-provided physical RAM map:
+[    0.000000] BIOS-e820: [mem 0x0000000000000000-0x0000000000007fff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x0000000000008000-0x000000000007ffff]  device reserved
+[    0.000000] BIOS-e820: [mem 0x0000000000080000-0x0000000000099fff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x000000000009a000-0x00000000000bffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x00000000000c0000-0x00000000000dffff]
+[    0.000000] BIOS-e820: [mem 0x00000000000e0000-0x00000000000effff]  ACPI data
+[    0.000000] BIOS-e820: [gap 0x00000000000f0000-0x00000000000fffff]
+[    0.000000] BIOS-e820: [mem 0x0000000000100000-0x00000000003fffff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x0000000000400000-0x000000000047ffff]  device reserved
+[    0.000000] BIOS-e820: [mem 0x0000000000480000-0x000000000067ffff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x0000000000680000-0x00000000006fffff]  device reserved
+[    0.000000] BIOS-e820: [mem 0x0000000000700000-0x000000007efe7fff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x000000007efe8000-0x000000007efeffff]  ACPI NVS
+[    0.000000] BIOS-e820: [mem 0x000000007eff0000-0x000000007effffff]  ACPI data
+[    0.000000] BIOS-e820: [mem 0x000000007f000000-0x000000007fffffff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x0000000080000000-0x00000000fbffffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x00000000fc000000-0x00000000ffffffff]
+[    0.000000] BIOS-e820: [mem 0x0000000100000000-0x000000013fffffff]  device reserved
+[    0.000000] BIOS-e820: [mem 0x0000000140000000-0x000000027effffff]  System RAM
+[    0.000000] Kernel compiled without mitigations, ignoring 'mitigations'; system may still be vulnerable
+[    0.000000] NX (Execute Disable) protection: active
+[    0.000000] APIC: Static calls initialized
+[    0.000000] SMBIOS 2.1 present.
+[    0.000000] DMI:  , BIOS unde Wed 09/22/2021 16:2
+[    0.000000] DMI: Memory slots populated: 1/1
+[    0.000000] ps4: EMC timer is broken.
+[    0.000000] ps4: Unable to measure TSC frequency, assuming default.
+[    0.000000] tsc: Detected 1594.000 MHz processor
+[    0.001419] e820: update [mem 0x00000000-0x00000fff] System RAM ==> device reserved
+[    0.001425] e820: remove [mem 0x000a0000-0x000fffff] System RAM
+[    0.001438] last_pfn = 0x27f000 max_arch_pfn = 0x400000000
+[    0.001447] MTRR map: 6 entries (3 fixed + 3 variable; max 20), built from 9 variable MTRRs
+[    0.001452] x86/PAT: Configuration [0-7]: WB  WC  UC- UC  WB  WP  UC- WT  
+[    0.001783] e820: update [mem 0x80000000-0x13fffffff] System RAM ==> device reserved
+[    0.001799] last_pfn = 0x80000 max_arch_pfn = 0x400000000
+[    0.009829] Using GB pages for direct mapping
+[    0.019502] printk: log buffer data + meta data: 4194304 + 17825792 = 22020096 bytes
+[    0.019509] printk: early log buf free: 61616(94%)
+[    0.019512] RAMDISK: [mem 0x44f00000-0x44fd2fff]
+[    0.019528] ACPI: Early table checksum verification disabled
+[    0.019536] ACPI: RSDP 0x00000000000E0000 000024 (v02 SIE   )
+[    0.019545] ACPI: XSDT 0x00000000000E0088 00004C (v01 SIE    ORBIS    20121218 INTL 20110211)
+[    0.019556] ACPI: FACP 0x00000000000E016C 0000F4 (v04 SIE    ORBIS    20130205 INTL 20110211)
+[    0.019566] ACPI: DSDT 0x00000000000E0430 00018C (v02 SIE    ORBIS    20121002 INTL 20110211)
+[    0.019573] ACPI: FACS 0x00000000000E012C 000040
+[    0.019578] ACPI: FACS 0x00000000000E012C 000040
+[    0.019583] ACPI: APIC 0x00000000000E0298 00006C (v02 SIE    ORBIS    20120725 INTL 20110211)
+[    0.019589] ACPI: MCFG 0x00000000000E0304 00003C (v01 SIE    ORBIS    20120725 INTL 20110211)
+[    0.019595] ACPI: SSDT 0x00000000000E0730 0001EC (v01 AMD    POWERNOW 00000001 AMD  00000001)
+[    0.019601] ACPI: IVRS 0x00000000000E091C 000054 (v01 F0F    PS4KEXEC 20161225 KEXC 20161225)
+[    0.019606] ACPI: Reserving FACP table memory at [mem 0xe016c-0xe025f]
+[    0.019610] ACPI: Reserving DSDT table memory at [mem 0xe0430-0xe05bb]
+[    0.019612] ACPI: Reserving FACS table memory at [mem 0xe012c-0xe016b]
+[    0.019614] ACPI: Reserving FACS table memory at [mem 0xe012c-0xe016b]
+[    0.019616] ACPI: Reserving APIC table memory at [mem 0xe0298-0xe0303]
+[    0.019618] ACPI: Reserving MCFG table memory at [mem 0xe0304-0xe033f]
+[    0.019619] ACPI: Reserving SSDT table memory at [mem 0xe0730-0xe091b]
+[    0.019621] ACPI: Reserving IVRS table memory at [mem 0xe091c-0xe096f]
+[    0.020543] ACPI: No IOAPIC entries present
+[    0.020546] ACPI: Using ACPI for processor (LAPIC) configuration information
+[    0.020554] CPU topo: Max. logical packages:   1
+[    0.020556] CPU topo: Max. logical nodes:      1
+[    0.020557] CPU topo: Num. nodes per package:  1
+[    0.020564] CPU topo: Max. logical dies:       1
+[    0.020565] CPU topo: Max. dies per package:   1
+[    0.020578] CPU topo: Max. threads per core:   1
+[    0.020580] CPU topo: Num. cores per package:     8
+[    0.020581] CPU topo: Num. threads per package:   8
+[    0.020583] CPU topo: Allowing 8 present CPUs plus 0 hotplug CPUs
+[    0.020609] [gap 0xfc000000-0xffffffff] available for PCI devices
+[    0.020615] clocksource: refined-jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645519600211568 ns
+[    0.020659] Zone ranges:
+[    0.020661]   DMA      [mem 0x0000000000001000-0x0000000000ffffff]
+[    0.020666]   DMA32    [mem 0x0000000001000000-0x00000000ffffffff]
+[    0.020669]   Normal   [mem 0x0000000100000000-0x000000027effffff]
+[    0.020673] Movable zone start for each node
+[    0.020674] Early memory node ranges
+[    0.020675]   node   0: [mem 0x0000000000001000-0x0000000000007fff]
+[    0.020678]   node   0: [mem 0x0000000000080000-0x0000000000099fff]
+[    0.020680]   node   0: [mem 0x0000000000100000-0x00000000003fffff]
+[    0.020683]   node   0: [mem 0x0000000000480000-0x000000000067ffff]
+[    0.020685]   node   0: [mem 0x0000000000700000-0x000000007efe7fff]
+[    0.020687]   node   0: [mem 0x000000007f000000-0x000000007fffffff]
+[    0.020689]   node   0: [mem 0x0000000140000000-0x000000027effffff]
+[    0.020693] Initmem setup node 0 [mem 0x0000000000001000-0x000000027effffff]
+[    0.020705] On node 0, zone DMA: 1 pages in unavailable ranges
+[    0.020710] On node 0, zone DMA: 120 pages in unavailable ranges
+[    0.020731] On node 0, zone DMA: 102 pages in unavailable ranges
+[    0.020746] On node 0, zone DMA: 128 pages in unavailable ranges
+[    0.020798] On node 0, zone DMA: 128 pages in unavailable ranges
+[    0.031575] On node 0, zone DMA32: 24 pages in unavailable ranges
+[    0.058286] On node 0, zone Normal: 4096 pages in unavailable ranges
+[    0.058310] setup_percpu: NR_CPUS:8 nr_cpumask_bits:8 nr_cpu_ids:8 nr_node_ids:1
+[    0.059038] percpu: Embedded 44 pages/cpu s142232 r8192 d29800 u262144
+[    0.059058] pcpu-alloc: s142232 r8192 d29800 u262144 alloc=1*2097152
+[    0.059065] pcpu-alloc: [0] 0 1 2 3 4 5 6 7 
+[    0.059099] Kernel command line: panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0 drm.debug=0x06 console=tty0 earlyprintk=efi,keep loglevel=8 root=/dev/sda2 rw rootdelay=10 systemd.unified_cgroup_hierarchy=0 systemd.legacy_systemd_cgroup_controller=yes audit=0 amdgpu.audio=1 usbcore.autosuspend=-1 video=HDMI-A-1:1920x1080@60 mitigations=off zswap.enabled=1 netconsole=6665@192.168.0.2/eth0,6666@192.168.0.1/b4:45:06:6c:f6:4f log_buf_len=4M
+[    0.059313] audit: disabled (until reboot)
+[    0.061260] Dentry cache hash table entries: 1048576 (order: 11, 8388608 bytes, linear)
+[    0.062200] Inode-cache hash table entries: 524288 (order: 10, 4194304 bytes, linear)
+[    0.062265] software IO TLB: area num 8.
+[    0.091989] Built 1 zonelists, mobility grouping on.  Total pages: 1830409
+[    0.092003] mem auto-init: stack:off, heap alloc:off, heap free:off
+[    0.127513] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=8, Nodes=1
+[    0.127657] Dynamic Preempt: full
+[    0.127762] rcu: Preemptible hierarchical RCU implementation.
+[    0.127765] 	Trampoline variant of Tasks RCU enabled.
+[    0.127767] 	Tracing variant of Tasks RCU enabled.
+[    0.127768] rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.
+[    0.127791] RCU Tasks: Setting shift to 3 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=8.
+[    0.127808] NR_IRQS: 4352, nr_irqs: 128, preallocated irqs: 0
+[    0.127868] rcu: 	Offload RCU callbacks from CPUs: 0-7.
+[    0.127877] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[    0.127934] No irq handler for 0.49
+[    0.127969] Console: colour dummy device 80x25
+[    0.127975] printk: legacy console [tty0] enabled
+[    0.128610] ACPI: Core revision 20251212
+[    0.128691] ACPI: setting ELCR to 0200 (from ffff)
+[    0.128713] Failed to register legacy timer interrupt
+[    0.128720] APIC: Switch to symmetric I/O mode setup
+[    0.128765] clocksource: tsc-early: mask: 0xffffffffffffffff max_cycles: 0x16fa00e7d19, max_idle_ns: 440795227561 ns
+[    0.128789] Calibrating delay loop (skipped), value calculated using timer frequency.. 3188.00 BogoMIPS (lpj=6376000)
+[    0.128845] Last level iTLB entries: 4KB 512, 2MB 8, 4MB 4
+[    0.128854] Last level dTLB entries: 4KB 512, 2MB 256, 4MB 128, 1GB 0
+[    0.128870] mitigations: Enabled attack vectors: SMT mitigations: off
+[    0.128880] Speculative Store Bypass: Vulnerable
+[    0.128888] Spectre V2 : Vulnerable
+[    0.128893] RETBleed: Vulnerable
+[    0.128899] Spectre V1 : Vulnerable: __user pointer sanitization and usercopy barriers only; no swapgs barriers
+[    0.128920] x86/fpu: Supporting XSAVE feature 0x001: 'x87 floating point registers'
+[    0.128929] x86/fpu: Supporting XSAVE feature 0x002: 'SSE registers'
+[    0.128936] x86/fpu: Supporting XSAVE feature 0x004: 'AVX registers'
+[    0.128944] x86/fpu: xstate_offset[2]:  576, xstate_sizes[2]:  256
+[    0.128951] x86/fpu: Enabled xstate features 0x7, context size is 832 bytes, using 'standard' format.
+[    0.130888] Freeing SMP alternatives memory: 68K
+[    0.130900] pid_max: default: 32768 minimum: 301
+[    0.131049] Mount-cache hash table entries: 16384 (order: 5, 131072 bytes, linear)
+[    0.131093] Mountpoint-cache hash table entries: 16384 (order: 5, 131072 bytes, linear)
+[    0.131252] VFS: Finished mounting rootfs on nullfs
+[    0.131699] smpboot: CPU0: AMD DG1501SML87LB (family: 0x16, model: 0x43, stepping: 0x0)
+[    0.132253] Performance Events: AMD PMU driver.
+[    0.132268] ... version:                   0
+[    0.132274] ... bit width:                 48
+[    0.132280] ... generic counters:          4
+[    0.132286] ... generic bitmap:            000000000000000f
+[    0.132293] ... fixed-purpose counters:    0
+[    0.132298] ... fixed-purpose bitmap:      0000000000000000
+[    0.132305] ... value mask:                0000ffffffffffff
+[    0.132311] ... max period:                00007fffffffffff
+[    0.132318] ... global_ctrl mask:          000000000000000f
+[    0.132533] signal: max sigframe size: 1776
+[    0.132625] rcu: Hierarchical SRCU implementation.
+[    0.132634] rcu: 	Max phase no-delay instances is 1000.
+[    0.132781] Timer migration: 1 hierarchy levels; 8 children per group; 1 crossnode level
+[    0.132781] smp: Bringing up secondary CPUs ...
+[    0.132781] smpboot: x86: Booting SMP configuration:
+[    0.132781] .... node  #0, CPUs:      #1 #2 #3 #4 #5 #6 #7
+[    0.146784] smp: Brought up 1 node, 8 CPUs
+[    0.146784] smpboot: Total of 8 processors activated (25504.00 BogoMIPS)
+[    0.149063] Memory: 7049140K/7321636K available (25658K kernel code, 1100K rwdata, 18468K rodata, 1176K init, 616K bss, 267552K reserved, 0K cma-reserved)
+[    0.149459] devtmpfs: initialized
+[    0.149466] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+[    0.149466] posixtimers hash table entries: 4096 (order: 4, 65536 bytes, linear)
+[    0.149466] futex hash table entries: 2048 (131072 bytes on 1 NUMA nodes, total 128 KiB, linear).
+[    0.149466] prandom: seed boundary self test passed
+[    0.150139] prandom: 100 self tests passed
+[    0.153299] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[    0.153650] thermal_sys: Registered thermal governor 'step_wise'
+[    0.153678] cpuidle: using governor ladder
+[    0.153700] cpuidle: using governor menu
+[    0.153744] PCI: ECAM [mem 0xf8000000-0xfbffffff] (base 0xf8000000) for domain 0000 [bus 00-3f]
+[    0.153744] PCI: Using configuration type 1 for base access
+[    0.153744] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[    0.153744] HugeTLB: 28 KiB vmemmap can be freed for a 2.00 MiB page
+[    0.224785] raid6: sse2x4   gen()  3914 MB/s
+[    0.292786] raid6: sse2x2   gen()  3932 MB/s
+[    0.360784] raid6: sse2x1   gen()  3291 MB/s
+[    0.360792] raid6: using algorithm sse2x2 gen() 3932 MB/s
+[    0.428786] raid6: .... xor() 2550 MB/s, rmw enabled
+[    0.428794] raid6: using ssse3x2 recovery algorithm
+[    0.428897] ACPI: Added _OSI(Module Device)
+[    0.428906] ACPI: Added _OSI(Processor Device)
+[    0.428913] ACPI: Added _OSI(Processor Aggregator Device)
+[    0.429220] ACPI: 2 ACPI AML tables successfully acquired and loaded
+[    0.448863] ACPI: OSL: ACPI: Bypassing SCI allocation for PS4
+[    0.456857] ACPI: \_SB_: platform _OSC: OS support mask [00027eef]
+[    0.456962] ACPI: Interpreter enabled
+[    0.456979] ACPI: PM: (supports S0 S5)
+[    0.456986] ACPI: Using PIC for interrupt routing
+[    0.457016] PCI: Ignoring host bridge windows from ACPI; if necessary, use "pci=use_crs" and report a bug
+[    0.457027] PCI: Ignoring E820 reservations for host bridge windows
+[    0.457792] acpi PNP0A03:00: [Firmware Bug]: no secondary bus range in _CRS
+[    0.457814] ACPI: PCI Root Bridge [PCI0] (domain 0000 [bus 00-ff])
+[    0.457830] acpi PNP0A03:00: _OSC: OS supports [ExtendedConfig ASPM ClockPM Segments MSI HPX-Type3]
+[    0.457848] acpi PNP0A03:00: _OSC: OS requested [PME AER PCIeCapability LTR]
+[    0.457858] acpi PNP0A03:00: _OSC: platform willing to grant [PME AER PCIeCapability LTR]
+[    0.457868] acpi PNP0A03:00: _OSC: platform retains control of PCIe features (AE_ERROR)
+[    0.457879] acpi PNP0A03:00: [Firmware Info]: ECAM [mem 0xf8000000-0xfbffffff] for domain 0000 [bus 00-3f] only partially covers this bridge
+[    0.457911] acpi PNP0A03:00: host bridge window [io  0x0cf8-0x0cff] (ignored)
+[    0.457922] PCI: root bus 00: using default resources
+[    0.457972] PCI host bridge to bus 0000:00
+[    0.457984] pci_bus 0000:00: root bus resource [io  0x0000-0xffff]
+[    0.457994] pci_bus 0000:00: root bus resource [mem 0x00000000-0xffffffffff]
+[    0.458004] pci_bus 0000:00: root bus resource [bus 00-ff]
+[    0.458027] pci 0000:00:00.0: [1022:1436] type 00 class 0x060000 conventional PCI endpoint
+[    0.458137] pci 0000:00:00.2: [1022:1437] type 00 class 0x080600 conventional PCI endpoint
+[    0.458249] pci 0000:00:01.0: [1002:9924] type 00 class 0x030000 PCIe Root Complex Integrated Endpoint
+[    0.458281] pci 0000:00:01.0: BAR 0 [mem 0xe0000000-0xe3ffffff 64bit pref]
+[    0.458292] pci 0000:00:01.0: BAR 2 [mem 0xe4000000-0xe47fffff 64bit pref]
+[    0.458302] pci 0000:00:01.0: BAR 4 [io  0x6000-0x60ff]
+[    0.458311] pci 0000:00:01.0: BAR 5 [mem 0xe4800000-0xe483ffff]
+[    0.458320] pci 0000:00:01.0: ROM [mem 0x00000000-0x0001ffff pref]
+[    0.458333] pci 0000:00:01.0: enabling Extended Tags
+[    0.458353] pci 0000:00:01.0: Video device with shadowed ROM at [mem 0x000c0000-0x000dffff]
+[    0.458382] pci 0000:00:01.0: supports D1 D2
+[    0.458389] pci 0000:00:01.0: PME# supported from D1 D2 D3hot
+[    0.458475] pci 0000:00:01.1: [1002:9921] type 00 class 0x040300 PCIe Root Complex Integrated Endpoint
+[    0.458505] pci 0000:00:01.1: BAR 0 [mem 0xe4840000-0xe4843fff 64bit]
+[    0.458520] pci 0000:00:01.1: enabling Extended Tags
+[    0.458552] pci 0000:00:01.1: supports D1 D2
+[    0.458637] pci 0000:00:02.0: [1022:1438] type 00 class 0x060000 conventional PCI endpoint
+[    0.458754] pci 0000:00:14.0: [104d:90d7] type 00 class 0x088000 PCIe Endpoint
+[    0.458803] pci 0000:00:14.0: BAR 0 [mem 0xfdf8000000-0xfdf9ffffff 64bit]
+[    0.458814] pci 0000:00:14.0: BAR 2 [io  0x1000-0x13ff]
+[    0.458997] pci 0000:00:14.1: [104d:90d8] type 00 class 0x088001 PCIe Endpoint
+[    0.459049] pci 0000:00:14.1: BAR 0 [mem 0xc2000000-0xc2000fff 64bit]
+[    0.459225] pci 0000:00:14.2: [104d:90d9] type 00 class 0x088002 PCIe Endpoint
+[    0.459274] pci 0000:00:14.2: BAR 0 [mem 0xc4000000-0xc4007fff 64bit]
+[    0.459454] pci 0000:00:14.3: [104d:90da] type 00 class 0x088003 PCIe Endpoint
+[    0.459503] pci 0000:00:14.3: BAR 0 [mem 0xc6000000-0xc6000fff 64bit]
+[    0.459683] pci 0000:00:14.4: [104d:90db] type 00 class 0x088004 PCIe Endpoint
+[    0.459731] pci 0000:00:14.4: BAR 0 [mem 0xc8000000-0xc8001fff 64bit]
+[    0.459743] pci 0000:00:14.4: BAR 2 [mem 0xc8800000-0xc89fffff 64bit]
+[    0.459753] pci 0000:00:14.4: BAR 4 [mem 0xc9000000-0xc91fffff 64bit]
+[    0.459924] pci 0000:00:14.5: [104d:90dc] type 00 class 0x088005 PCIe Endpoint
+[    0.459973] pci 0000:00:14.5: BAR 0 [mem 0xca000000-0xca000fff 64bit]
+[    0.459984] pci 0000:00:14.5: BAR 2 [mem 0xca800000-0xca800fff 64bit]
+[    0.460167] pci 0000:00:14.6: [104d:90dd] type 00 class 0x088006 PCIe Endpoint
+[    0.460216] pci 0000:00:14.6: BAR 0 [mem 0xcc000000-0xcc000fff 64bit]
+[    0.460227] pci 0000:00:14.6: BAR 2 [mem 0x80000000-0xbfffffff 64bit]
+[    0.460237] pci 0000:00:14.6: BAR 4 [mem 0xcd000000-0xcd0fffff]
+[    0.460246] pci 0000:00:14.6: BAR 5 [mem 0xcd400000-0xcd43ffff]
+[    0.460421] pci 0000:00:14.7: [104d:90de] type 00 class 0x088007 PCIe Endpoint
+[    0.460470] pci 0000:00:14.7: BAR 0 [mem 0xce000000-0xce3fffff 64bit]
+[    0.460481] pci 0000:00:14.7: BAR 2 [mem 0xce800000-0xce80ffff 64bit]
+[    0.460491] pci 0000:00:14.7: BAR 4 [mem 0xcf000000-0xcf7fffff 64bit]
+[    0.460938] pci 0000:00:18.0: [1022:142e] type 00 class 0x060000 conventional PCI endpoint
+[    0.461030] pci 0000:00:18.1: [1022:142f] type 00 class 0x060000 conventional PCI endpoint
+[    0.461118] pci 0000:00:18.2: [1022:1430] type 00 class 0x060000 conventional PCI endpoint
+[    0.461207] pci 0000:00:18.3: [1022:1431] type 00 class 0x060000 conventional PCI endpoint
+[    0.461297] pci 0000:00:18.4: [1022:1432] type 00 class 0x060000 conventional PCI endpoint
+[    0.461387] pci 0000:00:18.5: [1022:1433] type 00 class 0x060000 conventional PCI endpoint
+[    0.461471] pci 0000:00:18.6: [1022:1434] type 00 class 0x060000 conventional PCI endpoint
+[    0.461563] pci_bus 0000:00: on NUMA node 0
+[    0.462033] iommu: Default domain type: Translated
+[    0.462041] iommu: DMA domain TLB invalidation policy: lazy mode
+[    0.462080] SCSI subsystem initialized
+[    0.462080] libata version 3.00 loaded.
+[    0.462080] ACPI: bus type USB registered
+[    0.462080] usbcore: registered new interface driver usbfs
+[    0.462080] usbcore: registered new interface driver hub
+[    0.462080] usbcore: registered new device driver usb
+[    0.462080] Advanced Linux Sound Architecture Driver Initialized.
+[    0.462080] Bluetooth: Core ver 2.22
+[    0.462080] NET: Registered PF_BLUETOOTH protocol family
+[    0.462080] Bluetooth: HCI device and connection manager initialized
+[    0.462080] Bluetooth: HCI socket layer initialized
+[    0.462080] Bluetooth: L2CAP socket layer initialized
+[    0.462080] Bluetooth: SCO socket layer initialized
+[    0.462080] PCI: Using ACPI for IRQ routing
+[    0.465617] PCI: pci_cache_line_size set to 64 bytes
+[    0.465664] e820: register RAM buffer resource [mem 0x00008000-0x0000ffff]
+[    0.465674] e820: register RAM buffer resource [mem 0x0009a000-0x0009ffff]
+[    0.465683] e820: register RAM buffer resource [mem 0x00680000-0x006fffff]
+[    0.465690] e820: register RAM buffer resource [mem 0x7efe8000-0x7fffffff]
+[    0.465698] e820: register RAM buffer resource [mem 0x27f000000-0x27fffffff]
+[    0.465734] pci 0000:00:01.0: vgaarb: setting as boot VGA device
+[    0.465734] pci 0000:00:01.0: vgaarb: bridge control possible
+[    0.465734] pci 0000:00:01.0: vgaarb: VGA device added: decodes=io+mem,owns=io+mem,locks=none
+[    0.465734] vgaarb: loaded
+[    0.465734] clocksource: Switched to clocksource tsc-early
+[    0.465734] pnp: PnP ACPI init
+[    0.465734] pnp: PnP ACPI: found 0 devices
+[    0.468928] NET: Registered PF_INET protocol family
+[    0.469252] IP idents hash table entries: 131072 (order: 8, 1048576 bytes, linear)
+[    0.523774] tcp_listen_portaddr_hash hash table entries: 4096 (order: 4, 65536 bytes, linear)
+[    0.523824] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[    0.523843] TCP established hash table entries: 65536 (order: 7, 524288 bytes, linear)
+[    0.524065] TCP bind hash table entries: 65536 (order: 9, 2097152 bytes, linear)
+[    0.524643] TCP: Hash tables configured (established 65536 bind 65536)
+[    0.524878] MPTCP token hash table entries: 8192 (order: 6, 196608 bytes, linear)
+[    0.524950] UDP hash table entries: 4096 (order: 6, 262144 bytes, linear)
+[    0.525047] UDP-Lite hash table entries: 4096 (order: 6, 262144 bytes, linear)
+[    0.525252] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[    0.525697] RPC: Registered named UNIX socket transport module.
+[    0.525706] RPC: Registered udp transport module.
+[    0.525713] RPC: Registered tcp transport module.
+[    0.525719] RPC: Registered tcp-with-tls transport module.
+[    0.525725] RPC: Registered tcp NFSv4.1 backchannel transport module.
+[    0.526104] pci_bus 0000:00: resource 4 [io  0x0000-0xffff]
+[    0.526118] pci_bus 0000:00: resource 5 [mem 0x00000000-0xffffffffff]
+[    0.526191] pci 0000:00:01.1: D0 power state depends on 0000:00:01.0
+[    0.526207] pci 0000:00:02.0: CLS mismatch (64 != 512), using 64 bytes
+[    0.526266] PCI-DMA: Using software bounce buffering for IO (SWIOTLB)
+[    0.526274] software IO TLB: mapped [mem 0x000000007afe8000-0x000000007efe8000] (64MB)
+[    0.526417] LVT offset 0 assigned for vector 0x400
+[    0.526522] Trying to unpack rootfs image as initramfs...
+[    0.529713] perf: AMD IBS detected (0x000000ff)
+[    0.529776] platform rtc_cmos: registered platform RTC device (no PNP device found)
+[    0.532075] Initialise system trusted keyrings
+[    0.532171] workingset: timestamp_bits=46 max_order=21 bucket_order=0
+[    0.532612] ntfs3: Warning: Activated 64 bits per cluster. Windows does not support this
+[    0.532696] fuse: init (API version 7.45)
+[    0.533060] cryptd: max_cpu_qlen set to 1000
+[    0.547682] Freeing initrd memory: 844K
+[    0.568139] NET: Registered PF_ALG protocol family
+[    0.568178] xor: automatically using best checksumming function   avx       
+[    0.568189] Key type asymmetric registered
+[    0.568196] Asymmetric key parser 'x509' registered
+[    0.568262] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 252)
+[    0.568272] io scheduler mq-deadline registered
+[    0.568279] io scheduler kyber registered
+[    0.568311] io scheduler bfq registered
+[    0.570456] Could not retrieve perf counters (-19)
+[    0.594336] Serial: 8250/16550 driver, 4 ports, IRQ sharing enabled
+[    0.595029] Non-volatile memory driver v1.3
+[    0.595050] Linux agpgart interface v0.103
+[    0.595294] ACPI: bus type drm_connector registered
+[    0.595329] [drm:amdgpu_acpi_enumerate_xcc] No matching acpi device found for AMD3000
+[    0.596528] brd: module loaded
+[    0.598794] loop: module loaded
+[    0.599041] zram: Added device: zram0
+[    0.599355] baikal_pcie 0000:00:14.4: bpcie glue probe
+[    0.599370] baikal_pcie 0000:00:14.4: Baikal chip revision: 5c202021:7ca85ea9:0000b100
+[    0.599383] pci 0000:00:14.0: bpcie_create_irq_domain
+[    0.599396] pci 0000:00:14.1: bpcie_create_irq_domain
+[    0.599406] pci 0000:00:14.2: bpcie_create_irq_domain
+[    0.599419] pci 0000:00:14.3: bpcie_create_irq_domain
+[    0.599429] baikal_pcie 0000:00:14.4: bpcie_create_irq_domain
+[    0.599438] pci 0000:00:14.5: bpcie_create_irq_domain
+[    0.599447] pci 0000:00:14.6: bpcie_create_irq_domain
+[    0.599456] pci 0000:00:14.7: bpcie_create_irq_domain
+[    0.628258] Turn ON BT/WLAN: ret=20, reply 00 00 00 00
+[    0.633318] usb0 status: ret=20, reply 00 00 01 00
+[    0.633342] USB is already turned ON!
+[    0.633458] input: Power Button as /devices/pci0000:00/0000:00:14.4/input/input0
+[    0.668274] ret=46, reply 00 00 03 00 00 00 15 00
+[    0.673318] ret=20, reply 00 00 01 02 10 00 00 00
+[    0.678247] ret=20, reply 00 00 00 00 00 00 00 00
+[    0.678632] ps4-led ps4-led: PS4 LED driver ready.
+[    0.678710] ps4-fan ps4-fan: PS4 fan hwmon ready — temp1_input, temp1_crit (20–85°C), fan1_input
+[    0.678759] ps4-buzzer ps4-buzzer: PS4 buzzer driver ready.
+[    0.678909] ps4-mesa-lock: built without PS4_MESA_LOCK_TOKEN; all verification requests will fail
+[    0.678974] wireguard: WireGuard 1.0.0 loaded. See www.wireguard.com for information.
+[    0.678983] wireguard: Copyright (C) 2015-2019 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
+[    0.679350] tun: Universal TUN/TAP device driver, 1.6
+[    0.679466] sky2: driver version 1.30
+[    0.679550] usbcore: registered new interface driver mwifiex_usb
+[    0.679598] usbcore: registered new interface driver mt7601u
+[    0.679623] usbcore: registered new interface driver mt76x0u
+[    0.679694] usbcore: registered new interface driver mt76x2u
+[    0.679770] usbcore: registered new interface driver mt7663u
+[    0.680294] VFIO - User Level meta-driver version: 0.3
+[    0.680474] xhci_aeolia 0000:00:14.7: Baikal SATA PHY init
+[    0.680487] xhci_aeolia 0000:00:14.7: Baikal SATA EFUSE VALUE: 0x24:0x0e:0x0e
+[    0.680497] xhci_aeolia 0000:00:14.7: Baikal SATA PHY Trace length : 4
+[    0.680702] xhci_aeolia 0000:00:14.7: AHCI vers 0001.0300, 32 command slots, 6 Gbps, ATA mode
+[    0.680714] xhci_aeolia 0000:00:14.7: 1/1 ports implemented (port mask 0x1)
+[    0.680724] xhci_aeolia 0000:00:14.7: flags: ncq sntf pm clo only pmp pio slum part ccc apst 
+[    0.681091] scsi host0: ahci
+[    0.681200] ata1: SATA max UDMA/133 abar m65536@0xce800000 port 0xce800100 irq 32 lpm-pol 0
+[    0.681219] xhci_aeolia 0000:00:14.7: xhci_aeolia_probe_one 0 controller 90de irq 32
+[    0.685564] xhci_aeolia 0000:00:14.7: xHCI Host Controller
+[    0.685603] xhci_aeolia 0000:00:14.7: new USB bus registered, assigned bus number 1
+[    0.685744] xhci_aeolia 0000:00:14.7: hcc params 0x0228f66c hci version 0x100 quirks 0x0008000000010010
+[    0.685770] xhci_aeolia 0000:00:14.7: irq 32, io mem 0xce000000
+[    0.685784] xhci_aeolia 0000:00:14.7: xHCI Host Controller
+[    0.685794] xhci_aeolia 0000:00:14.7: new USB bus registered, assigned bus number 2
+[    0.685805] xhci_aeolia 0000:00:14.7: Host supports USB 3.0 SuperSpeed
+[    0.685919] usb usb1: New USB device found, idVendor=1d6b, idProduct=0002, bcdDevice= 7.00
+[    0.685931] usb usb1: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+[    0.685940] usb usb1: Product: xHCI Host Controller
+[    0.685948] usb usb1: Manufacturer: Linux 7.0.8-Strawberry-ThinLTO-Baikal-+ xhci-hcd
+[    0.685956] usb usb1: SerialNumber: 0000:00:14.7
+[    0.686251] hub 1-0:1.0: USB hub found
+[    0.686277] hub 1-0:1.0: 2 ports detected
+[    0.686452] usb usb2: We don't know the algorithms for LPM for this host, disabling LPM.
+[    0.686519] usb usb2: New USB device found, idVendor=1d6b, idProduct=0003, bcdDevice= 7.00
+[    0.686531] usb usb2: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+[    0.686540] usb usb2: Product: xHCI Host Controller
+[    0.686547] usb usb2: Manufacturer: Linux 7.0.8-Strawberry-ThinLTO-Baikal-+ xhci-hcd
+[    0.686556] usb usb2: SerialNumber: 0000:00:14.7
+[    0.686721] hub 2-0:1.0: USB hub found
+[    0.686745] hub 2-0:1.0: 2 ports detected
+[    0.709614] xhci_aeolia 0000:00:14.7: xhci_aeolia_probe_one 2 controller 90de irq 32
+[    0.713565] xhci_aeolia 0000:00:14.7: xHCI Host Controller
+[    0.713594] xhci_aeolia 0000:00:14.7: new USB bus registered, assigned bus number 3
+[    0.713718] xhci_aeolia 0000:00:14.7: hcc params 0x0220f06c hci version 0x100 quirks 0x0008000000010010
+[    0.713744] xhci_aeolia 0000:00:14.7: irq 32, io mem 0xcf000000
+[    0.713758] xhci_aeolia 0000:00:14.7: xHCI Host Controller
+[    0.713768] xhci_aeolia 0000:00:14.7: new USB bus registered, assigned bus number 4
+[    0.713780] xhci_aeolia 0000:00:14.7: Host supports USB 3.0 SuperSpeed
+[    0.713934] usb usb3: New USB device found, idVendor=1d6b, idProduct=0002, bcdDevice= 7.00
+[    0.713949] usb usb3: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+[    0.713961] usb usb3: Product: xHCI Host Controller
+[    0.713969] usb usb3: Manufacturer: Linux 7.0.8-Strawberry-ThinLTO-Baikal-+ xhci-hcd
+[    0.713979] usb usb3: SerialNumber: 0000:00:14.7
+[    0.714306] hub 3-0:1.0: USB hub found
+[    0.714332] hub 3-0:1.0: 1 port detected
+[    0.714486] usb usb4: We don't know the algorithms for LPM for this host, disabling LPM.
+[    0.714555] usb usb4: New USB device found, idVendor=1d6b, idProduct=0003, bcdDevice= 7.00
+[    0.714568] usb usb4: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+[    0.714577] usb usb4: Product: xHCI Host Controller
+[    0.714584] usb usb4: Manufacturer: Linux 7.0.8-Strawberry-ThinLTO-Baikal-+ xhci-hcd
+[    0.714594] usb usb4: SerialNumber: 0000:00:14.7
+[    0.714771] hub 4-0:1.0: USB hub found
+[    0.714793] hub 4-0:1.0: 1 port detected
+[    0.735987] usbcore: registered new interface driver uas
+[    0.736044] usbcore: registered new interface driver usb-storage
+[    0.736106] i8042: PNP: No PS/2 controller found.
+[    0.736311] mousedev: PS/2 mouse device common for all mice
+[    0.736437] usbcore: registered new interface driver xpad
+[    0.736511] i2c_dev: i2c /dev entries driver
+[    0.736882] device-mapper: ioctl: 4.50.0-ioctl (2025-04-28) initialised: dm-devel@lists.linux.dev
+[    0.737037] amd_pstate: the _CPC object is not present in SBIOS or ACPI disabled
+[    0.737047] sdhci: Secure Digital Host Controller Interface driver
+[    0.737054] sdhci: Copyright(c) Pierre Ossman
+[    0.737186] hid: raw HID events driver (C) Jiri Kosina
+[    0.737230] sdhci-pci 0000:00:14.3: SDHCI controller found [104d:90da] (rev 0)
+[    0.737343] usbcore: registered new interface driver usbhid
+[    0.737355] usbhid: USB HID core driver
+[    0.737683] usbcore: registered new interface driver snd-usb-audio
+[    0.738067] snd_hda_intel 0000:00:01.1: can't derive routing for PCI INT B
+[    0.738079] snd_hda_intel 0000:00:01.1: PCI INT B: not connected
+[    0.738091] mmc0: SDHCI controller on PCI [0000:00:14.3] using ADMA
+[    0.738230] u32 classifier
+[    0.738241]     input device check on
+[    0.738246]     Actions configured
+[    0.738378] ipip: IPv4 and MPLS over IPv4 tunneling driver
+[    0.738610] gre: GRE over IPv4 demultiplexer driver
+[    0.738658] Initializing XFRM netlink socket
+[    0.738698] NET: Registered PF_INET6 protocol family
+[    0.739334] Segment Routing with IPv6
+[    0.739343] RPL Segment Routing with IPv6
+[    0.739368] In-situ OAM (IOAM) with IPv6
+[    0.739411] mip6: Mobile IPv6
+[    0.739426] NET: Registered PF_PACKET protocol family
+[    0.739434] NET: Registered PF_APPLETALK protocol family
+[    0.739455] NET: Registered PF_X25 protocol family
+[    0.739474] X25: Linux Version 0.2
+[    0.739570] Bluetooth: RFCOMM TTY layer initialized
+[    0.739581] Bluetooth: RFCOMM socket layer initialized
+[    0.739588] Bluetooth: RFCOMM ver 1.11
+[    0.739596] Bluetooth: BNEP (Ethernet Emulation) ver 1.3
+[    0.739602] Bluetooth: BNEP filters: protocol multicast
+[    0.739611] Bluetooth: BNEP socket layer initialized
+[    0.739617] Bluetooth: HIDP (Human Interface Emulation) ver 1.2
+[    0.739626] Bluetooth: HIDP socket layer initialized
+[    0.739665] NET: Registered PF_PHONET protocol family
+[    0.739690] 8021q: 802.1Q VLAN Support v1.8
+[    0.740234] NET: Registered PF_IEEE802154 protocol family
+[    0.740254] Key type dns_resolver registered
+[    0.740402] batman_adv: B.A.T.M.A.N. advanced 2025.5 (compatibility version 15) loaded
+[    0.740514] NET: Registered PF_VSOCK protocol family
+[    0.740537] mpls_gso: MPLS GSO support
+[    0.741196] microcode: Current revision: 0x07043001
+[    0.741448] IPI shorthand broadcast: enabled
+[    0.750434] input: HD-Audio Generic HDMI/DP,pcm=3 as /devices/pci0000:00/0000:00:01.1/sound/card0/input1
+[    0.750562] input: HD-Audio Generic HDMI/DP,pcm=7 as /devices/pci0000:00/0000:00:01.1/sound/card0/input2
+[    0.757011] sched_clock: Marking stable (626704477, 128781081)->(2203591815, -1448106257)
+[    0.757372] registered taskstats version 1
+[    0.757768] Loading compiled-in X.509 certificates
+[    0.761291] zswap: loaded using pool zstd
+[    0.761895] Btrfs loaded, zoned=no, fsverity=no
+[    0.762392] amdgpu 0000:00:01.0: can't derive routing for PCI INT A
+[    0.762415] amdgpu 0000:00:01.0: PCI INT A: not connected
+[    0.762428] amdgpu 0000:00:01.0: initializing kernel modesetting (GLADIUS 0x1002:0x9924 0x1002:0x9924 0x00).
+[    0.762471] amdgpu 0000:00:01.0: register mmio base: 0xE4800000
+[    0.762480] amdgpu 0000:00:01.0: register mmio size: 262144
+[    0.762562] amdgpu 0000:00:01.0: detected ip block number 0 <common_v1_0_0> (cik_common)
+[    0.762576] amdgpu 0000:00:01.0: detected ip block number 1 <gmc_v7_0_0> (gmc_v7_0)
+[    0.762587] amdgpu 0000:00:01.0: detected ip block number 2 <ih_v2_0_0> (cik_ih)
+[    0.762597] amdgpu 0000:00:01.0: detected ip block number 3 <dce_v8_1_0> (dce_v8_0)
+[    0.762608] amdgpu 0000:00:01.0: detected ip block number 4 <gfx_v7_1_0> (gfx_v7_0)
+[    0.762618] amdgpu 0000:00:01.0: detected ip block number 5 <sdma_v2_0_0> (cik_sdma)
+[    0.796898] amdgpu 0000:00:01.0: Fetched VBIOS from ROM BAR
+[    0.796913] amdgpu 0000:00:01.0: [drm] ATOM BIOS: 113-Roma-012
+[    0.796949] amdgpu 0000:00:01.0: vgaarb: deactivate vga console
+[    0.796961] amdgpu 0000:00:01.0: Trusted Memory Zone (TMZ) feature not supported
+[    0.797399] amdgpu 0000:00:01.0: Liverpool CLK: SPLL startup_freq_id=0 max_freq_id=0 SCLK startup_DID=16 current_DID=16
+[    0.797412] amdgpu 0000:00:01.0: Liverpool CLK: SPLL PDIVA=0 FBDIV=0x0
+[    0.797421] amdgpu 0000:00:01.0: Liverpool CLK: CG_SCLK_CNTL=0x00000010 DIVIDER=16 DIRCNTLEN=0 DIRCNTLDIV=0
+[    0.797435] amdgpu 0000:00:01.0: Liverpool CLK: force done. CG_SCLK_CNTL=0x00000010 DIRCNTLDIV=0 status=0x00000009
+[    0.797446] amdgpu 0000:00:01.0: Liverpool CLK: readback DID mismatch â€” expected 1 got 0
+[    0.797461] amdgpu 0000:00:01.0: vm size is 64 GB, 2 levels, block size is 10-bit, fragment size is 9-bit
+[    0.797475] amdgpu 0000:00:01.0: VRAM: 1024M 0x0000000F00000000 - 0x0000000F3FFFFFFF (1024M used)
+[    0.797487] amdgpu 0000:00:01.0: GART: 512M 0x0000000000000000 - 0x000000001FFFFFFF
+[    0.797503] amdgpu 0000:00:01.0: [drm] Detected VRAM RAM=1024M, BAR=1024M
+[    0.797511] amdgpu 0000:00:01.0: [drm] RAM width 64bits GDDR5
+[    0.797733] amdgpu 0000:00:01.0:  1024M of VRAM memory ready
+[    0.797744] amdgpu 0000:00:01.0:  3444M of GTT memory ready.
+[    0.797786] amdgpu 0000:00:01.0: [drm] GART: num cpu pages 131072, num gpu pages 131072
+[    0.797804] amdgpu 0000:00:01.0: Done gart
+[    0.797821] amdgpu 0000:00:01.0: Done init
+[    0.797855] amdgpu 0000:00:01.0: [drm] PCIE GART of 512M enabled (table at 0x0000000F00100000).
+[    0.798580] amdgpu 0000:00:01.0: PS4 GPU IRQ: vector=35 msi_enabled=1 pdev_irq=35
+[    0.798677] [drm:drm_connector_init_only] cmdline mode for connector HDMI-A-1  1920x1080@60Hz
+[    0.798707] amdgpu 0000:00:01.0: [drm] AMDGPU Display Connectors
+[    0.798720] amdgpu 0000:00:01.0: [drm] Connector 0:
+[    0.798727] amdgpu 0000:00:01.0: [drm]   HDMI-A-1
+[    0.798734] amdgpu 0000:00:01.0: [drm]   HPD1
+[    0.798741] amdgpu 0000:00:01.0: [drm]   DDC: 0x194c 0x194c 0x194d 0x194d 0x194e 0x194e 0x194f 0x194f
+[    0.798753] amdgpu 0000:00:01.0: [drm]   Encoders:
+[    0.798760] amdgpu 0000:00:01.0: [drm]     DFP1: INTERNAL_UNIPHY
+[    0.800539] [drm:dce_v8_0_pageflip_irq] amdgpu_crtc->pflip_status = 0 != AMDGPU_FLIP_SUBMITTED(2)
+[    0.800590] [drm:dce_v8_0_pageflip_irq] amdgpu_crtc->pflip_status = 0 != AMDGPU_FLIP_SUBMITTED(2)
+[    0.860594] mmc0: new UHS-I speed SDR104 SDIO card at address 0001
+[    0.861817] mt76x8-mt6632_sdio mmc0:0001:1: Direct firmware load for wifi.cfg failed with error -2
+[    0.862036] [wlan][56]halPollDbgCr:(INIT WARN) SWPCDBGR 0x00000000
+[    0.863531] usb usb3-port1: over-current condition
+[    0.877675] mt76x8-mt6632_sdio mmc0:0001:1: Direct firmware load for mt7668_patch_e2_hdr.bin failed with error -2
+[    0.877707] [wlan][56]kalFirmwareOpen:(INIT ERROR) Request FW image failed! Cur/Max ECO Ver[E2/E1]
+[    0.877719] [wlan][56]wlanDownloadPatch:(INIT WARN) FW[2] load error!
+[    0.877764] mt76x8-mt6632_sdio mmc0:0001:1: Direct firmware load for WIFI_RAM_CODE_MT7668.bin failed with error -2
+[    0.877808] mt76x8-mt6632_sdio mmc0:0001:1: Direct firmware load for WIFI_RAM_CODE_MT7668 failed with error -2
+[    0.877852] mt76x8-mt6632_sdio mmc0:0001:1: Direct firmware load for WIFI_RAM_CODE_MT7668_E2.bin failed with error -2
+[    0.877895] mt76x8-mt6632_sdio mmc0:0001:1: Direct firmware load for WIFI_RAM_CODE_MT7668_E2 failed with error -2
+[    0.877908] [wlan][56]kalFirmwareOpen:(INIT ERROR) Request FW image failed! Cur/Max ECO Ver[E2/E1]
+[    0.877918] [wlan][56]wlanDownloadFW:(INIT WARN) FW[0] load error!
+[    0.937427] usb 1-1: new high-speed USB device number 2 using xhci_aeolia
+[    0.946520] amdgpu 0000:00:01.0: [drm:amdgpu_ring_test_helper] *ERROR* ring gfx test failed (-110)
+[    0.946544] amdgpu 0000:00:01.0: hw_init of IP block <gfx_v7_0> failed -110
+[    0.946553] amdgpu 0000:00:01.0: amdgpu_device_ip_init failed
+[    0.946562] amdgpu 0000:00:01.0: Fatal error during GPU init
+[    0.946570] amdgpu 0000:00:01.0: finishing device.
+[    0.948642] ------------[ cut here ]------------
+[    0.948649] WARNING: drivers/gpu/drm/amd/amdgpu/amdgpu_irq.c:703 at amdgpu_irq_put+0x119/0x120, CPU#1: kworker/u32:1/78
+[    0.948667] Modules linked in:
+[    0.948678] CPU: 1 UID: 0 PID: 78 Comm: kworker/u32:1 Not tainted 7.0.8-Strawberry-ThinLTO-Baikal-+ #4 PREEMPT(full) 
+[    0.948691] Hardware name:  , BIOS unde Wed 09/22/2021 16:2
+[    0.948699] Workqueue: events_unbound deferred_probe_work_func
+[    0.948713] RIP: 0010:amdgpu_irq_put+0x119/0x120
+[    0.948724] Code: 10 4c 89 ff 4c 89 f6 89 da ff 10 89 c3 4c 89 e7 48 8b 75 d0 e8 f8 2f d9 00 89 d8 48 83 c4 08 5b 41 5c 41 5d 41 5e 41 5f 5d c3 <0f> 0b eb ed cc cc cc 55 48 89 e5 41 56 53 48 83 ec 68 48 89 fb 48
+[    0.948740] RSP: 0018:ffff888140827b60 EFLAGS: 00010246
+[    0.948748] RAX: 00000000ffffffea RBX: 0000000000000000 RCX: ffff888141068980
+[    0.948757] RDX: ffffffff8305e4e8 RSI: ffff8881429a5880 RDI: ffff888142980000
+[    0.948765] RBP: ffff888140827b90 R08: ffffffff84083c78 R09: 0000000000000000
+[    0.948773] R10: ffff888141dda340 R11: 00000000fffdffff R12: ffff888140827ba0
+[    0.948780] R13: 0000000000000000 R14: ffff8881429a5880 R15: ffff888142980000
+[    0.948788] FS:  0000000000000000(0000) GS:ffff8882f27e1000(0000) knlGS:0000000000000000
+[    0.948798] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[    0.948806] CR2: 0000000000000000 CR3: 0000000008e11000 CR4: 00000000000406f0
+[    0.948814] Call Trace:
+[    0.948820]  <TASK>
+[    0.948828]  amdgpu_fence_driver_hw_fini+0x2d/0x140
+[    0.948840]  amdgpu_device_fini_hw+0x248/0x500
+[    0.948849]  amdgpu_driver_unload_kms+0xdd/0x100
+[    0.948858]  amdgpu_driver_load_kms+0x5a/0x80
+[    0.948866]  amdgpu_pci_probe+0x27c/0x620
+[    0.948877]  pci_device_probe.llvm.5970028063154822711+0x7d/0xf0
+[    0.948887]  really_probe+0xc5/0x2f0
+[    0.948897]  driver_probe_device+0xa9/0x1e0
+[    0.948908]  __device_attach_driver+0xfd/0x110
+[    0.948917]  ? coredump_store+0x40/0x40
+[    0.948927]  bus_for_each_drv+0x113/0x140
+[    0.948937]  __device_attach.llvm.12424973341547923051+0xa7/0x110
+[    0.948949]  device_initial_probe+0x2f/0x50
+[    0.948958]  bus_probe_device+0x9e/0x110
+[    0.948967]  deferred_probe_work_func+0x8b/0xc0
+[    0.948977]  process_scheduled_works+0x1a3/0x340
+[    0.948988]  worker_thread+0x23a/0x2d0
+[    0.948997]  kthread+0x147/0x160
+[    0.949005]  ? pr_cont_work+0x1c0/0x1c0
+[    0.949013]  ? kthread_blkcg+0x30/0x30
+[    0.949020]  ret_from_fork+0xa8/0x220
+[    0.949029]  ? kthread_blkcg+0x30/0x30
+[    0.949037]  ret_from_fork_asm+0x11/0x20
+[    0.949048]  </TASK>
+[    0.949053] ---[ end trace 0000000000000000 ]---
+[    0.949082] ------------[ cut here ]------------
+[    0.949089] WARNING: drivers/gpu/drm/amd/amdgpu/amdgpu_irq.c:703 at amdgpu_irq_put+0x119/0x120, CPU#1: kworker/u32:1/78
+[    0.949104] Modules linked in:
+[    0.949112] CPU: 1 UID: 0 PID: 78 Comm: kworker/u32:1 Tainted: G        W           7.0.8-Strawberry-ThinLTO-Baikal-+ #4 PREEMPT(full) 
+[    0.949126] Tainted: [W]=WARN
+[    0.949130] Hardware name:  , BIOS unde Wed 09/22/2021 16:2
+[    0.949137] Workqueue: events_unbound deferred_probe_work_func
+[    0.949148] RIP: 0010:amdgpu_irq_put+0x119/0x120
+[    0.949159] Code: 10 4c 89 ff 4c 89 f6 89 da ff 10 89 c3 4c 89 e7 48 8b 75 d0 e8 f8 2f d9 00 89 d8 48 83 c4 08 5b 41 5c 41 5d 41 5e 41 5f 5d c3 <0f> 0b eb ed cc cc cc 55 48 89 e5 41 56 53 48 83 ec 68 48 89 fb 48
+[    0.949173] RSP: 0018:ffff888140827b60 EFLAGS: 00010246
+[    0.949181] RAX: 00000000ffffffea RBX: 0000000000000002 RCX: ffff888141068980
+[    0.949189] RDX: ffffffff8305e4e8 RSI: ffff8881429a5880 RDI: ffff888142980000
+[    0.949196] RBP: ffff888140827b90 R08: ffffffff84083c78 R09: 0000000000000000
+[    0.949203] R10: ffff888141dda340 R11: 00000000fffdffff R12: ffff888140827ba0
+[    0.949211] R13: 0000000000000002 R14: ffff8881429a5880 R15: ffff888142980000
+[    0.949218] FS:  0000000000000000(0000) GS:ffff8882f27e1000(0000) knlGS:0000000000000000
+[    0.949228] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[    0.949235] CR2: 0000000000000000 CR3: 0000000008e11000 CR4: 00000000000406f0
+[    0.949242] Call Trace:
+[    0.949247]  <TASK>
+[    0.949253]  amdgpu_fence_driver_hw_fini+0x2d/0x140
+[    0.949263]  amdgpu_device_fini_hw+0x248/0x500
+[    0.949271]  amdgpu_driver_unload_kms+0xdd/0x100
+[    0.949280]  amdgpu_driver_load_kms+0x5a/0x80
+[    0.949288]  amdgpu_pci_probe+0x27c/0x620
+[    0.949297]  pci_device_probe.llvm.5970028063154822711+0x7d/0xf0
+[    0.949307]  really_probe+0xc5/0x2f0
+[    0.949316]  driver_probe_device+0xa9/0x1e0
+[    0.949326]  __device_attach_driver+0xfd/0x110
+[    0.949336]  ? coredump_store+0x40/0x40
+[    0.949345]  bus_for_each_drv+0x113/0x140
+[    0.949355]  __device_attach.llvm.12424973341547923051+0xa7/0x110
+[    0.949366]  device_initial_probe+0x2f/0x50
+[    0.949376]  bus_probe_device+0x9e/0x110
+[    0.949385]  deferred_probe_work_func+0x8b/0xc0
+[    0.949395]  process_scheduled_works+0x1a3/0x340
+[    0.949405]  worker_thread+0x23a/0x2d0
+[    0.949419]  kthread+0x147/0x160
+[    0.949428]  ? pr_cont_work+0x1c0/0x1c0
+[    0.949436]  ? kthread_blkcg+0x30/0x30
+[    0.949443]  ret_from_fork+0xa8/0x220
+[    0.949452]  ? kthread_blkcg+0x30/0x30
+[    0.949459]  ret_from_fork_asm+0x11/0x20
+[    0.949470]  </TASK>
+[    0.949475] ---[ end trace 0000000000000000 ]---
+[    0.949504] ------------[ cut here ]------------
+[    0.949510] WARNING: drivers/gpu/drm/amd/amdgpu/amdgpu_irq.c:703 at amdgpu_irq_put+0x119/0x120, CPU#1: kworker/u32:1/78
+[    0.949525] Modules linked in:
+[    0.949532] CPU: 1 UID: 0 PID: 78 Comm: kworker/u32:1 Tainted: G        W           7.0.8-Strawberry-ThinLTO-Baikal-+ #4 PREEMPT(full) 
+[    0.949546] Tainted: [W]=WARN
+[    0.949550] Hardware name:  , BIOS unde Wed 09/22/2021 16:2
+[    0.949557] Workqueue: events_unbound deferred_probe_work_func
+[    0.949568] RIP: 0010:amdgpu_irq_put+0x119/0x120
+[    0.949578] Code: 10 4c 89 ff 4c 89 f6 89 da ff 10 89 c3 4c 89 e7 48 8b 75 d0 e8 f8 2f d9 00 89 d8 48 83 c4 08 5b 41 5c 41 5d 41 5e 41 5f 5d c3 <0f> 0b eb ed cc cc cc 55 48 89 e5 41 56 53 48 83 ec 68 48 89 fb 48
+[    0.949592] RSP: 0018:ffff888140827b60 EFLAGS: 00010246
+[    0.949600] RAX: 00000000ffffffea RBX: 0000000000000003 RCX: ffff888141068980
+[    0.949608] RDX: ffffffff8305e4e8 RSI: ffff8881429a5880 RDI: ffff888142980000
+[    0.949615] RBP: ffff888140827b90 R08: ffffffff84083c78 R09: 0000000000000000
+[    0.949623] R10: ffff888141dda340 R11: 00000000fffdffff R12: ffff888140827ba0
+[    0.949630] R13: 0000000000000003 R14: ffff8881429a5880 R15: ffff888142980000
+[    0.949637] FS:  0000000000000000(0000) GS:ffff8882f27e1000(0000) knlGS:0000000000000000
+[    0.949646] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[    0.949654] CR2: 0000000000000000 CR3: 0000000008e11000 CR4: 00000000000406f0
+[    0.949661] Call Trace:
+[    0.949666]  <TASK>
+[    0.949671]  amdgpu_fence_driver_hw_fini+0x2d/0x140
+[    0.949682]  amdgpu_device_fini_hw+0x248/0x500
+[    0.949690]  amdgpu_driver_unload_kms+0xdd/0x100
+[    0.949698]  amdgpu_driver_load_kms+0x5a/0x80
+[    0.949706]  amdgpu_pci_probe+0x27c/0x620
+[    0.949716]  pci_device_probe.llvm.5970028063154822711+0x7d/0xf0
+[    0.949725]  really_probe+0xc5/0x2f0
+[    0.949735]  driver_probe_device+0xa9/0x1e0
+[    0.949745]  __device_attach_driver+0xfd/0x110
+[    0.949754]  ? coredump_store+0x40/0x40
+[    0.949764]  bus_for_each_drv+0x113/0x140
+[    0.949773]  __device_attach.llvm.12424973341547923051+0xa7/0x110
+[    0.949785]  device_initial_probe+0x2f/0x50
+[    0.949794]  bus_probe_device+0x9e/0x110
+[    0.949804]  deferred_probe_work_func+0x8b/0xc0
+[    0.949814]  process_scheduled_works+0x1a3/0x340
+[    0.949823]  worker_thread+0x23a/0x2d0
+[    0.949832]  kthread+0x147/0x160
+[    0.949839]  ? pr_cont_work+0x1c0/0x1c0
+[    0.949847]  ? kthread_blkcg+0x30/0x30
+[    0.949854]  ret_from_fork+0xa8/0x220
+[    0.949863]  ? kthread_blkcg+0x30/0x30
+[    0.949870]  ret_from_fork_asm+0x11/0x20
+[    0.949881]  </TASK>
+[    0.949886] ---[ end trace 0000000000000000 ]---
+[    0.949914] ------------[ cut here ]------------
+[    0.949920] WARNING: drivers/gpu/drm/amd/amdgpu/amdgpu_irq.c:703 at amdgpu_irq_put+0x119/0x120, CPU#1: kworker/u32:1/78
+[    0.949935] Modules linked in:
+[    0.949942] CPU: 1 UID: 0 PID: 78 Comm: kworker/u32:1 Tainted: G        W           7.0.8-Strawberry-ThinLTO-Baikal-+ #4 PREEMPT(full) 
+[    0.949955] Tainted: [W]=WARN
+[    0.949960] Hardware name:  , BIOS unde Wed 09/22/2021 16:2
+[    0.949966] Workqueue: events_unbound deferred_probe_work_func
+[    0.949978] RIP: 0010:amdgpu_irq_put+0x119/0x120
+[    0.949988] Code: 10 4c 89 ff 4c 89 f6 89 da ff 10 89 c3 4c 89 e7 48 8b 75 d0 e8 f8 2f d9 00 89 d8 48 83 c4 08 5b 41 5c 41 5d 41 5e 41 5f 5d c3 <0f> 0b eb ed cc cc cc 55 48 89 e5 41 56 53 48 83 ec 68 48 89 fb 48
+[    0.950002] RSP: 0018:ffff888140827b60 EFLAGS: 00010246
+[    0.950010] RAX: 00000000ffffffea RBX: 0000000000000004 RCX: ffff888141068980
+[    0.950017] RDX: ffffffff8305e4e8 RSI: ffff8881429a5880 RDI: ffff888142980000
+[    0.950024] RBP: ffff888140827b90 R08: ffffffff84083c78 R09: 0000000000000000
+[    0.950032] R10: ffff888141dda340 R11: 00000000fffdffff R12: ffff888140827ba0
+[    0.950039] R13: 0000000000000004 R14: ffff8881429a5880 R15: ffff888142980000
+[    0.950047] FS:  0000000000000000(0000) GS:ffff8882f27e1000(0000) knlGS:0000000000000000
+[    0.950056] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[    0.950063] CR2: 0000000000000000 CR3: 0000000008e11000 CR4: 00000000000406f0
+[    0.950070] Call Trace:
+[    0.950075]  <TASK>
+[    0.950080]  amdgpu_fence_driver_hw_fini+0x2d/0x140
+[    0.950091]  amdgpu_device_fini_hw+0x248/0x500
+[    0.950099]  amdgpu_driver_unload_kms+0xdd/0x100
+[    0.950107]  amdgpu_driver_load_kms+0x5a/0x80
+[    0.950115]  amdgpu_pci_probe+0x27c/0x620
+[    0.950125]  pci_device_probe.llvm.5970028063154822711+0x7d/0xf0
+[    0.950134]  really_probe+0xc5/0x2f0
+[    0.950144]  driver_probe_device+0xa9/0x1e0
+[    0.950154]  __device_attach_driver+0xfd/0x110
+[    0.950163]  ? coredump_store+0x40/0x40
+[    0.950173]  bus_for_each_drv+0x113/0x140
+[    0.950182]  __device_attach.llvm.12424973341547923051+0xa7/0x110
+[    0.950194]  device_initial_probe+0x2f/0x50
+[    0.950203]  bus_probe_device+0x9e/0x110
+[    0.950212]  deferred_probe_work_func+0x8b/0xc0
+[    0.950222]  process_scheduled_works+0x1a3/0x340
+[    0.950232]  worker_thread+0x23a/0x2d0
+[    0.950240]  kthread+0x147/0x160
+[    0.950247]  ? pr_cont_work+0x1c0/0x1c0
+[    0.950255]  ? kthread_blkcg+0x30/0x30
+[    0.950263]  ret_from_fork+0xa8/0x220
+[    0.950271]  ? kthread_blkcg+0x30/0x30
+[    0.950279]  ret_from_fork_asm+0x11/0x20
+[    0.950290]  </TASK>
+[    0.950294] ---[ end trace 0000000000000000 ]---
+[    0.950323] ------------[ cut here ]------------
+[    0.950329] WARNING: drivers/gpu/drm/amd/amdgpu/amdgpu_irq.c:703 at amdgpu_irq_put+0x119/0x120, CPU#1: kworker/u32:1/78
+[    0.950343] Modules linked in:
+[    0.950350] CPU: 1 UID: 0 PID: 78 Comm: kworker/u32:1 Tainted: G        W           7.0.8-Strawberry-ThinLTO-Baikal-+ #4 PREEMPT(full) 
+[    0.950363] Tainted: [W]=WARN
+[    0.950368] Hardware name:  , BIOS unde Wed 09/22/2021 16:2
+[    0.950375] Workqueue: events_unbound deferred_probe_work_func
+[    0.950386] RIP: 0010:amdgpu_irq_put+0x119/0x120
+[    0.950396] Code: 10 4c 89 ff 4c 89 f6 89 da ff 10 89 c3 4c 89 e7 48 8b 75 d0 e8 f8 2f d9 00 89 d8 48 83 c4 08 5b 41 5c 41 5d 41 5e 41 5f 5d c3 <0f> 0b eb ed cc cc cc 55 48 89 e5 41 56 53 48 83 ec 68 48 89 fb 48
+[    0.950410] RSP: 0018:ffff888140827b60 EFLAGS: 00010246
+[    0.950418] RAX: 00000000ffffffea RBX: 0000000000000005 RCX: ffff888141068980
+[    0.950425] RDX: ffffffff8305e4e8 RSI: ffff8881429a5880 RDI: ffff888142980000
+[    0.950432] RBP: ffff888140827b90 R08: ffffffff84083c78 R09: 0000000000000000
+[    0.950440] R10: ffff888141dda340 R11: 00000000fffdffff R12: ffff888140827ba0
+[    0.950447] R13: 0000000000000005 R14: ffff8881429a5880 R15: ffff888142980000
+[    0.950455] FS:  0000000000000000(0000) GS:ffff8882f27e1000(0000) knlGS:0000000000000000
+[    0.950464] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[    0.950471] CR2: 0000000000000000 CR3: 0000000008e11000 CR4: 00000000000406f0
+[    0.950478] Call Trace:
+[    0.950483]  <TASK>
+[    0.950488]  amdgpu_fence_driver_hw_fini+0x2d/0x140
+[    0.950499]  amdgpu_device_fini_hw+0x248/0x500
+[    0.950507]  amdgpu_driver_unload_kms+0xdd/0x100
+[    0.950515]  amdgpu_driver_load_kms+0x5a/0x80
+[    0.950523]  amdgpu_pci_probe+0x27c/0x620
+[    0.950533]  pci_device_probe.llvm.5970028063154822711+0x7d/0xf0
+[    0.950542]  really_probe+0xc5/0x2f0
+[    0.950551]  driver_probe_device+0xa9/0x1e0
+[    0.950561]  __device_attach_driver+0xfd/0x110
+[    0.950571]  ? coredump_store+0x40/0x40
+[    0.950581]  bus_for_each_drv+0x113/0x140
+[    0.950590]  __device_attach.llvm.12424973341547923051+0xa7/0x110
+[    0.950601]  device_initial_probe+0x2f/0x50
+[    0.950611]  bus_probe_device+0x9e/0x110
+[    0.950620]  deferred_probe_work_func+0x8b/0xc0
+[    0.950630]  process_scheduled_works+0x1a3/0x340
+[    0.950640]  worker_thread+0x23a/0x2d0
+[    0.950649]  kthread+0x147/0x160
+[    0.950655]  ? pr_cont_work+0x1c0/0x1c0
+[    0.950664]  ? kthread_blkcg+0x30/0x30
+[    0.950671]  ret_from_fork+0xa8/0x220
+[    0.950680]  ? kthread_blkcg+0x30/0x30
+[    0.950687]  ret_from_fork_asm+0x11/0x20
+[    0.950698]  </TASK>
+[    0.950702] ---[ end trace 0000000000000000 ]---
+[    0.950731] ------------[ cut here ]------------
+[    0.950737] WARNING: drivers/gpu/drm/amd/amdgpu/amdgpu_irq.c:703 at amdgpu_irq_put+0x119/0x120, CPU#1: kworker/u32:1/78
+[    0.950752] Modules linked in:
+[    0.950758] CPU: 1 UID: 0 PID: 78 Comm: kworker/u32:1 Tainted: G        W           7.0.8-Strawberry-ThinLTO-Baikal-+ #4 PREEMPT(full) 
+[    0.950771] Tainted: [W]=WARN
+[    0.950776] Hardware name:  , BIOS unde Wed 09/22/2021 16:2
+[    0.950783] Workqueue: events_unbound deferred_probe_work_func
+[    0.950794] RIP: 0010:amdgpu_irq_put+0x119/0x120
+[    0.950804] Code: 10 4c 89 ff 4c 89 f6 89 da ff 10 89 c3 4c 89 e7 48 8b 75 d0 e8 f8 2f d9 00 89 d8 48 83 c4 08 5b 41 5c 41 5d 41 5e 41 5f 5d c3 <0f> 0b eb ed cc cc cc 55 48 89 e5 41 56 53 48 83 ec 68 48 89 fb 48
+[    0.950818] RSP: 0018:ffff888140827b60 EFLAGS: 00010246
+[    0.950826] RAX: 00000000ffffffea RBX: 0000000000000002 RCX: ffff888141068980
+[    0.950833] RDX: ffffffff8305e4e8 RSI: ffff8881429a5880 RDI: ffff888142980000
+[    0.950840] RBP: ffff888140827b90 R08: ffffffff84083c78 R09: 0000000000000000
+[    0.950848] R10: ffff888141dda340 R11: 00000000fffdffff R12: ffff888140827ba0
+[    0.950855] R13: 0000000000000002 R14: ffff8881429a5880 R15: ffff888142980000
+[    0.950862] FS:  0000000000000000(0000) GS:ffff8882f27e1000(0000) knlGS:0000000000000000
+[    0.950871] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[    0.950878] CR2: 0000000000000000 CR3: 0000000008e11000 CR4: 00000000000406f0
+[    0.950886] Call Trace:
+[    0.950891]  <TASK>
+[    0.950896]  amdgpu_fence_driver_hw_fini+0x2d/0x140
+[    0.950906]  amdgpu_device_fini_hw+0x248/0x500
+[    0.950915]  amdgpu_driver_unload_kms+0xdd/0x100
+[    0.950923]  amdgpu_driver_load_kms+0x5a/0x80
+[    0.950930]  amdgpu_pci_probe+0x27c/0x620
+[    0.950940]  pci_device_probe.llvm.5970028063154822711+0x7d/0xf0
+[    0.950949]  really_probe+0xc5/0x2f0
+[    0.950959]  driver_probe_device+0xa9/0x1e0
+[    0.950969]  __device_attach_driver+0xfd/0x110
+[    0.950978]  ? coredump_store+0x40/0x40
+[    0.950988]  bus_for_each_drv+0x113/0x140
+[    0.950998]  __device_attach.llvm.12424973341547923051+0xa7/0x110
+[    0.951009]  device_initial_probe+0x2f/0x50
+[    0.951019]  bus_probe_device+0x9e/0x110
+[    0.951028]  deferred_probe_work_func+0x8b/0xc0
+[    0.951038]  process_scheduled_works+0x1a3/0x340
+[    0.951047]  worker_thread+0x23a/0x2d0
+[    0.951056]  kthread+0x147/0x160
+[    0.951062]  ? pr_cont_work+0x1c0/0x1c0
+[    0.951071]  ? kthread_blkcg+0x30/0x30
+[    0.951078]  ret_from_fork+0xa8/0x220
+[    0.951087]  ? kthread_blkcg+0x30/0x30
+[    0.951094]  ret_from_fork_asm+0x11/0x20
+[    0.951105]  </TASK>
+[    0.951110] ---[ end trace 0000000000000000 ]---
+[    0.951138] ------------[ cut here ]------------
+[    0.951144] WARNING: drivers/gpu/drm/amd/amdgpu/amdgpu_irq.c:703 at amdgpu_irq_put+0x119/0x120, CPU#1: kworker/u32:1/78
+[    0.951159] Modules linked in:
+[    0.951166] CPU: 1 UID: 0 PID: 78 Comm: kworker/u32:1 Tainted: G        W           7.0.8-Strawberry-ThinLTO-Baikal-+ #4 PREEMPT(full) 
+[    0.951179] Tainted: [W]=WARN
+[    0.951183] Hardware name:  , BIOS unde Wed 09/22/2021 16:2
+[    0.951190] Workqueue: events_unbound deferred_probe_work_func
+[    0.951201] RIP: 0010:amdgpu_irq_put+0x119/0x120
+[    0.951211] Code: 10 4c 89 ff 4c 89 f6 89 da ff 10 89 c3 4c 89 e7 48 8b 75 d0 e8 f8 2f d9 00 89 d8 48 83 c4 08 5b 41 5c 41 5d 41 5e 41 5f 5d c3 <0f> 0b eb ed cc cc cc 55 48 89 e5 41 56 53 48 83 ec 68 48 89 fb 48
+[    0.951225] RSP: 0018:ffff888140827b60 EFLAGS: 00010246
+[    0.951233] RAX: 00000000ffffffea RBX: 0000000000000003 RCX: ffff888141068980
+[    0.951240] RDX: ffffffff8305e4e8 RSI: ffff8881429a5880 RDI: ffff888142980000
+[    0.951247] RBP: ffff888140827b90 R08: ffffffff84083c78 R09: 0000000000000000
+[    0.951255] R10: ffff888141dda340 R11: 00000000fffdffff R12: ffff888140827ba0
+[    0.951262] R13: 0000000000000003 R14: ffff8881429a5880 R15: ffff888142980000
+[    0.951269] FS:  0000000000000000(0000) GS:ffff8882f27e1000(0000) knlGS:0000000000000000
+[    0.951278] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[    0.951285] CR2: 0000000000000000 CR3: 0000000008e11000 CR4: 00000000000406f0
+[    0.951293] Call Trace:
+[    0.951298]  <TASK>
+[    0.951303]  amdgpu_fence_driver_hw_fini+0x2d/0x140
+[    0.951313]  amdgpu_device_fini_hw+0x248/0x500
+[    0.951321]  amdgpu_driver_unload_kms+0xdd/0x100
+[    0.951329]  amdgpu_driver_load_kms+0x5a/0x80
+[    0.951337]  amdgpu_pci_probe+0x27c/0x620
+[    0.951347]  pci_device_probe.llvm.5970028063154822711+0x7d/0xf0
+[    0.951356]  really_probe+0xc5/0x2f0
+[    0.951366]  driver_probe_device+0xa9/0x1e0
+[    0.951376]  __device_attach_driver+0xfd/0x110
+[    0.951385]  ? coredump_store+0x40/0x40
+[    0.951395]  bus_for_each_drv+0x113/0x140
+[    0.951405]  __device_attach.llvm.12424973341547923051+0xa7/0x110
+[    0.951416]  device_initial_probe+0x2f/0x50
+[    0.951426]  bus_probe_device+0x9e/0x110
+[    0.951435]  deferred_probe_work_func+0x8b/0xc0
+[    0.951445]  process_scheduled_works+0x1a3/0x340
+[    0.951454]  worker_thread+0x23a/0x2d0
+[    0.951463]  kthread+0x147/0x160
+[    0.951470]  ? pr_cont_work+0x1c0/0x1c0
+[    0.951478]  ? kthread_blkcg+0x30/0x30
+[    0.951485]  ret_from_fork+0xa8/0x220
+[    0.951494]  ? kthread_blkcg+0x30/0x30
+[    0.951501]  ret_from_fork_asm+0x11/0x20
+[    0.951512]  </TASK>
+[    0.951517] ---[ end trace 0000000000000000 ]---
+[    0.951545] ------------[ cut here ]------------
+[    0.951551] WARNING: drivers/gpu/drm/amd/amdgpu/amdgpu_irq.c:703 at amdgpu_irq_put+0x119/0x120, CPU#1: kworker/u32:1/78
+[    0.951566] Modules linked in:
+[    0.951572] CPU: 1 UID: 0 PID: 78 Comm: kworker/u32:1 Tainted: G        W           7.0.8-Strawberry-ThinLTO-Baikal-+ #4 PREEMPT(full) 
+[    0.951585] Tainted: [W]=WARN
+[    0.951590] Hardware name:  , BIOS unde Wed 09/22/2021 16:2
+[    0.951597] Workqueue: events_unbound deferred_probe_work_func
+[    0.951608] RIP: 0010:amdgpu_irq_put+0x119/0x120
+[    0.951618] Code: 10 4c 89 ff 4c 89 f6 89 da ff 10 89 c3 4c 89 e7 48 8b 75 d0 e8 f8 2f d9 00 89 d8 48 83 c4 08 5b 41 5c 41 5d 41 5e 41 5f 5d c3 <0f> 0b eb ed cc cc cc 55 48 89 e5 41 56 53 48 83 ec 68 48 89 fb 48
+[    0.951631] RSP: 0018:ffff888140827b60 EFLAGS: 00010246
+[    0.951639] RAX: 00000000ffffffea RBX: 0000000000000004 RCX: ffff888141068980
+[    0.951647] RDX: ffffffff8305e4e8 RSI: ffff8881429a5880 RDI: ffff888142980000
+[    0.951654] RBP: ffff888140827b90 R08: ffffffff84083c78 R09: 0000000000000000
+[    0.951661] R10: ffff888141dda340 R11: 00000000fffdffff R12: ffff888140827ba0
+[    0.951669] R13: 0000000000000004 R14: ffff8881429a5880 R15: ffff888142980000
+[    0.951676] FS:  0000000000000000(0000) GS:ffff8882f27e1000(0000) knlGS:0000000000000000
+[    0.951685] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[    0.951692] CR2: 0000000000000000 CR3: 0000000008e11000 CR4: 00000000000406f0
+[    0.951700] Call Trace:
+[    0.951704]  <TASK>
+[    0.951710]  amdgpu_fence_driver_hw_fini+0x2d/0x140
+[    0.951720]  amdgpu_device_fini_hw+0x248/0x500
+[    0.951728]  amdgpu_driver_unload_kms+0xdd/0x100
+[    0.951736]  amdgpu_driver_load_kms+0x5a/0x80
+[    0.951744]  amdgpu_pci_probe+0x27c/0x620
+[    0.951754]  pci_device_probe.llvm.5970028063154822711+0x7d/0xf0
+[    0.951763]  really_probe+0xc5/0x2f0
+[    0.951773]  driver_probe_device+0xa9/0x1e0
+[    0.951783]  __device_attach_driver+0xfd/0x110
+[    0.951792]  ? coredump_store+0x40/0x40
+[    0.951802]  bus_for_each_drv+0x113/0x140
+[    0.951811]  __device_attach.llvm.12424973341547923051+0xa7/0x110
+[    0.951823]  device_initial_probe+0x2f/0x50
+[    0.951832]  bus_probe_device+0x9e/0x110
+[    0.951842]  deferred_probe_work_func+0x8b/0xc0
+[    0.951851]  process_scheduled_works+0x1a3/0x340
+[    0.951861]  worker_thread+0x23a/0x2d0
+[    0.951869]  kthread+0x147/0x160
+[    0.951876]  ? pr_cont_work+0x1c0/0x1c0
+[    0.951884]  ? kthread_blkcg+0x30/0x30
+[    0.951892]  ret_from_fork+0xa8/0x220
+[    0.951900]  ? kthread_blkcg+0x30/0x30
+[    0.951908]  ret_from_fork_asm+0x11/0x20
+[    0.951919]  </TASK>
+[    0.951923] ---[ end trace 0000000000000000 ]---
+[    0.951951] ------------[ cut here ]------------
+[    0.951957] WARNING: drivers/gpu/drm/amd/amdgpu/amdgpu_irq.c:703 at amdgpu_irq_put+0x119/0x120, CPU#1: kworker/u32:1/78
+[    0.951972] Modules linked in:
+[    0.951979] CPU: 1 UID: 0 PID: 78 Comm: kworker/u32:1 Tainted: G        W           7.0.8-Strawberry-ThinLTO-Baikal-+ #4 PREEMPT(full) 
+[    0.951992] Tainted: [W]=WARN
+[    0.951997] Hardware name:  , BIOS unde Wed 09/22/2021 16:2
+[    0.952003] Workqueue: events_unbound deferred_probe_work_func
+[    0.952014] RIP: 0010:amdgpu_irq_put+0x119/0x120
+[    0.952024] Code: 10 4c 89 ff 4c 89 f6 89 da ff 10 89 c3 4c 89 e7 48 8b 75 d0 e8 f8 2f d9 00 89 d8 48 83 c4 08 5b 41 5c 41 5d 41 5e 41 5f 5d c3 <0f> 0b eb ed cc cc cc 55 48 89 e5 41 56 53 48 83 ec 68 48 89 fb 48
+[    0.952038] RSP: 0018:ffff888140827b60 EFLAGS: 00010246
+[    0.952046] RAX: 00000000ffffffea RBX: 0000000000000005 RCX: ffff888141068980
+[    0.952053] RDX: ffffffff8305e4e8 RSI: ffff8881429a5880 RDI: ffff888142980000
+[    0.952060] RBP: ffff888140827b90 R08: ffffffff84083c78 R09: 0000000000000000
+[    0.952068] R10: ffff888141dda340 R11: 00000000fffdffff R12: ffff888140827ba0
+[    0.952075] R13: 0000000000000005 R14: ffff8881429a5880 R15: ffff888142980000
+[    0.952082] FS:  0000000000000000(0000) GS:ffff8882f27e1000(0000) knlGS:0000000000000000
+[    0.952092] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[    0.952099] CR2: 0000000000000000 CR3: 0000000008e11000 CR4: 00000000000406f0
+[    0.952106] Call Trace:
+[    0.952111]  <TASK>
+[    0.952116]  amdgpu_fence_driver_hw_fini+0x2d/0x140
+[    0.952126]  amdgpu_device_fini_hw+0x248/0x500
+[    0.952135]  amdgpu_driver_unload_kms+0xdd/0x100
+[    0.952143]  amdgpu_driver_load_kms+0x5a/0x80
+[    0.952150]  amdgpu_pci_probe+0x27c/0x620
+[    0.952160]  pci_device_probe.llvm.5970028063154822711+0x7d/0xf0
+[    0.952169]  really_probe+0xc5/0x2f0
+[    0.952179]  driver_probe_device+0xa9/0x1e0
+[    0.952189]  __device_attach_driver+0xfd/0x110
+[    0.952198]  ? coredump_store+0x40/0x40
+[    0.952208]  bus_for_each_drv+0x113/0x140
+[    0.952217]  __device_attach.llvm.12424973341547923051+0xa7/0x110
+[    0.952229]  device_initial_probe+0x2f/0x50
+[    0.952238]  bus_probe_device+0x9e/0x110
+[    0.952248]  deferred_probe_work_func+0x8b/0xc0
+[    0.952258]  process_scheduled_works+0x1a3/0x340
+[    0.952267]  worker_thread+0x23a/0x2d0
+[    0.952276]  kthread+0x147/0x160
+[    0.952283]  ? pr_cont_work+0x1c0/0x1c0
+[    0.952291]  ? kthread_blkcg+0x30/0x30
+[    0.952298]  ret_from_fork+0xa8/0x220
+[    0.952307]  ? kthread_blkcg+0x30/0x30
+[    0.952314]  ret_from_fork_asm+0x11/0x20
+[    0.952325]  </TASK>
+[    0.952330] ---[ end trace 0000000000000000 ]---
+[    0.952358] ------------[ cut here ]------------
+[    0.952364] WARNING: drivers/gpu/drm/amd/amdgpu/amdgpu_irq.c:703 at amdgpu_irq_put+0x119/0x120, CPU#1: kworker/u32:1/78
+[    0.952379] Modules linked in:
+[    0.952386] CPU: 1 UID: 0 PID: 78 Comm: kworker/u32:1 Tainted: G        W           7.0.8-Strawberry-ThinLTO-Baikal-+ #4 PREEMPT(full) 
+[    0.952399] Tainted: [W]=WARN
+[    0.952403] Hardware name:  , BIOS unde Wed 09/22/2021 16:2
+[    0.952410] Workqueue: events_unbound deferred_probe_work_func
+[    0.952421] RIP: 0010:amdgpu_irq_put+0x119/0x120
+[    0.952431] Code: 10 4c 89 ff 4c 89 f6 89 da ff 10 89 c3 4c 89 e7 48 8b 75 d0 e8 f8 2f d9 00 89 d8 48 83 c4 08 5b 41 5c 41 5d 41 5e 41 5f 5d c3 <0f> 0b eb ed cc cc cc 55 48 89 e5 41 56 53 48 83 ec 68 48 89 fb 48
+[    0.952445] RSP: 0018:ffff888140827b60 EFLAGS: 00010246
+[    0.952452] RAX: 00000000ffffffea RBX: 0000000000000000 RCX: ffff888141068940
+[    0.952460] RDX: ffffffff8305e800 RSI: ffff8881429ad2a0 RDI: ffff888142980000
+[    0.952467] RBP: ffff888140827b90 R08: ffffffff84083c78 R09: 0000000000000000
+[    0.952474] R10: ffff888141dda340 R11: 00000000fffdffff R12: ffff888140827ba0
+[    0.952482] R13: 0000000000000000 R14: ffff8881429ad2a0 R15: ffff888142980000
+[    0.952489] FS:  0000000000000000(0000) GS:ffff8882f27e1000(0000) knlGS:0000000000000000
+[    0.952498] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[    0.952505] CR2: 0000000000000000 CR3: 0000000008e11000 CR4: 00000000000406f0
+[    0.952513] Call Trace:
+[    0.952517]  <TASK>
+[    0.952523]  amdgpu_fence_driver_hw_fini+0x2d/0x140
+[    0.952533]  amdgpu_device_fini_hw+0x248/0x500
+[    0.952541]  amdgpu_driver_unload_kms+0xdd/0x100
+[    0.952549]  amdgpu_driver_load_kms+0x5a/0x80
+[    0.952557]  amdgpu_pci_probe+0x27c/0x620
+[    0.952567]  pci_device_probe.llvm.5970028063154822711+0x7d/0xf0
+[    0.952576]  really_probe+0xc5/0x2f0
+[    0.952586]  driver_probe_device+0xa9/0x1e0
+[    0.952596]  __device_attach_driver+0xfd/0x110
+[    0.952605]  ? coredump_store+0x40/0x40
+[    0.952615]  bus_for_each_drv+0x113/0x140
+[    0.952624]  __device_attach.llvm.12424973341547923051+0xa7/0x110
+[    0.952636]  device_initial_probe+0x2f/0x50
+[    0.952645]  bus_probe_device+0x9e/0x110
+[    0.952655]  deferred_probe_work_func+0x8b/0xc0
+[    0.952664]  process_scheduled_works+0x1a3/0x340
+[    0.952674]  worker_thread+0x23a/0x2d0
+[    0.952683]  kthread+0x147/0x160
+[    0.952689]  ? pr_cont_work+0x1c0/0x1c0
+[    0.952698]  ? kthread_blkcg+0x30/0x30
+[    0.952705]  ret_from_fork+0xa8/0x220
+[    0.952714]  ? kthread_blkcg+0x30/0x30
+[    0.952721]  ret_from_fork_asm+0x11/0x20
+[    0.952732]  </TASK>
+[    0.952736] ---[ end trace 0000000000000000 ]---
+[    0.952765] ------------[ cut here ]------------
+[    0.952771] WARNING: drivers/gpu/drm/amd/amdgpu/amdgpu_irq.c:703 at amdgpu_irq_put+0x119/0x120, CPU#1: kworker/u32:1/78
+[    0.952785] Modules linked in:
+[    0.952792] CPU: 1 UID: 0 PID: 78 Comm: kworker/u32:1 Tainted: G        W           7.0.8-Strawberry-ThinLTO-Baikal-+ #4 PREEMPT(full) 
+[    0.952805] Tainted: [W]=WARN
+[    0.952810] Hardware name:  , BIOS unde Wed 09/22/2021 16:2
+[    0.952816] Workqueue: events_unbound deferred_probe_work_func
+[    0.952827] RIP: 0010:amdgpu_irq_put+0x119/0x120
+[    0.952837] Code: 10 4c 89 ff 4c 89 f6 89 da ff 10 89 c3 4c 89 e7 48 8b 75 d0 e8 f8 2f d9 00 89 d8 48 83 c4 08 5b 41 5c 41 5d 41 5e 41 5f 5d c3 <0f> 0b eb ed cc cc cc 55 48 89 e5 41 56 53 48 83 ec 68 48 89 fb 48
+[    0.952851] RSP: 0018:ffff888140827b60 EFLAGS: 00010246
+[    0.952859] RAX: 00000000ffffffea RBX: 0000000000000001 RCX: ffff888141068940
+[    0.952866] RDX: ffffffff8305e800 RSI: ffff8881429ad2a0 RDI: ffff888142980000
+[    0.952874] RBP: ffff888140827b90 R08: ffffffff84083c78 R09: 0000000000000000
+[    0.952881] R10: ffff888141dda340 R11: 00000000fffdffff R12: ffff888140827ba0
+[    0.952888] R13: 0000000000000001 R14: ffff8881429ad2a0 R15: ffff888142980000
+[    0.952896] FS:  0000000000000000(0000) GS:ffff8882f27e1000(0000) knlGS:0000000000000000
+[    0.952905] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[    0.952912] CR2: 0000000000000000 CR3: 0000000008e11000 CR4: 00000000000406f0
+[    0.952920] Call Trace:
+[    0.952925]  <TASK>
+[    0.952930]  amdgpu_fence_driver_hw_fini+0x2d/0x140
+[    0.952941]  amdgpu_device_fini_hw+0x248/0x500
+[    0.952949]  amdgpu_driver_unload_kms+0xdd/0x100
+[    0.952957]  amdgpu_driver_load_kms+0x5a/0x80
+[    0.952965]  amdgpu_pci_probe+0x27c/0x620
+[    0.952975]  pci_device_probe.llvm.5970028063154822711+0x7d/0xf0
+[    0.952984]  really_probe+0xc5/0x2f0
+[    0.952994]  driver_probe_device+0xa9/0x1e0
+[    0.953004]  __device_attach_driver+0xfd/0x110
+[    0.953014]  ? coredump_store+0x40/0x40
+[    0.953023]  bus_for_each_drv+0x113/0x140
+[    0.953033]  __device_attach.llvm.12424973341547923051+0xa7/0x110
+[    0.953044]  device_initial_probe+0x2f/0x50
+[    0.953054]  bus_probe_device+0x9e/0x110
+[    0.953063]  deferred_probe_work_func+0x8b/0xc0
+[    0.953073]  process_scheduled_works+0x1a3/0x340
+[    0.953083]  worker_thread+0x23a/0x2d0
+[    0.953091]  kthread+0x147/0x160
+[    0.953098]  ? pr_cont_work+0x1c0/0x1c0
+[    0.953106]  ? kthread_blkcg+0x30/0x30
+[    0.953114]  ret_from_fork+0xa8/0x220
+[    0.953122]  ? kthread_blkcg+0x30/0x30
+[    0.953130]  ret_from_fork_asm+0x11/0x20
+[    0.953141]  </TASK>
+[    0.953145] ---[ end trace 0000000000000000 ]---
+[    0.954289] ------------[ cut here ]------------
+[    0.954297] WARNING: drivers/gpu/drm/amd/amdgpu/amdgpu_irq.c:703 at amdgpu_irq_put+0x119/0x120, CPU#1: kworker/u32:1/78
+[    0.954312] Modules linked in:
+[    0.954320] CPU: 1 UID: 0 PID: 78 Comm: kworker/u32:1 Tainted: G        W           7.0.8-Strawberry-ThinLTO-Baikal-+ #4 PREEMPT(full) 
+[    0.954334] Tainted: [W]=WARN
+[    0.954339] Hardware name:  , BIOS unde Wed 09/22/2021 16:2
+[    0.954345] Workqueue: events_unbound deferred_probe_work_func
+[    0.954357] RIP: 0010:amdgpu_irq_put+0x119/0x120
+[    0.954367] Code: 10 4c 89 ff 4c 89 f6 89 da ff 10 89 c3 4c 89 e7 48 8b 75 d0 e8 f8 2f d9 00 89 d8 48 83 c4 08 5b 41 5c 41 5d 41 5e 41 5f 5d c3 <0f> 0b eb ed cc cc cc 55 48 89 e5 41 56 53 48 83 ec 68 48 89 fb 48
+[    0.954381] RSP: 0018:ffff888140827b88 EFLAGS: 00010246
+[    0.954389] RAX: 00000000ffffffea RBX: 0000000000000000 RCX: ffff8881419ab8a0
+[    0.954396] RDX: ffffffff83067790 RSI: ffff888142980c60 RDI: ffff888142980000
+[    0.954404] RBP: ffff888140827bb8 R08: 0000000000000001 R09: 0000000000000001
+[    0.954411] R10: ffff888141dda340 R11: 00000000fffdffff R12: 0000000000000006
+[    0.954418] R13: 0000000000000000 R14: ffff888142980c60 R15: ffff888142980000
+[    0.954426] FS:  0000000000000000(0000) GS:ffff8882f27e1000(0000) knlGS:0000000000000000
+[    0.954435] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[    0.954442] CR2: 0000000000000000 CR3: 0000000008e11000 CR4: 00000000000406f0
+[    0.954450] Call Trace:
+[    0.954454]  <TASK>
+[    0.954460]  gmc_v7_0_hw_fini.llvm.16537679224245900897+0x1a/0xa0
+[    0.954470]  amdgpu_device_fini_hw+0x42b/0x500
+[    0.954479]  amdgpu_driver_unload_kms+0xdd/0x100
+[    0.954487]  amdgpu_driver_load_kms+0x5a/0x80
+[    0.954495]  amdgpu_pci_probe+0x27c/0x620
+[    0.954504]  pci_device_probe.llvm.5970028063154822711+0x7d/0xf0
+[    0.954513]  really_probe+0xc5/0x2f0
+[    0.954523]  driver_probe_device+0xa9/0x1e0
+[    0.954533]  __device_attach_driver+0xfd/0x110
+[    0.954542]  ? coredump_store+0x40/0x40
+[    0.954552]  bus_for_each_drv+0x113/0x140
+[    0.954561]  __device_attach.llvm.12424973341547923051+0xa7/0x110
+[    0.954573]  device_initial_probe+0x2f/0x50
+[    0.954582]  bus_probe_device+0x9e/0x110
+[    0.954592]  deferred_probe_work_func+0x8b/0xc0
+[    0.954601]  process_scheduled_works+0x1a3/0x340
+[    0.954611]  worker_thread+0x23a/0x2d0
+[    0.954620]  kthread+0x147/0x160
+[    0.954626]  ? pr_cont_work+0x1c0/0x1c0
+[    0.954635]  ? kthread_blkcg+0x30/0x30
+[    0.954642]  ret_from_fork+0xa8/0x220
+[    0.954650]  ? kthread_blkcg+0x30/0x30
+[    0.954658]  ret_from_fork_asm+0x11/0x20
+[    0.954669]  </TASK>
+[    0.954673] ---[ end trace 0000000000000000 ]---
+[    0.954851] amdgpu 0000:00:01.0: probe with driver amdgpu failed with error -110
+[    0.955285] amdgpu 0000:00:01.0:  ttm finalized
+[    0.955784] ahci 0000:00:14.2: DMA bits = 32
+[    0.955795] ahci 0000:00:14.2: DMA enable
+[    0.955823] ahci 0000:00:14.2: AHCI vers 0001.0300, 32 command slots, 3 Gbps, unknown mode
+[    0.955835] ahci 0000:00:14.2: 1/1 ports implemented (port mask 0x1)
+[    0.955844] ahci 0000:00:14.2: flags: ncq sntf pm clo only pmp pio slum part ccc apst 
+[    0.956179] scsi host1: ahci
+[    0.956279] ata2: SATA max UDMA/133 abar m32768@0xc4000000 port 0xc4000100 irq 35 lpm-pol 1 ext
+[    0.956353] netconsole: netconsole: local port 6665
+[    0.956364] netconsole: netconsole: local IPv4 address 192.168.0.2
+[    0.956375] netconsole: netconsole: interface name 'eth0'
+[    0.956381] netconsole: netconsole: local ethernet address 'ff:ff:ff:ff:ff:ff'
+[    0.956390] netconsole: netconsole: remote port 6666
+[    0.956397] netconsole: netconsole: remote IPv4 address 192.168.0.1
+[    0.956404] netconsole: netconsole: remote ethernet address b4:45:06:6c:f6:4f
+[    0.956414] netpoll: netconsole: eth0 doesn't exist, aborting
+[    0.956421] netconsole: Not enabling netconsole for cmdline0. Netpoll setup failed
+[    0.956583] printk: console [netcon0] enabled
+[    0.956595] netconsole: network logging started
+[    0.957011] cfg80211: Loading compiled-in X.509 certificates for regulatory database
+[    0.958113] Loaded X.509 cert 'sforshee: 00b28ddf47aef9cea7'
+[    0.958676] Loaded X.509 cert 'wens: 61c038651aabdcf94bd0ac7ff06c7248db18c600'
+[    0.958759] faux_driver regulatory: Direct firmware load for regulatory.db failed with error -2
+[    0.958779] cfg80211: failed to load regulatory.db
+[    0.958813] clk: Disabling unused clocks
+[    0.958825] ALSA device list:
+[    0.958832]   #0: HD-Audio Generic at 0xe4840000 irq 34
+[    1.023610] usb usb4-port1: over-current condition
+[    1.074162] usb 1-1: New USB device found, idVendor=152d, idProduct=2329, bcdDevice= 1.00
+[    1.074198] usb 1-1: New USB device strings: Mfr=1, Product=2, SerialNumber=5
+[    1.074210] usb 1-1: Product: USB to ATA/ATAPI bridge
+[    1.074223] usb 1-1: Manufacturer: JMicron
+[    1.074232] usb 1-1: SerialNumber: 50026B724C07
+[    1.074947] usb-storage 1-1:1.0: USB Mass Storage device detected
+[    1.075207] usb-storage 1-1:1.0: Quirks match for vid 152d pid 2329: 8020
+[    1.075277] scsi host2: usb-storage 1-1:1.0
+[    1.161724] ata1: SATA link up 3.0 Gbps (SStatus 123 SControl 300)
+[    1.193702] usb 2-2: new SuperSpeed USB device number 2 using xhci_aeolia
+[    1.210501] ata1.00: ATA-10: TOSHIBA MQ04ABF100, JU0G0A, max UDMA/100
+[    1.211773] ata1.00: 1953525168 sectors, multi 16: LBA48 NCQ (depth 32), AA
+[    1.215111] ata1.00: Features: HIPM DIPM
+[    1.220812] usb 2-2: New USB device found, idVendor=054c, idProduct=0c87, bcdDevice= 1.04
+[    1.220845] usb 2-2: New USB device strings: Mfr=1, Product=2, SerialNumber=0
+[    1.220858] usb 2-2: Product: 4-Port USB 3.0 Hub
+[    1.220867] usb 2-2: Manufacturer: Generic
+[    1.245909] ata1.00: configured for UDMA/100
+[    1.246288] scsi 0:0:0:0: Direct-Access     ATA      TOSHIBA MQ04ABF1 0A   PQ: 0 ANSI: 5
+[    1.246926] sd 0:0:0:0: Attached scsi generic sg0 type 0
+[    1.247037] sd 0:0:0:0: [sda] Drive-managed SMR disk
+[    1.247077] sd 0:0:0:0: [sda] 1953525168 512-byte logical blocks: (1.00 TB/932 GiB)
+[    1.247089] sd 0:0:0:0: [sda] 4096-byte physical blocks
+[    1.247123] sd 0:0:0:0: [sda] Write Protect is off
+[    1.247137] sd 0:0:0:0: [sda] Mode Sense: 00 3a 00 00
+[    1.247184] sd 0:0:0:0: [sda] Write cache: enabled, read cache: enabled, doesn't support DPO or FUA
+[    1.247267] sd 0:0:0:0: [sda] Preferred minimum I/O size 4096 bytes
+[    1.248315] hub 2-2:1.0: USB hub found
+[    1.249084] hub 2-2:1.0: 2 ports detected
+[    1.333501] usb 1-2: new high-speed USB device number 3 using xhci_aeolia
+[    1.438032] ata2: SATA link up 1.5 Gbps (SStatus 113 SControl 300)
+[    1.438567] ata2.00: ATAPI: SONY    PS-SYSTEM   420R, 6141, max UDMA/133
+[    1.439500] ata2.00: configured for UDMA/133
+[    1.454792] scsi 1:0:0:0: CD-ROM            SONY     PS-SYSTEM   420R 6141 PQ: 0 ANSI: 5
+[    1.472361] sr 1:0:0:0: [sr0] scsi3-mmc drive: 0x/0x cd/rw xa/form2 cdda tray
+[    1.472393] cdrom: Uniform CD-ROM driver Revision: 3.20
+[    1.480379] usb 1-2: New USB device found, idVendor=054c, idProduct=0c88, bcdDevice= 1.04
+[    1.480411] usb 1-2: New USB device strings: Mfr=1, Product=2, SerialNumber=0
+[    1.480424] usb 1-2: Product: 4-Port USB 2.0 Hub
+[    1.480432] usb 1-2: Manufacturer: Generic
+[    1.482198] sr 1:0:0:0: Attached scsi CD-ROM sr0
+[    1.482360] sr 1:0:0:0: Attached scsi generic sg1 type 5
+[    1.518145] hub 1-2:1.0: USB hub found
+[    1.518742] hub 1-2:1.0: 2 ports detected
+[    1.535552] clocksource: tsc: mask: 0xffffffffffffffff max_cycles: 0x16fa00e7d19, max_idle_ns: 440795227561 ns
+[    1.535688] clocksource: Switched to clocksource tsc
+[    1.550004] usb 2-2.1: new SuperSpeed USB device number 3 using xhci_aeolia
+[    1.566235] usb 2-2.1: New USB device found, idVendor=0781, idProduct=55ad, bcdDevice= 1.00
+[    1.566270] usb 2-2.1: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[    1.566283] usb 2-2.1: Product:  SanDisk 3.2Gen1
+[    1.566292] usb 2-2.1: Manufacturer:  USB
+[    1.566306] usb 2-2.1: SerialNumber: 040154c7e22a8a8bb0626ffa372152ce863a6a240b8fcf68701558315fc582d8871100000000000000000000ba2d8eccff147d18ad55810785b2c431
+[    1.582532] usb-storage 2-2.1:1.0: USB Mass Storage device detected
+[    1.582931] scsi host3: usb-storage 2-2.1:1.0
+[    1.860938] usb 1-2.2: new low-speed USB device number 4 using xhci_aeolia
+[    1.972521] usb 1-2.2: New USB device found, idVendor=046d, idProduct=c31c, bcdDevice=49.00
+[    1.972559] usb 1-2.2: New USB device strings: Mfr=1, Product=2, SerialNumber=0
+[    1.972572] usb 1-2.2: Product: USB Keyboard
+[    1.972582] usb 1-2.2: Manufacturer: Logitech
+[    2.068751] input: Logitech USB Keyboard as /devices/pci0000:00/0000:00:14.7/usb1/1-2/1-2.2/1-2.2:1.0/0003:046D:C31C.0001/input/input3
+[    2.077410] scsi 2:0:0:0: Direct-Access     KINGSTON  SV300S37A120G        PQ: 0 ANSI: 2 CCS
+[    2.077688] sd 2:0:0:0: Attached scsi generic sg2 type 0
+[    2.084573] sd 2:0:0:0: [sdb] 234441648 512-byte logical blocks: (120 GB/112 GiB)
+[    2.085021] sd 2:0:0:0: [sdb] Write Protect is off
+[    2.085039] sd 2:0:0:0: [sdb] Mode Sense: 28 00 00 00
+[    2.085347] sd 2:0:0:0: [sdb] No Caching mode page found
+[    2.085361] sd 2:0:0:0: [sdb] Assuming drive cache: write through
+[    2.105663]  sdb: sdb1 sdb2
+[    2.105971] sd 2:0:0:0: [sdb] Attached SCSI disk
+[    2.125543] hid-generic 0003:046D:C31C.0001: input,hidraw0: USB HID v1.10 Keyboard [Logitech USB Keyboard] on usb-0000:00:14.7-2.2/input0
+[    2.129165] input: Logitech USB Keyboard as /devices/pci0000:00/0000:00:14.7/usb1/1-2/1-2.2/1-2.2:1.1/0003:046D:C31C.0002/input/input4
+[    2.185239] hid-generic 0003:046D:C31C.0002: input,hidraw1: USB HID v1.10 Device [Logitech USB Keyboard] on usb-0000:00:14.7-2.2/input1
+[    2.591554] scsi 3:0:0:0: Direct-Access      USB      SanDisk 3.2Gen1 1.00 PQ: 0 ANSI: 6
+[    2.591874] sd 3:0:0:0: Attached scsi generic sg3 type 0
+[    2.602651] sd 3:0:0:0: [sdc] 242737152 512-byte logical blocks: (124 GB/116 GiB)
+[    2.603998] sd 3:0:0:0: [sdc] Write Protect is off
+[    2.604018] sd 3:0:0:0: [sdc] Mode Sense: 43 00 00 00
+[    2.604429] sd 3:0:0:0: [sdc] Write cache: disabled, read cache: enabled, doesn't support DPO or FUA
+[    2.635111]  sdc: sdc1
+[    2.635382] sd 3:0:0:0: [sdc] Attached SCSI removable disk
+[    5.881050] [wlan][56]wlanCheckWifiFunc:(INIT ERROR) Waiting for ready bit: Timeout, Status=0x00000000
+[    5.881092] mt76x8-mt6632_sdio mmc0:0001:1: probe with driver mt76x8-mt6632_sdio failed with error -1
+[    6.879564] Bluetooth: hci0: Device setup in 974087 usecs
+[   31.845032] ata1.00: exception Emask 0x0 SAct 0x400000 SErr 0x0 action 0x6 frozen
+[   31.845071] ata1.00: failed command: READ FPDMA QUEUED
+[   31.845080] ata1.00: cmd 60/08:b0:00:00:00/00:00:00:00:00/40 tag 22 ncq dma 4096 in
+[   31.845080]          res 40/00:00:00:00:00/00:00:00:00:00/00 Emask 0x4 (timeout)
+[   31.845108] ata1.00: status: { DRDY }
+[   31.845120] ata1: hard resetting link
+[   32.312933] ata1: SATA link up 3.0 Gbps (SStatus 123 SControl 300)
+[   37.468939] ata1.00: qc timeout after 5000 msecs (cmd 0xec)
+[   37.468984] ata1.00: failed to IDENTIFY (I/O error, err_mask=0x4)
+[   37.468996] ata1.00: revalidation failed (errno=-5)
+[   37.469008] ata1: hard resetting link
+[   37.936918] ata1: SATA link up 3.0 Gbps (SStatus 123 SControl 300)
+[   47.964917] ata1.00: qc timeout after 10000 msecs (cmd 0xec)
+[   47.964959] ata1.00: failed to IDENTIFY (I/O error, err_mask=0x4)
+[   47.964971] ata1.00: revalidation failed (errno=-5)
+[   47.964982] ata1: limiting SATA link speed to 1.5 Gbps
+[   47.964994] ata1: hard resetting link
+[   48.432932] ata1: SATA link up 1.5 Gbps (SStatus 113 SControl 310)
+[   78.940928] ata1.00: qc timeout after 30000 msecs (cmd 0xec)
+[   78.940973] ata1.00: failed to IDENTIFY (I/O error, err_mask=0x4)
+[   78.940985] ata1.00: revalidation failed (errno=-5)
+[   78.940994] ata1.00: disable device
+[   79.408923] ata1: SATA link up 1.5 Gbps (SStatus 113 SControl 310)
+[   79.408986] ata1: EH complete
+[   79.409047] sd 0:0:0:0: [sda] tag#0 UNKNOWN(0x2003) Result: hostbyte=0x04 driverbyte=DRIVER_OK cmd_age=78s
+[   79.409071] sd 0:0:0:0: [sda] tag#0 CDB: opcode=0x28 28 00 00 00 00 00 00 00 08 00
+[   79.409084] I/O error, dev sda, sector 0 op 0x0:(READ) flags 0x800000 phys_seg 1 prio class 2
+[   79.409098] Buffer I/O error on dev sda, logical block 0, async page read
+[   79.409135] random: crng init done
+[   79.409220] sd 0:0:0:0: [sda] tag#23 UNKNOWN(0x2003) Result: hostbyte=0x04 driverbyte=DRIVER_OK cmd_age=0s
+[   79.409259] sd 0:0:0:0: [sda] tag#23 CDB: opcode=0x28 28 00 00 00 00 00 00 00 08 00
+[   79.409278] I/O error, dev sda, sector 0 op 0x0:(READ) flags 0x800000 phys_seg 1 prio class 2
+[   79.409294] Buffer I/O error on dev sda, logical block 0, async page read
+[   79.409330]  sda: unable to read partition table
+[   79.409377] sd 0:0:0:0: [sda] Attached SCSI disk
+[   79.409996] Freeing unused kernel image (initmem) memory: 1176K
+[   79.410032] Write protecting the kernel read-only data: 47104k
+[   79.410891] Freeing unused kernel image (text/rodata gap) memory: 964K
+[   79.411830] Freeing unused kernel image (rodata/data gap) memory: 2012K
+[   79.411874] Run /init as init process
+[   79.411885]   with arguments:
+[   79.411893]     /init
+[   79.411901]   with environment:
+[   79.411909]     HOME=/
+[   79.411917]     TERM=linux
+[   79.422834] === PS4 DEBUG INITRAMFS ALIVE ===
+[   79.423243] === DEBUG LOOP 1 ===
+[   79.439162] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[   85.705356] === DEBUG LOOP 2 ===
+[   85.719071] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[   91.973083] === DEBUG LOOP 3 ===
+[   91.986155] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[   98.217662] === DEBUG LOOP 4 ===
+[   98.231185] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  104.463039] === DEBUG LOOP 5 ===
+[  104.476313] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  110.713898] === DEBUG LOOP 6 ===
+[  110.727180] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  116.956735] === DEBUG LOOP 7 ===
+[  116.970043] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  123.203876] === DEBUG LOOP 8 ===
+[  123.217402] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  129.451838] === DEBUG LOOP 9 ===
+[  129.464915] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  135.697305] === DEBUG LOOP 10 ===
+[  135.711073] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  141.941597] === DEBUG LOOP 11 ===
+[  141.954604] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  148.190224] === DEBUG LOOP 12 ===
+[  148.204061] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  154.436937] === DEBUG LOOP 13 ===
+[  154.449924] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  160.685463] === DEBUG LOOP 14 ===
+[  160.698674] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  166.934480] === DEBUG LOOP 15 ===
+[  166.949541] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  173.185302] === DEBUG LOOP 16 ===
+[  173.199270] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  179.432680] === DEBUG LOOP 17 ===
+[  179.445895] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  185.682166] === DEBUG LOOP 18 ===
+[  185.695177] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  191.932970] === DEBUG LOOP 19 ===
+[  191.946062] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  198.183850] === DEBUG LOOP 20 ===
+[  198.197426] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  204.434586] === DEBUG LOOP 21 ===
+[  204.447555] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  210.691664] === DEBUG LOOP 22 ===
+[  210.705414] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  216.950587] === DEBUG LOOP 23 ===
+[  216.963974] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  223.209100] === DEBUG LOOP 24 ===
+[  223.223313] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  229.462071] === DEBUG LOOP 25 ===
+[  229.475312] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  235.713269] === DEBUG LOOP 26 ===
+[  235.726389] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  241.962151] === DEBUG LOOP 27 ===
+[  241.975171] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  248.215920] === DEBUG LOOP 28 ===
+[  248.230017] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  254.471188] === DEBUG LOOP 29 ===
+[  254.488472] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  260.729817] === DEBUG LOOP 30 ===
+[  260.743295] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  266.985618] === DEBUG LOOP 31 ===
+[  266.999388] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  273.239281] === DEBUG LOOP 32 ===
+[  273.252672] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  279.496129] === DEBUG LOOP 33 ===
+[  279.509538] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  285.753386] === DEBUG LOOP 34 ===
+[  285.766513] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  292.012061] === DEBUG LOOP 35 ===
+[  292.026916] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  298.287754] === DEBUG LOOP 36 ===
+[  298.301031] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  304.544175] === DEBUG LOOP 37 ===
+[  304.557678] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  310.798499] === DEBUG LOOP 38 ===
+[  310.811686] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  317.054041] === DEBUG LOOP 39 ===
+[  317.067651] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  323.313365] === DEBUG LOOP 40 ===
+[  323.327507] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  329.573253] === DEBUG LOOP 41 ===
+[  329.586910] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  335.838639] === DEBUG LOOP 42 ===
+[  335.852177] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  342.104289] === DEBUG LOOP 43 ===
+[  342.118631] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  348.363860] === DEBUG LOOP 44 ===
+[  348.377402] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  354.620310] === DEBUG LOOP 45 ===
+[  354.634796] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  360.886977] === DEBUG LOOP 46 ===
+[  360.901506] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  367.154922] === DEBUG LOOP 47 ===
+[  367.169505] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  373.418245] === DEBUG LOOP 48 ===
+[  373.432506] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  379.680241] === DEBUG LOOP 49 ===
+[  379.694960] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  385.949898] === DEBUG LOOP 50 ===
+[  385.963792] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  392.215071] === DEBUG LOOP 51 ===
+[  392.230272] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  398.484212] === DEBUG LOOP 52 ===
+[  398.499502] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  404.755519] === DEBUG LOOP 53 ===
+[  404.770660] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  411.018186] === DEBUG LOOP 54 ===
+[  411.033408] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  417.288192] === DEBUG LOOP 55 ===
+[  417.304877] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  423.562423] === DEBUG LOOP 56 ===
+[  423.578224] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  429.834696] === DEBUG LOOP 57 ===
+[  429.850532] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  436.107989] === DEBUG LOOP 58 ===
+[  436.123535] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  442.376484] === DEBUG LOOP 59 ===
+[  442.392624] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  448.650622] === DEBUG LOOP 60 ===
+[  448.666249] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  454.929702] === DEBUG LOOP 61 ===
+[  454.945156] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  461.210661] === DEBUG LOOP 62 ===
+[  461.226536] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  467.490249] === DEBUG LOOP 63 ===
+[  467.506882] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  473.771512] === DEBUG LOOP 64 ===
+[  473.787747] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  480.049742] === DEBUG LOOP 65 ===
+[  480.066790] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  486.349437] === DEBUG LOOP 66 ===
+[  486.366292] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  492.647800] === DEBUG LOOP 67 ===
+[  492.665080] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  498.942493] === DEBUG LOOP 68 ===
+[  498.960002] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  505.238603] === DEBUG LOOP 69 ===
+[  505.255626] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  511.532935] === DEBUG LOOP 70 ===
+[  511.550499] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  517.827349] === DEBUG LOOP 71 ===
+[  517.845251] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  524.122118] === DEBUG LOOP 72 ===
+[  524.140175] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  530.418557] === DEBUG LOOP 73 ===
+[  530.436404] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  536.715920] === DEBUG LOOP 74 ===
+[  536.733530] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  543.014498] === DEBUG LOOP 75 ===
+[  543.034344] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  549.315286] === DEBUG LOOP 76 ===
+[  549.333466] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  555.610464] === DEBUG LOOP 77 ===
+[  555.627255] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  561.898422] === DEBUG LOOP 78 ===
+[  561.915753] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  568.187886] === DEBUG LOOP 79 ===
+[  568.206257] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  574.477203] === DEBUG LOOP 80 ===
+[  574.495211] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  580.765588] === DEBUG LOOP 81 ===
+[  580.783402] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  587.053026] === DEBUG LOOP 82 ===
+[  587.070610] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  593.332673] === DEBUG LOOP 83 ===
+[  593.350711] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  599.619884] === DEBUG LOOP 84 ===
+[  599.638630] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  605.906874] === DEBUG LOOP 85 ===
+[  605.925138] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  612.195447] === DEBUG LOOP 86 ===
+[  612.214009] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  618.481897] === DEBUG LOOP 87 ===
+[  618.500483] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  624.787695] === DEBUG LOOP 88 ===
+[  624.806700] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  631.097410] === DEBUG LOOP 89 ===
+[  631.119876] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  637.385421] === DEBUG LOOP 90 ===
+[  637.404375] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  643.668189] === DEBUG LOOP 91 ===
+[  643.686486] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  649.955028] === DEBUG LOOP 92 ===
+[  649.974371] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  656.270956] === DEBUG LOOP 93 ===
+[  656.289126] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  662.555563] === DEBUG LOOP 94 ===
+[  662.575245] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  668.840359] === DEBUG LOOP 95 ===
+[  668.860746] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  675.135508] === DEBUG LOOP 96 ===
+[  675.154856] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  681.421106] === DEBUG LOOP 97 ===
+[  681.440137] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  687.718074] === DEBUG LOOP 98 ===
+[  687.737253] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  694.022302] === DEBUG LOOP 99 ===
+[  694.042187] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  700.320847] === DEBUG LOOP 100 ===
+[  700.341104] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  706.617892] === DEBUG LOOP 101 ===
+[  706.637866] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  712.911250] === DEBUG LOOP 102 ===
+[  712.930618] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  719.205799] === DEBUG LOOP 103 ===
+[  719.225725] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  725.499873] === DEBUG LOOP 104 ===
+[  725.519913] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  731.793618] === DEBUG LOOP 105 ===
+[  731.815107] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  738.097431] === DEBUG LOOP 106 ===
+[  738.117738] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  744.392845] === DEBUG LOOP 107 ===
+[  744.413429] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  750.687591] === DEBUG LOOP 108 ===
+[  750.707929] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  756.991051] === DEBUG LOOP 109 ===
+[  757.011621] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  763.291006] === DEBUG LOOP 110 ===
+[  763.311971] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.
+[  769.590258] === DEBUG LOOP 111 ===
+[  769.611217] FAT-fs (sdb1): Volume was not properly unmounted. Some data may be corrupt. Please run fsck.

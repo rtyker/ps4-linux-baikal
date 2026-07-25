@@ -1,0 +1,7 @@
+~ # cat /sys/class/drm/card0/device/vbios_version 2>/dev/null; echo; cat /sys/ke
+rnel/debug/dri/0/amdgpu_vbios 2>&1 | head -c 200; echo; ls /sys/class/drm/; echo
+ GPU_END
+cat: can't open '/sys/kernel/debug/dri/0/amdgpu_vbios': No such file or directory
+[0;0mversion
+GPU_END
+~ # 

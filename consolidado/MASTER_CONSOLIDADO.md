@@ -1,8 +1,10 @@
 # MASTER CONSOLIDADO — PS4 Linux (Baikal/Arch Minimal v2)
 
-> **Última atualização**: 2026-07-20  
-> **Versão**: Arch Minimal v2 — Kernel 5.4.247-neocine-1.1  
+> **Última atualização**: 2026-07-25  
+> **Versão**: Arch Minimal v2 — Kernel 7.0.8-Strawberry-ThinLTO-Baikal-+, baseline `v7.0-20260722-clean-video-ok`, ativo `bzImage-7.0-20260723-RELEASE`  
 > **Hardware**: PS4-RTYKER (CUH-2xxx), Southbridge Baikal B1 (0x30201), FW 12.52, GoldHEN v2.4b18.9
+>
+> **Nota:** este documento cobre a migração antiga do kernel 5.4.247 (feeRnt) para o 7.0.8 (Strawberry). O projeto já concluiu essa migração e roda hoje em 7.0 — trechos históricos do 5.4 foram mantidos como registro, mas marcados como superados. Para o estado corrente, ver também `STATUS_ATUAL.md` e `BACKLOG.md`.
 
 ---
 
@@ -14,18 +16,19 @@
 | **SSH** | ✅ | root/ps4 @ 192.168.6.128 (Dropbear/OpenSSH) |
 | **Vídeo HDMI** | ✅ | 1920×1080@60 forçado, ps4_bridge VIC mode 16 |
 | **EDID Persistente** | ✅ | Firmware override `/lib/firmware/edid/ps4_tv_edid.bin` |
-| **Rede (Ethernet)** | ❌ | GBE power-gated (Syscon/ICC) — sky2 probe falha `unsupported chip type 0x0` — ver Seção 18 |
+| **Rede (WiFi)** | ✅ | WiFi/SSH 100% funcionais |
+| **Rede (Ethernet)** | ⚠️ | `eth0` via driver próprio `mts.ko` (não é sky2), MAC real `2c:cc:44:3f:69:5f`. MAC core ligado via ICC, TX por software (~95%, doorbell corrigido 2026-07-25). **PHY nunca sai de power-down** (MDIO Clause 45/22 sempre zero/timeout) — RX morto. Ver `PLANO_FASES_GBE_2026-07-25.md` |
 | **Áudio HDMI** | ✅ | snd_hda_intel (1002:9921) |
 | **RTC/Time** | ✅ | Payload injeta `time=UNIX_TS`, hook early seta relógio |
 | **VRAM Control** | ✅ | `vram.txt` (FAT32) lido pelo payload, default 1024 MB |
 | **Storage** | ✅ | SATA AHCI + USB 3.0 xHCI + SD/MMC |
-| **Build System** | ✅ | 3 scripts: build-kernel, build-image, burn-image |
+| **Build System** | ✅ | 3 scripts: `00-build-kernel-7.0.sh`, `01-build-image-7.0.sh`, burn-image |
 | **NOR Dump (PS4 real)** | ✅ | `nor_sflash0.bin` (32 MB) — dumpado via ps4-sflash0-dumper |
 | **C0020001 (WiFi calibração)** | ✅ | Extraído do NOR em `boot_referencia/C0020001_wifi_calibration.bin` |
-| **sd8797_uapsta.bin (Orbis)** | ❌ | **Não está no NOR** — firmware fica no HDD Orbis, não na flash |
-| **MWIFIEX_SDIO** | ⏳ | Será desabilitado no build 7.0 (Baikal usa MT7668, não Marvell) |
-| **WiFi/BT (MT7668)** | ❌ | Firmware ausente no kernel |
-| **Kernel Dump 12.52** | 🔄 | `scene-kmem-dumper` TCP (porta 9020) em teste — ver Seção 18 |
+| **sd8797_uapsta.bin (Orbis)** | ✅ | Obtido via feeRnt/ps4-linux-initramfs — Orbis custom (443 KB) confirmado vs upstream (522 KB) |
+| **WiFi/BT (MT7668)** | ❌ | Firmware ausente no kernel; manufacture data (NVRAM) também ausente — funcional com defaults do eFUSE |
+| **Kernel Dump 12.52** | ✅ | Concluído em 2026-07-20 via `scene-kmem-dumper` TCP (porta 9020): 32.2 MB, 3s, 11.3 MB/s, zero corrupção (tag `milestone-dump-success`) — ver Seção 18 |
+| **CoreOS/SLB2** | ✅ | 4 contêineres SLB2 extraídos, build #1281815, kernel cifrado via SAMU (dump offline inviável, contornado pelo dump de RAM ativa) |
 
 ---
 
@@ -57,7 +60,7 @@
 | GPU Gladius (1002:9924) | amdgpu (CIK) | ✅ |
 | Display DCE v8.0 | amdgpu DC/DCN1 | ✅ |
 | HDMI Bridge | ps4_bridge (custom) | ✅ |
-| Ethernet | sky2 | ❌ GBE power-gated (precisa ICC/Syscon power-on) |
+| Ethernet | mts.ko (driver próprio, não sky2) | ⚠️ MAC ligado via ICC power-on (`0x004=0xb19`), TX por software funcional (~95%); PHY power-gated (MDIO sempre zero/timeout), RX morto |
 | USB 3.0 | xhci_aeolia | ✅ |
 | SATA AHCI | ahci | ✅ |
 | SD/MMC | sdhci | ✅ |
@@ -127,11 +130,12 @@ A ferramenta `ps4-pup-unpacker` extrai 0 bytes — o fluxo ZLIB/Deflate a partir
 
 **Conclusão:** A única via para obter o kernel Orbis desciptografado é o dump de RAM ativa (payload rodando no PS4 após o boot completo, lendo a memória já desciptografada pelo hardware). Este é o objetivo do `scene-kmem-dumper` (TCP porta 9020) — ver Seção 18.
 
-### 3.4 Alvos de Análise Pós-Dump
+### 3.4 Alvos de Análise Pós-Dump — CONCLUÍDO (2026-07-20 a 2026-07-23)
 
-Com o kernel em mãos, os alvos no Ghidra/IDA são:
-- **Interface `gbe0`** — controle da Ethernet Gigabit (Marvell Yukon `sky2` adaptado Baikal)
-- **Syscon power management** — mapeamento de registradores MMIO pervasive e chamadas ICC (`/dev/icc_device_power`) para ativar o clock/power da GBE
+Com o kernel em mãos (dump da Seção 18), a engenharia reversa foi concluída:
+- **Interface `gbe0` (Orbis)** — identificado como driver **MTS** próprio da Sony (`SceGbeMtsCtrl`), não Marvell Yukon/`sky2` — motivou a reescrita do driver Linux como `mts.ko` (não mais tentativa de reaproveitar `sky2`). Ver `consolidado/RE_KERNEL_GBE_ATTACH.md`.
+- **Syscon/ICC power management** — comando ICC major `0x04`/minor `0x38` identificado e replicado no driver Linux; MAC core liga com sucesso (`0x004=0xb19`). O PHY, porém, continua não respondendo a MDIO mesmo após o power-on do MAC — investigação ativa em `PLANO_FASES_GBE_2026-07-25.md`.
+- **S5 shutdown (`icc_power_shutdown`)** — disassembly do offset `0x1d8a3c` revelou payload real de 32 bytes (driver Linux enviava só 6 bytes truncados); patch aplicado nos drivers `ps4-bpcie-icc.c`/`ps4-apcie-icc.c`, pendente apenas de teste ao vivo (ver `BACKLOG.md`).
 
 ---
 
@@ -286,31 +290,19 @@ nc -w 3 192.168.6.130 9090 < linux-3072mb.bin
 
 ## 9. KERNELS RECOMENDADOS PARA BAIKAL
 
-### Kernel 5.4.247-neocine-1.1 (feeRnt) — ATUAL
-- Base: DFAUS-git/ps4-baikal-5.4.247-kernel
-- WiFi/BT: MediaTek 7668 (mt76x8; MT6632 variant)
-- Fixes: Tela preta login/initramfs, AMDGPU Gladius Registers
-- ZRAM/ZSWAP/ZBUD, march=btver2, -O3
-- Compilador: Clang/LLVM-14 ou GCC-11
-- ⚠️ Mesa ≤ 25.1 (libdrm novo quebra aceleração 3D)
-
-### Kernel 7.0.8 (Strawberry/rmuxnet) — BLEEDING EDGE
-- Primeira porta Baikal para kernel 7.x
-- UART, USB, display, WiFi/BT MT7668
+### Kernel 7.0.8 (Strawberry/rmuxnet) — ATIVO
+- Baseline oficial: tag `v7.0-20260722-clean-video-ok` (vídeo OK, boot completo, telnet OK, rebuild limpo)
+- Ativo em produção: `bzImage-7.0-20260723-RELEASE`
+- UART, USB, display, WiFi/BT MT7668, Ethernet `eth0` via `mts.ko`
 - Perfis: General (desktop/gaming) ou Server (headless)
-- ThinLTO / FullLTO
-- GitHub Actions geram bzImage pré-compilado
+- ThinLTO
+- Repositório clonado/commitado localmente em `/mnt/hdauxiliar/temp/kernel_build_7.0` (tag `v7.0-20260722-clean-video-ok`, commit `811184c1f`)
+- Compilação: `sudo ./00-build-kernel-7.0.sh`
 
-### Compilação (feeRnt 5.4)
-O código-fonte deste kernel já está clonado localmente na pasta de build: `/mnt/hdauxiliar/temp/kernel_build`.
-
-Para compilar de forma automatizada com patches, use o script `00-build-kernel.sh`. Para clonar/compilar manualmente em outro local:
-```bash
-git clone https://github.com/feeRnt/ps4-linux-12xx --branch v5.4.247__neocine-1.1
-cd ps4-linux-12xx
-make -j$(nproc) bzImage
-# Saída: arch/x86/boot/bzImage
-```
+### Kernel 5.4.247-neocine-1.1 (feeRnt) — SUPERADO
+- Base: DFAUS-git/ps4-baikal-5.4.247-kernel
+- Migração para 7.0 concluída em 2026-07-22 — este kernel não é mais usado, mantido só como referência histórica
+- ⚠️ Mesa ≤ 25.1 (libdrm novo quebrava aceleração 3D nesta versão)
 
 ---
 
@@ -319,14 +311,14 @@ make -j$(nproc) bzImage
 ### Scripts Principais
 | Script | Função |
 |--------|--------|
-| `00-build-kernel.sh` | Compila kernel neocine (patches MediaTek, sky2, gcc16) |
-| `01-build-image.sh` | Cria rootfs Arch + initramfs (hooks EDID, time, vram) |
+| `00-build-kernel-7.0.sh` | Compila kernel 7.0 Strawberry (patches Baikal, mts, firmware) |
+| `01-build-image-7.0.sh` | Cria rootfs Arch + initramfs (hooks EDID, time, vram) |
 | `02-burn-image.sh` | Grava HD: FAT32 boot + ext4 root (LABEL=psxitarch) |
-| `rebuild-initramfs.sh` | Reconstrói initramfs após mudança de hooks |
+| `rebuild-initramfs-7.0.sh` | Reconstrói initramfs após mudança de hooks |
 
 ### Fluxo Completo
 ```bash
-sudo ./00-build-kernel.sh && sudo ./01-build-image.sh && sudo ./02-burn-image.sh /dev/sda
+sudo ./00-build-kernel-7.0.sh && sudo ./01-build-image-7.0.sh && sudo ./02-burn-image.sh /dev/sda
 ```
 
 ### O que `01-build-image.sh` Faz
@@ -402,11 +394,12 @@ cat /sys/kernel/debug/dri/0/amdgpu_vram_mm 2>/dev/null
 | systemd > 258 quebra boot | Incompatibilidade cgroup | Downgrade fixo 258.1-1 ✅ |
 | **UART + vídeo não coexistem** | Conflito console Baikal | **NÃO USAR** `console=uart8250...` com vídeo |
 | WiFi/BT não funciona | Firmware MT7668 ausente | Adicionar `mt7668pr2h.bin` no kernel |
-| Mesa > 25.1 quebra 3D | libdrm novo incompatível 5.4 | Travar Mesa ≤ 25.1 |
 | **Dumper USB falha no 12.52** | `jailbreak()` corrompe `rootvnode` | Usar TCP (`scene-kmem-dumper`) em vez de filesystem |
 | **Kernel cifrado offline** | Criptografia SAMU em hardware | Só dump de RAM ativa (payload rodando pós-boot) |
 | **`/dev/kmem` bloqueado** | GoldHEN bloqueia `open()` | Não usar kmem; ler via `kexec`+`copyout` |
 | **MSR direto em userland** | Instrução privilegiada → Kernel Panic | Sempre usar `kexec()` para código kernel |
+| **GBE PHY nunca sai de power-down** | MDIO Clause 45/22 sempre zero/timeout mesmo após MAC ligado via ICC | Ativo — ver `PLANO_FASES_GBE_2026-07-25.md`; RX morto até resolver |
+| **S5 `poweroff -f` deixa luz azul** | Payload ICC shutdown enviado incompleto (6 de 32 bytes) | Patch de 32 bytes já aplicado nos drivers; pendente teste ao vivo (`BACKLOG.md`) |
 
 ---
 
@@ -513,17 +506,11 @@ cat /proc/cmdline
 
 ## 17. ROADMAP PRÓXIMOS PASSOS
 
-1. **Kernel Dump 12.52** — Recompilar `scene-kmem-dumper` via Docker `ps4sdk` (toolchain correto gcc 15.2.0) e capturar dump TCP completo da RAM
-2. **Análise do Kernel Orbis** — Ghidra/IDA: achar power-gate da GBE (`devpm: gbe off`) e chamadas ICC para ativar Ethernet
-3. **WiFi/BT** — Adicionar `mt7668pr2h.bin` no kernel
-4. **UART Console** — Cabo JST-SH 3.3V, testar **isolado** (sem `video=`)
-5. **Power Management** — Reativar DPM com testes de estresse
-6. **Mesa/Vulkan** — radv para CIK (Gladius)
-7. **Kernel Mainline** — Migrar para 6.x quando suporte PS4 amadurecer
+> A lista completa e priorizada de pendências vive **exclusivamente em [`BACKLOG.md`](BACKLOG.md)** — não duplicar aqui. Trabalho ativo da GBE em `PLANO_FASES_GBE_2026-07-25.md`.
 
 ---
 
-## 18. KERNEL DUMP FIRMWARE 12.52 — Estado Atual
+## 18. KERNEL DUMP FIRMWARE 12.52 — CONCLUÍDO (histórico 2026-07-19/20)
 
 ### 20.1 Contexto
 Precisamos do dump completo do kernel Orbis FW 12.52 (região R+E ~13.6 MB) para analisar os drivers de GBE (`sky2`/`bpcie`) e Syscon power management. O kernel Orbis está cifrado offline (criptografia SAMU em hardware), só acessível descriptografado na RAM ativa.
@@ -571,12 +558,12 @@ Payload reescrito em 2026-07-19 que usa **TCP** em vez de filesystem:
 
 ## 19. REFERÊNCIAS
 
-- Kernel: https://github.com/feeRnt/ps4-linux-12xx (branch v5.4.247__neocine-1.1)
+- **Kernel ativo (7.0):** https://github.com/rmuxnet/linux (baikal/7.0.8-Stable) — Strawberry
 - Payloads: https://github.com/ArabPixel/ps4-linux-payloads
 - Guia: https://dionkill.github.io/ps4-linux-tutorial/
 - PSFree: https://arabpixel.github.io/PSFree-Enhanced/
-- DFAUS kernels: https://github.com/DFAUS-git/ps4-baikal-5.4.247-kernel
-- Strawberry 7.0: https://github.com/rmuxnet/linux (baikal/7.0.8-Stable)
+- Kernel histórico (5.4, superado): https://github.com/feeRnt/ps4-linux-12xx (branch v5.4.247__neocine-1.1)
+- DFAUS kernels (histórico): https://github.com/DFAUS-git/ps4-baikal-5.4.247-kernel
 
 ---
 

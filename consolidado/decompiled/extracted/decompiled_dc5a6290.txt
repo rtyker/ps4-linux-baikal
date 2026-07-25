@@ -1,0 +1,97 @@
+// Extraido por Ghidra PyGhidra (consolidate_decompiled_lacunas.py)
+// addr: 0xffffffffdc5a6290  name: FUN_ffffffffdc5a6290  size: 718
+// escopo: lacuna MTS/GBE/ICC/glue identificada em testes ao vivo
+// chamadores (2):
+//   FUN_ffffffffdc5a41d0 @ 0x-000000023a5be30
+//   FUN_ffffffffdc5a5ec0 @ 0x-000000023a5a140
+// chamadas (9):
+//   FUN_ffffffffdca17ba0 @ 0x-0000000235e8460
+//   FUN_ffffffffdc60d4c0 @ 0x-0000000239f2b40
+//   FUN_ffffffffdc3f3950 @ 0x-000000023c0c6b0
+//   FUN_ffffffffdc3f3660 @ 0x-000000023c0c9a0
+//   FUN_ffffffffdc5b7b80 @ 0x-000000023a48480
+//   FUN_ffffffffdc5a58d0 @ 0x-000000023a5a730
+//   FUN_ffffffffdc5a5050 @ 0x-000000023a5afb0
+//   FUN_ffffffffdc5a5200 @ 0x-000000023a5ae00
+//   FUN_ffffffffdc60d400 @ 0x-0000000239f2c00
+
+
+void FUN_ffffffffdc5a6290(long param_1)
+
+{
+  long lVar1;
+  long lVar2;
+  int iVar3;
+  undefined2 local_7a;
+  undefined1 local_78 [6];
+  undefined1 local_72 [6];
+  undefined1 local_6c [2];
+  undefined1 local_6a [2];
+  undefined2 local_68;
+  undefined1 local_66;
+  char local_65;
+  undefined1 local_64 [2];
+  undefined1 local_62 [2];
+  undefined1 local_60 [2];
+  undefined1 local_5e [2];
+  undefined2 local_5c;
+  byte local_59;
+  long local_38;
+  
+  local_38 = DAT_ffffffffdeaacea0;
+  lVar2 = *(long *)(param_1 + 0x10);
+  FUN_ffffffffdc5a5200(lVar2,2,0x13);
+  FUN_ffffffffdc5a5200(lVar2,3,0x13);
+  FUN_ffffffffdc5a5200(lVar2,4,0x13);
+  lVar1 = lVar2 + 0x30e8;
+  FUN_ffffffffdc3f3660(lVar1,0,"W:\\Build\\J02690760\\sys\\freebsd\\sys\\dev\\mts\\if_mts.c",0xab5);
+  local_7a = 0x20;
+  FUN_ffffffffdc60d4c0(local_78,&DAT_ffffffffdcb0e02c,6);
+  FUN_ffffffffdc60d4c0(local_72,lVar2 + 0x30d6,6);
+  FUN_ffffffffdc60d4c0(local_6c,&DAT_ffffffffdcb0e01f,2);
+  FUN_ffffffffdc60d400(local_6a,2);
+  local_68 = 0xfa42;
+  local_66 = 0xf;
+  local_65 = *(char *)(lVar2 + 0x3108) + '\x01';
+  if (local_65 == '\0') {
+    local_65 = '\x01';
+  }
+  *(char *)(lVar2 + 0x3108) = local_65;
+  FUN_ffffffffdc60d400(local_64,2);
+  FUN_ffffffffdc60d4c0(local_62,&DAT_ffffffffdcb0e028,2);
+  FUN_ffffffffdc60d4c0(local_60,&DAT_ffffffffdcb0e02a,2);
+  FUN_ffffffffdc60d4c0(local_5e,&local_7a,2);
+  local_5c = 0x800b;
+  FUN_ffffffffdc5a58d0(lVar2,local_78,0x20);
+  FUN_ffffffffdc3f3950(lVar1,"W:\\Build\\J02690760\\sys\\freebsd\\sys\\dev\\mts\\if_mts.c",0xab7);
+  FUN_ffffffffdc3f3660(lVar1,0,"W:\\Build\\J02690760\\sys\\freebsd\\sys\\dev\\mts\\if_mts.c",0xab5);
+  local_7a = 0x20;
+  FUN_ffffffffdc60d4c0(local_78,&DAT_ffffffffdcb0e02c,6);
+  FUN_ffffffffdc60d4c0(local_72,lVar2 + 0x30d6,6);
+  FUN_ffffffffdc60d4c0(local_6c,&DAT_ffffffffdcb0e01f,2);
+  FUN_ffffffffdc60d400(local_6a,2);
+  local_68 = 0xfa42;
+  local_66 = 0xf;
+  local_65 = *(char *)(lVar2 + 0x3108) + '\x01';
+  if (local_65 == '\0') {
+    local_65 = '\x01';
+  }
+  *(char *)(lVar2 + 0x3108) = local_65;
+  FUN_ffffffffdc60d400(local_64,2);
+  FUN_ffffffffdc60d4c0(local_62,&DAT_ffffffffdcb0e028,2);
+  FUN_ffffffffdc60d4c0(local_60,&DAT_ffffffffdcb0e02a,2);
+  FUN_ffffffffdc60d4c0(local_5e,&local_7a,2);
+  local_5c = 0x600b;
+  iVar3 = FUN_ffffffffdc5a58d0(lVar2,local_78,0x20);
+  FUN_ffffffffdc3f3950(lVar1,"W:\\Build\\J02690760\\sys\\freebsd\\sys\\dev\\mts\\if_mts.c",0xab7);
+  if ((iVar3 == 0) && ((local_59 & 1) != 0)) {
+    FUN_ffffffffdc5b7b80(*(undefined8 *)(param_1 + 8),"L2 switch has been reset.\n");
+  }
+  FUN_ffffffffdc5a5050(param_1);
+  if (DAT_ffffffffdeaacea0 == local_38) {
+    return;
+  }
+                    /* WARNING: Subroutine does not return */
+  FUN_ffffffffdca17ba0();
+}
+

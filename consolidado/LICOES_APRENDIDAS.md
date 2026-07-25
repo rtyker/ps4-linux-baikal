@@ -327,6 +327,30 @@ netconsole=6665@192.168.0.2/eth0,6666@192.168.0.1/...
 
 ## Checklist de Verificação Pré-Boot
 
+## Hold registers Baikal são WRITE-ONLY — sempre leem 0 após escrita (2026-07-24)
+
+Hold registers retornam 0 na leitura imediatamente após uma escrita de valor não-zero. Isso não é bug — é o design do hardware Baikal. Não confiar em leituras de confirmação para hold registers; usar apenas escritas.
+
+⚠️ **CORREÇÃO 2026-07-25:** este texto originalmente afirmava "GBE hold=0x180034, SATA hold=0x180020" — **as duas labels estavam trocadas/erradas**. A label GBE=0x180034 veio de uma inferência por padrão (hold = pulse - 0x40) que nunca foi cruzada com a descompilação real já existente no projeto (`consolidado/decompiled/baikal_glue_block_reset_dc6df.txt`, função `fcn.ffffffffdc6df850`). Essa descompilação mostra que a rotina de *stop* do MAC da GBE (`fcn.dc59fe10`, já confirmada por RE anterior) é chamada imediatamente antes do bloco `0x2000`, cujo par é `hold=0x20, pulse=0x74` — ou seja, **GBE hold = `0x180020`** (não `0x180034`). `0x180034` pertence a um bloco diferente e não identificado (`0x3c00`). SATA sempre foi `0x18002c`/`0x18006c`, nunca `0x180020`. Código corrigido em `drivers_mts/mts.c` e testado ao vivo 2026-07-25 (sem incidente, mas sem resolver o PHY mudo). Ver `test_history` no `consolidado/ps4_hardware_memory.db`.
+
+## MAC Enable/Stop: regras críticas descobertas por experimentação (2026-07-24)
+
+- **NUNCA escrever 0 em BAR0+0x34/0x38** — corrompe o estado permanentemente (o MAC enable é one-shot por power cycle)
+- **ENABLE**: escrever **1** (bit 0) DIRETO com `mts_write()`, NUNCA com `mts_set()` (RMW escreve 0x09 que é rejeitado pelo hardware)
+- **STOP**: escrever **2** (bit 1 = soft-reset) em 0x34 e 0x38, poll bit 1 até zerar (ACK). Não usar 0 (corrompe) nem rmmod sem stop (deixa MAC ativo)
+
+Sequência stop correta (da Orbis dc5a3060): IMR=0x7ffffa → 0x34=2 (poll bit1) → 0x38=2 (poll bit1) → drain TX/RX → 0x1c8 &= ~0x440
+
+## ICC 4 0x38 com retry loop funciona, mas só liga o MAC, não o PHY (2026-07-24)
+
+O comando `bpcie_icc_cmd(4, 0x38, &on=1, 1, &reply, 1)` precisa de loop de retry (até 100x com 50ms delay) — não funciona na primeira tentativa. Quando bem-sucedido, retorna `ret=20 reply=01`. Isso liga o MAC core (BAR0+0x004 muda de 0 para 0xb19), mas o PHY permanece power-gated e não responde a MDIO.
+
+O PHY tem domínio de power separado (`SceGbeMtsPhyCtrl`) — a documentação confirma que ICC 4 0x38 só cobre o wrapper PCIe/MAC.
+
+## NUNCA varrer ICC minors com data=1 (power-on payload) (2026-07-24)
+
+Enviar `data=1` (significa "power-on" para ICC device_power) para minors desconhecidos causa crash/reboot do PS4 inteiro. O sistema cai imediatamente, sem log, sem chance de debug. Se for testar ICC, usar `data=0` (query) ou payload vazio (GET). Ver ICC_GBE_TEST_LOG.md para a tabela de comandos já testados — NÃO re-testar.
+
 Antes de desconectar o HD e testar no PS4, verificar:
 
 - [ ] `bootargs.txt` — igual ao `boot_referencia/bootargs.txt` (com `systemd.unified_cgroup_hierarchy=0`)

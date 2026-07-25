@@ -1,4 +1,9 @@
-# Logs e arquivos de execução temporários
+# ============================================================
+# PS4 Linux Baikal — .gitignore
+# Focado em: kernel Baikal + driver MTS + Mesa PS4 patchado
+# ============================================================
+
+# --- Temporários ---
 *.log
 *.tmp
 __pycache__/
@@ -6,20 +11,24 @@ __pycache__/
 netconsole_ps4.log
 dmesg.log
 
-# Dumps brutos e imagens temporárias pesadas
+# --- Dumps/binários brutos ---
 *.tar
+*.tar.xz
+*.tar.gz
+*.tar.zst
+*.zip
 dummy_mem.bin
 fake_mem
 
-# Arquivos de ambiente e sidecars temporários
+# --- IDE/ambiente ---
 .claude/
 .claude-memory.yml
+.vscode/
 
-# Ignorar binários compilados grandes mantendo a estrutura de scripts das distros
-distros/arch_minimal_v2/boot_referencia/*.cpio.gz
-distros/arch_minimal_v2/boot_referencia/bzImage*
-
-# Ignorar sub-repositórios incorporados e ferramentas externas
+# ============================================================
+# PROJETOS IGNORADOS (não são do Baikal)
+# ============================================================
+old_project/
 OpenOrbis/
 all-ps4-payloads/
 archive/
@@ -31,3 +40,35 @@ ps4-payload-sdk/
 ps4-pup-unpacker/
 scene-kernel-dumper/
 scene-kmem-dumper/
+initramfs/
+kernel-framework-local/
+kernels/
+drivers/
+distros/Steam4PS/
+distros/winesapos/
+
+# ============================================================
+# BUILD ARTIFACTS (recuperáveis via build)
+# ============================================================
+
+# Kernel build outputs
+distros/arch_minimal_v2/boot_referencia/
+distros/arch_minimal_v2/arch_minimal_v2-7.0.tar
+distros/arch_minimal_v2/systemd_cache/
+distros/arch_minimal_v2/logs/
+distros/arch_minimal_v2/extra_firmware/
+
+# MTS module build
+drivers_mts/build/
+
+# Mesa build
+mesa-26.1.5/
+mesa-26.1.5.tar.xz
+mesa/build_artifacts/
+mesa/*.tar.xz
+mesa/*.tar.gz
+mesa/*.tar.zst
+mesa/*.zip
+
+# Ghidra project
+consolidado/tools/ghidra_project/

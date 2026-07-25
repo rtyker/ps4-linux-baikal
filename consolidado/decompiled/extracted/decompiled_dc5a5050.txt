@@ -1,0 +1,85 @@
+// Extraido por Ghidra PyGhidra (consolidate_decompiled_lacunas.py)
+// addr: 0xffffffffdc5a5050  name: FUN_ffffffffdc5a5050  size: 432
+// escopo: lacuna MTS/GBE/ICC/glue identificada em testes ao vivo
+// chamadores (2):
+//   FUN_ffffffffdc5a3810 @ 0x-000000023a5c7f0
+//   FUN_ffffffffdc5a6290 @ 0x-000000023a59d70
+// chamadas (2):
+//   FUN_ffffffffdc4e0540 @ 0x-000000023b1fac0
+//   FUN_ffffffffdc5a5200 @ 0x-000000023a5ae00
+
+
+void FUN_ffffffffdc5a5050(undefined8 *param_1)
+
+{
+  undefined8 uVar1;
+  undefined8 uVar2;
+  uint uVar3;
+  uint uVar4;
+  uint uVar5;
+  uint uVar6;
+  uint uVar7;
+  
+  uVar1 = param_1[2];
+  uVar2 = *param_1;
+  uVar3 = FUN_ffffffffdc5a5200(uVar1,3,0x11);
+  uVar4 = FUN_ffffffffdc5a5200(uVar1,3,0);
+  if ((uVar3 & 0x400) == 0) {
+    uVar3 = 0;
+  }
+  else {
+    uVar5 = uVar3 & 0xc000;
+    uVar3 = ((uVar3 & 0xffff) >> 0xd & 1) * 2 + 1;
+    if (uVar5 == 0x4000) {
+      uVar3 = uVar3 | 0x20;
+    }
+    else if ((short)uVar5 == 0) {
+      uVar3 = uVar3 | 0x10;
+    }
+    else if (uVar5 == 0x8000) {
+      uVar3 = uVar3 | 0x40;
+    }
+    uVar3 = (uVar4 >> 10 & 4 | uVar3) << 8;
+  }
+  uVar4 = FUN_ffffffffdc5a5200(uVar1,2,0x11);
+  uVar5 = FUN_ffffffffdc5a5200(uVar1,2,0);
+  if ((uVar4 & 0x400) == 0) {
+    uVar4 = 0;
+  }
+  else {
+    uVar6 = uVar4 & 0xc000;
+    uVar4 = ((uVar4 & 0xffff) >> 0xd & 1) * 2 + 1;
+    if (uVar6 == 0x4000) {
+      uVar4 = uVar4 | 0x20;
+    }
+    else if ((short)uVar6 == 0) {
+      uVar4 = uVar4 | 0x10;
+    }
+    else if (uVar6 == 0x8000) {
+      uVar4 = uVar4 | 0x40;
+    }
+    uVar4 = (uVar5 >> 10 & 4 | uVar4) << 0x10;
+  }
+  uVar5 = FUN_ffffffffdc5a5200(uVar1,4,0x11);
+  uVar6 = FUN_ffffffffdc5a5200(uVar1,4,0);
+  if ((uVar5 & 0x400) == 0) {
+    uVar5 = 0;
+  }
+  else {
+    uVar7 = uVar5 & 0xc000;
+    uVar5 = ((uVar5 & 0xffff) >> 0xd & 1) * 2 + 1;
+    if (uVar7 == 0x4000) {
+      uVar5 = uVar5 | 0x20;
+    }
+    else if ((short)uVar7 == 0) {
+      uVar5 = uVar5 | 0x10;
+    }
+    else if (uVar7 == 0x8000) {
+      uVar5 = uVar5 | 0x40;
+    }
+    uVar5 = uVar6 >> 10 & 4 | uVar5;
+  }
+  FUN_ffffffffdc4e0540(uVar2,uVar4 | uVar3 | uVar5);
+  return;
+}
+

@@ -52,8 +52,8 @@ estão funcionando naquele exato momento:
 | `0x140000` | `BLOCO+0x00..0x2f` | idêntico | idêntico |
 
 **O estado de reset/hold do bloco na glue não é o que diferencia a GBE.** Isso encerra a linha
-aberta na seção 4 do `GBE_ACTION_PLAN.md` — não há o que "soltar": o bloco já está no mesmo
-estado dos que funcionam.
+de investigação de hold/pulse aberta em `ICC_GBE_TEST_LOG.md` (testes M7/M8) — não há o que "soltar":
+o bloco já está no mesmo estado dos que funcionam.
 
 Reforça também a segunda explicação que ficou em aberto no M8: **o bloco `0x2000` provavelmente
 não é a GBE.** A associação veio da vizinhança da chamada a `dc59fe10` na rotina de *quiesce* —

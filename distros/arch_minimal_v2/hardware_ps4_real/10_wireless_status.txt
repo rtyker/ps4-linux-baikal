@@ -1,0 +1,9 @@
+~ # cat /proc/net/wireless; echo; iw dev 2>&1; echo WIRELESS_END
+Inter-| sta-|   Quality        |   Discarded packets               | Missed | WE
+ face | tus | link level noise |  nwid  crypt   frag  retry   misc | beacon | 22
+ wlan0: 0000    0.  234.    0.       0      0      0      0      0        0
+   ap0: 0000    0     0     0        0      0      0      0      0        0
+   ap1: 0000    0     0     0        0      0      0      0      0        0
+/bin/sh: iw: not found
+WIRELESS_END
+~ # 

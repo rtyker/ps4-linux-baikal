@@ -1,5 +1,8 @@
 # Investigação Profunda: Habilitação da GBE (Ethernet) no PS4 Pro Baikal (Kernel 7.0)
 
+> ## 🗄️ ARQUIVADO EM 2026-07-25 — premissa central do documento inteiro está obsoleta
+> Este documento propõe patchear `sky2_probe()` (`drivers/net/ethernet/marvell/sky2.c`). Essa arquitetura foi **abandonada**: o `sky2` é o driver Yukon genérico (Aeolia/Belize) e nunca reconhece o chip Baikal (`unsupported chip type 0x0`) porque é silício MTS diferente. O projeto passou a usar um driver dedicado, **`drivers_mts/mts.c`** (`mts.ko`), que já incorpora as descobertas de RE válidas deste documento (ICC `4 0x38` com retry, clock `BAR2+0x10a030`, hold/pulse) — ver `AGENTS.md` e `PLANO_FASES_GBE_2026-07-25.md` para o estado atual. Mantido aqui só como histórico da investigação.
+>
 > ## ⚠️ AVISO — SEÇÃO 3.6 E O "PLANO DE AÇÃO (VERSÃO 2)" ABAIXO ESTÃO REFUTADOS (2026-07-20)
 > A premissa central deste documento — que `fcn.ffffffffdc5a3060` escreve no **espaço de configuração PCI padrão** (offsets `0x54`/`0x34`/`0x38`) e que isso "controla o power-gating/clock-gating do Yukon" — **foi verificada por decompilação direta e não se sustenta.**
 >

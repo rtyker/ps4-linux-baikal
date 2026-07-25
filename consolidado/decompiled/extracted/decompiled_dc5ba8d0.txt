@@ -1,0 +1,60 @@
+// Extraido por Ghidra PyGhidra (consolidate_decompiled_lacunas.py)
+// addr: 0xffffffffdc5ba8d0  name: FUN_ffffffffdc5ba8d0  size: 180
+// escopo: lacuna MTS/GBE/ICC/glue identificada em testes ao vivo
+// chamadores (41):
+//   FUN_ffffffffdc3cb570 @ 0x-000000023c34a90
+//   FUN_ffffffffdc6fcf90 @ 0x-000000023903070
+//   FUN_ffffffffdc3fc3e0 @ 0x-000000023c03c20
+//   FUN_ffffffffdc47bfd0 @ 0x-000000023b84030
+//   FUN_ffffffffdc74c340 @ 0x-0000000238b3cc0
+//   FUN_ffffffffdc3531d0 @ 0x-000000023cace30
+//   FUN_ffffffffdc353b70 @ 0x-000000023cac490
+//   FUN_ffffffffdc59f840 @ 0x-000000023a607c0
+//   FUN_ffffffffdc7704d0 @ 0x-00000002388fb30
+//   FUN_ffffffffdc380420 @ 0x-000000023c7fbe0
+//   FUN_ffffffffdc572440 @ 0x-000000023a8dbc0
+//   FUN_ffffffffdc73e6e0 @ 0x-0000000238c1920
+//   FUN_ffffffffdc68a1b0 @ 0x-000000023975e50
+//   FUN_ffffffffdc7fbb30 @ 0x-0000000238044d0
+//   FUN_ffffffffdc359290 @ 0x-000000023ca6d70
+//   FUN_ffffffffdc5142b0 @ 0x-000000023aebd50
+//   FUN_ffffffffdc4dbbb0 @ 0x-000000023b24450
+//   FUN_ffffffffdc571090 @ 0x-000000023a8ef70
+//   FUN_ffffffffdc5bca20 @ 0x-000000023a435e0
+//   FUN_ffffffffdc388260 @ 0x-000000023c77da0
+//   ... +21 mais
+// chamadas (1):
+//   FUN_ffffffffdc4ebcf0 @ 0x-000000023b14310
+
+
+undefined8
+FUN_ffffffffdc5ba8d0
+          (long param_1,undefined4 param_2,undefined8 param_3,undefined8 param_4,undefined8 param_5,
+          undefined8 param_6,undefined4 param_7)
+
+{
+  long *plVar1;
+  long lVar2;
+  undefined8 *puVar3;
+  undefined8 uVar4;
+  ulong uVar5;
+  
+  plVar1 = *(long **)(param_1 + 0x28);
+  if (plVar1 == (long *)0x0) {
+    uVar4 = 0;
+  }
+  else {
+    lVar2 = *plVar1;
+    uVar5 = (ulong)DAT_ffffffffdddb2d70;
+    puVar3 = *(undefined8 **)(lVar2 + uVar5 * 8);
+    if ((undefined1 *)*puVar3 != &DAT_ffffffffdddb2d70) {
+      puVar3 = (undefined8 *)
+               FUN_ffffffffdc4ebcf0
+                         (*(undefined8 *)(lVar2 + 0x800),lVar2 + uVar5 * 8,&DAT_ffffffffdddb2d70,
+                          uVar5,param_4,param_5);
+    }
+    uVar4 = (*(code *)puVar3[1])(plVar1,param_1,param_2,param_3,param_4,param_5,param_6,param_7);
+  }
+  return uVar4;
+}
+

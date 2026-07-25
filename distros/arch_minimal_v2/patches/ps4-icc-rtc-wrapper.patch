@@ -1,0 +1,106 @@
+diff --git a/drivers/ps4/aeolia.h b/drivers/ps4/aeolia.h
+index a4262732d..c65ccd1cd 100644
+--- a/drivers/ps4/aeolia.h
++++ b/drivers/ps4/aeolia.h
+@@ -113,6 +113,13 @@ static inline int apcie_irqnum(struct apcie_dev *sc, int index)
+ 
+ int apcie_icc_cmd(u8 major, u16 minor, const void *data, u16 length,
+ 	    void *reply, u16 reply_length);
++
++/* Wrapper de retry para ICC lento (RTC), transparente de console.
++ * Veja comentario completo em baikal.h — definido em ps4-bpcie-icc.c. */
++#define PS4_ICC_RTC_RETRIES		100
++#define PS4_ICC_RTC_RETRY_DELAY_MS	50
++int ps4_icc_rtc_cmd(u8 major, u16 minor, const void *data, u16 length,
++		    void *reply, u16 reply_length);
+ int apcie_uart_init(struct apcie_dev *sc);
+ void apcie_uart_remove(struct apcie_dev *sc);
+ int apcie_icc_init(struct apcie_dev *sc);
+diff --git a/drivers/ps4/baikal.h b/drivers/ps4/baikal.h
+index 91f13d14c..49f0923fe 100644
+--- a/drivers/ps4/baikal.h
++++ b/drivers/ps4/baikal.h
+@@ -144,6 +144,27 @@ static inline int bpcie_irqnum(struct bpcie_dev *sc, int index)
+ int bpcie_icc_cmd(u8 major, u16 minor, const void *data, u16 length,
+ 	    void *reply, u16 reply_length);
+ 
++/*
++ * ps4_icc_rtc_cmd — conveniencia para o driver rtc-ps4-icc (e outros
++ * consumidores que precisem de retry lógico em ICC lento). Encapsula
++ * ate PS4_ICC_RTC_RETRIES tentativas com PS4_ICC_RTC_RETRY_DELAY_MS ms
++ * de gap entre elas, como recomendado em AGENTS.md (mesmo padrao usado
++ * no power-on da GBE).
++ *
++ * Em PS4 Baikal despacha para bpcie_icc_cmd; em Aeolia/Belize para
++ * apcie_icc_cmd. Sempre retorna true-zero em sucesso (>=0 = bytes
++ * reply recebidos) ou errno negativo.
++ *
++ * Veja consolidado/plans/rtc_via_icc_plan.md (RE 2026-07-25 valida
++ * ICC major=2 minor=0x0b/0x0c sub=0x81/1 = save/load context, e
++ * ICC major=4 minor=0x50 = bitmask de alarmes).
++ */
++#define PS4_ICC_RTC_RETRIES		100
++#define PS4_ICC_RTC_RETRY_DELAY_MS	50
++
++int ps4_icc_rtc_cmd(u8 major, u16 minor, const void *data, u16 length,
++		    void *reply, u16 reply_length);
++
+ #define CHAR_BIT 8	/* Normally in <limits.h> */
+ static inline u32 rol (u32 n, unsigned int c) {
+ 	const unsigned int mask = (CHAR_BIT*sizeof(n) - 1);  // assumes width is a power of 2.
+diff --git a/drivers/ps4/ps4-bpcie-icc.c b/drivers/ps4/ps4-bpcie-icc.c
+index 5aba26a42..7c486fce2 100644
+--- a/drivers/ps4/ps4-bpcie-icc.c
++++ b/drivers/ps4/ps4-bpcie-icc.c
+@@ -610,3 +610,51 @@ void bpcie_icc_resume(struct bpcie_dev *sc)
+ {
+ }
+ #endif
++
++/*
++ * ps4_icc_rtc_cmd — wrapper agnostico de console para comandos ICC do RTC.
++ *
++ * Encapsula o padrao de retry (ate PS4_ICC_RTC_RETRIES x 50 ms) recomendado
++ * pelo AGENTS.md para todo ICC lento (mesmo padrão ja usado no power-on da
++ * GBE). Em PS4 Baikal despacha direto para bpcie_icc_cmd; em Aeolia/Belize
++ * despacha para apcie_icc_cmd (que por sua vez despacha para bpcie_icc_cmd
++ * se CONFIG_X86_PS4_BAIKAL estiver ligado — veja apcie_icc_cmd).
++ *
++ * Retorno: igual ao bpcie_icc_cmd/apcie_icc_cmd:
++ *   >0 = numero de bytes recebidos em reply
++ *   <0 = errno negativo (-EAGAIN, -ETIMEDOUT, -EIO, etc.)
++ *
++ * Use para os comandos do driver rtc-ps4-icc:
++ *   ps4_icc_rtc_cmd(2, 0x0c, &flag, 1, &flag_reply, 1)  // load context
++ *   ps4_icc_rtc_cmd(2, 0x0b, &flag, 1, &flag_reply, 1)  // save context
++ *   ps4_icc_rtc_cmd(4, 0x50, &byte, 1, &byte_reply, 1)  // alarm bitmask
++ *
++ * Veja consolidado/plans/rtc_via_icc_plan.md (RE 2026-07-25).
++ */
++int ps4_icc_rtc_cmd(u8 major, u16 minor, const void *data, u16 length,
++		    void *reply, u16 reply_length)
++{
++	int ret, i;
++
++	for (i = 0; i < PS4_ICC_RTC_RETRIES; i++) {
++#ifdef CONFIG_X86_PS4_BAIKAL
++		ret = bpcie_icc_cmd(major, minor, data, length, reply, reply_length);
++#else
++		ret = apcie_icc_cmd(major, minor, data, length, reply, reply_length);
++#endif
++		if (ret >= 0)
++			return ret;
++		/* -EAGAIN = "ICC nao inicializado"; nao adianta retry imediato —
++		 * aguarda 50 ms e tenta de novo. -EINTR/-ETIMEDOUT tambem podem
++		 * ser transitórios (SC sob carga) — idem.
++		 */
++		if (ret != -EAGAIN && ret != -EINTR && ret != -ETIMEDOUT)
++			return ret;
++		msleep(PS4_ICC_RTC_RETRY_DELAY_MS);
++	}
++
++	pr_err("ps4-icc-rtc: deu timeout apos %d tentativas (major=%u minor=%u)\n",
++	       PS4_ICC_RTC_RETRIES, major, minor);
++	return ret;
++}
++EXPORT_SYMBOL_GPL(ps4_icc_rtc_cmd);
