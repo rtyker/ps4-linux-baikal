@@ -46,8 +46,6 @@
 ## Regras Críticas (NUNCA quebrar)
 
 1. **`CONFIG_DEBUG_INFO_BTF=y`** obrigatório — remover causa tela preta (provado 2 builds)
-2. **`diag.c` + `diag.bin` (9356 bytes, 2026-07-20) imutáveis** — referência comprovada de teste básico
-3. **`app.bin` UM teste por power cycle** — reinjetar sem reboot do PS4 não progride
 4. **Nenhuma alteração em `linux_boot.c` ou quiesce do kexec** — regra absoluta
 5. **Testes ao vivo sempre com autorização explícita do usuário** antes de injetar
 6. **PROIBIDO rodar `make`, `make bzImage`, ou qualquer comando de compilação/build sem autorização/confirmação prévia e explícita do usuário** — alteração de código ou plano NÃO autoriza a execução automática de build.
