@@ -1,0 +1,484 @@
+[36m[Debug] src/PayloadsView.cpp:319: Loading: /data/payloads/linux-1024mb.bin[0m
+[GoldHEN] <payloader> accepted a new payload
+[GoldHEN] <payloader> TCP Mode
+[36m[De[bGugol] dsrc/PHEN]ayload s<Viepwa.cpypl:1o8a6: derGenerate> pPayaload reyloads icse ciallvede adnd![0m s
+ave[d 36m[t[emp_fDeile:b ug]/u ssrc/ePayrl/oadsteVmiew.pc/pppay:loa2d.1742: 5C65 leanup - spaiylzoae:d l is2t.9..6[01m92
+ - ip:[ 1236m[D7eb.ug] src0/.Pay0loa.d1sV]iew.cpp
+:206: [GeneGratoledPHEN] <payaloads: yReloadferr> esfhoeund andd [0jma
+ilbroken target process [proc: ScePartyDaemon - pid: 46]
+[GoldHEN] <payloader> launching payload... [format: BIN]
+#
+# A user thread receives a fatal signal
+#
+# signal: 11 (SIGSEGV)
+# thread ID: 101071
+# thread name: 
+# proc ID: 46
+# proc name: ScePartyDaemon
+# reason: page fault (user read data, page not present)
+# fault address: 00000000000001e0
+#
+# registers:
+# rax: 00000000000001c6  rbx: 0000000881b9bd60
+# rcx: 0000000881b9bd60  rdx: 0000000000000006
+# rsi: 0000000000000000  rdi: 0000000802062430
+# rbp: 0000000000000000  rsp: 000000000021fff8
+# r8 : 0000000000000000  r9 : 0000000001020183
+# r10: 000000000515ca11  r11: 0000000000000212
+# r12: 0000000000000000  r13: 0000000881b9bdc0
+# r14: 0000000000000000  r15: 0000000000000000
+# rip: 000000000019c066  eflags: 00010246
+# BrF: ffffffffffffffff  BrT: 000000000019c066
+#
+# backtrace:
+#
+# dynamic libraries:
+# /app0/eboot.bin
+#  text: 0000000007dc8000:000000000847c000 r-x
+#  data: 00000000084b0000:0000000008864000 rw-
+#  fingerprint: 99734c594ec1647ae9b079c303178f3000000000
+# /BFzOz0WoHz/common/lib/libkernel_sys.sprx
+#  text: 000000080d8cc000:000000080d920000 r-x
+#  data: 000000080d924000:000000080d95c000 rw-
+#  fingerprint: ff6501a2b83ec52ffd301e94af20490e00000000
+# /BFzOz0WoHz/common/lib/libSceLibcInternal.sprx
+#  text: 000000083a0a0000:000000083a1d4000 r-x
+#  data: 000000083a1dc000:000000083a1f8000 rw-
+#  fingerprint: 880aa19881586dd24d1af615e7f62d5f00000000
+# /BFzOz0WoHz/common/lib/libSceSysmodule.sprx
+#  text: 0000000800c58000:0000000800c64000 r-x
+#  data: 0000000800c68000:0000000800c74000 rw-
+#  fingerprint: 24952bcab86cf2a9d28189970de43dec00000000
+# /BFzOz0WoHz/common/lib/libSceIpmi.sprx
+#  text: 0000000831610000:000000083161c000 r-x
+#  data: 0000000831620000:0000000831634000 rw-
+#  fingerprint: ad88c9a36cb671bf4a151e6fc7cbe75900000000
+# /BFzOz0WoHz/common/lib/libSceNetCtl.sprx
+#  text: 0000sync call performance warning tid:0x00018838 kid:0x000000ed name:SceSysCoreApp method id:0xAA11000C time:0000000000014390 micro sec
+0008300c8000:00000008300d0000 r-x
+#  data: 00000008300d4000:00000008300d8000 rw-
+#  fingerprint: 90c7d7f9dda248dbf50cab103888e92700000000
+# /BFzOz0WoHz/common/lib/libSceNet.sprx
+#  text: 00000008273e8000:0000000827420000 r-x
+#  data: 0000000827424000:0000000827538000 rw-
+#  fingerprint: eb5bcc3b92d7eb4dd854652b85ad45ae00000000
+# /BFzOz0WoHz/common/lib/libSceRtc.sprx
+#  text: 000000083dbd8000:000000083dbe0000 r-x
+#  data: 000000083dbe4000:000000083dbe8000 rw-
+#  fingerprint: 8be85f06d81503a312f2681d1f9b0ca500000000
+# /BFzOz0WoHz/common/lib/libSceSsl2.sprx
+#  text: 0000000807174000:00000008072bc000 r-x
+#  data: 00000008072d8000:00000008072dc000 rw-
+#  fingerprint: 20fd8127a00a5057d8f9e4f3979cb28c00000000
+# /BFzOz0WoHz/common/lib/libSceHttp.sprx
+#  text: 000000080dfac000:000000080dfe4000 r-x
+#  data: 000000080dfe8000:000000080dff0000 rw-
+#  fingerprint: 6889bac51cbd58cf91ad80fe4dd9750100000000
+# /BFzOz0WoHz/common/lib/libSceHttp2.sprx
+#  text: 000000083846c000:00000008384a0000 r-x
+#  data: 00000008384a4000:00000008384a8000 rw-
+#  fingerprint: 8739981bc9e8bfe7b41a737cb0679aba00000000
+# /BFzOz0WoHz/common/lib/libSceNpCommon.sprx
+#  text: 0000000822f90000:0000000822fd4000 r-x
+#  data: 0000000822fd8000:0000000822fdc000 rw-
+#  fingerprint: aac3293e2054105511ece0b3a61ac90c00000000
+# /BFzOz0WoHz/common/lib/libSceNpUtility.sprx
+#  text: 000000082d430000:000000082d458000 r-x
+#  data: 000000082d45c000:000000082d460000 rw-
+#  fingerprint: b2d69a8b9c4e68ce863298eaf04a11fe00000000
+# /BFzOz0WoHz/common/lib/libSceRegMgr.sprx
+#  text: 000000081c4d0000:000000081c4d4000 r-x
+#  data: 000000081c4d8000:000000081c4dc000 rw-
+#  fingerprint: 9a98ef885f467a289cba6ce20b8cca3c00000000
+# /BFzOz0WoHz/common/lib/libSceNpManager.sprx
+#  text: 000000081ef38000:000000081ef8c000 r-x
+#  data: 000000081ef90000:000000081ef94000 rw-
+#  fingerprint: 803300c1060e5eff7fd03a50b311dfcf00000000
+# /BFzOz0WoHz/common/lib/libSceNpWebApi.sprx
+#  text: 000000082e2a4000:000000082e2bc000 r-x
+#  data: 000000082e2c0000:000000082e2c4000 rw-
+#  fingerprint: e0381af624565d167f06c360c8b8bc7000000000
+# /BFzOz0WoHz/common/lib/libSceNpWebApi2.sprx
+#  text: 00000008118f8000:000000081191c000 r-x
+#  data: 0000000811920000:0000000811924000 rw-
+#  fingerprint: a7288a3003806fc9f0a73ff2d36fe12600000000
+# /BFzOz0WoHz/common/lib/libSceSystemService.sprx
+#  text: 000000081945c000:0000000819498000 r-x
+#  data: 000000081949c000:00000008194a8000 rw-
+#  fingerprint: fa8364051adaf2d3611c0a6d2913d07500000000
+# /BFzOz0WoHz/common/lib/libSceUserService.sprx
+#  text: 0000000811cb4000:0000000811cc4000 r-x
+#  data: 0000000811cc8000:0000000811ccc000 rw-
+#  fingerprint: a3a5b3a6361c2d3f2579ddb912d1265a00000000
+# /BFzOz0WoHz/common/lib/libSceSysUtil.sprx
+#  text: 000000083a97c000:000000083a980000 r-x
+#  data: 000000083a984000:000000083a988000 rw-
+#  fingerprint: 3d7f6f61918fdf892e9aa8d9173bc0f000000000
+# /BFzOz0WoHz/common/lib/libSceMbus.sprx
+#  text: 0000000838908000:0000000838914000 r-x
+#  data: 0000000838918000:000000083891c000 rw-
+#  fingerprint: b2b7c9ebc2ee1130b029e4a7d5bf5e7a00000000
+# /BFzOz0WoHz/common/lib/libSceAudioOut.sprx
+#  text: 0000000817260000:0000000817278000 r-x
+#  data: 000000081727c000:0000000817280000 rw-
+#  fingerprint: 307afbb692d24a3757e48cce8c93b84300000000
+# /BFzOz0WoHz/common/lib/libSceAudioIn.sprx
+#  text: 0000000823888000:0000000823890000 r-x
+#  data: 0000000823894000:0000000823898000 rw-
+#  fingerprint: f1a6dededf25814a01b343f2cc4718da00000000
+# /BFzOz0WoHz/common/lib/libSceAvSetting.sprx
+#  text: 000000082de44000:000000082de50000 r-x
+#  data: 000000082de54000:000000082de58000 rw-
+#  fingerprint: 6515c8bf5104d2befe0c7fc5b798ad7500000000
+# /BFzOz0WoHz/common/lib/libSceAjm.sprx
+#  text: 0000000823650000:0000000823654000 r-x
+#  data: 0000000823658000:000000082365c000 rw-
+#  fingerprint: fb4bfb98c9c43f525e3f6c49670a6c5d00000000
+# /BFzOz0WoHz/common/lib/libSceVoice.sprx
+#  text: 0000000819094000:00000008190b4000 r-x
+#  data: 00000008190b8000:00000008190f8000 rw-
+#  fingerprint: 56e19570[SceShellUI] I/PSM.UI : [FirstClear] : ClearFrameBuffer=False
+854b20028b202c340f4d6c7f00000000
+# /BFzOz0WoHz/common/lib/libSceAppInstUtil.sprx
+#  text: 000000082631c000:0000000826328000 r-x
+#  data: 000000082632c000:0000000826334000 rw-
+#  fingerprint: aea345c55d8bf81db2e86bd9b11c012c00000000
+# /BFzOz0WoHz/common/lib/libSceSharePlay.sprx
+#  text: 000000081eefc000:000000081ef00000 r-x
+#  data: 000000081ef04000:000000081ef08000 rw-
+#  fingerprint: daaf0707d52f66534f26f3a2a633ff3400000000
+# /BFzOz0WoHz/common/lib/libSceVnaInternal.sprx
+#  text: 000000080a81c000:000000080a820000 r-x
+#  data: 000000080a824000:000000080a828000 rw-
+#  fingerprint: 1f5c7242c3042dbaec12f31dcba3de2400000000
+# /BFzOz0WoHz/common/lib/libSceRudp.sprx
+#  text: 0000000824fe0000:0000000825008000 r-x
+#  data: 000000082500c000:0000000825010000 rw-
+#  fingerprint: 95f3929d0a7e9e919ee745163bfa4a4c00000000
+# /BFzOz0WoHz/common/lib/libSceJson2.sprx
+#  text: 000000081c5a0000:000000081c5b4000 r-x
+#  data: 000000081c5b8000:000000081c5bc000 rw-
+#  fingerprint: 3af0dc5fdc7e9d19adc7887830e3179000000000
+# /BFzOz0WoHz/common/lib/libSceRandom.sprx
+#  text: 000000082b62c000:000000082b630000 r-x
+#  data: 000000082b634000:000000082b638000 rw-
+#  fingerprint: a6355f17f2833cf413d7bc70d732ddb400000000
+# /BFzOz0WoHz/common/lib/libSceRemoteplay.sprx
+#  text: 000000080e3e0000:000000080e3e8000 r-x
+#  data: 000000080e3ec000:000000080e3f0000 rw-
+#  fingerprint: 2c6b7478f70b7dab149d4ef2d493159500000000
+# /system/common/lib/libkernel.sprx
+#  text: 0000000801fd4000:0000000802028000 r-x
+#  data: 000000080202c000:0000000802064000 rw-
+#  fingerprint: ba7aa6d44b714e22b0824c89d7436d0900000000
+# /system/common/lib/libSceSysUtil.sprx
+#  text: 000000083a1f8000:000000083a1fc000 r-x
+#  data: 000000083a200000:000000083a204000 rw-
+#  fingerprint: 3d7f6f61918fdf892e9aa8d9173bc0f000000000
+[Syscore App] App Crash : PID=0x2e, reason=0xb
+[Syscore App] Syscore Event Queue Push : SCE_SYSCORE_EVENT_APP_CRASH
+[Syscore App] Syscore Event Queue Pop : SCE_SYSCORE_EVENT_APP_CRASH
+[SceLncService] AppCrash: pid={0x0000002e} appId={0x60000504} appLocalPid={0x10504050}
+[SceLncUtil] blockAppSusCpend: name={SceNpUds}, appId={0x60000100}, refCount={1}
+[SceLncUtil] unblockAppSuspend: name={SceNpUds}, appId={0x60000100}, refCount={0}
+[SceLncService] getCoredumpSequence() isDebuggable={0} isKeepProcess={1} isUserDebugRequest={0} isLimitKeepProcess={0} enableCrashReport={1}
+[SceLncService] CoredumpSequence = {DUMP_PROCESS}
+[SceLncService] getCoredumpMode() isSystem={0x00000001}, reason={0x0000000b}
+[SceLncService] notifyAppCrash() pid={0x0000002e}, appId={0x60000504}, appLocalPid={0x10504050}, coredump.path,name,mode={/user/data/sce_coredumps/NPXS21002_1785338094/,NPXS21002_1785338094.sorbisdmp,1}, enableCrashReport={1}, skipVshDump={0}
+[SceLncService] enableCrashReport={1}, crashReportMode={0}, isAllowed={0}
+[SceLncService] kick coredump is disabled.
+[Syscore App] Kill process: 0x2e
+#### AudioOut recovery is done [616870(386)-] (616870 16997618)
+ontext.cc:189 (ajmContextCleanup) - Codec CELP8 Decoder was not properly unregistered.
+Context.cc:189 (ajmContextCleanup) - Codec CELP8 Encoder was not properly unregistered.
+Context.cc:189 (ajmContextCleanup) - Codec CELP(16) Decoder was not properly unregistered.
+Context.cc:191 (ajmContextCleanup) - More codecs were not properly unregistered...
+[GoldHEN[ScePsP:InputCtrl] LOST PAD DATA: 110msec
+[mbus] onSessionKilled. pid=46
+@ removeSession:L184
+[Syscore App] Kill process: 0x2e => 0
+] <paylo[Syscore App] EVFILT_PROC NOTE_EXIT received : pid=0x2e
+[AppMgr Trace]: pid=0x2e, deleted.
+[SyCscore App] Syscore Event Queue Push : SCE_SYSCORE_EVENT_ON_PROCESS_UNLOADED
+[AppMgr] checkAppTerminated pid=0x33 is still alive in 0x60000504
+[Syscore App] Kill process: 0x33
+[Syscore App] Syscore Event Queue Pop : SCE_SYSCORE_EVENT_ON_PROCESS_UNLOADED
+[Syscore App] process delete event : pid=0x2e
+ontexta.ccd:e189 r>(ajmC foantextCleanuip) l-e Codecd  tOpuso  launcSILK Encoder h wpasa noty loproperlya unregisterd, eedr.
+rContext.orcc:189 (ajmC: o1ntextCl
+eanup) - Codec Opus CELT Encoder was not properly unregistered.
+Context.cc:189 (ajmContextCleanup) - Codec Opus Decoder was not properly unregistered.
+[Syscore App] EVFILT_PROC NOTE_EXIT received : pid=0x33
+[Syscore App] Kill process: 0x33 => 0
+[Syscore App] process delete event : pid=0x33
+[AppMgr Trace]: pid=0x33, deleted.
+[Syscore App] Syscore Event Queue Push : SCE_SYSCORE_EVENT_ON_PROCESS_UNLOADED
+[AppMgr] All processes exited
+[Syscore App] Syscore Event Queue Push : SCE_SYSCORE_EVENT_ON_APP_UNLOADED
+[AppMgr Trace]: AppId=0x60000504  deleted
+[Syscore App] Syscore Event Queue Pop : SCE_SYSCORE_EVENT_ON_PROCESS_UNLOADED
+[SceLncService] KillApp() appId={0x60000504}, withSuspend={0}, forceKill={1} killReason={0}
+[Syscore App] Syscore Event Queue Pop : SCE_SYSCORE_EVENT_ON_APP_UNLOADED
+[SceLncService] BlockingKill() appId={0x60000504}, titleId={NPXS21002}, is_coredumpFinished={0}, forceKill={1}
+[SceLncService] convertToSysCoreKillReason: {0x00000000}->{0x00000000}
+[Syscore App]  ExpandCpuSetMode : disable
+[SceLncService] this app has already exited. appId={0x60000504}
+[SceLncService] start unmountAllForShellCoreInternal()
+[SceLncService] end unmountAllForShellCoreInternal()
+[SceLncUtil] blockAppSuspend: name={SceNpUds}, appId={0x60000100}, refCount={1}
+[SceLncUtil] unblockAppSuspend: name={SceNpUds}, appId={0x60000100}, refCount={0}
+[libSceSaveData] wait 0 msec for session killed
+[SceRnpsAppMgr] UnblockAllAppInstall(): NPXS21002(appId=0x60000504)
+[UIProcess] malloc stats freeSize:41183296 (98%) inuseSize:759744 peakSize:761952 [pid:0x3a]
+[SceLncService] onAppExit() appId={0x60000504}
+[SceLncService] ProcessTerm()
+[SceLncService] ProcessTerm() returned
+[SceLncService] convertToSysCoreKillReason: {0x00000000}->{0x00000000}
+[SceShellCore] RESTART Party Daemon
+[SceLncService] launchApp(NPXS21002)
+[SceLncService] category={gdd} VRMode={0,0}
+[SceLncService] hnm,psnf,pc,tk,ns={1,0,0,0,0} appBootMode={-1}
+[SceLncService] appType={SCE_LNC_APP_TYPE_DAEMON} [] appVer={00.00}
+[SceLncService] Num. of logged-in users is 1
+[SceLncService] PrepareProcessLaunchDebuggerCheck()
+[SceLncService] PrepareProcessLaunchDebuggerCheck() returned
+[SceLncService] PrepareProcessLaunchDebugger()
+[SceLncService] PrepareProcessLaunchDebugger() returned
+[SceLncService] spawnApp
+[Syscore App] createApp NPXS21002
+[Syscore App] processSpawn(pid, 0x60001004, 0x11004150, appParam,m processParam, 0, 0, 1, param, debug, 0)
+[Syscore App] appParam: appType = 0x2, rootPath = /mnt/sandbox/NPXS21002_000, titleId = NPXS21002
+[Syscore App] processParam: elfPath = /app0/eboot.bin, fullPath = /system/vsh/app/NPXS21002/eboot.bin
+[Syscore App] new pid=0x49[Syscore App] attributeExe= 0
+[Syscore App] Ready to exec
+[Syscore App] wait for NOTE_EXIT|NOTE_EXEC
+[Syscore App] Add event : pid=0x49
+[AppMgr Trace]: New Process, pid=0x49, created.
+[AppMgr Trace]: New App, appId=0x60001004, created
+[Syscore App]  ExpandCpuSetMode : disable
+DBG: Process 73 untraced!
+<73> EXEC /app0/eboot.bin [system], vm#0, dmem#0  <606765 msec>
+[Syscore App] Start sceApplicationAddProcess /app0/webrtc_daemon.self
+[Syscore App] calling addm process
+[Syscore App] processSpawn(pid, 0x60001004, 0x11004161, appParam, processParam, 0, 0, 0, param, debug, 0)
+[Syscore App] appParam: appType = 0x2, rootPath = /mnt/sandbox/NPXS21002_000, titleId = NPXS21002
+[Syscore App] processParam: elfPath = /app0/webrtc_daemon.self, fullPath = /system/vsh/app/NPXS21002/webrtc_daemon.self
+[Syscore App] new pid=0x4a[Syscore App] attributeExe= 0
+[Syscore App] Ready to exec
+[Syscore App] wait for NOTE_EXIT|NOTE_EXEC
+[Syscore App] Add event : pid=0x4a
+[AppMgr Trace]: New Process, pid=0x4a, created.
+DBG: Process 74 untraced!
+<74> EXEC /app0/webrtc_daemon.self [unspecified], vm#0, dmem#0  <607021 msec>
+[mbus] onNewClient. clientNum 10 over 8
+SQLite MSG pthreadMutexInit 138: redundant call.
+SQLite MSG pthreadMutexInit 138: redundant call.
+SQLite MSG pthreadMutexInit 138: redundant call.
+SQLite MSG pthreadMutexInit 138: redundant call.
+[SceLncService] W:\Build\J02690785\vsh\shell\shell_core\lnc_service\lnc_manager.cpp(2188) getAppId: LNC_ISOK::0x80940004->0xffffffff
+@ busStatusChangeSubscribe:L4750
+[SceShellUI] I/PSM.UI : [NoDraw] : ClearFrameBuffer=False
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [AppScreen : ApplicationScreenScene] -> [ContentAreaScene : ContentAreaScene]
+[SceShellUI] I/PSM.UI :      Scene [ContentAreaScene : ContentAreaScene] : Alive
+SetDeviceIndexBehavior: mode=SpecificUser, param=0x1b6ebedc
+[Theme/I] : ActiveUserChanged : From : [ANONYMOUS(userId = ffffffff)]
+[Theme/I] : ActiveUserChanged : To   : [BLUE(userId = 1b6ebedc)]
+[Theme/I] : Apply [BLUE] : [Option:111111]: with preloaded user
+[SceShellUI] I/PSM.UI : [FirstClear] : ClearFrameBuffer=False
+[SL] AppFocusChanged [AZIF00003] -> [NPXS20001]
+[VCS]checkFocusStatus() [LNC->VCS] Focus Change. appType = 1(SHELL_UI). appId = 0x60000201.
+GetPlusInfoJob : Run(Start)
+GetPlusInfoJob : Run(End)
+GetPlusInfoJob : Finish / Cancelled False / Result True
+[UpdateUserInfoforPlus] upd_userId : 460242652 / type : None
+[SceLncService] BG MiniApp Status: AZIF00003, RSS 6 MiB (+0.000 MiB), PageOut 0.000 MiB
+D/88391:000000001
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [ContentAreaScene : ContentAreaScene] -> [SystemArea : SystemAreaScene]
+[SceShellUI] I/PSM.UI :      Scene [SystemArea : SystemAreaScene] : Alive
+SetDeviceIndexBehavior: mode=SpecificUser, param=0x1b6ebedc
+[Theme/I] : Apply [BLUE] : [Option:111111]: with preloaded user
+[SceShellUI] I/PSM.UI : ** Unload enqueue: SystemAreaNotification : SystemAreaPluginNotification
+[SceShellUI] W/PSM.UI : WARNING : Scene LayoutBuild : [7.80msec/4widgets] : SystemAreaNotification : SystemAreaPluginNotification
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.01msec] Layout[7.80msec/4widgets] : SystemAreaNotification : SystemAreaPluginNotification
+[SceShellUI] I/PSM.UI : SceneQ : Unloaded[2.99msec] : SystemAreaNotification : SystemAreaPluginNotification
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.01msec] Layout[0.00msec/0widgets] : SystemAreaPSPlus : SystemAreaPluginPSPlus
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [SystemArea : SystemAreaScene] -> []
+SetDeviceIndexBehavior: mode=SpecificUser, param=0x1b6ebedc
+[SceShellUI] W/PSM.UI : SystemSound called when there is no FocusActiveScene !
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.01msec] Layout[0.00msec/0widgets] : SettingsPlugin : SettingsApplication
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.00msec] Layout[0.00msec/0widgets] : Noname : FrameScene
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.00msec] Layout[0.00msec/0widgets] : NormalStack : SettingPageNormalStack
+sceRemoteplayInitialize: 0x80fc0003
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.00msec] Layout[0.00msec/0widgets] : SettingsBGScene : Scene
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [] -> [id_goldhen_menu : SettingPage]
+[SceShellUI] I/PSM.UI :      Scene [id_goldhen_menu : SettingPage] : Alive
+SetDeviceIndexBehavior: mode=SpecificUser, param=0x1b6ebedc
+[Theme/I] : Apply [BLUE] : [Option:111111]: with preloaded user
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.01msec] Layout[0.00msec/0widgets] : id_goldhen_menu : SettingPage
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [id_goldhen_menu : SettingPage] -> [id_goldhen_utils : SettingPage]
+[SceShellUI] I/PSM.UI :      Scene [id_goldhen_utils : SettingPage] : Alive
+SetDeviceIndexBehavior: mode=SpecificUser, param=0x1b6ebedc
+[Theme/I] : Apply [BLUE] : [Option:111111]: with preloaded user
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.00msec] Layout[0.00msec/0widgets] : id_goldhen_utils : SettingPage
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [id_goldhen_utils : SettingPage] -> [id_goldhen_utils_payloader : SettingPage]
+[SceShellUI] I/PSM.UI :      Scene [id_goldhen_utils_payloader : SettingPage] : Alive
+SetDeviceIndexBehavior: mode=SpecificUser, param=0x1b6ebedc
+[Theme/I] : Apply [BLUE] : [Option:111111]: with preloaded user
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.00msec] Layout[0.00msec/0widgets] : id_goldhen_utils_payloader : SettingPage
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [id_goldhen_utils_payloader : SettingPage] -> [id_goldhen_utils_payloader_launchpad : SettingPage]
+[SceShellUI] I/PSM.UI :      Scene [id_goldhen_utils_payloader_launchpad : SettingPage] : Alive
+SetDeviceIndexBehavior: mode=SpecificUser, param=0x1b6ebedc
+[Theme/I] : Apply [BLUE] : [Option:111111]: with preloaded user
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.01msec] Layout[0.00msec/0widgets] : id_goldhen_utils_payloader_launchpad : SettingPage
+[SceShellCore] VM Stats: RSS 548.3, kernel 265.1, wire count 342.9, swap out 0.0, page table CPU 2480/6144 GPU 387/2048
+[SceShellCore] FMEM   1.3/   4.5 NPXS20977 SceSysAvControl.elf
+[SceShellCore] FMEM  10.6/  74.3 NPXS20991 SceSysCore.elf
+[SceShellCore] FMEM   9.3/  54.3 NPXS20973 orbis_audiod.elf
+[SceShellCore] FMEM   3.2/  11.2 NPXS20976 GnmCompositor.elf
+[SceShellCore] FMEM  28.4/ 344.9 NPXS20000 SceShellCore
+[SceShellCore] FMEM 330.2/ 847.3 NPXS20001 SceShellUI
+[SceShellCore] FMEM   3.5/   8.3 NPXS21003 SceAvCapture
+[SceShellCore] FMEM   8.2/  32.4 NPXS21000 SceGameLiveStreaming
+[SceShellCore] FMEM   4.3/  25.4 NPXS21004 SceVideoCoreServer
+[SceShellCore] FMEM   9.8/  51.3 NPXS21006 SceRemotePlay
+[SceShellCore] FMEM   6.8/  41.0 NPXS21010 SceCloudClientDaemon
+[SceShellCore] FMEM   3.3/  10.9 NPXS21016 SceSpZeroConf
+[SceShellCore] FMEM   6.4/  18.1 NPXS21019 SceSocialScreenMgr
+[SceShellCore] FMEM   4.3/   9.8 NPXS21007 SceMusicCoreServer
+[SceShellCore] FMEM   6.5/  14.4 NPXS21020 SceVoiceAndAgent
+[SceShellCore] FMEM   2.1/   5.1 NPXS20967 fs_cleaner.elf
+[SceShellCore] FMEM   2.0/  10.2 NPXS20974 SceVdecProxy.elf
+[SceShellCore] FMEM   2.0/  10.3 NPXS20975 SceVencProxy.elf
+[SceShellCore] FMEM  25.7/ 270.0 NPXS20001 SecureUIProcess.self
+[SceShellCore] FMEM  41.7/ 535.1 NPXS20001 SecureWebProcess.self
+[SceShellCore] FMEM  10.7/ 358.8 NPXS20001 orbis-jsc-compiler.self
+[SceShellCore] FMEM   6.3/  30.2 AZIF00003 guest.elf
+[SceShellCore] FMEM  13.7/  43.5 NPXS21002 ScePartyDaemon
+[SceShellCore] FMEM   7.9/ 156.0 NPXS21002 webrtc_daemon.self
+kernel_init()
+Kernel base = ffffffffdd138000
+Direct map base = ffffb11800000000
+Testing global variable access (write protection)...
+OK.
+Kernel interface initialized
+Installing sys_kexec to system call #153
+kexec_init() successful
+
+sys_kexec invoked
+========================================
+PS4 Linux Payloads AIO
+FW 12.52 (1252)
+VRAM 1024 MB
+Southbridge: Baikal
+============================#### AudioOut recovery is done [1996954(1252)-] (1996954 31954140)
+============
+sys_kexec(0x200130000, 15844352, 0x201050000, 3289116, "panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0 drm.debug=0x06 earlycon=uart8250,mmio32,0xC890E000 console=uart8250,mmio32,0xC890E000 console=tty0 keep_bootcon earlyprintk=efi,keep loglevel=8 root=LABEL=psxitarch rw rootwait systemd.unified_cgroup_hierarchy=0 systemd.legacy_systemd_cgroup_controller=yes audit=0 amdgpu.audio=1 usbcore.autosuspend=-1 video=HDMI-A-1:1920x1080@60 mitigations=off zswap.enabled=1 log_buf_len=4M netconsole=@192.168.0.2/eth0,6666@192.168.0.1/ff:ff:ff:ff:ff:ff")
+firmware_extract: Extract lib/firmware/amdgpu/gladius_pfp.bin 
+Copying PFP firmware
+NOP handler at 0xff0
+firmware_extract: Extract lib/firmware/amdgpu/gladius_me.bin 
+Copying ME firmware
+firmware_extract: Extract lib/firmware/amdgpu/gladius_ce.bin 
+Copying CE firmware
+NOP handler at 0x7f0
+firmware_extract: Extract lib/firmware/amdgpu/gladius_mec.bin 
+Copying MEC firmware
+NOP handler at 0xff0
+firmware_extract: Extract lib/firmware/amdgpu/gladius_mec2.bin 
+Copying MEC2 firmware
+NOP handler at 0xff0
+firmware_extract: Extract lib/firmware/amdgpu/gladius_rlc.bin 
+Copying RLC firmware
+firmware_extract: Extract lib/firmware/amdgpu/gladius_sdma.bin 
+Copying SDMA firmware
+firmware_extract: Extract lib/firmware/amdgpu/gladius_sdma1.bin 
+Copying SDMA1 firmware
+
+kexec parameters:
+    Kernel image size:   15844352 bytes
+    Initramfs size:      3385888 bytes (3289116 from user)
+    Kernel command line: panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0 drm.debug=0x06 earlycon=uart8250,mmio32,0xC890E000 console=uart8250,mmio32,0xC890E000 console=tty0 keep_bootcon earlyprintk=efi,keep loglevel=8 root=LABEL=psxitarch rw rootwait systemd.unified_cgroup_hierarchy=0 systemd.legacy_systemd_cgroup_controller=yes audit=0 amdgpu.audio=1 usbcore.autosuspend=-1 video=HDMI-A-1:1920x1080@60 mitigations=off zswap.enabled=1 log_buf_len=4M netconsole=@192.168.0.2/eth0,6666@192.168.0.1/ff:ff:ff:ff:ff:ff
+    Kernel image buffer: 0xffffffffffffffff
+    Initramfs buffer:    0xffffb11847400000
+kernel_hook_install(0xffffff80777c50f4, 0xffffffffdd57fb10)
+  Using 64bit absolute jump
+******************************************************
+kexec successfully armed. Please shut down the system.
+******************************************************
+
+ContextCon.cc:189 (ajmContextCleanup) - Codec Opus SILK Encoder was not properly unregistered.
+text.cc:189 (ajmContextCleanup) - Codec CELP8 Decoder was not properly unregistered.
+Context.cc:189 (ajmContextCleanup) - Codec [KE]CsceELCPame8raDe EnvcoKdill::2er68 w5 ERROaRs : notsceC amerparProocConfperigSlytop  0uxn802e0006 iregistered.
+Context.cc:189 (ajmContextCleanup) - Codec CELP(1=06 )ha nDdlee=257c odper id=4was 3not
+ properly unregistered.
+Context.cc:191 (ajmContextCleanup) - More codecs were not Copntreoxt.cc:p1e8rl9y (ajmC ounnrteextClegaisnup) - Cotdec eOpusr CELedT.. Enco.der w
+as not properly unregCointseterextd..cc:
+1C7ontex4 t.cc:189( ajm(ajmConteCxontCleatenxutpCle)a n- Coduepc)  - OIpusns Dtecoderan wacse n ot pr2785op32 erly unwaresgister edno.
+t properly destroyeCondt.ext.cc:189 
+(ajmContexCon[KttERCNelEexL] dmaetnm.u_hcandcple_vms:)1 p-ac8 eCo9_d e(exiteacd jOpm Cusopn tiexCdtE:CL l7Tea En2un, cpopdt)eyr p-  e=wC1o,da e0cs x nOpfotf uffb1sp1rope8rly unr4467aegis9f8te-r>pet_dl.o
+aCCdeood is TRnUnEttee
+xx[KttE.R.cNcEc:L]c1:8 189dmem9 _ ((ahajandjlmmeC_oCvmnostpaenxctteCe_lxexietatneuCd plma)p  e#0-  aC0xonfudfefcp )Of ffffp-fu ffCsoff dfeCEcffLT
+  M[DPKeEEcGRo4NEL]d  deAr AmweCa Emns_ nhcooadtndlee rp_r vowmspaapesce_erx ilntyoe dt u pidpn: rreo7pger2isly,t  euappre_nmda.rps_coe
+ugntis[t1e], 1 -> r0ed
+.
+ SILK EncCoondetrex tw.cc:174 (ajmContextCleanup) - Instance 16389 was not properly destroyed.
+Context.cc:189 (ajmContextCleanup) - Codec MP3 Decoder awass not no protpe rlypr uonregipsetered.
+rlConytext. cc:1u89 (anjmCornteexgisteCronetdext..
+cContextc:1.74c (c:174aj mC(oanjmCotnetxetCxtClleaeanup)nu -p)  In- sItance 344n0st67 was nance 114689 ot wproperlas yn odtes ptroryopeed.
+rContexlt.cyc:189  (adjmConteextCsletaronup)y - eCd.o
+dec OpContext.cc:189 (ajmContextCleanup) - Codec AC3 Encoder was not properly unregistered.
+Context.cc:174 (ajmContextCleanup) - Instance 16384u2 s Decwaoders  nwoas tno ptr oppropeerly unrlyreg distesered.tr
+oyed.
+CtonCtleanup)e xt.- Codeccc AT:1R8AC99  Deco(adejmr wasC noontte properxtlClye uanrnupe)gi -ster ed.C
+odec DTS Encoder was not properly unregistered.
+[SceSysCore mini] killall timeout 5[sec]...
+[SceSysCore mini] forcibly unmount 4 nullfses
+[SceSysCore mini] forcibly unmount /mnt/usb0
+[SceSysCore mini[REGMGR] 000006 ...
+] sceKernelPollE[ventFlag(reboot_flag): failed 80020010
+[SceSysCore mini] call reboot(4000)
+REGMGR] (    630.306 sec) 010006 ...
+[REGMGR] (   0.011783 sec) 010007 ...
+[REGMGR] 000108 ...
+Waiting (max 60 seconds) for system process `SceVnlru' to stop...done
+Waiting (max 60 seconds) for system process `SceBufdaemon1' to stop...done
+W
+aiSytinngc (imax 60ng se conds) ford system processi `SceSskyncer' to stosp,... vnodes remaining...1 SD Manual Tuning done. MaxPassWindowSize=22, TunePoint=20 CORE_CTRL=0x184094
+1 0 0 sched_sync: flush softdep (iter=2)
+sched_sync: flush softdep (iter=1)
+done
+Waiting (max 60 seconds) for system process `SceBufdaemon0' to stop...done
+Waiting (max 60 seconds) for system process `SceBufdaemon2' to stop...done
+All buffers synced.
+[PFS] umount[0x00004a09c09c334d] finished 0
+[PFS] umount[0x00004a09c09c3626] finished 0
+vputx: negative ref count
+vn_printf: tag exfatfs, type 2(VDIR)
+    usecount 0, writecount 0, refcount 0
+    flags (VV_ROOT|VI_FREE)
+ VI_LOCKed    v_object: ref=0 pages=0 budget=-1(?) containter=0(sys)
+    lock type exfatfs: EXCL by thread 0xffffb118042837a0 (pid 1)
+sce_exfatfs_vop_print: bo->bo_bsize[0x1000], root directory, StartCluster[0], Size[0x4000]
+    name: 
+panic: vputx: negative ref cnt
+cpuid = 0
+ICC 07-01 polling
+ICC 07-00 polling
+ICC 02-0b polling
+mDBG: System error. Performing systemdump.
+mDBG: Mute audio.
+mDBG: Mute audio done.
+mDBG: Power down...
+mDBG: ...
+hook_icc_query_nowait called
+ICC 05-00 polling
+Fixing ACPI tables at 0xe0000 (0xffffffffffffffff)
+RSDT at 0xe0024
+XSDT at 0xe0088
+FACP at 0xe016c
+FACS at 0xe012c
+DSDT at 0xe0430
+APIC at 0xe0298
+MCFG at 0xe0304
+SSDT at 0xe0730
+ACPI tables fixed

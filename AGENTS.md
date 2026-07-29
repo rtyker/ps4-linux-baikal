@@ -1,5 +1,107 @@
 # Instruções para Agentes — PS4 Linux Baikal
 
+> **Fonte única de regras e procedimentos deste projeto.** O `CLAUDE.md` na raiz é apenas um stub que importa este arquivo (`@AGENTS.md`), porque o Claude Code carrega `CLAUDE.md` automaticamente e não lê `AGENTS.md`. Edite SEMPRE aqui, nunca no stub.
+
+## Regras de Conduta
+1. **Regra de Ouro da Injeção:** NUNCA, SOB NENHUMA HIPÓTESE, dispare o payload ou inicie o `send_payload_loop.py` sem ANTES avisar o usuário e esperar o "pronto" dele. O usuário precisa estar olhando para a tela e o pendrive precisa estar no videogame.
+2. **Atualização Contínua de Documentação:** A cada nova descoberta técnica, acerto ou falha em testes de payload, os arquivos de documentação (como `CLAUDE.md` e artefatos de progresso) DEVEM ser atualizados IMEDIATAMENTE. Isso garante que não correremos o risco de repetir testes falhos ou testar hipóteses já descartadas.
+3. **Sincronia:** Sempre garanta que o contexto da sessão (o que tentamos, o que falhou, o que causou Kernel Panic) esteja fielmente refletido na documentação antes de encerrar o turno ou mudar de estratégia.
+4. **Limite de UM teste por power cycle:** o `app.bin` do `scene-kmem-dumper` só aceita UMA injeção/teste por power cycle do PS4 (observado 2026-07-20) — reinjetar sem reiniciar o console entre tentativas não progride. Todo plano de teste ao vivo deve contar o tempo de power cycle completo (tirar da tomada 15–30s + boot + reabrir GoldHEN/Payload Server) como parte do custo de cada iteração. Ver `memory/app-bin-um-teste-por-powercycle.md`.
+5. **`diag.c` e `diag.bin` são referência IMUTÁVEL:** O payload mínimo de diagnóstico (`scene-kmem-dumper/source/diag.c`, versão 2026-07-20) e seu binário compilado (`diag.bin`, 9356 bytes) **NUNCA podem ser alterados**. São baseline comprovado que funciona e servem como ponto de referência estável para testes. Se novos diagnósticos forem necessários, criar arquivo separado (ex: `diag_v2.c`, `diag_experimental.c`), nunca sobrescrever. Ver `memory/diag-referencia-imutavel.md`.
+6. **Kernel Linux 7.0 Baikal: a tag `v7.0-20260722-clean-video-ok` (e a baseline pré-compilada `20260720-sky2len-fix`) são as BASELINES OFICIAIS confirmadas (vídeo OK, boot completo, telnet OK)**. Artefatos em `distros/arch_minimal_v2/boot_referencia/*-7.0-20260722-clean-video-ok*` e `config-7.0-20260720-sky2len-fix` **NUNCA podem ser sobrescritos/descartados**.
+   - **Descoberta do Gap de Rebuild (2026-07-22):** O patch `sky2-baikal-gbe.patch` forçava o driver `sky2` (built-in) a fazer probe na GBE Baikal (`104d:90d8`), que NÃO é Marvell Yukon. Isso congelava o barramento PCIe e o vídeo no boot.
+   - **Solução Validada no PS4:** Removido o `sky2-baikal-gbe.patch` do script `00-build-kernel-7.0.sh` e garantidas as opções `CONFIG_MFD_SYSCON=y` e `CONFIG_REGMAP_MMIO=y`. Reconstrução limpa do zero testada e aprovada ao vivo com vídeo OK e telnet OK. O repositório do kernel em `/mnt/hdauxiliar/temp/kernel_build_7.0` foi commitado (commit `811184c1f`) e etiquetado com a git tag `v7.0-20260722-clean-video-ok`. Ver `memory/baseline-oficial-sky2len-fix.md`.
+   - **MARCO HISTÓRICO GBE ETHERNET (2026-07-22):** Carregamento do driver `mts.ko stage=4` via Telnet registrou com SUCESSO ABSOLUTO a interface **`eth0`** com o endereço MAC real lido da SPM (`2c:cc:44:3f:69:5f`), anéis DMA programados (TX `0x010dd000`, RX `0x010de000`) e 0 erros ou travamentos!
+   - **NETCONSOLE PRONTO PARA OS PRÓXIMOS BUILDS:** Configurado `bootargs` com `netconsole=@192.168.0.2/eth0,6666@192.168.0.1/ff:ff:ff:ff:ff:ff` (IP PS4 `192.168.0.2` -> Host PC `192.168.0.1:6666/UDP`). Script de recepção ao vivo disponível em `scripts/netconsole_listener.py`.
+   - **BUILD AUTOMÁTICO ETH0 + NETCONSOLE (2026-07-23):** Criada e implantada no HD a tag `20260723-mts-autoeth0`. O driver `mts.ko` agora possui o padrão `stage=4` e auto-carregamento no boot, subindo a interface `eth0` automaticamente sem necessidade de intervenção via Telnet. Netconsole ativado por padrão no boot.
+   - **DESLIGAMENTO REMOTO VIA TELNET (2026-07-22):** O comando `sync && poweroff -f` (ou `echo o > /proc/sysrq-trigger`) encerra o sistema operacional e a rede limpos (ping cai 100%), porém o console permanece em **luz azul (luz azul acesa/pulsando)** pois o desligamento de energia total da fonte (S5) exige comando ICC dedicado ou desligamento manual no botão.
+
+---
+
+## 🔴 REGRA CRÍTICA — Montagem de dispositivos
+
+**NUNCA monte nada diretamente em `/mnt`.** Sempre crie um subdiretório dedicado (ex: `/mnt/ps4_rootfs_7.0`, `/mnt/temp_build`) e monte lá. Montar em `/mnt` raiz conflita com outros mounts do sistema, esconde diretórios existentes e quebra scripts que esperam estrutura previsível.
+
+---
+
+## 🔴 REGRA CRÍTICA — Build & deploy passam SEMPRE pelos scripts oficiais
+
+**NUNCA rodar `make bzImage` direto. NUNCA usar `deploy-boot-7.0.sh` sem antes ter rodado `00-build-kernel-7.0.sh`.** Toda compilação e todo deploy do kernel 7.0 devem passar pela sequência oficial em `distros/arch_minimal_v2/`:
+
+| Script | Função |
+|--------|--------|
+| `00-build-kernel-7.0.sh [TAG]` | Compila kernel (ThinLTO, profile General, Baikal). Gera `boot_referencia/bzImage-7.0-<TAG>` + `config-7.0-<TAG>`. Aplica `scripts/config` do projeto (zstd, zswap, RTC_CLASS, etc). Faz `make modules`. |
+| `01-build-image-7.0.sh` | Cria rootfs Arch + initramfs. Gera `boot_referencia/initramfs-7.0-<TAG>.cpio.gz`. |
+| `02-burn-image-7.0.sh /dev/sda` | Particiona + grava rootfs (label **`psxitarch`** obrigatório) + boot. Use quando refazer rootfs do zero. |
+| `deploy-boot-7.0.sh <TAG> [MNT]` | Apenas reescreve boot no HD já particionado, mantém rootfs intacto. Mais leve. Exige tag completa: bzImage, config, bootargs.txt, initramfs (reaproveitável de outra tag via cp explícito). |
+| `rebuild-initramfs-7.0.sh` | Reconstrói initramfs em rootfs já montado em `/mnt/ps4_rootfs_7.0` após mudar hooks. |
+
+**Por que isso é regra:**
+
+1. **Label `psxitarch` é hardcoded no initramfs.** O script `init` do busybox no initramfs faz `mount LABEL=psxitarch /newroot` literalmente — se a partição root não tiver exatamente esse label (e não `arch_base_v2`, `arch_minimal_v2`, etc), o mount falha e o boot cai no rescue shell com "The 'root' variable is empty". Só `02-burn-image-7.0.sh` garante `mkfs.ext4 -L psxitarch` na partição correta. Ver lição #7 do `consolidado/LICOES_APRENDIDAS.md`.
+
+2. **A primeira lição (#7) já documenta exatamente esse incidente.** Ele aconteceu de novo em 2026-07-25 por eu ter rodado `make bzImage` direto e depois reaproveitado `initramfs-7.0-20260725-full-build.cpio.gz` (que estava OK, mas sem o `01-build-image` rodando não houve auditoria de integridade entre `bootargs.txt` / `initramfs` / novo kernel).
+
+3. **Bootargs e initramfs são parte do artefato.** Não basta mexer no kernel. Toda tag em `boot_referencia/` precisa de 4 arquivos: `bzImage-7.0-<TAG>`, `config-7.0-<TAG>`, `bootargs-7.0-<TAG>.txt`, `initramfs-7.0-<TAG>.cpio.gz`. `deploy-boot-7.0.sh` falha alto se algum faltar — sem fallback silencioso (lição: "fallback silencioso em ferramenta de debug é armadilha").
+
+4. **Limite de ~10 MB do bzImage em alguns loaders de kexec do PS4 (lição #23).** A build padrão do projeto mantém o kernel abaixo desse limite. Um `make` fora dos parâmetros pode inflar sem perceber — o `00-build-kernel` tem as opções certas já validadas.
+
+### Sequência típica de modificação de kernel
+
+```bash
+cd /mnt/t/downloads/PS4/linux_in_ps4/distros/arch_minimal_v2
+
+# 1. Editou source em /mnt/hdauxiliar/temp/kernel_build_7.0/ (com sudo)
+
+# 2. Compila e gera tag (r(run~20-45 min):
+sudo ./00-build-kernel-7.0.sh 20260725-sata-fix
+
+# 3. Se mudou algo no rootfs/initramfs (hooks mkinitcpio, modules-load):
+#    sudo ./01-build-image-7.0.sh
+#    (se só mudou bzImage/bootargs, pode pular e usar initramfs de outra tag)
+
+# 4. HD USB do PS4 plugado neste PC:
+sudo ./deploy-boot-7.0.sh 20260725-sata-fix
+# (grava só o boot, mantém rootfs psxitarch intacto, confere MD5 origem→destino)
+
+# 5. Plugar HD de volta no PS4, ligar, SSH em 192.168.6.128, smoke test.
+```
+
+**Rollback:** rodar `deploy-boot-7.0.sh <tag-anterior>` restaura em 1 power cycle — todo histórico fica em `boot_referencia/`.
+
+### Convenções de bootargs (validadas ao vivo)
+
+| Use | Nunca use | Por quê |
+|-----|-----------|---------|
+| `rootwait` | `rootdelay=N` | **Ganho medido de 10,5s de boot** (fase de initramfs: 21,7s → 11,2s), sem nenhuma espera por root device. `rootdelay` dorme os N segundos completos mesmo com o disco pronto. Validado 2026-07-28, `test_history` id 66. |
+| `earlycon=uart8250,mmio32,0xC890E000` + `console=uart8250,mmio32,0xC890E000` + `console=tty0` | `console=ttyS0,115200n8` | `ttyS0` é a porta 8250 legada x86, sem hardware real no PS4 — causa tela preta. |
+
+⚠️ **O bootargs do baseline `sata-noncq-fix-20260728` NÃO tem console serial** (só `console=tty0`).
+Derivar dele deixa a UART cega ao kernel. Para diagnóstico use
+`bootargs-7.0-20260728-sata-diag.txt` como modelo (UART + `rootwait`).
+
+⚠️ **Console serial custa tempo de boot.** Com UART ativa o `ata1` proba em 2,4-7s; sem ela, em
+0,68s. Não confundir com regressão — só comparar tempos entre boots com a mesma configuração de console.
+
+⚠️ **`libata.force=...,noncq` no cmdline NÃO desliga NCQ neste projeto** — o quirk está hardcoded em
+`drivers/ata/libata-core.c:4199` para o `TOSHIBA MQ04ABF100`. Remover do bootargs não reativa NCQ.
+
+### Procedimento OBRIGATÓRIO antes de qualquer deploy
+
+Antes de rodar `deploy-boot-7.0.sh <TAG>`:
+
+1. Confirmar que o HD USB `psxitarch` está plugado e a partição `BOOT` montou (`lsblk | grep BOOT`).
+2. Confirmar que a tag existe completa em `boot_referencia/` (4 arquivos: bzImage, config, bootargs, initramfs).
+3. Confirmar MD5 dos arquivos da tag (script já faz automaticamente origen→destino, mas vale uma checagem prévia).
+4. Em incidente — caiu no rescue shell: NÃO tentar "remediar" comandos ad-hoc pelo shell do initramfs. Desligar, puxar o HD, plugar neste PC, restaurar tag anterior via `deploy-boot-7.0.sh <tag-velha>`, refazer o build corretamente com os scripts oficiais.
+
+### Referências
+
+- `consolidado/LICOES_APRENDIDAS.md` — lições #7 (label psxitarch), #17/22/23 (boot/stabilidade), #24 (não compilar em NTFS), "REGRA: no HD (sda1) fica APENAS o bzImage ativo", "INCIDENTE: 'testar' um script de deploy destruiu o boot do HD", "Fallback silencioso em ferramenta de debug é armadilha".
+- `consolidado/FULL_BUILD.md` — procedimento de build completo do Arch Minimal v2.
+
+---
+
 ## 🔴 PRIORIDADE ALTA — Banco de Varreduras de Hardware (SEMPRE consultar antes de varrer de novo)
 
 **Antes de fazer qualquer varredura de registradores/MMIO ao vivo (BAR0/BAR2/BAR4, ICC, glue), consultar primeiro `consolidado/ps4_hardware_memory.db` (SQLite)** — é a fonte única de leituras já feitas em hardware real, para não repetir teste (cada teste ao vivo custa um power cycle inteiro).
@@ -38,6 +140,42 @@ sshpass -p ps4 ssh root@192.168.6.128 "<cmd>"
 ```
 
 ---
+
+## Captura de UART TTL (console serial físico)
+
+**Hardware validado 2026-07-27:** solda do usuário na UART Baikal (MMIO `0xC890E000`) funcional. Esquema de pinagem do adaptador USB-TTL (PL2303):
+
+| Fio (cor do usuário) | Vai para |
+|---|---|
+| AMARELO | GND do adaptador |
+| VERMELHO | RX do adaptador (recebe o TX do PS4) |
+| LARANJA | TX do adaptador (opcional, só para enviar) |
+
+**NUNCA usar `stty` + `cat` direto** — o adaptador PL2303 re-enumera no USB (visto em `dmesg`) e o termios volta ao padrão (9600 + modo canônico), fazendo o `cat` engolir tudo no buffer sem entregar nada. Os scripts abaixo usam `stty raw -icanon` + `dd bs=1` (método comprovado pelo usuário), com detecção automática de porta e reabertura se o adaptador cair.
+
+### Scripts
+
+| Script | Função |
+|--------|--------|
+| `scripts/uart_start.sh [duracao_s] [nome]` | Inicia UMA captura em background, grava em `tests/uart_logs/<nome>_<timestamp>.{bin,log}`. Recusa iniciar se já houver captura rodando (evita duas capturas disputando a porta — isso corrompe/trava a leitura). |
+| `scripts/uart_stop.sh` | Encerra toda captura em andamento (via pid file + varredura de processos órfãos `dd`/`xxd`/`uart_capture.sh`). Sempre rodar antes de iniciar uma nova se não tiver certeza do estado. |
+| `scripts/uart_capture.sh` | Motor interno (chamado pelos dois acima) — não rodar direto, usar `uart_start.sh`. |
+
+```bash
+scripts/uart_start.sh 900 s5-shutdown-test   # captura de 15 min
+tail -f tests/uart_logs/s5-shutdown-test_*.log   # acompanhar ao vivo
+scripts/uart_stop.sh                          # encerrar quando terminar
+```
+
+### Bootargs necessário
+
+`console=ttyS0,115200n8` **NÃO funciona** — é a porta 8250 legada x86 (`0x3F8`), sem hardware real no PS4 (`/proc/tty/driver/serial` mostra `uart:unknown`). O log para de sair pela UART assim que o kernel troca do `earlycon` para esse console fantasma (~0.7s de boot). Usar:
+```
+earlycon=uart8250,mmio32,0xC890E000 console=uart8250,mmio32,0xC890E000 console=tty0
+```
+(console real apontando para o mesmo MMIO do earlycon, não para `ttyS0`). Teste ao vivo desse fix em andamento — ver `memory/console-ttys0-bootargs-causa-tela-preta-2026-07-27.md` e `memory/uart-ttl-pinagem-corrigida-2026-07-27.md`.
+
+**Consoles CEX/retail (firmware oficial, antes do kexec) censuram a UART com bytes `0x20` (espaço) puros** — isso é esperado e não indica falha de captura.
 
 ## Compilação de Módulos
 
@@ -134,3 +272,33 @@ Ghidra headless está instalado em `/mnt/hdauxiliar/ghidra_12.1.2` e os scripts 
   -readOnly
 ```
 Adicionar novo endereço em `TARGET_ADDRS` do `ExtractMtsNamespaceNoAnalysis.py` antes de rodar. Saídas em `consolidado/decompiled/extracted/`.
+
+---
+
+## Localização da Documentação
+- **Fonte única de documentação do projeto a partir de 2026-07-19: `consolidado/`.** Ignorar qualquer coisa em `old_project/` para fins de documentação (inclusive `old_project/distros/arch_minimal_v2/LICOES_APRENDIDAS.md`, que tinha lições extras #24-27, mas foi descontinuado por decisão do usuário).
+- O arquivo de lições imperativas (REGRA #0, ler antes de qualquer ação) é `consolidado/LICOES_APRENDIDAS.md`.
+- **Memórias do assistente movidas para o projeto (2026-07-20):** os arquivos de memória foram relocados de `/home/anderson/.claude/projects/-mnt-t-downloads-PS4-linux-in-ps4/memory/` para `./memory/` (pasta na raiz do projeto) para que múltiplos agentes/sessões possam acessá-los. O índice está em `memory/MEMORY.md`.
+
+### Mapa de arquivos (reorganizado em 2026-07-28 — fonte única)
+
+Antes desta data havia regras em `AGENTS.md` **e** estado/regras em `CLAUDE.md` (32 KB), o que
+criava ambiguidade sobre onde escrever e inflava o contexto de toda sessão. Layout atual:
+
+| Arquivo | Papel | Auto-carregado? |
+|---------|-------|-----------------|
+| `AGENTS.md` | **Fonte única de regras e procedimentos.** Escreva aqui. | Sim, via import do stub |
+| `CLAUDE.md` | Stub de uma linha (`@AGENTS.md`). **Não escrever regras aqui.** | Sim (o Claude Code só lê este nome) |
+| `consolidado/BACKLOG.md` | Fonte única de pendências e próximos passos | Não |
+| `consolidado/LICOES_APRENDIDAS.md` | Lições imperativas (REGRA #0) | Não |
+| `consolidado/ESTADO_E_HISTORICO.md` | Estado narrativo e histórico das sagas (payloads, dumper) | Não |
+| `memory/MEMORY.md` | Índice das memórias curtas do assistente | Não |
+| `PLANO_*.md` (raiz) | Planos de investigação por tema | Não |
+
+**Por que o stub existe:** a documentação oficial do Claude Code diz textualmente *"Claude Code
+reads `CLAUDE.md`, not `AGENTS.md`"* e recomenda exatamente este padrão — um `CLAUDE.md` que
+importa o `AGENTS.md`, para que os dois mundos leiam as mesmas instruções sem duplicá-las.
+Outros agentes (opencode, em `.opencode/`) leem o `AGENTS.md` direto.
+
+⚠️ **Regra prática:** regra nova ou procedimento novo vai em `AGENTS.md`. Pendência vai em
+`BACKLOG.md`. Histórico vai em `ESTADO_E_HISTORICO.md`. Nada volta para o `CLAUDE.md`.

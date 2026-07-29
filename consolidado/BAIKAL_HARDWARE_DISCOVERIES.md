@@ -113,7 +113,8 @@ O Southbridge expõe um barramento principal contendo todos os periféricos cust
 - **00:14.7 (USB 3.0):** xHCI Host Controller (ativado pelo `xhci_aeolia`).
 
 ### Armazenamento
-- O sistema monta múltiplas partições formatadas como GPT customizado do PS4 no disco interno SATA (`sda` - HDD TOSHIBA 465 GiB). O mapeamento detectou até a partição 27 (`sda27`), indicando que o esquema de tabelas do Orbis OS está acessível para o kernel Linux.
+- O sistema monta múltiplas partições formatadas como GPT customizado do PS4 no disco interno SATA (`sda`). O mapeamento detectou até a partição 27 (`sda27`), indicando que o esquema de tabelas do Orbis OS está acessível para o kernel Linux.
+  > ⚠️ **CORREÇÃO 2026-07-27:** o valor "465 GiB" citado aqui antes estava ERRADO. O HD real deste console (confirmado por foto da etiqueta física) é um **Toshiba MQ04ABF100, 1TB** (1.953.525.168 setores, S/N `X8MNSD6RS`). Não foi trocado — é o disco original. **`consolidado/HARDWARE.md` é a fonte de verdade** para specs de hardware físico deste console específico; qualquer doc que cite capacidade/modelo de disco divergente deve ser considerado desatualizado. Isso pode exigir revisão futura de qualquer cálculo de offset/partição no kernel Linux ou no payload que tenha assumido o tamanho de disco errado (465 GiB ≈ 500GB classe, vs. 1TB real — quase o dobro).
 
 ---
 

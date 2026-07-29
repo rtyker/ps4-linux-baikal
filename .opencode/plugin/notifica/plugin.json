@@ -1,0 +1,10 @@
+{
+  "name": "notifica",
+  "version": "1.0.0",
+  "description": "Envia notificações via ntfy.sh para o celular (usa ~/scripts/notifica.sh)",
+  "hooks": {
+    "on_build_complete": "hooks/notify_build.sh",
+    "on_deploy_complete": "hooks/notify_deploy.sh",
+    "on_error": "hooks/notify_error.sh"
+  }
+}

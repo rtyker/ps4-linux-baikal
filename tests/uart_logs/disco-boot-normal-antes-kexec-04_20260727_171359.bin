@@ -1,0 +1,13 @@
+mDBG: ...
+hook_icc_query_nowait called
+ICC 05-00 polling
+Fixing ACPI tables at 0xe0000 (0xffffc189000e0000)
+RSDT at 0xe0024
+XSDT at 0xe0088
+FACP at 0xe016c
+FACS at 0xe012c
+DSDT at 0xe0430
+APIC at 0xe0298
+MCFG at 0xe0304
+SSDT at 0xe0730
+ACPI tables fixed

@@ -1,0 +1,909 @@
+[SceShellCore] Libc Heap Status: free 37%, in-use 3829.3 KB, trend +35.3 KB/min, peak 4172.1 KB, when 187 [sec]
+[CloudConnectMgr] INFO: cloud_connect_manager_entitlement.cpp/tick(771): Updating user/title list (Interval)
+DBG AutoMounter(_getEventDetail 556):
+	NoChg.
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [AppScreen : ApplicationScreenScene] -> [ContentAreaScene : ContentAreaScene]
+[SceShellUI] I/PSM.UI :      Scene [ContentAreaScene : ContentAreaScene] : Alive
+SetDeviceIndexBehavior: mode=SpecificUser, param=0x1b6ebedc
+[Theme/I] : ActiveUserChanged : From : [ANONYMOUS(userId = ffffffff)]
+[Theme/I] : ActiveUserChanged : To   : [BLUE(userId = 1b6ebedc)]
+[Theme/I] : Apply [BLUE] : [Option:111111]: with preloaded user
+* [AvSetting core:3346] mode = AUDIO_OUT_MODE_SHARED
+VideoModeCompatible check -> BDP(Non_PU)
+[avs] no need to change 17,1,332759680473
+[SL] AppFocusChanged [NPXS20113] -> [NPXS20001]
+[SceDiscPlayer] I/PSM.UI :  ======= Unlock SystemAsset SharedVideoMemory ======
+* [AvSetting core:3346] mode = AUDIO_OUT_MODE_SHARED
+VideoModeCompatible check -> BDP(Non_PU)
+[avs] no need to change 17,2,332779380036
+* [AvSetting core:3346] mode = AUDIO_OUT_MODE_SHARED
+VideoModeCompatible check -> BDP(Non_PU)
+** cpv:e1 **
+** set_mode_a_cc ** -1
+ video: port:0 1080P_5994 YUV444 limited 709 24bpp 16:9 nodata n-u
+ audio: port:HDMI src:I2S 48k 2.0 24bit fmt:LPCM LPCM once
+[av control] : 1080P_5994 YUV444 709 24bpp LT=Fast
+[av control] : LinkRate(5.4Gbps), HDMI(FLV2)
+*** Hdmi Audio(CC) Setup(kern) : 0 ***
+[SceLncService] suspendApp() appId={0x60000e0c}, causeCode={0x00000009}
+[SceLncService] Start suspending NPXS20113
+[SceLncService] 0000206009 (time trace)
+[SceLncService] lockSuspendBlock(0x60000e0c)
+0000206022:[DiscPlayer] SystemEvent Receive : SCE_SYSTEM_SERVICE_EVENT_SUSPEND_REQUEST
+0000206040:[DiscPlayerUI]:BdpCoreController.UnblockAppSuspendUnblockAppSuspend() Called
+0000206040:[DiscPlayer] Call  DiscPlayerNativeIF::BdpUnblockAppSuspend()
+0000206041:[DiscPlayer] Set UnBlock Suspend(Call sceLncUtilUnblockAppSuspend)
+[SceLncUtil] unblockAppSuspend: name={SceDiscPlayer}, appId={0x60000e0c}, refCount={0}
+[SceLncUtil] 0000206041 (time trace for bug 70592)
+[SceLncService] lockSuspendBlock: appId={0x60000e0c}
+[SceLncService] sceApplicationSuspend([0x60000e0c)
+[Syscore App] Suspend App : 0x60000e0c NPXS20113
+[Syscore App] Suspend process : 0x42
+[Syscore App] Suspend process : 0x42 => 0
+[Syscore App] Suspend process : 0x43
+[VCS]checkFocusStatus() [LNC->VCS] Focus Change. appType = 1(SHELL_UI). appId = 0x60000201.
+[avs] update 32:5
+** cpv:e1 **
+** set_mode ** -1/-1
+ video: port:0 1080P_5994 RGB444 limited CERGB 24bpp 16:9 nodata n-s
+ audio: port:HDMI src:I2S 48k 2.0 24bit fmt:LPCM LPCM once
+[av control] : 1080P_5994 RGB444 CERGB 24bpp LT=Fast
+[av control] : LinkRate(5.4Gbps), HDMI(FLV2)
+[avs] update 5:15
+[Syscore App] Suspend process : 0x43 => 0
+[Syscore App] Suspend process : 0x45
+#LOGIN MGR# Receive Event : SCE_MBUS_EVENT_VIDEO_OUT_EVENT eventType=0x1
+#LOGIN MGR# Receive Event : SCE_MBUS_EVENT_VIDEO_OUT_EVENT
+#LOGIN MGR# [IsPuConnectHdmi] start checkDeviceId : 0x7000 
+#LOGIN MGR# [IsPuConnectHdmi] sceAvSettingGetDeviceInfo -> 0(0x00000000) 
+#LOGIN MGR# [IsPuConnectHdmi] videoOutCapability = 0x1 
+#LOGIN MGR# [IsPuConnectHdmi] end checkDeviceId : 0x7000 -> isReady = 0 
+#LOGIN MGR# [NotifyMorpheusConnectStatusChangedForHmuSetupDialog] deviceId : 0xffffffffffffffff / userId : 0xffffffff / avSettingPuType : 0 / connectStatus : 6 
+av control k] : set_mode -> set_mode
+[av control] : lt_req=1 hdmi_misc_up_req=1 vr_flg_up_req=0 vr_switch=0 csc_dir_req=0 hdr_dir_req=0
+GetPlusInfoJob : Run(Start)
+GetPlusInfoJob : Run(End)
+GetPlusInfoJob : Finish / Cancelled False / Result True
+[UpdateUserInfoforPlus] upd_userId : 460242652 / type : None
+*** Hdmi Init(kern)  : 0 ***
+[SceShellUI] I/PSM.UI : VideoOutMode   : IsSystemDefault=True, IsVr=False
+[SceShellUI] I/PSM.UI : VideoOutStatus : [1920 1080] : freq 59.94
+[av control] : f=HdmiSetup videoConfigType(NORMAL)
+[SceLncService] BG MiniApp Status: NPXS20113, RSS 409 MiB (+0.000 MiB), PageOut 0.000 MiB
+*** Hdmi Setup(kern) : 0 ***
+[avc] ConfigSetSystemMute(0)
+[avc] ConfigSetSystemMute() done
+** set_mode done (336140660792:1949) **
+[avs] update 15:32
+[Syscore App] Suspend process : 0x45 => 0
+[Syscore App] Suspend process : 0x44
+[avs] hdmi event: hdcp done(2), 0x9000000000100, 336155147985
+#LOGIN MGR# Receive Event : SCE_MBUS_EVENT_VIDEO_OUT_EVENT eventType=0x2
+gbase_free_vm_space_2 has mapped memory vmid:6
+gbase_free_vm_space_2 has mapped memory vmid:7
+[Syscore App] Suspend process : 0x44 => 0
+[AppMgr Trace]: AppId=0x60000e0c suspended
+[Syscore App] Suspend App : 0x60000e0c NPXS20113 => SCE_OK
+[Syscore App]  ExpandCpuSetMode : enable
+[SceLncService] sceApplicationSuspend(0x60000e0c) returned
+[SceLncService] Completed suspending NPXS20113 (2130 msec)
+[SceLncService] 0000208139 (time trace)
+[SceSystemStateMgr] Power Mode Change: NAVIGATION
+[SceSystemStateMgr] CPU  HLT CP SE CU ACLK DCLK ECLK LCLK SCLK SAMCLK VCLK DispCLK NCLK MemCLK MemP GMC DPM VDD      VDDNB    SOC      
+[SceSystemStateMgr] 2100   1 GL  2 16  711  673  533  711  800    609  711     673 1400   1375 GAME  GL   2 03e/1156 05d/937  00740f30
+MSG AutoMounter(int32_t AutoMount::DirectoryMapManager::removeLockAny(pid_t, bool *, char *, char *, char *) 413):
+	there is no lock for 0x42.
+MSG AutoMounter(int32_t AppIdManager::getFdAny(pid_t, int *) 253):
+	pid(0x42) has no valid fd.
+MSG AutoMounter(int32_t appIdManagerGetFdAny(pid_t, int *) 570): g_appIdManager.getFdAny(pid, p_fd) returned 0x80f40004.
+MSG AutoMounter(int32_t AppIdManager::getPidWithIndex(SceApplicationId, int, pid_t *) 174):
+	appId(0x60000e0c) with index(1) is not registered.
+MSG AutoMounter(int32_t AutoMount::UsbMass::fakeEjection(SceApplicationId) 716):
+	getPidWithIndex(0x60000e0c, 1) returned 0x80f40002.
+MSG AutoMounterIpc(void _intermidiateCallbackUnmountUsbFake(void **) 450):
+	targetPid(0x42) is not mine(0x2b).
+[SceLncService] unlockSuspendBlock: appId={0x60000e0c}
+[UIProcess] malloc stats freeSize:41186144 (98%) inuseSize:756896 peakSize:757344 [pid:0x3a]
+[VCS]checkApplicationStatus() [LNC->VCS] App was Suspended. appId = 0x60000e0c.
+[BGFT] [5156] GameSuspended(NPXS20113, 3)
+[BGFT] ERROR: [3568] task not found. (NPXS20113)
+D/88391:
+D/88391:000000001
+D/88391:AZIF00003
+[SceLncService] launchApp(AZIF00003)
+[SceLncService] category={gde} VRMode={0,0}
+[SceLncService] hnm,psnf,pc,tk,ns={1,0,0,0,0} appBootMode={0}
+[SceLncService] appType={SCE_LNC_APP_TYPE_MINI_APP} [] appVer={0.98}
+[SceLncService] Num. of logged-in users is 1
+[SceLncService] PrepareProcessLaunchDirCheck()
+[ScePatchChecker] (*) check (title_id='AZIF00003', app_version='0.98', check_option=0): status=0, trigger=1 userId=0xffffffff return 0x80412883
+[SceLncService] PrepareProcessLaunchDirCheck() returned
+[SceLncService] KillApp() appId={0x60000e0c}, withSuspend={1}, forceKill={0} killReason={0}
+[SceLncService] suspendApp appId={0x60000e0c} before kill.
+[SceLncService] suspendApp() appId={0x60000e0c}, causeCode={0x00000006}
+[SceLncService] Start special resume. appId = {0x60000e0c}
+[SceLncService] sceApplicationResume(0x60000e0c)
+[Syscore App] Resume App : 0x60000e0c NPXS20113
+[Syscore App]  ExpandCpuSetMode : disable
+[Syscore App] Resume process : 0x43
+[ScePatchChecker] check (title_id='AZIF00003', app_version='0.98', check_option=0): status=0, dl_status=0, trigger=1 userId=0xffffffff return 0x80412883
+[Syscore App] Resume process : 0x43 => 0
+[Syscore App] Resume process : 0x44
+[Syscore App] Resume process : 0x44 => 0
+[Syscore App] Resume process : 0x45
+[Syscore App] Resume process : 0x45 => 0
+[Syscore App] Resume process : 0x42
+[Syscore App] Resume process : 0x42 => 0
+[AppMgr Trace]: AppId=0x60000e0c resumed
+[Syscore App] Resume App : 0x60000e0c NPXS20113 => SCE_OK
+[Syscore App]  ExpandCpuSetMode : disable
+[SceLncService] sceApplicationResume(0x60000e0c) returned
+0000211811:[DiscPlayer] SystemEvent Receive : SCE_SYSTEM_SERVICE_EVENT_SPECIAL_RESUME
+[SceDiscPlayer] I/PSM.UI : VideoOutMode   : IsSystemDefault=True, IsVr=False
+[SceDiscPlayer] I/PSM.UI : VideoOutStatus : [1920 1080] : freq 59.94
+0000211815:[DiscPlayer] ForceStop Requested BDP-CORE STATUS=3
+0000211815:[DiscPlayer] **** Call bdpForceStop() ****
+0000211815:[DiscPlayerUI]:DiscPlayerMain.StopCorePlayCORE_PLAY_STOP_RET.DONE_FORCED
+0000211815:[DiscPlayerUI]:DiscPlayerMain.SetCmd============  m_cmd <--- WAIT_CORE_STOP   (method_name=OnBdpCoreEventReceived)
+0000211815:[DiscPlayerUI]:DiscPlayerMain.SetCoreStopReason Set m_core_stop_reason to SPECIAL_RESUME
+[SceLncService] BG MiniApp Status: NPXS20113, RSS 409 MiB (+0.406 MiB), PageOut 0.172 MiB
+0000212817:[DiscPlayer] PLAY-STATUS CHANGE To STOP
+0000212832:[DiscPlayerUI]:DiscPlayerMain.StopCorePlayCORE_PLAY_STOP_RET.NOT_DONE
+0000212832:[DiscPlayer] **** Call bdpPlayUnready() ****
+0000212832:[DiscPlayerUI]:DiscPlayerMain.StopCoreProcessCORE_PROCESS_STOP_RET.OK
+[SceLncService] BG MiniApp Status: NPXS20113, RSS 403 MiB (-5.563 MiB), PageOut -0.203 MiB
+SceNpService: invalid syncMethod[Id: e000a
+SceNpService: invalid syncMethodId: e000a
+KERNEL] dmem_handle_vmspace_exited pid: 69, ptype=1, 0xffffe31c0638ac70->pt_loaded is TRUE
+[KERNEL] dmem_handle_vmspace_exited map #0 0xffffffffffffffff
+[KERNEL] dmem_handle_vmspace_exited map #1 0xffffe31c2c95e508
+[KERNEL] dmem_handle_vmspace_exited map #2 0xffffe31c2c95e290
+[KERNEL] dmem_handle_vmspace_exited ma[SceLncService] CALL sceApplicationLocalProcessKill2(appId, appLocalPid, forceKill);
+[Syscore App] Kill process: 0x44
+p #3 0xffffffffffffffff
+[KERNEL] dmem_handle_vmspace_exited pid: 69, app_maps_count[1], 4 -> 3
+[KERNEL] dmem_handle_vmspace_exited pid: 68, ptype=1, 0xffffe31c2c95e290->pt_loaded is TRUE
+[KERNEL] dmem_handle_vmspace_exited map #0 0xffffe31c2c95e780
+[KERNEL] dmem_handle_vmspace_exited map #1 0xffffffffffffffff
+[KERNEL] dmem_handle_vmspace_exited map #2 0xffffffffffffffff
+[KERNEL] dmem_handle_vmspace_exited pid: 68, app_maps_count[1], 3 -> 2
+[Syscore App] EVFILT_PROC NOTE_EXIT received : pid=0x45
+gbase_free_vm_space_2 has mapped memory vmid:7
+[Syscore Umd] W:\Build\J02690760\sys\internal\syscore\umd\umd_manager.cpp(1090) error : 0x80020003
+[Syscore App] Kill process: 0x44 => 0x80020003
+[Syscore App] process delete event : pid=0x45
+[AppMgr Trace]: pid=0x44, deleted.
+[Syscore App] Syscore Event Queue Push : SCE_SYSCORE_EVENT_ON_PROCESS_UNLOADED
+[AppMgr] checkAppTerminated pid=0x42 is still alive in 0x60000e0c
+[SceLncService] CALL sceApplicationLocalProcessKill2(appId, appLocalPid, forceKill); has returned
+[Syscore App] Syscore Event Queue Pop : SCE_SYSCORE_EVENT_ON_PROCESS_UNLOADED
+[AppMgr Trace]: pid=0x45, deleted.
+[Syscore App] Syscore Event Queue Push : SCE_SYSCORE_EVENT_ON_PROCESS_UNLOADED
+[AppMgr] checkAppTerminated pid=0x42 is still alive in 0x60000e0c
+[Syscore App]  ExpandCpuSetMode : disable
+[Syscore App] EVFILT_PROC NOTE_EXIT received : pid=0x44
+[Syscore App] Syscore Event Queue Pop : SCE_SYSCORE_EVENT_ON_PROCESS_UNLOADED
+[Syscore App] process delete event : pid=0x44
+[SceLncService] BG MiniApp Status: NPXS20113, RSS 204 MiB (-8.109 MiB), PageOut -0.641 MiB
+0000215652:[DiscPlayer] CORE-STATUS CHANGED TO BDPCS_MOUNT FROM BDPCS_PLAYABLE
+0000215667:[DiscPlayerUI]:BdpCoreController.CheckBdpCoreStatusCoreStatus Change CoreStatus=BDPCS_MOUNT Prev_CoreStatue=[1]
+0000215668:[DiscPlayer] **** Call bdpUnmount() ****
+0000215682:[DiscPlayer] CORE-STATUS CHANGED TO BDPCS_INITIALIZED FROM BDPCS_MOUNT
+0000215684:[DiscPlayerUI]:BdpCoreController.CheckBdpCoreStatusCoreStatus Change CoreStatus=BDPCS_INITIALIZED Prev_CoreStatue=[1]
+0000215686:[DiscPlayer] Start STOP BDP-CORE Process (Thread Create)
+0000215687:[DiscPlayer] **** Call bdpTerminateProxy() ****
+[mbus] onSessionKilled. pid=67
+[@ removeSession:L184
+KERNEL] dmem_handle_vmspace_exited pid: 67, ptype=1, 0xffffe31c2c95e508->pt_loaded is TRUE
+[KERNEL] dmem_handle_vmspace_exited map #0 0xffffffffffffffff
+[KERNEL] dmem_handle_vmspace_exited map #1 0xffffffffffffffff
+[KERNEL] dmem_handle_vmspace_exited pid: 67, app_maps_count[1], 2 -> 1
+gbase_free_vm_space_2 has mapped memory vmid:6
+[Syscore App] EVFILT_PROC NOTE_EXIT received : pid=0x43
+[Syscore App] process delete event : pid=0x43
+[AppMgr Trace]: pid=0x43, deleted.
+[Syscore App] Syscore Event Queue Push : SCE_SYSCORE_EVENT_ON_PROCESS_UNLOADED
+[AppMgr] checkAppTerminated pid=0x42 is still alive in 0x60000e0c
+[Syscore App]  ExpandCpuSetMode : disable
+[Syscore App] Syscore Event Queue Pop : SCE_SYSCORE_EVENT_ON_PROCESS_UNLOADED
+[SceLncService] BG MiniApp Status: NPXS20113, RSS 139 MiB (+0.000 MiB), PageOut 2.063 MiB
+[SceLncService] CALL sceApplicationLocalProcessKill2(appId, appLocalPid, forceKill);
+[SceLncService] CALL sceApplicationLocalProcessKill2(appId, appLocalPid, forceKill); has returned
+[SceLncService] W:\Build\J02690785\vsh\shell\shell_core\lnc_service\lnc_manager.cpp(1179) killLocalProcess: LNC_ISOK::0x80aa0010
+[SceLncService] W:\Build\J02690785\vsh\shell\shell_core\lnc_service\lnc_util_ipc_server.cpp(553) Run: LNC_ISOK::0x80aa0010
+[SceLncUtil] W:\Build\J02690785\vsh\common_lib\lnc_util\src\lnc_util_ipc_client.cpp(299) killLocalProcess: LNC_ISOK::0x80aa0010
+[SceSystemServiceImpl] W:\Build\J02690785\vsh\common_lib\sce_system_service\system_service_impl.cpp(145) sceSystemServiceKillLocalProcess: SYSTEM_SERVICE_ISOK::0x80aa0010
+0000216885:[DiscPlayerUI]:DiscPlayerMain.SetCmd============  m_cmd <--- DO_STOP   (method_name=OnBdpCoreEventReceived)
+0000216885[33m[40m:[DiscPlayerUI]WARNING:DiscPlayerMain.SetCmd:============ m_cmd is not IDLE , OverWrite m_cmd  (req_cmd=DO_STOP m_cmd=WAIT_CORE_STOP)[0m
+
+0000216901:[DiscPlayerUI]:DiscPlayerMain.SetCmd============  m_cmd <--- IDLE   (method_name=OnUpdateFrame)
+[SceDiscPlayer] I/PSM.UI : OnFocusActiveSceneChanged [PlayScene : PlayScene] -> []
+[SceDiscPlayer] I/PSM.UI : ** Unload enqueue: OptionPanel : PlayOptionPanelScene
+[SceDiscPlayer] I/PSM.UI : ** Unload enqueue: ControlPanel : PlayControlPanelScene
+[SceDiscPlayer] I/PSM.UI : ** Unload enqueue: Info : PlayInfoScene
+[SceDiscPlayer] I/PSM.UI : ** Unload enqueue: PlayScene : PlayScene
+[SceDiscPlayer] I/PSM.UI : ** Unload enqueue: Setting : PlaySettingScene
+[SceDiscPlayer] I/PSM.UI : ** Unload enqueue: PlayMiniInfo : PlayMiniInfoScene
+[CSceDiscPlayer] I/PSM.UI : ** Unload enqueue: PlayMessageAudioWaterMark : PlayMessageScene
+[SceDiscPlayer] I/PSM.UI : ** Unload enqueue: ParentalConfirmFrameScene.PrimaryScene : MessageFramePrimaryScene
+[SceDiscPlayer] I/PSM.UI : ** Unload enqueue: ParentalConfirmFrameScene : MessageFrameScene
+[SceDiscPlayer] I/PSM.UI : ** Unload enqueue: ParentalInputPassCodeFrameScene : InputPassCodeFrameScene
+[SceDiscPlayer] I/PSM.UI : ** Unload enqueue: TtsConfirmFrameScene.PrimaryScene : MessageFramePrimaryScene
+[SceDiscPlayer] I/PSM.UI : ** Unload enqueue: TtsConfirmFrameScene : MessageFrameScene
+[SceDiscPlayer] I/PSM.UI : ** Unload enqueue: TtsConfirmFrameSceneWithResetDisplay.PrimaryScene : MessageFramePrimaryScene
+[SceDiscPlayer] I/PSM.UI : ** Unload enqueue: TtsConfirmFrameSceneWithResetDisplay : MessageFrameScene
+[SceDiscPlayer] I/PSM.UI : ** Unload enqueue: PlayButtonGuideScene.PlayButtonGuideSubScene : PlayButtonGuideSubScene
+[SceDiscPlayer] I/PSM.UI : ** Unload enqueue: ButtonGuideFrame : PlayButtonGuideScene
+[SceDiscPlayer] I/PSM.UI : ** Unload enqueue: ButtonGuideSub : PlayButtonGuideSubScene
+[SceDiscPlayer] I/PSM.UI : ** Unload enqueue: S3dHint.PrimaryScene : S3dOnHmdHintPrimaryScene
+[SceDiscPlayer] I/PSM.UI : ** Unload enqueue: S3dHint : S3dOnHmdHintScene
+[SceDiscPlayer] I/PSM.UI : ** Unload enqueue: S3dSetModeFrameScene.PrimaryScene : MessageFramePrimaryScene
+[SceDiscPlayer] I/PSM.UI : ** Unload enqueue: S3dSetModeFrameScene : MessageFrameScene
+[SceDiscPlayer] I/PSM.UI : ** Unload enqueue: HmuOnFrameScene.PrimaryScene : MessageFramePrimaryScene
+[SceDiscPlayer] I/PSM.UI : ** Unload enqueue: HmuOnFrameScene : MessageFrameScene
+[SceDiscPlayer] I/PSM.UI : ** Unload enqueue: PlaySceneSearchScene : PlaySceneSearchScene
+[SceLncService] BG MiniApp Status: NPXS20113, RSS 140 MiB (+0.375 MiB), PageOut 1.875 MiB
+[SceDiscPlayer] I/PSM.UI : ** Unload enqueue: BusyScene : BusyScene
+0000216934:[DiscPlayer] (Native) Finalize Start
+DBG(unregisterCallback 374):
+	server is called. eventId=0x310000.
+DBG(unregisterCallback 374):
+	server is called. eventId=0x220000.
+DBG(unregisterCallback 374):
+	server is called. eventId=0x350001.
+DBG(unregisterCallback 374):
+	server is called. eventId=0x380000.
+MSG AutoMounterIpc(void *sceAutoMounterIpcClient::daemonLoop(void *) 328):
+	eventFlag is deleted and client daemon exits loop.
+MSG AutoMounterIpc(virtual void sceAutoMounterIpc::MyEventHandler::onSessionClosedByClient(::IPMI::Session *) 203):
+	connection for 0x42 is closed.
+MSG AutoMounter(int32_t AutoMount::DirectoryMapManager::removeLockAny(pid_t, bool *, char *, char *, char *) 413):
+	there is no lock for 0x42.
+MSG AutoMounter(int32_t AppIdManager::getFdAny(pid_t, int *) 253):
+	pid(0x42) has no valid fd.
+MSG AutoMounter(int32_t appIdManagerGetFdAny(pid_t, int *) 570): g_appIdManager.getFdAny(pid, p_fd) returned 0x80f40004.
+0000216935:[DiscPlayerUI]:BdpCoreController.FinishSpecialResumeBdpFinishSpecialResume() Called
+[SceLncService] finishSpecialResume() called. appId = {0x60000e0c}
+[SceLncService] sceApplicationSuspend(0x60000e0c)
+[Syscore App] Suspend App : 0x60000e0c NPXS20113
+[Syscore App] Suspend process : 0x42
+[SceDiscPlayer] I/PSM.UI : SceneQ : Unloaded[0.31msec] : OptionPanel : PlayOptionPanelScene
+[SceDiscPlayer] I/PSM.UI : SceneQ : Unloaded[0.04msec] : ControlPanel : PlayControlPanelScene
+[SceDiscPlayer] I/PSM.UI : SceneQ : Unloaded[0.03msec] : Info : PlayInfoScene
+[SceDiscPlayer] I/PSM.UI : SceneQ : Unloaded[0.04msec] : PlayScene : PlayScene
+[SceDiscPlayer] I/PSM.UI : SceneQ : Unloaded[0.04msec] : Setting : PlaySettingScene
+[SceDiscPlayer] I/PSM.UI : SceneQ : Unloaded[0.03msec] : PlayMiniInfo : PlayMiniInfoScene
+[SceDiscPlayer] I/PSM.UI : SceneQ : Unloaded[0.03msec] : PlayMessageAudioWaterMark : PlayMessageScene
+[SceDiscPlayer] I/PSM.UI : SceneQ : Unloaded[0.04msec] : ParentalConfirmFrameScene.PrimaryScene : MessageFramePrimaryScene
+[SceDiscPlayer] I/PSM.UI : SceneQ : Unloaded[0.15msec] : ParentalConfirmFrameScene : MessageFrameScene
+[SceDiscPlayer] I/PSM.UI : SceneQ : Unloaded[0.03msec] : ParentalInputPassCodeFrameScene : InputPassCodeFrameScene
+[SceDiscPlayer] I/PSM.UI : SceneQ : Unloaded[0.01msec] : TtsConfirmFrameScene.PrimaryScene : MessageFramePrimaryScene
+[SceDiscPlayer] I/PSM.UI : SceneQ : Unloaded[0.00msec] : TtsConfirmFrameScene : MessageFrameScene
+[SceDiscPlayer] I/PSM.UI : SceneQ : Unloaded[0.01msec] : TtsConfirmFrameSceneWithResetDisplay.PrimaryScene : MessageFramePrimaryScene
+[SceDiscPlayer] I/PSM.UI : SceneQ : Unloaded[0.00msec] : TtsConfirmFrameSceneWithResetDisplay : MessageFrameScene
+[SceDiscPlayer] I/PSM.UI : SceneQ : Unloaded[0.01msec] : PlayButtonGuideScene.PlayButtonGuideSubScene : PlayButtonGuideSubScene
+[SceDiscPlayer] I/PSM.UI : SceneQ : Unloaded[0.03msec] : ButtonGuideFrame : PlayButtonGuideScene
+[SceDiscPlayer] I/PSM.UI : SceneQ : Unloaded[0.06msec] : ButtonGuideSub : PlayButtonGuideSubScene
+[SceDiscPlayer] I/PSM.UI : SceneQ : Unloaded[0.04msec] : S3dHint.PrimaryScene : S3dOnHmdHintPrimaryScene
+[SceDiscPlayer] I/PSM.UI : SceneQ : Unloaded[0.03msec] : S3dHint : S3dOnHmdHintScene
+[SceDiscPlayer] I/PSM.UI : SceneQ : Unloaded[0.01msec] : S3dSetModeFrameScene.PrimaryScene : MessageFramePrimaryScene
+[SceDiscPlayer] I/PSM.UI : SceneQ : Unloaded[0.00msec] : S3dSetModeFrameScene : MessageFrameScene
+[SceDiscPlayer] I/PSM.UI : SceneQ : Unloaded[0.01msec] : HmuOnFrameScene.PrimaryScene : MessageFramePrimaryScene
+[SceDiscPlayer] I/PSM.UI : SceneQ : Unloaded[0.00msec] : HmuOnFrameScene : MessageFrameScene
+[SceDiscPlayer] I/PSM.UI : SceneQ : Unloaded[0.04msec] : PlaySceneSearchScene : PlaySceneSearchScene
+[SceDiscPlayer] I/PSM.UI : SceneQ : Unloaded[0.03msec] : BusyScene : BusyScene
+[Syscore App] Suspend process : 0x42 => 0
+[AppMgr Trace]: AppId=0x60000e0c suspended
+[Syscore App] Suspend App : 0x60000e0c NPXS20113 => SCE_OK
+[Syscore App]  ExpandCpuSetMode : enable
+[SceLncService] sceApplicationSuspend(0x60000e0c) returned
+[SceLncService] BlockingKill() appId={0x60000e0c}, titleId={NPXS20113}, is_coredumpFinished={0}, forceKill={0}
+[SceLncService] convertToSysCoreKillReason: {0x00000000}->{0x00000000}
+[Syscore App] Kill App : 0x60000e0c NPXS20113
+[Syscore App] Kill process: 0x42
+[mbus] onSessionKilled. pid=66
+[VCS]closeSession() [APP->VCS] clientPid = 0x42.
+[VCS]closeSession() [APP->VCS] clientPid = 0x42.
+@ removeSession:L184
+ontext.cc:189 (ajmContextCleanup) - Codec MP3 Decoder was not properly unregistered.
+Context.cc:189 (ajmContextCleanup) - Codec ATRAC9 Decoder was not properly unregistered.
+[KERNEL] dmem_handle_vmspace_exited map #0 0xffffe31c2c95e780
+[KERNEL] dmem_handle_vmspace_exited pid: 66, app_maps_count[1], 1 -> 0
+[Syscore App] EVFILT_PROC NOTE_EXIT received : pid=0x42
+[Syscore App] Kill process: 0x42 => 0
+[AppMgr Trace]: pid=0x42, deleted.
+[Syscore App] Syscore Event Queue Push : SCE_SYSCORE_EVENT_ON_PROCESS_UNLOADED
+[AppMgr] All processes exited
+[Syscore App] Syscore Event Queue Push : SCE_SYSCORE_EVENT_ON_APP_UNLOADED
+[AppMgr Trace]: AppId=0x60000e0c  deleted
+[Syscore App] Kill App : 0xffffffff  => 0
+[Syscore App] blockingKill(0x60000e0c, 0) complete
+[AppMgr] checkAppTerminated invalid app.
+[Syscore App]  ExpandCpuSetMode : enable
+[Syscore App] Syscore Event Queue Pop : SCE_SYSCORE_EVENT_ON_PROCESS_UNLOADED
+[SceLncService] start unmountAllForShellCoreInternal()
+[Syscore App] Syscore Event Queue Pop : SCE_SYSCORE_EVENT_ON_APP_UNLOADED
+[SceLncService] unmount path = {/mnt/sandbox/NPXS20113_000/disc}
+[SceLncService] end unmountAllForShellCoreInternal()
+[Syscore App] process delete event : pid=0x42
+[SceLncUtil] blockAppSuspend: name={SceNpUds}, appId={0x60000100}, refCount={1}
+[SceLncUtil] unblockAppSuspend: name={SceNpUds}, appId={0x60000100}, refCount={0}
+[libSceSaveData] wait 0 msec for session killed
+[SceRnpsAppMgr] UnblockAllAppInstall(): NPXS20113(appId=0x60000e0c)
+[UIProcess] malloc stats freeSize:41186272 (98%) inuseSize:756768 peakSize:757344 [pid:0x3a]
+[SceLncService] ProcessTerm()
+[sceProcessStarter] ProcessTerm() big/mini app title_id = [NPXS20113] root_dir = [/mnt/sandbox/NPXS20113_000]
+[sceProcessStarter] UnMountDownloadData() mount_path = [/mnt/sandbox/download/NPXS20113]
+[BGFT] [641] GameStopped(NPXS20113, 3) start
+Error: W:\Build\J02690785\vsh\common_lib\app_inst_util_addcont\app_inst_util_addcont.cpp at 161
+hdb.GetAppInfo() = 80f50005
+[BGFT] [643] GameStopped(NPXS20113, 3) end
+[SceLncService] ProcessTerm() returned
+[SceLncService] convertToSysCoreKillReason: {0x00000000}->{0x00000000}
+[SceSystemStateMgr] Power Mode Change: FULL_GAME
+[VCS]checkApplicationStatus() [LNC->VCS] App was Killed. appId = 0x60000e0c.
+[SceLncService] onAppExit() appId={0x60000e0c}
+[Syscore Umd] Switching to Base mode.
+[Syscore App] W:\Build\J02690760\sys\internal\syscore\app/process_monitor.h(220) m_currentMode=0
+[SceSystemStateMgr] CPU  HLT CP SE CU ACLK DCLK ECLK LCLK SCLK SAMCLK VCLK DispCLK NCLK MemCLK MemP GMC DPM VDD      VDDNB    SOC      
+[SceSystemStateMgr] 1600   0 BC  2 18  800  673  711  800  800    800  711     673 1400   1375 GAME  BC   3 05a/981  054/1000 00740f30
+[SceLncService] PrepareProcessLaunchDir()
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [ContentAreaScene : ContentAreaScene] -> [SplashScreen : SplashScreenScene]
+[SceShellUI] I/PSM.UI :      Scene [SplashScreen : SplashScreenScene] : Alive
+SetDeviceIndexBehavior: mode=MergeAllConnectedDevice, param=null
+[Theme/I] : ActiveUserChanged : From : [BLUE(userId = 1b6ebedc)]
+[Theme/I] : ActiveUserChanged : To   : [ANONYMOUS(userId = ffffffff)]
+[Theme/I] : Apply [ANONYMOUS] : [Option:101000]: with not preloaded user
+[BGFT] [571] GameStartBoot(AZIF00003, 7) start
+[BGFT] [573] GameStartBoot(AZIF00003, 7) end
+[AppDb] GetMediaDiscThumbnailPath()[294]: DiscThumbnailHddPath=[/user/temp/media_event_listener/thumbnail/logo.jpg]
+[AppDb] GetMediaDiscThumbnailPath()[294]: DiscThumbnailHddPath=[/user/temp/media_event_listener/thumbnail/logo.jpg]
+[AppDb] GetMediaDiscTitleName()[285]: [PFS] mount [0x00001d2deeb92a71] finished 1 1 1 1 0 1 1
+DiscTitleName=[HenLoader LP]
+[PFS] mount [0x00001d2deebeb51e] finished 1 0 0 1 0 1 1
+[BGFT] [606] GameWillStart(AZIF00003, 7) start
+[BGFT] [608] GameWillStart(AZIF00003, 7) end
+[SceLncService] PrepareProcessLaunchDir() returned
+[SceLncService] spawnApp
+[Syscore App] createApp AZIF00003
+[Syscore App]  Expa[ndCpuSetMode : disable
+[Syscore App] processSpawn(pid, 0x60000f0c, 0x10f0c190, appParam, processParam, 1, 1, 1, param, debug, 0)
+[Syscore App] appParam: appType = 0x1, rootPath = /mnt/sandbox/AZIF00003_000, titleId = AZIF00003
+[Syscore App] processParam: elfPath = /app0/eboot.bin, fullPath = /mnt/sandbox/pfsmnt/AZIF00003-app0-patch0-union/eboot.bin
+[Syscore App] new pid=0x48[Syscore App] attributeExe= 0
+[Syscore App] Ready to exec
+[Syscore App] wait for NOTE_EXIT|NOTE_EXEC
+[SceShellUI] W/PSM.UI : UIImage.Create(): Failed to create Image from '/user/appmeta/push_resource/CUSA01780/icon0.png'
+[SceShellUI] W/PSM.UI : UIImage.Create(): Failed to create Image from '/user/appmeta/push_resource/NPXS20107/icon0_17.png'
+[AppDb] GetMediaDiscThumbnailPath()[294]: DiscThumbnailHddPath=[/user/temp/media_event_listener/thumbnail/logo.jpg]
+KERNEL] dmem_start_app_process pid: 72, map=0xffffe31c2c95e018, app_maps_count[1], 0 -> 1
+[Syscore App] Add event : pid=0xm48
+[AppMgr Trace]: New Process, pid=0x48, created.
+[AppMgr Trace]: New App, appId=0x60000f0c, created
+[Syscore App]  ExpandCpuSetMode : disable
+[SceLncUtil] blockAppSuspend: name={SceNpUds}, appId={0x60000100}, refCount={1}
+[SceLncUtil] unblockAppSuspend: name={SceNpUds}, appId={0x60000100}, refCount={0}
+[AppDb] openDb()[1063]: [File:Open] openDb() call dbutil::Connection::Open() path[/X2YFFjF7O2/priv/mms/app.db] flags[0x10000002] result[0x0, 0]
+[AppDb] AppInfoDbInitializeDaemon()[54]: [File:Open] AppInfoDbInitializeDaemon() call DbAccessor::Init() path[/X2YFFjF7O2/priv/mms/app.db] result[0x0, 0].
+[SL] AppFocusChanged [NPXS20001] -> [AZIF00003]
+[AppDb] AppInfoDbTerminateDaemon()[67]: [File:Close] AppInfoDbTerminateDaemon() call DbAccessor::Terminate().
+[AppDb] Terminate()[768]: [File:Close] DbAccessor::Terminate() call dbutil::Connection::Close().
+DBG: Process 72 untraced!
+<72> EXEC /app0/eboot.bin [system[VCS]checkFocusStatus() [LNC->VCS] Focus Change. appType = 4(MINI_APP). appId = 0x60000f0c.
+], vm#0, dmem#0  <222040 msec>
+[GoldHEN] <Plugins Loader> Started successfully
+[GoldHEN] <Plugins Loader> Loaded 0 plugin(s)
+(../game_patch/source/main.cpp:354) [GoldHEN] <game_patch\Ver.0x00000110> module_start
+(../game_patch/source/main.cpp:355) [GoldHEN] Plugin Author(s): illusion
+(../game_patch/source/main.cpp:356) Commit: caacf01174654235459d48ab9d0b9e00a588b300 Branch: main Build: 188 (Release)
+(../game_patch/source/main.cpp:356) Built: May 27 2023 @ 04:49:25
+(../game_patch/source/main.cpp:356) GoldHEN SDK Ver: 0x00000100
+(../game_patch/source/main.cpp:356) GoldHEN System SDK Ver: 0xffffffff
+(../game_patch/source/main.cpp:324) numModules: 5
+(../game_patch/source/main.cpp:328) ret 0x0
+(../game_patch/source/main.cpp:329) module 0
+(../game_patch/source/main.cpp:330) name: eboot.bin
+(../game_patch/source/main.cpp:331) start: 0x400000
+(../game_patch/source/main.cpp:332) size: 49152 (0xc000)
+(../game_patch/source/main.cpp:365) Module start: 0x400000 0xc000
+(../game_patch/source/main.cpp:371) process info
+(../game_patch/source/main.cpp:371) pid: 72
+(../game_patch/source/main.cpp:371) name: eboot.bin
+(../game_patch/source/main.cpp:371) path: /app0/eboot.bin
+(../game_patch/source/main.cpp:371) titleid: AZIF00003
+(../game_patch/source/main.cpp:371) contentid: IV0000-AZIF00003_00-PAYLOADGUEST0000
+(../game_patch/source/main.cpp:371) version: 0.98
+(../game_patch/source/main.cpp:371) base_address: 0x400000
+(../game_patch/source/main.cpp:130) file /data/GoldHEN/patches/xml/AZIF00003.xml not found
+error: 0x80020002(../aio_fix_505/source/main.c:311) [GoldHEN] <async_io_fix\Ver.0x00000100> module_start
+(../aio_fix_505/source/main.c:312) [GoldHEN] Plugin Author(s): jocover
+(../aio_fix_505/source/main.c:313) Commit: caacf01174654235459d48ab9d0b9e00a588b300 Branch: main Build: 188 (Release)
+(../aio_fix_505/source/main.c:313) Built: May 27 2023 @ 04:49:24
+(../aio_fix_505/source/main.c:313) GoldHEN SDK Ver: 0x00000100
+(../aio_fix_505/source/main.c:313) GoldHEN System SDK Ver: 0xffffffff
+[Detour] Detour_DetourFunction64: - InstructionSize: 15
+[Detour] Detour_DetourFunction64: Detour Written Successfully! (FunctionPtr: 800016660 - HookPtr: 8002a8080 - HookPtrTrampoline: 200000000 - StubPtr: 200004000 - StubSize: 29)
+[Detour] Detour_DetourFunction64: - InstructionSize: 16
+[Detour] Detour_DetourFunction64: Detour Written Successfully! (FunctionPtr: 800016690 - HookPtr: 8002a8090 - HookPtrTrampoline: 200008000 - StubPtr: 20000c000 - StubSize: 30)
+[Detour] Detour_DetourFunction64: - InstructionSize: 14
+[Detour] Detour_DetourFunction64: Detour Written Successfully! (FunctionPtr: 800016630 - HookPtr: 8002a80c0 - HookPtrTrampoline: 200010000 - StubPtr: 200014000 - StubSize: 28)
+[Detour] Detour_DetourFunction64: - InstructionSize: 16
+[Detour] Detour_DetourFunction64: Detour Written Successfully! (FunctionPtr: 800016a20 - HookPtr: 8002a8120 - HookPtrTrampoline: 200018000 - StubPtr: 20001c000 - StubSize: 30)
+[Detour] Detour_DetourFunction64: - InstructionSize: 14
+[Detour] Detour_DetourFunction64: Detour Written Successfully! (FunctionPtr: 800016a80 - HookPtr: 8002a8150 - HookPtrTrampoline: 200020000 - StubPtr: 200024000 - StubSize: 28)
+[Detour] Detour_DetourFunction64: - InstructionSize: 16
+[Detour] Detour_DetourFunction64: Detour Written Successfully! (FunctionPtr: 800016ae0 - HookPtr: 8002a81b0 - HookPtrTrampoline: 200028000 - StubPtr: 20002c000 - StubSize: 30)
+[Detour] Detour_DetourFunction64: - InstructionSize: 14
+[Detour] Detour_DetourFunction64: Detour Written Successfully! (FunctionPtr: 800016ab0 - HookPtr: 8002a8200 - HookPtrTrampoline: 200030000 - StubPtr: 200034000 - StubSize: 28)
+[Detour] Detour_DetourFunction64: - InstructionSize: 15
+[Detour] Detour_DetourFunction64: Detour Written Successfully! (FunctionPtr: 800016990 - HookPtr: 8002a8290 - HookPtrTrampoline: 200038000 - StubPtr: 20003c000 - StubSize: 29)
+[Detour] Detour_DetourFunction64: - InstructionSize: 20
+[Detour] Detour_DetourFunction64: Detour Written Successfully! (FunctionPtr: 8000166f0 - HookPtr: 8002a8350 - HookPtrTrampoline: 200040000 - StubPtr: 200044000 - StubSize: 34)
+[Detour] Detour_DetourFunction64: - InstructionSize: 14
+[Detour] Detour_DetourFunction64: Detour Written Successfully! (FunctionPtr: 800016b40 - HookPtr: 8002a84a0 - HookPtrTrampoline: 200048000 - StubPtr: 20004c000 - StubSize: 28)
+[Detour] Detour_DetourFunction64: - InstructionSize: 14
+[Detour] Detour_DetourFunction64: Detour Written Successfully! (FunctionPtr: 800016b80 - HookPtr: 8002a8620 - HookPtrTrampoline: 200050000 - StubPtr: 200054000 - StubSize: 28)
+[Detour] Detour_DetourFunction64: - InstructionSize: 14
+[Detour] Detour_DetourFunction64: Detour Written Successfully! (FunctionPtr: 800016bc0 - HookPtr: 8002a87c0 - HookPtrTrampoline: 200058000 - StubPtr: 20005c000 - StubSize: 28)
+[Detour] Detour_DetourFunction64: - InstructionSize: 14
+[Detour] Detour_DetourFunction64: Detour Written Successfully! (FunctionPtr: 800016c00 - HookPtr: 8002a8950 - HookPtrTrampoline: 200060000 - StubPtr: 200064000 - StubSize: 28)
+[32m[Info ] src/ChainLauncher.c:22: Loading "/app0/guest.elf"[0m
+[SceLncService] tryLockSuspendBl[ock: appId={0x60000f0c}
+[Syscore App] Kill for LoadExec(0x48)
+KERNEL] dmem_handle_vmspace_exited pid: 72, ptype=1, 0xffffe31c2c95e018->pt_loaded is TRUE
+[KERNEL] dmem_handle_vmspace_exited map #0 0xffffffffffffffff
+[KERNEL] dmem_handle_vmspace_exited pid: 72, app_maps_count[1], 1 -> 0
+[Syscore App] EVFILT_PROC NOTE_EXIT received : pid=0x48
+[Syscore App] Kill for LoadExec(0x48) => 0
+[Syscore App] process delete event : pid=0x48
+[AppMgr Trace]: pid=0x48, deleted.
+[Syscore App] Syscore Event Queue Push : SCE_SYSCORE_EVENT_ON_PROCESS_UNLOADED
+[AppMgr] All processes exited, ready for next spawn
+[AppMgr] Executing next spawn
+[Syscore App]  ExpandCpuSetMode : disable
+[Syscore App] Syscore Event Queue Pop : SCE_SYSCORE_EVENT_ON_PROCESS_UNLOADED
+[Syscore App] processSpawn(pid, 0x60000f0c, 0x10f0c1a0, appParam, processParam, 1, 1, 1, param, debug, 1)
+[Syscore App] appParam: appType[ = 0x1, rootPath = /mnt/sandbox/AZIF00003_000, titleId = AZIF00003
+[Syscore App] processParam: elfPath = /app0/guest.elf, fullPath = /mnt/sandbox/pfsmnt/AZIF00003-app0-patch0-union/eboot.bin
+[Syscore App] new pid=0x49[Syscore App] attributeExe= 0
+[Syscore App] Ready to exec
+[Syscore App] wait for NOTE_EXIT|NOTE_EXEC
+KERNEL] dmem_start_app_process pid: 73, map=0xffffe31c2c95dda0, app_maps_count[1], 0 -> 1
+[Syscore App] Add event : pid=0xm49
+[SceLncService] unlockSuspendBlock: appId={0x60000f0c}
+DBG: Process 73 untraced!
+<73> EXEC /app0/guest.elf [system], vm#0, dmem#0  <222884 msec>
+[GoldHEN] <Plugins Loader> Started successfully
+[GoldHEN] <Plugins Loader> Loaded 0 plugin(s)
+(../game_patch/source/main.cpp:354) [GoldHEN] <game_patch\Ver.0x00000110> module_start
+(../game_patch/source/main.cpp:355) [GoldHEN] Plugin Author(s): illusion
+(../game_patch/source/main.cpp:356) Commit: caacf01174654235459d48ab9d0b9e00a588b300 Branch: main Build: 188 (Release)
+(../game_patch/source/main.cpp:356) Built: May 27 2023 @ 04:49:25
+(../game_patch/source/main.cpp:356) GoldHEN SDK Ver: 0x00000100
+(../game_patch/source/main.cpp:356) GoldHEN System SDK Ver: 0xffffffff
+(../game_patch/source/main.cpp:324) numModules: 5
+(../game_patch/source/main.cpp:328) ret 0x0
+(../game_patch/source/main.cpp:329) module 0
+(../game_patch/source/main.cpp:330) name: guest.elf
+(../game_patch/source/main.cpp:331) start: 0x400000
+(../game_patch/source/main.cpp:332) size: 851968 (0xd0000)
+(../game_patch/source/main.cpp:365) Module start: 0x400000 0xd0000
+(../game_patch/source/main.cpp:371) process info
+(../game_patch/source/main.cpp:371) pid: 73
+(../game_patch/source/main.cpp:371) name: guest.elf
+(../game_patch/source/main.cpp:371) path: /app0/guest.elf
+(../game_patch/source/main.cpp:371) titleid: AZIF00003
+(../game_patch/source/main.cpp:371) contentid: IV0000-AZIF00003_00-PAYLOADGUEST0000
+(../game_patch/source/main.cpp:371) version: 0.98
+(../game_patch/source/main.cpp:371) base_address: 0x400000
+(../game_patch/source/main.cpp:130) file /data/GoldHEN/patches/xml/AZIF00003.xml not found
+error: 0x80020002(../aio_fix_505/source/main.c:311) [GoldHEN] <async_io_fix\Ver.0x00000100> module_start
+(../aio_fix_505/source/main.c:312) [GoldHEN] Plugin Author(s): jocover
+(../aio_fix_505/source/main.c:313) Commit: caacf01174654235459d48ab9d0b9e00a588b300 Branch: main Build: 188 (Release)
+(../aio_fix_505/source/main.c:313) Built: May 27 2023 @ 04:49:24
+(../aio_fix_505/source/main.c:313) GoldHEN SDK Ver: 0x00000100
+(../aio_fix_505/source/main.c:313) GoldHEN System SDK Ver: 0xffffffff
+[Detour] Detour_DetourFunction64: - InstructionSize: 15
+[Detour] Detour_DetourFunction64: Detour Written Successfully! (FunctionPtr: 800016660 - HookPtr: 8002a8080 - HookPtrTrampoline: 200000000 - StubPtr: 200004000 - StubSize: 29)
+[Detour] Detour_DetourFunction64: - InstructionSize: 16
+[Detour] Detour_DetourFunction64: Detour Written Successfully! (FunctionPtr: 800016690 - HookPtr: 8002a8090 - HookPtrTrampoline: 200008000 - StubPtr: 20000c000 - StubSize: 30)
+[Detour] Detour_DetourFunction64: - InstructionSize: 14
+[Detour] Detour_DetourFunction64: Detour Written Successfully! (FunctionPtr: 800016630 - HookPtr: 8002a80c0 - HookPtrTrampoline: 200010000 - StubPtr: 200014000 - StubSize: 28)
+[Detour] Detour_DetourFunction64: - InstructionSize: 16
+[Detour] Detour_DetourFunction64: Detour Written Successfully! (FunctionPtr: 800016a20 - HookPtr: 8002a8120 - HookPtrTrampoline: 200018000 - StubPtr: 20001c000 - StubSize: 30)
+[Detour] Detour_DetourFunction64: - InstructionSize: 14
+[Detour] Detour_DetourFunction64: Detour Written Successfully! (FunctionPtr: 800016a80 - HookPtr: 8002a8150 - HookPtrTrampoline: 200020000 - StubPtr: 200024000 - StubSize: 28)
+[Detour] Detour_DetourFunction64: - InstructionSize: 16
+[Detour] Detour_DetourFunction64: Detour Written Successfully! (FunctionPtr: 800016ae0 - HookPtr: 8002a81b0 - HookPtrTrampoline: 200028000 - StubPtr: 20002c000 - StubSize: 30)
+[Detour] Detour_DetourFunction64: - InstructionSize: 14
+[Detour] Detour_DetourFunction64: Detour Written Successfully! (FunctionPtr: 800016ab0 - HookPtr: 8002a8200 - HookPtrTrampoline: 200030000 - StubPtr: 200034000 - StubSize: 28)
+[Detour] Detour_DetourFunction64: - InstructionSize: 15
+[Detour] Detour_DetourFunction64: Detour Written Successfully! (FunctionPtr: 800016990 - HookPtr: 8002a8290 - HookPtrTrampoline: 200038000 - StubPtr: 20003c000 - StubSize: 29)
+[Detour] Detour_DetourFunction64: - InstructionSize: 20
+[Detour] Detour_DetourFunction64: Detour Written Successfully! (FunctionPtr: 8000166f0 - HookPtr: 8002a8350 - HookPtrTrampoline: 200040000 - StubPtr: 200044000 - StubSize: 34)
+[Detour] Detour_DetourFunction64: - InstructionSize: 14
+[Detour] Detour_DetourFunction64: Detour Written Successfully! (FunctionPtr: 800016b40 - HookPtr: 8002a84a0 - HookPtrTrampoline: 200048000 - StubPtr: 20004c000 - StubSize: 28)
+[Detour] Detour_DetourFunction64: - InstructionSize: 14
+[Detour] Detour_DetourFunction64: Detour Written Successfully! (FunctionPtr: 800016b80 - HookPtr: 8002a8620 - HookPtrTrampoline: 200050000 - StubPtr: 200054000 - StubSize: 28)
+[Detour] Detour_DetourFunction64: - InstructionSize: 14
+[Detour] Detour_DetourFunction64: Detour Written Successfully! (FunctionPtr: 800016bc0 - HookPtr: 8002a87c0 - HookPtrTrampoline: 200058000 - StubPtr: 20005c000 - StubSize: 28)
+[Detour] Detour_DetourFunction64: - InstructionSize: 14
+[Detour] Detour_DetourFunction64: Detour Written Successfully! (FunctionPtr: 800016c00 - HookPtr: 8002a8950 - HookPtrTrampoline: 200060000 - StubPtr: 200064000 - StubSize: 28)
+**** Base Mode ****
+[36m[Debug] src/App.cpp:29: Initialize Language...[0m
+[36m[Debug] src/App.cpp:31: Initialize Controller...[0m
+[mbus] onNewClient. clientNum 10 over 8
+[36m[Debug] src/App.cpp:33: Initialize Graphics...[0m
+[36m[Debug] src/Graphics.cpp:89: Handle is 1309737216 (0x4e110100)[0m
+[36m[Debug] src/Graphics.cpp:181: DirectMemOff: 0x200000[0m
+[36m[Debug] src/Graphics.cpp:182: DirectMemAllocationSize: 0xc000000[0m
+[36m[Debug] src/Graphics.cpp:183: alignment: 2097152 (0x00200000)[0m
+[36m[Debug] src/Graphics.cpp:188: VideoMem: 0x200200000[0m
+[36m[Debug] src/Graphics.cpp:109: Allocating framebuffer...[0m
+[36m[Debug] src/Graphics.cpp:237: handle: 1309737216 (0x4e110100)[0m
+[36m[Debug] src/Graphics.cpp:239: flipArgLog: 0x20006c160[0m
+[36m[Debug] src/Graphics.cpp:240: FrameBuffers: 0x20006c280[0m
+[36m[Debug] src/Graphics.cpp:255: sceVideoOutRegisterBuffers: 0x00000000[0m
+[36m[Debug] src/App.cpp:35: Initialize Resource...[0m
+[36m[Debug] src/Graphics.cpp:627: Loading PNG...[0m
+[36m[Debug] src/Graphics.cpp:637: PNG Loaded![0m
+[36m[Debug] src/Graphics.cpp:627: Loading PNG...[0m
+[36m[Debug] src/Graphics.cpp:637: PNG Loaded![0m
+[36m[Debug] src/Graphics.cpp:627: Loading PNG...[0m
+[36m[Debug] src/Graphics.cpp:637: PNG Loaded![0m
+[36m[Debug] src/Graphics.cpp:627: Loading PNG...[0m
+[36m[Debug] src/Graphics.cpp:637: PNG Loaded![0m
+[36m[Debug] src/Graphics.cpp:627: Loading PNG...[0m
+[36m[Debug] src/Graphics.cpp:637: PNG Loaded![0m
+[36m[Debug] src/Graphics.cpp:627: Loading PNG...[0m
+[36m[Debug] src/Graphics.cpp:637: PNG Loaded![0m
+[36m[Debug] src/Graphics.cpp:627: Loading PNG...[0m
+[36m[Debug] src/Graphics.cpp:637: PNG Loaded![0m
+[36m[Debug] src/App.cpp:43: Initialize the Main View...[0m
+[36m[Debug] src/PayloadsView.cpp:186: GeneratePayloads is called![0m
+[36m[Debug] src/PayloadsView.cpp:212: Cleanup payload list...[0m
+[36m[Debug] src/PayloadsView.cpp:206: GeneratePayloads: Refreshed[0m
+[36m[Debug] src/PayloadsView.cpp:252: PayloadsView: End of constructor[0m
+[36m[Debug] src/App.cpp:119: Application: RUN[0m
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [SplashScreen : SplashScreenScene] -> [AppScreen : ApplicationScreenScene]
+[SceShellUI] I/PSM.UI :      Scene [AppScreen : ApplicationScreenScene] : Alive
+SetDeviceIndexBehavior: mode=MergeAllConnectedDevice, param=null
+[Theme/I] : Apply [ANONYMOUS] : [Option:101000]: with not preloaded user
+[SceShellUI] I/PSM.UI : [NoDraw] : ClearFrameBuffer=False
+[36m[Debug] src/PayloadsView.cpp:319: Loading: /data/payloads/linux-1024mb.bin[0m
+[36m[Debug] src/Utility.cpp:189: MemoryProtectedGetWritableAddress writable=0x2000b0000[0m
+[36m[Debug] src/Utility.cpp:192: MemoryProtectedGetExecutableAddress executable=0x2000b0000[0m
+[36m[Debug] src/Utility.cpp:225: Exiting LaunchShellcode()[0m
+[36m[Debug] src/PayloadsView.cpp:186: GeneratePayloads is called![0m
+[36m[Debug] src/PayloadsView.cpp:212: Cleanup payload list...[0m
+[36m[Debug] src/PayloadsView.cpp:206: GeneratePayloads: Refreshed[0m
+[SceShellUI] I/PSM.UI : [FirstClear] : ClearFrameBuffer=False
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [AppScreen : ApplicationScreenScene] -> [ContentAreaScene : ContentAreaScene]
+[SceShellUI] I/PSM.UI :      Scene [ContentAreaScene : ContentAreaScene] : Alive
+SetDeviceIndexBehavior: mode=SpecificUser, param=0x1b6ebedc
+[Theme/I] : ActiveUserChanged : From : [ANONYMOUS(userId = ffffffff)]
+[Theme/I] : ActiveUserChanged : To   : [BLUE(userId = 1b6ebedc)]
+[Theme/I] : Apply [BLUE] : [Option:111111]: with preloaded user
+[SL] AppFocusChanged [AZIF00003] -> [NPXS20001]
+[VCS]checkFocusStatus() [LNC->VCS] Focus Change. appType = 1(SHELL_UI). appId = 0x60000201.
+GetPlusInfoJob : Run(Start)
+GetPlusInfoJob : Run(End)
+GetPlusInfoJob : Finish / Cancelled False / Result True
+[UpdateUserInfoforPlus] upd_userId : 460242652 / type : None
+D/88391:000000001
+[SceLncService] BG MiniApp Status: AZIF00003, RSS 7 MiB (+0.000 MiB), PageOut 0.000 MiB
+D/88391:
+D/88391:NPXS20108
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [ContentAreaScene : ContentAreaScene] -> [SystemArea : SystemAreaScene]
+[SceShellUI] I/PSM.UI :      Scene [SystemArea : SystemAreaScene] : Alive
+SetDeviceIndexBehavior: mode=SpecificUser, param=0x1b6ebedc
+[Theme/I] : Apply [BLUE] : [Option:111111]: with preloaded user
+[SceShellUI] I/PSM.UI : ** Unload enqueue: SystemAreaNotification : SystemAreaPluginNotification
+[SceShellUI] W/PSM.UI : WARNING : Scene LayoutBuild : [5.69msec/4widgets] : SystemAreaNotification : SystemAreaPluginNotification
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.01msec] Layout[5.69msec/4widgets] : SystemAreaNotification : SystemAreaPluginNotification
+[SceShellUI] I/PSM.UI : SceneQ : Unloaded[3.24msec] : SystemAreaNotification : SystemAreaPluginNotification
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.01msec] Layout[0.00msec/0widgets] : SystemAreaPSPlus : SystemAreaPluginPSPlus
+[SceShellCore] Libc Heap Status: free 37%, in-use 3828.8 KB, trend +2.4 KB/min, peak 4176.6 KB, when 218 [sec]
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [SystemArea : SystemAreaScene] -> []
+SetDeviceIndexBehavior: mode=SpecificUser, param=0x1b6ebedc
+[SceShellUI] W/PSM.UI : SystemSound called when there is no FocusActiveScene !
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.06msec] Layout[0.00msec/0widgets] : SettingsPlugin : SettingsApplication
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.00msec] Layout[0.00msec/0widgets] : Noname : FrameScene
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.00msec] Layout[0.00msec/0widgets] : NormalStack : SettingPageNormalStack
+sceRemoteplayInitialize: 0x80fc0003
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.00msec] Layout[0.00msec/0widgets] : SettingsBGScene : Scene
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [] -> [id_goldhen_menu : SettingPage]
+[SceShellUI] I/PSM.UI :      Scene [id_goldhen_menu : SettingPage] : Alive
+SetDeviceIndexBehavior: mode=SpecificUser, param=0x1b6ebedc
+[Theme/I] : Apply [BLUE] : [Option:111111]: with preloaded user
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.01msec] Layout[0.00msec/0widgets] : id_goldhen_menu : SettingPage
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [id_goldhen_menu : SettingPage] -> [id_goldhen_utils : SettingPage]
+[SceShellUI] I/PSM.UI :      Scene [id_goldhen_utils : SettingPage] : Alive
+SetDeviceIndexBehavior: mode=SpecificUser, param=0x1b6ebedc
+[Theme/I] : Apply [BLUE] : [Option:111111]: with preloaded user
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.00msec] Layout[0.00msec/0widgets] : id_goldhen_utils : SettingPage
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [id_goldhen_utils : SettingPage] -> [id_goldhen_utils_payloader : SettingPage]
+[SceShellUI] I/PSM.UI :      Scene [id_goldhen_utils_payloader : SettingPage] : Alive
+SetDeviceIndexBehavior: mode=SpecificUser, param=0x1b6ebedc
+[Theme/I] : Apply [BLUE] : [Option:111111]: with preloaded user
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.00msec] Layout[0.00msec/0widgets] : id_goldhen_utils_payloader : SettingPage
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [id_goldhen_utils_payloader : SettingPage] -> [id_goldhen_utils_payloader_launchpad : SettingPage]
+[SceShellUI] I/PSM.UI :      Scene [id_goldhen_utils_payloader_launchpad : SettingPage] : Alive
+SetDeviceIndexBehavior: mode=SpecificUser, param=0x1b6ebedc
+[Theme/I] : Apply [BLUE] : [Option:111111]: with preloaded user
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.00msec] Layout[0.00msec/0widgets] : id_goldhen_utils_payloader_launchpad : SettingPage
+kernel_init()
+Kernel base = ffffffff890f4000
+Direct map base = ffffe31c00000000
+Testing global variable access (write protection)...
+OK.
+Kernel interface initialized
+Installing sys_kexec to system call #153
+kexec_init() successful
+
+sys_kexec invoked
+========================================
+PS4 Linux Payloads AIO
+FW 12.52 (1252)
+VRAM 1024 MB
+Southbridge: Baikal
+========================================
+sys_kexec(0x201054000, 18727936, 0x202234000, 14428842, "panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0 drm.debug=0x06 earlycon=uart8250,mmio32,0xC890E000 console=uart8250,mmio32,0xC890E000 console=tty0 earlyprintk=efi,keep loglevel=8 root=LABEL=psxitarch rw rootdelay=10 systemd.unified_cgroup_hierarchy=0 systemd.legacy_systemd_cgroup_controller=yes audit=0 amdgpu.audio=1 usbcore.autosuspend=-1 video=HDMI-A-1:1920x1080@60 mitigations=off zswap.enabled=1 log_buf_len=4M libata.force=1.00:3.0Gbps,noncq ahci.mobile_lpm_policy=1 netconsole=@192.168.0.2/eth0,6666@192.168.0.1/ff:ff:ff:ff:ff:ff")
+firmware_extract: Extract [SceLncService] BG MiniApp Status: AZIF00003, RSS 7 MiB (-0.016 MiB), PageOut 0.016 MiB
+lib/firmware/amdgpu/gladius_pfp.bin 
+Copying PFP firmware
+NOP handler at 0xff0
+firmware_extract: Extract lib/firmware/amdgpu/gladius_me.bin 
+Copying ME firmware
+firmware_extract: Extract lib/firmware/amdgpu/gladius_ce.bin 
+Copying CE firmware
+NOP handler at 0x7f0
+firmware_extract: Extract lib/firmware/amdgpu/gladius_mec.bin 
+Copying MEC firmware
+NOP handler at 0xff0
+firmware_extract: Extract lib/firmware/amdgpu/gladius_mec2.bin 
+Copying MEC2 firmware
+NOP handler at 0xff0
+firmware_extract: Extract lib/firmware/amdgpu/gladius_rlc.bin 
+Copying RLC firmware
+firmware_extract: Extract lib/firmware/amdgpu/gladius_sdma.bin 
+Copying SDMA firmware
+firmware_extract: Extract lib/firmware/amdgpu/gladius_sdma1.bin 
+Copying SDMA1 firmware
+
+kexec parameters:
+    Kernel image size:   18727936 bytes
+    Initramfs size:      14525614 bytes (14428842 from user)
+    Kernel command line: panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0 drm.debug=0x06 earlycon=uart8250,mmio32,0xC890E000 console=uart8250,mmio32,0xC890E000 console=tty0 earlyprintk=efi,keep loglevel=8 root=LABEL=psxitarch rw rootdelay=10 systemd.unified_cgroup_hierarchy=0 systemd.legacy_systemd_cgroup_controller=yes audit=0 amdgpu.audio=1 usbcore.autosuspend=-1 video=HDMI-A-1:1920x1080@60 mitigations=off zswap.enabled=1 log_buf_len=4M libata.force=1.00:3.0Gbps,noncq ahci.mobile_lpm_policy=1 netconsole=@192.168.0.2/eth0,6666@192.168.0.1/ff:ff:ff:ff:ff:ff
+    Kernel image buffer: 0xffffffffffffffff
+    Initramfs buffer:    0xffffe31d01000000
+kernel_hook_install(0xffffff8071ee10f4, 0xffffffff8953bb10)
+  Using 64bit absolute jump
+******************************************************
+kexec successfully armed. Please shut down the system.
+******************************************************
+
+[KE]sceCameraDevKill::2685 ERROR: sceCameraProcConfigStop 0x802e0006 i=0 handle=257 pid=43
+Context.cc:174 (ajmContextCleanup) - InstaCnontexct.cce 2:7815374 2 was (ajmnConteoxtt[CK lERNpeEarnL]ouppe r)d ml-yem_  Idhaenssndtle_tvamnrscpoeacy eed1_.6exit3e
+d89  Copiwnadt:s e 7xno3, ptt t.pypecr=co:1, p10e8xfffferl39y  1c2(cad9jesm5Ctddora0ony-te>ped.txtC_ll
+oaCedoanuedpn )tiesx TRUE t
+-[.K CocEdcRNe:Ec1L Op8] u9ds m (aem_SjhanImdlLCeK_vms poEnanteccoe_edxteCr waxiteds m lenap #o0ta 0n puxrpffff)oep 3e1-c2 cr9Co5ldyec du dMan0Pre
+g3 [iKDeERcsNEtoLed] dmrered em_ha.wa
+nsCdo lneno_tvtme xpspta.rcope_exceicrt:l1y7 ed 4upnrei gid(s:a j7tm3er,Co eadn.pt
+exCp_tmCoalnpetsea_cxount[1n]tu, 1 p.-cc:>1) 809 
+ -( ajInsmCtonatnexce 344067 watCsl eanot pnroperluyp) de -stroyed.
+ContexCot.ntccext.cc::181899  ((aajmContjmeCxotCleanup) n-t Codec Oepus xSItLK EnCcleoder anwas nuopt pro)perly  - Cunrodeegisctered. 
+OCpousnte Dxt.cceco:de189 (ajmContextClre anuwap) -s C noot pderco Opuspe CELTC ontexEtn.cc:189 c(odeajmConrt extCwleanup)as - n oCodt ecp roOppus CELTe rlEny coder wausn rnot propeegrly unregistisetreed.
+rCoentext.cdc:18.
+9 (ajmContexCtoCnleanup) - CodecC onOptuext.cc:1s 89 C(ajmEContexLTtC leanuDep) cod- eCodecr  waCELP8 sDeco der wnas noott p roproperly puernregistlyered.
+ Conteunrext.cc:189 (gaijmCosntexttCeleranup)e -d Codec .CELP8
+ Encoder texwta.cs not prco:1perly 8u9 (ajnregisteremdCo.n
+textCColentexatn.cc:u1p8)9 (ajm C- oContextdeClc eanup) - OpCuso decD eCELPc(16)od Deerc odewar ws anos not pt rpoproerpleryl unregistery uenregd.
+iContext.stcec:191 (arejmdCo.n
+textClearnup) - lMyore c uodecs were nnot prroperegliy unregiststered...
+ered.
+ Codec ATRACC9o nDtext.cec:c1od8e9 (ajr wmConteasx ntCleanup) o- tC odec MprPEG4o AAC Encodpeerlr was not yproperly u nrueginrstered.eg
+istered.
+Context.cc:174 (ajmContextCleanup) - Instance 114689 was not properly destroyed.
+Context.cc:189 (ajmContextCleanup) - Codec AC3 Encoder was not properly unregistered.
+Context.cc:174 (ajmContextCleanup) - Instance 163842 was not properly destroyed.
+Context.cc:189 (ajmContextCleanup) - Codec DTS Encoder was not properly unregistered.
+[SceSysCore mini] killall timeout 5[sec]...
+[SceSysCore mini] forcibly unmount 2 nullfses
+[SceSysCore mini] forcibly unmount /mnt/usb0
+[SceSysCore mini[REGMGR] 000006 ...
+] sceKernelPollE[ventFlag(reboot_flag): failed 80020010
+[SceSysCore mini] call reboot(4000)
+REGMGR] (    243.865 sec) 010006 ...
+[REGMGR] (   0.011771 sec) 010007 ...
+[REGMGR] 000108 ...
+Waiting (max 60 seconds) for system process `SceVnlru' to stop...done
+Waiting (max 60 seconds) for system process `SceBufdaemon0' to stop...SD Manual Tuning done. MaxPassWindowSize=23, TunePoint=11 CORE_CTRL=0x58408b
+done
+Waiting (max 60 seconds) for system process `SceBufdaemon1' to stop...done
+Wa
+iting Sy(max nc60 seconids)ng for s dysitem pskrsocess `,SceS yncer'vn too dsteops ...remaining...1 1 0 0 sched_sync: flush softdep (iter=2)
+sched_sync: flush softdep (iter=1)
+done
+Waiting (max 60 seconds) for system process `SceBufdaemon2' to stop...done
+All buffers synced.
+[PFS] umount[0x00001d2deebeb51e] finished 0
+[PFS] umount[0x00001d2deeb92a71] finished 0
+Uptime: 4m9s
+icc post sync:Thermal alert LED off
+Change memory pstate to MM failed(19)
+[REGMGR] 000007 @2@ ...
+icc08-4001 0802
+icc:failed to disabled reset button notification: 0005
+icc:disabled thermal notification
+ICC: howto:00004000 depth:2 cause:00 hand:01
+ICC: Shutdown.
+hook_icc_query_nowait called
+ICC 05-00 polling
+Fixing ACPI tables at 0xe0000 (0xffffffffffffffff)
+RSDT at 0xe0024
+XSDT at 0xe0088
+FACP at 0xe016c
+FACS at 0xe012c
+DSDT at 0xe0430
+APIC at 0xe0298
+MCFG at 0xe0304
+SSDT at 0xe0730
+ACPI tables fixed
+kexec: Waiting for secondary CPUs...
+kexec: Secondary CPUs quiesced
+kexec: Setting up GDT...
+kexec: Relocating stub...
+kexec: Setting up boot params...
+kexec: Cleaning up hardware...
+Current sb_id: 3
+
+SB_BAIKAL constant: 3
+
+kexec: Detected Baikal Southbridge, disabling IOMMU...
+kexec: Reconfiguring VRAM...
+kexec: Resetting GPU...
+kexec: About to relocate and jump to kernel
+[    0.000000] ps4: x86_ps4_early_setup: PS4 early setup
+[    0.000000] Linux version 7.0.8-Strawberry-ThinLTO-Baikal-+ (root@adsv2) (clang version 22.1.8, GNU ld (GNU Binutils) 2.46.1) #2 SMP PREEMPT_DYNAMIC Sat Jul 25 15:50:39 -03 2026
+[    0.000000] 
+[    0.000000]   _________ __                       ___.
+[    0.000000]  /   _____//  |_____________ __  _  _\_ |__   __________________ ___.__.
+[    0.000000]  \_____  \\   __\_  __ \__  \\ \/ \/ /| __ \_/ __ \_  __ \_  __ <   |  |
+[    0.000000]  /        \|  |  |  | \// __ \\     / | \_\ \  ___/|  | \/|  | \/\___  |
+[    0.000000] /_______  /|__|  |__|  (____  /\/\_/  |___  /\___  >__|   |__|   / ____|
+[    0.000000]         \/                  \/            \/     \/              \/
+[    0.000000] 
+[    0.000000]   Strawberry PS4 Linux
+[    0.000000]   Platform  : Sony PlayStation 4
+[    0.000000]   Focus     : BAIKAL
+[    0.000000]   Release   : 7.0.8-Strawberry-ThinLTO-Baikal-+
+[    0.000000]   Builder   : root@adsv2
+[    0.000000]   Toolchain : clang version 22.1.8, GNU ld (GNU Binutils) 2.46.1
+[    0.000000]   Build     : #2 SMP PREEMPT_DYNAMIC Sat Jul 25 15:50:39 -03 2026
+[    0.000000] 
+[    0.000000] Command line: panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0 drm.debug=0x06 earlycon=uart8250,mmio32,0xC890E000 console=uart8250,mmio32,0xC890E000 console=tty0 earlyprintk=efi,keep loglevel=8 root=LABEL=psxitarch rw rootdelay=10 systemd.unified_cgroup_hierarchy=0 systemd.legacy_systemd_cgroup_controller=yes audit=0 amdgpu.audio=1 usbcore.autosuspend=-1 video=HDMI-A-1:1920x1080@60 mitigations=off zswap.enabled=1 log_buf_len=4M libata.force=1.00:3.0Gbps,noncq ahci.mobile_lpm_policy=1 netconsole=@192.168.0.2/eth0,6666@192.168.0.1/ff:ff:ff:ff:ff:ff
+[    0.000000] KERNEL supported cpus:
+[    0.000000]   AMD AuthenticAMD
+[    0.000000] BIOS-provided physical RAM map:
+[    0.000000] BIOS-e820: [mem 0x0000000000000000-0x0000000000007fff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x0000000000008000-0x000000000007ffff]  device reserved
+[    0.000000] BIOS-e820: [mem 0x0000000000080000-0x0000000000099fff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x000000000009a000-0x00000000000bffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x00000000000c0000-0x00000000000dffff]
+[    0.000000] BIOS-e820: [mem 0x00000000000e0000-0x00000000000effff]  ACPI data
+[    0.000000] BIOS-e820: [gap 0x00000000000f0000-0x00000000000fffff]
+[    0.000000] BIOS-e820: [mem 0x0000000000100000-0x00000000003fffff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x0000000000400000-0x000000000047ffff]  device reserved
+[    0.000000] BIOS-e820: [mem 0x0000000000480000-0x000000000067ffff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x0000000000680000-0x00000000006fffff]  device reserved
+[    0.000000] BIOS-e820: [mem 0x0000000000700000-0x000000007efe7fff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x000000007efe8000-0x000000007efeffff]  ACPI NVS
+[    0.000000] BIOS-e820: [mem 0x000000007eff0000-0x000000007effffff]  ACPI data
+[    0.000000] BIOS-e820: [mem 0x000000007f000000-0x000000007fffffff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x0000000080000000-0x00000000fbffffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x00000000fc000000-0x00000000ffffffff]
+[    0.000000] BIOS-e820: [mem 0x0000000100000000-0x000000013fffffff]  device reserved
+[    0.000000] BIOS-e820: [mem 0x0000000140000000-0x000000027effffff]  System RAM
+[    0.000000] earlycon: uart8250 at MMIO32 0x00000000c890e000 (options '')
+[    0.000000] printk: legacy bootconsole [uart8250] enabled
+[    0.000000] Kernel compiled without mitigations, ignoring 'mitigations'; system may still be vulnerable
+[    0.000000] NX (Execute Disable) protection: active
+[    0.000000] APIC: Static calls initialized
+[    0.000000] SMBIOS 2.1 present.
+[    0.000000] DMI:  , BIOS unde Wed 09/22/2021 16:2
+[    0.000000] DMI: Memory slots populated: 1/1
+[    0.000000] ps4: EMC timer is broken.
+[    0.000000] ps4: Unable to measure TSC frequency, assuming default.
+[    0.000000] tsc: Detected 1594.000 MHz processor
+[    0.001341] e820: update [mem 0x00000000-0x00000fff] System RAM ==> device reserved
+[    0.009157] e820: remove [mem 0x000a0000-0x000fffff] System RAM
+[    0.015205] last_pfn = 0x27f000 max_arch_pfn = 0x400000000
+[    0.020805] MTRR map: 6 entries (3 fixed + 3 variable; max 20), built from 9 variable MTRRs
+[    0.029328] x86/PAT: Configuration [0-7]: WB  WC  UC- UC  WB  WP  UC- WT  
+[    0.036689] e820: update [mem 0x80000000-0x13fffffff] System RAM ==> device reserved
+[    0.044610] last_pfn = 0x80000 max_arch_pfn = 0x400000000
+[    0.058318] Using GB pages for direct mapping
+[    0.072883] printk: log buffer data + meta data: 4194304 + 17825792 = 22020096 bytes
+[    0.080795] printk: early log buf free: 61320(93%)
+[    0.085679] RAMDISK: [mem 0x101000000-0x101ddafff]
+[    0.090565] Allocated new RAMDISK: [mem 0x27cd23000-0x27dafd4ad]
+[    2.597571] Move RAMDISK from [mem 0x101000000-0x101dda4ad] to [mem 0x27cd23000-0x27dafd4ad]
+[    2.606229] ACPI: Early table checksum verification disabled
+[    2.612004] ACPI: RSDP 0x00000000000E0000 000024 (v02 SIE   )
+[    2.617871] ACPI: XSDT 0x00000000000E0088 00004C (v01 SIE    ORBIS    20121218 INTL 20110211)
+[    2.626579] ACPI: FACP 0x00000000000E016C 0000F4 (v04 SIE    ORBIS    20130205 INTL 20110211)
+[    2.635286] ACPI: DSDT 0x00000000000E0430 00018C (v02 SIE    ORBIS    20121002 INTL 20110211)
+[    2.643989] ACPI: FACS 0x00000000000E012C 000040
+[    2.648698] ACPI: FACS 0x00000000000E012C 000040
+[    2.653407] ACPI: APIC 0x00000000000E0298 00006C (v02 SIE    ORBIS    20120725 INTL 20110211)
+[    2.662110] ACPI: MCFG 0x00000000000E0304 00003C (v01 SIE    ORBIS    20120725 INTL 20110211)
+[    2.670811] ACPI: SSDT 0x00000000000E0730 0001EC (v01 AMD    POWERNOW 00000001 AMD  00000001)
+[    2.679513] ACPI: IVRS 0x00000000000E091C 000054 (v01 F0F    PS4KEXEC 20161225 KEXC 20161225)
+[    2.688215] ACPI: Reserving FACP table memory at [mem 0xe016c-0xe025f]
+[    2.694873] ACPI: Reserving DSDT table memory at [mem 0xe0430-0xe05bb]
+[    2.701530] ACPI: Reserving FACS table memory at [mem 0xe012c-0xe016b]
+[    2.708187] ACPI: Reserving FACS table memory at [mem 0xe012c-0xe016b]
+[    2.714843] ACPI: Reserving APIC table memory at [mem 0xe0298-0xe0303]
+[    2.721499] ACPI: Reserving MCFG table memory at [mem 0xe0304-0xe033f]
+[    2.728156] ACPI: Reserving SSDT table memory at [mem 0xe0730-0xe091b]
+[    2.734813] ACPI: Reserving IVRS table memory at [mem 0xe091c-0xe096f]
+[    2.742397] ACPI: No IOAPIC entries present
+[    2.746660] ACPI: Using ACPI for processor (LAPIC) configuration information
+[    2.753856] CPU topo: Max. logical packages:   1
+[    2.758561] CPU topo: Max. logical nodes:      1
+[    2.763266] CPU topo: Num. nodes per package:  1
+[    2.767975] CPU topo: Max. logical dies:       1
+[    2.772680] CPU topo: Max. dies per package:   1
+[    2.777396] CPU topo: Max. threads per core:   1
+[    2.782101] CPU topo: Num. cores per package:     8
+[    2.787070] CPU topo: Num. threads per package:   8
+[    2.792040] CPU topo: Allowing 8 present CPUs plus 0 hotplug CPUs
+[    2.798279] [gap 0xfc000000-0xffffffff] available for PCI devices
+[    2.804496] clocksource: refined-jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645519600211568 ns
+[    2.815189] Zone ranges:
+[    2.817765]   DMA      [mem 0x0000000000001000-0x0000000000ffffff]
+[    2.824069]   DMA32    [mem 0x0000000001000000-0x00000000ffffffff]
+[    2.830374]   Normal   [mem 0x0000000100000000-0x000000027effffff]
+[    2.836678] Movable zone start for each node
+[    2.841027] Early memory node ranges
+[    2.844667]   node   0: [mem 0x0000000000001000-0x0000000000007fff]
+[    2.851058]   node   0: [mem 0x0000000000080000-0x0000000000099fff]
+[    2.857449]   node   0: [mem 0x0000000000100000-0x00000000003fffff]
+[    2.863840]   node   0: [mem 0x0000000000480000-0x000000000067ffff]
+[    2.870231]   node   0: [mem 0x0000000000700000-0x000000007efe7fff]
+[    2.876622]   node   0: [mem 0x000000007f000000-0x000000007fffffff]
+[    2.883014]   node   0: [mem 0x0000000140000000-0x000000027effffff]
+[    2.889406] Initmem setup node 0 [mem 0x0000000000001000-0x000000027effffff]
+[    2.896605] On node 0, zone DMA: 1 pages in unavailable ranges
+[    2.902555] On node 0, zone DMA: 120 pages in unavailable ranges
+[    2.908697] On node 0, zone DMA: 102 pages in unavailable ranges
+[    2.914835] On node 0, zone DMA: 128 pages in unavailable ranges
+[    2.921005] On node 0, zone DMA: 128 pages in unavailable ranges
+[    2.936894] On node 0, zone DMA32: 24 pages in unavailable ranges
+[    2.967779] On node 0, zone Normal: 4096 pages in unavailable ranges
+[    2.974287] setup_percpu: NR_CPUS:8 nr_cpumask_bits:8 nr_cpu_ids:8 nr_node_ids:1
+[    2.982530] percpu: Embedded 45 pages/cpu s143384 r8192 d32744 u262144
+[    2.989210] pcpu-alloc: s143384 r8192 d32744 u262144 alloc=1*2097152
+[    2.995694] pcpu-alloc: [0] 0 1 2 3 4 5 6 7 
+[    3.000088] Kernel command line: panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0 drm.debug=0x06 earlycon=uart8250,mmio32,0xC890E000 console=uart8250,mmio32,0xC890E000 console=tty0 earlyprintk=efi,keep loglevel=8 root=LABEL=psxitarch rw rootdelay=10 systemd.unified_cgroup_hierarchy=0 systemd.legacy_systemd_cgroup_controller=yes audit=0 amdgpu.audio=1 usbcore.autosuspend=-1 video=HDMI-A-1:1920x1080@60 mitigations=off zswap.enabled=1 log_buf_len=4M libata.force=1.00:3.0Gbps,noncq ahci.mobile_lpm_policy=1 netconsole=@192.168.0.2/eth0,6666@192.168.0.1/ff:ff:ff:ff:ff:ff
+[    3.054137] audit: disabled (until reboot)
+[    3.060296] Dentry cache hash table entries: 1048576 (order: 11, 8388608 bytes, linear)
+[    3.069402] Inode-cache hash table entries: 524288 (order: 10, 4194304 bytes, linear)
+[    3.077461] software IO TLB: area num 8.
+[    3.111126] Built 1 zonelists, mobility grouping on.  Total pages: 1830409
+[    3.118155] mem auto-init: stack:off, heap alloc:off, heap free:off
+[    3.160289] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=8, Nodes=1
+[    3.167100] Dynamic Preempt: full
+[    3.170585] rcu: Preemptible hierarchical RCU implementation.
+[    3.176446] 	Trampoline variant of Tasks RCU enabled.
+[    3.181593] 	Tracing variant of Tasks RCU enabled.
+[    3.186476] rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.
+[    3.194217] RCU Tasks: Setting shift to 3 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=8.
+[    3.203109] NR_IRQS: 4352, nr_irqs: 128, preallocated irqs: 0
+[    3.209032] rcu: 	Offload RCU callbacks from CPUs: 0-7.
+[    3.214364] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[    3.221435] No irq handler for 0.49
+[    3.225022] Console: colour dummy device 80x25
+[    3.229556] printk: legacy console [tty0] enabled
+[    3.234355] printk: legacy bootconsole [uart8250] disabled

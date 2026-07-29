@@ -1411,13 +1411,20 @@ static void mts_send_rmu_frame(struct mts_priv *mp, u16 payload_cmd)
 
 static void mts_mac_enable(struct mts_priv *mp)
 {
+	dev_info(&mp->pdev->dev, "MAC_ENABLE: iniciando (stage=%d enable_phy_calib=%d)\n",
+		 stage, enable_phy_calib);
+
 	/*
 	 * Habilita os MAC cores. Orbis dc5a31f0 escreve 1 (bit 0) em
 	 * 0x34 e 0x38. O stop usa bit 1 (soft-reset, dc5a3060) e nunca
 	 * clear bit 0 — o Orbis nunca escreve 0 nestes registradores.
 	 */
+	dev_info(&mp->pdev->dev, "MAC_ENABLE: pre 0x34=0x%08x 0x38=0x%08x\n",
+		 mts_read(mp, MTS_MAC_EN1), mts_read(mp, MTS_MAC_EN2));
 	mts_write(mp, MTS_MAC_EN1, MTS_MAC_ENABLE);
 	mts_write(mp, MTS_MAC_EN2, MTS_MAC_ENABLE);
+	dev_info(&mp->pdev->dev, "MAC_ENABLE: pos 0x34=0x%08x 0x38=0x%08x\n",
+		 mts_read(mp, MTS_MAC_EN1), mts_read(mp, MTS_MAC_EN2));
 
 	/* Configuração Permanente do MAC (2026-07-25):
 	 * BAR0+0x50 |= 0x03 (Tx Enable bit 0, Rx Enable bit 1)
@@ -1425,6 +1432,8 @@ static void mts_mac_enable(struct mts_priv *mp)
 	 */
 	mts_set(mp, 0x50, BIT(0) | BIT(1));
 	mts_set(mp, 0x5c, BIT(9));
+	dev_info(&mp->pdev->dev, "MAC_ENABLE: 0x50=0x%08x 0x5c=0x%08x\n",
+		 mts_read(mp, 0x50), mts_read(mp, 0x5c));
 
 	mts_phy_calibration(mp);
 
@@ -1562,6 +1571,24 @@ static int mts_rx_clean(struct mts_priv *mp, int budget)
 	struct net_device *dev = mp->dev;
 	int cleaned = 0;
 
+	/* Log inicial do estado do anel RX na primeira chamada */
+	if (mp->rx_debug_logs == 0) {
+		dev_info(&mp->pdev->dev, "RX_CLEAN: primeira chamada - rx_idx=%u tx_idx=%u\n",
+			 mp->rx_idx, mp->tx_idx);
+		for (int i = 0; i < 8 && i < MTS_RING_SIZE; i++) {
+			__le32 *d = mp->rx_ring + i * MTS_DESC_SIZE;
+			u32 ctl = le32_to_cpu(d[0]);
+			dev_info(&mp->pdev->dev, "  RX[%02u] ctl=0x%08x OWN=%d len=%u addr=0x%08x\n",
+				 i, ctl, (ctl & MTS_DESC_OWN) ? 1 : 0,
+				 ctl & MTS_DESC_LEN_MASK, le32_to_cpu(d[1]));
+		}
+		dev_info(&mp->pdev->dev, "  RX_RING_PTR=0x%08x (mp->rx_idx=%u)\n",
+			 mts_read(mp, MTS_RX_RING_PTR), mp->rx_idx);
+		dev_info(&mp->pdev->dev, "  BAR0[0x50]=0x%08x [0x5c]=0x%08x [0x70]=0x%08x [0x04]=0x%08x\n",
+			 mts_read(mp, 0x50), mts_read(mp, 0x5c), mts_read(mp, 0x70),
+			 mts_read(mp, MTS_LINK_STATUS));
+	}
+
 	while (cleaned < budget) {
 		__le32 *d = mp->rx_ring + mp->rx_idx * MTS_DESC_SIZE;
 		u32 ctl = le32_to_cpu(d[0]);
@@ -1593,11 +1620,13 @@ static int mts_rx_clean(struct mts_priv *mp, int budget)
 				napi_gro_receive(&mp->napi, skb);
 				dev->stats.rx_packets++;
 				dev->stats.rx_bytes += len;
+				dev_info(&mp->pdev->dev, "RX: pacote recebido len=%u idx=%u\n", len, mp->rx_idx);
 			} else {
 				dev->stats.rx_dropped++;
 			}
 		} else {
 			dev->stats.rx_errors++;
+			dev_warn(&mp->pdev->dev, "RX: erro len=%u idx=%u\n", len, mp->rx_idx);
 		}
 
 		/* devolve descritor ao hardware: seta OWN (1), mantem WRAP se for o ultimo */
@@ -2558,11 +2587,19 @@ static int mts_open(struct net_device *dev)
 	dev_info(&mp->pdev->dev, "open (stage=%d) carrier=%d rx=%d tx=%d\n",
 		 stage, mp->enable_carrier, mp->enable_rx, mp->enable_tx);
 
+	/* Dump registradores chave antes do ifconfig up */
+	dev_info(&mp->pdev->dev, "open: pre-0x50=0x%08x 0x5c=0x%08x 0x70=0x%08x 0x04=0x%08x 0x34=0x%08x 0x38=0x%08x\n",
+		 mts_read(mp, 0x50), mts_read(mp, 0x5c), mts_read(mp, 0x70),
+		 mts_read(mp, MTS_LINK_STATUS), mts_read(mp, MTS_MAC_EN1), mts_read(mp, MTS_MAC_EN2));
+
 	mp->link_last_raw = ~0U; /* força primeira leitura a disparar mudança */
 	mp->link_up = false;      /* false para que primeira detecção de link up (true != false) dispare carrier on */
 	/* Configuração do Hardware MAC na abertura da interface (ifconfig up) */
 	mts_set(mp, 0x50, BIT(0) | BIT(1)); /* BAR0+0x50 |= 0x03 (Tx & Rx Enable) */
 	mts_set(mp, 0x5c, BIT(9));          /* BAR0+0x5c |= 0x200 (1000Mbps Gigabit RGMII) */
+
+	dev_info(&mp->pdev->dev, "open: post-0x50=0x%08x 0x5c=0x%08x\n",
+		 mts_read(mp, 0x50), mts_read(mp, 0x5c));
 
 	netif_carrier_off(dev);
 
@@ -2701,6 +2738,28 @@ static int mts_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	dev_info(&pdev->dev, "%s %s: BAR0 %pa len 0x%llx, stage=%d\n",
 		 DRV_NAME, DRV_VERSION, &pdev->resource[0].start,
 		 (unsigned long long)pci_resource_len(pdev, 0), stage);
+
+	/* Debug: leitura inicial de registradores-chave */
+	dev_info(&pdev->dev, "PROBE: BAR0[0x00]=0x%08x BAR0[0x04]=0x%08x BAR0[0x08]=0x%08x\n",
+		 mts_read(mp, 0x00), mts_read(mp, 0x04), mts_read(mp, 0x08));
+	dev_info(&pdev->dev, "PROBE: BAR0[0x34]=0x%08x BAR0[0x38]=0x%08x BAR0[0x50]=0x%08x\n",
+		 mts_read(mp, 0x34), mts_read(mp, 0x38), mts_read(mp, 0x50));
+	dev_info(&pdev->dev, "PROBE: BAR0[0x5c]=0x%08x BAR0[0x70]=0x%08x BAR0[0x74]=0x%08x\n",
+		 mts_read(mp, 0x5c), mts_read(mp, 0x70), mts_read(mp, 0x74));
+	dev_info(&pdev->dev, "PROBE: BAR0[0x7c]=0x%08x (clock) BAR0[0xac]=0x%08x\n",
+		 mts_read(mp, 0x7c), mts_read(mp, 0xac));
+
+	dev_info(&pdev->dev, "PROBE: Glue [0x10a030]=0x%08x [0x180020]=0x%08x [0x180074]=0x%08x\n",
+		 mp->regs_glue ? mts_glue_read(mp, 0x10a030) : 0,
+		 mp->regs_glue ? mts_glue_read(mp, 0x180020) : 0,
+		 mp->regs_glue ? mts_glue_read(mp, 0x180074) : 0);
+	dev_info(&pdev->dev, "PROBE: Glue BAR4 [0xC000]=0x%08x [0xC05c]=0x%08x [0xC060]=0x%08x [0xC068]=0x%08x [0xC06c]=0x%08x [0xC100]=0x%08x\n",
+		 mp->regs_glue_bar4 ? mts_glue_bar4_read(mp, 0xC000) : 0,
+		 mp->regs_glue_bar4 ? mts_glue_bar4_read(mp, 0xC05c) : 0,
+		 mp->regs_glue_bar4 ? mts_glue_bar4_read(mp, 0xC060) : 0,
+		 mp->regs_glue_bar4 ? mts_glue_bar4_read(mp, 0xC068) : 0,
+		 mp->regs_glue_bar4 ? mts_glue_bar4_read(mp, 0xC06c) : 0,
+		 mp->regs_glue_bar4 ? mts_glue_bar4_read(mp, 0xC100) : 0);
 
 	pci_set_drvdata(pdev, dev);
 

@@ -118,7 +118,7 @@
 
 | Arquivo | Conteúdo | Casos de Uso |
 |---------|----------|-------------|
-| **obsoleto/CABO_UART.md** | Pinout UART Baikal (J1/J2), adaptador USB-serial (OBSOLETO — sem cabo UART no projeto) | Debug headless |
+| **CABO_UART.md** | Pinout UART Baikal (J1/J2), adaptador USB-serial — **FUNCIONAL** (2026-07-27: solda validada, stream 0x20 @ 115200 8N1) | Debug headless |
 | **COMUNICACAO_PS4.md** | SSH, netconsole, remote boot | Debug remoto |
 | **TODO_NETCONSOLE.md** | Implementação de netconsole | Logs kernel UDP |
 | **TESTES_LOG.md** | Log de testes e resultados | Referência histórica |

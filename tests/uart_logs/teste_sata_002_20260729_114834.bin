@@ -1,0 +1,99 @@
+[36m[Debug] src/PayloadsView.cpp:319: Loading: /data/payloads/linux-1024mb.bin[0m
+[GoldHEN] <payloader> accepted a new payload
+[GoldHEN] <payloader> TCP Mode
+[36m[Debug[]Go lsrdc/PayloHEadsVieN] w<pa.cppy:1loa86: GedneeratrePay>l oapdas is calylloed!a[0md 
+re[c3e6imv[Deedbu agnd] sr c/PasayloadsvView.cppe:2d1 2[t: Cleeamnup_fip lpayleo:ad  l/iust..s.er/t[0emmp
+/payloa[36dm[.Debug5] s01rc5/9P3ay -lo adsView.scpp:20ize:6:  Ge2n9era6t1e9P2ayload -s:  iRefrep:shed[0 1m2
+7.0.0.1]
+[GoldHEN] <payloader> found and jailbroken target process [proc: ScePartyDaemon - pid: 46]
+[GoldHEN] <payloader> launching payload... [format: BIN]
+[GoldHEN] <payloader> payload launched successfully
+DBG AutoMounter(_getEventDetail 556):
+	NoChg.
+[SceShellUI] I/PSM.UI : [FirstClear] : ClearFrameBuffer=False
+[SceShellUI] I/PSM.UI : [NoDraw] : ClearFrameBuffer=False
+[SceShellUI] I/PSM.UI : [FirstClear] : ClearFrameBuffer=False
+[SceShellCore] Libc Heap Status: free 37%, in-use 3831.7 KB, trend +34.5 KB/min, peak 4240.2 KB, when 218 [sec]
+[SceShellUI] I/PSM.UI : [NoDraw] : ClearFrameBuffer=False
+ugen0.5: <Innostor, Ext. HDD, 20230206>(VID=0x1f75 PID=0x0621 depth=2 port=2 speed=4) at usbus0
+umass1: <Innostor Ext. HDD, class 0/0, rev 3.00/0.36, addr 4> on usbus0
+umass1: sim_unit:0x00000001 device_unit:0x00000001
+umass1:  SCSI over Bulk-Only; quirks = 0x0000
+umass1:3:1:-1: Attached to scbus3
+da1 at umass-sim1 bus 1 scbus3 target 0 lun 0
+da1: <Innostor Ext. HDD > Fixed Direct Access SCSI-6 device 
+da1: 400.000MB/s transfers
+da1: 114473MB (234441648 512 byte sectors: 255H 63S/T 14593C)
+
+DBG AutoMounter(checkSpecAndHub 494):
+	device(/dev/da1) is SUPER_SPEED.
+DBG AutoMounter(checkSpecAndHub 504):
+	deviceFilePath[/dev/da1] is connected to the USB port in general
+WARNING AutoMounter(bool AutoMounter::DevctlReader::UsbStartupHandler::isStartUp() 76):
+	fake implementation.
+MSG AutoMounter(void AutoMount::PsmEventNotifier::callback_connection(void **) 360):
+	Notify PsmEvent OnUsbStorageInserted
+MSG AutoMounter(int32_t AutoMounter::Util::checkFsFormat(const char *, uint32_t *) 888):
+	device(/dev/da1) has unknown format(0).
+MSG AutoMounter(int32_t _AutoMounter::UsbHandler::(anonymous namespace)::_mountFileSystem(std::string, bool, std::string &, uint32_t *, uint64_t *, uint64_t *, uint64_t *) 542):
+	/dev/da1 has unknown format.
+MSG AutoMounter(int32_t _AutoMounter::UsbHandler::requestMount(const char *, bool) 763): _mountFileSystem(deviceFilePath, false, mountPoint, &fsFormatType, &space, &freeSpace, &availableSpace) returned 0x80f4001c.
+MSG AutoMounter(int32_t _AutoMounter::UsbHandler::(anonymous namespace)::_acquireEncryptDevice(std::string, uint32_t *, uint32_t *, std::string &, uint64_t *) 592):
+	device(/dev/da1) is not qualified for encrypt device. ng_capability(0x2)
+verify_metadata: sceSblExternalHDDVerifyMetadata(0) failed 800f0435
+MSG AutoMounter(int32_t _AutoMounter::UsbHandler::(anonymous namespace)::checkEncryption(std::string, bool *) 347):
+	sceFsExternalStorageVerifyMetadata(/dev/da1) returned 0x80020050. device is not encrypted.
+MSG AutoMounter(int32_t _AutoMounter::UsbHandler::requestMount(const char *, bool) 795): _acquireEncryptDevice(deviceFilePath, &encryptDeviceFormat, &encryptDeviceStatus, encryptDeviceFilePath, &encryptDeviceId) returned 0x80f4001a.
+DBG AutoMounter(notifyMount 435):
+	eventArg.additionalFeatures[0x2000].
+MSG AutoMounter(int32_t AutoMounter::DevctlReader::handleCreateUsbDevice(const char *) 174): AutoMounter::UsbHandler::requestMount(deviceFilePath.c_str(), true) returned 0x80f4001a.
+MSG AutoMounter(void AutoMount::PsmEventNotifier::callback_mount(void **) 270):
+	Notify PsmEvent OnUsbStorageMounted
+
+DBG AutoMounter(checkSpecAndHub 494):
+	device(/dev/da1) is SUPER_SPEED.
+DBG AutoMounter(checkSpecAndHub 504):
+	deviceFilePath[/dev/da1] is connected to the USB port in general
+WARNING AutoMounter(bool AutoMounter::DevctlReader::UsbStartupHandler::isStartUp() 76):
+	fake implementation.
+MSG AutoMounter(void AutoMount::PsmEventNotifier::callback_connection(void **) 360):
+	Notify PsmEvent OnUsbStorageInserted
+MSG AutoMounter(int32_t _AutoMounter::UsbHandler::(anonymous namespace)::tryExfatMount(std::string, bool, std::string &, uint64_t *, uint64_t *, uint64_t *) 129):
+	device(/dev/da1s1) is mounted to /mnt/usb0 with exfat.
+DBG AutoMounter(notifyMount 435):
+	eventArg.additionalFeatures[0x2040].
+MSG AutoMounterMelUtil(void sceAutomounterMelUtil::callbackMountAll(void **) 279):
+		device(/dev/da1s1): exfat(mediaType=0x1001) is mounted at /mnt/usb0.
+callbackUsbStorageMountInternal()[374]: [MediaEvent] callbackUsbStorageMountInternal() devNum=0
+MSG AutoMounterWrapper(void callbackUsbMount(SceUsbStorageEventDatas *, void *) 102):
+callbackUsbStorageMountInternal()[377]: [MediaEvent] callbackUsbStorageMountInternal() locked.
+	DeviceId=0x33b3179
+MSG AutoMounter(void AutoMount::PsmEventNotifier::callback_mount(void **) 270):
+	Notify PsmEvent OnUsbStorageMounted
+
+[SceLncUtil] blockAppSuspend: name={SceSaveData}, appId={0x60000100}, refCount={1}
+[SceLncUtil] unblockAppSuspend: name={SceSaveData}, appId={0x60000100}, refCount={0}
+DBG AutoMounter(checkSpecAndHub 494):
+	device(/dev/da1) is SUPER_SPEED.
+DBG AutoMounter(checkSpecAndHub 504):
+	deviceFilePath[/dev/da1] is connected to the USB port in general
+WARNING AutoMounter(bool AutoMounter::DevctlReader::UsbStartupHandler::isStartUp() 76):
+	fake implementation.
+MSG AutoMounter(void AutoMount::PsmEventNotifier::callback_connection(void **) 360):
+	Notify PsmEvent OnUsbStorageInserted
+MSG AutoMounter(int32_t AutoMounter::Util::checkFsFormat(const char *, uint32_t *) 888):
+	device(/dev/da1s2) has unknown format(0).
+MSG AutoMounter(int32_t _AutoMounter::UsbHandler::(anonymous namespace)::_mountFileSystem(std::string, bool, std::string &, uint32_t *, uint64_t *, uint64_t *, uint64_t *) 542):
+	/dev/da1s2 has unknown format.
+MSG AutoMounter(int32_t _AutoMounter::UsbHandler::requestMount(const char *, bool) 763): _mountFileSystem(deviceFilePath, false, mountPoint, &fsFormatType, &space, &freeSpace, &availableSpace) returned 0x80f4001c.
+MSG AutoMounter(int32_t _AutoMounter::UsbHandler::(anonymous namespace)::_acquireEncryptDevice(std::string, uint32_t *, uint32_t *, std::string &, uint64_t *) 592):
+	device(/dev/da1s2) is not qualified for encrypt device. ng_capability(0x12)
+verify_metadata: sceSblExternalHDDVerifyMetadata(0) failed 800f0435
+MSG AutoMounter(int32_t _AutoMounter::UsbHandler::(anonymous namespace)::checkEncryption(std::string, bool *) 347):
+	sceFsExternalStorageVerifyMetadata(/dev/da1s2) returned 0x80020050. device is not encrypted.
+MSG AutoMounter(int32_t _AutoMounter::UsbHandler::requestMount(const char *, bool) 795): _acquireEncryptDevice(deviceFilePath, &encryptDeviceFormat, &encryptDeviceStatus, encryptDeviceFilePath, &encryptDeviceId) returned 0x80f4001a.
+DBG AutoMounter(notifyMount 435):
+	eventArg.additionalFeatures[0x2000].
+MSG AutoMounter(void AutoMount::PsmEventNotifier::callback_mount(void **) 270):
+	Notify PsmEvent OnUsbStorageMounted
+MSG AutoMounter(int32_t AutoMounter::DevctlReader::handleCreateUsbDevice(const char *) 174): AutoMounter::UsbHandler::requestMount(deviceFilePath.c_str(), true) returned 0x80f4001a.

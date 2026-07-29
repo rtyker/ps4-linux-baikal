@@ -1,0 +1,141 @@
+[    0.000000] ps4: x86_ps4_early_setup: PS4 early setup
+[    0.000000] Linux version 7.0.8-Strawberry-ThinLTO-Baikal-+ (root@adsv2) (clang version 22.1.8, LLD 22.1.8) #8 SMP PREEMPT_DYNAMIC Sun Jul 26 21:32:52 -03 2026
+[    0.000000] 
+[    0.000000]   _________ __                       ___.
+[    0.000000]  /   _____//  |_____________ __  _  _\_ |__   __________________ ___.__.
+[    0.000000]  \_____  \\   __\_  __ \__  \\ \/ \/ /| __ \_/ __ \_  __ \_  __ <   |  |
+[    0.000000]  /        \|  |  |  | \// __ \\     / | \_\ \  ___/|  | \/|  | \/\___  |
+[    0.000000] /_______  /|__|  |__|  (____  /\/\_/  |___  /\___  >__|   |__|   / ____|
+[    0.000000]         \/                  \/            \/     \/              \/
+[    0.000000] 
+[    0.000000]   Strawberry PS4 Linux
+[    0.000000]   Platform  : Sony PlayStation 4
+[    0.000000]   Focus     : BAIKAL
+[    0.000000]   Release   : 7.0.8-Strawberry-ThinLTO-Baikal-+
+[    0.000000]   Builder   : root@adsv2
+[    0.000000]   Toolchain : clang version 22.1.8, LLD 22.1.8
+[    0.000000]   Build     : #8 SMP PREEMPT_DYNAMIC Sun Jul 26 21:32:52 -03 2026
+[    0.000000] 
+[    0.000000] Command line: panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0 drm.debug=0x06 earlycon=uart8250,mmio32,0xC890E000 console=uart8250,mmio32,0xC890E000 console=tty0 earlyprintk=efi,keep loglevel=8 root=LABEL=psxitarch rw rootdelay=10 systemd.unified_cgroup_hierarchy=0 systemd.legacy_systemd_cgroup_controller=yes audit=0 amdgpu.audio=1 usbcore.autosuspend=-1 video=HDMI-A-1:1920x1080@60 mitigations=off zswap.enabled=1 log_buf_len=4M libata.force=1.00:3.0Gbps,noncq netconsole=@192.168.0.2/eth0,6666@192.168.0.1/ff:ff:ff:ff:ff:ff
+[    0.000000] KERNEL supported cpus:
+[    0.000000]   AMD AuthenticAMD
+[    0.000000] BIOS-provided physical RAM map:
+[    0.000000] BIOS-e820: [mem 0x0000000000000000-0x0000000000007fff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x0000000000008000-0x000000000007ffff]  device reserved
+[    0.000000] BIOS-e820: [mem 0x0000000000080000-0x0000000000099fff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x000000000009a000-0x00000000000bffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x00000000000c0000-0x00000000000dffff]
+[    0.000000] BIOS-e820: [mem 0x00000000000e0000-0x00000000000effff]  ACPI data
+[    0.000000] BIOS-e820: [gap 0x00000000000f0000-0x00000000000fffff]
+[    0.000000] BIOS-e820: [mem 0x0000000000100000-0x00000000003fffff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x0000000000400000-0x000000000047ffff]  device reserved
+[    0.000000] BIOS-e820: [mem 0x0000000000480000-0x000000000067ffff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x0000000000680000-0x00000000006fffff]  device reserved
+[    0.000000] BIOS-e820: [mem 0x0000000000700000-0x000000007efe7fff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x000000007efe8000-0x000000007efeffff]  ACPI NVS
+[    0.000000] BIOS-e820: [mem 0x000000007eff0000-0x000000007effffff]  ACPI data
+[    0.000000] BIOS-e820: [mem 0x000000007f000000-0x000000007fffffff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x0000000080000000-0x00000000fbffffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x00000000fc000000-0x00000000ffffffff]
+[    0.000000] BIOS-e820: [mem 0x0000000100000000-0x000000013fffffff]  device reserved
+[    0.000000] BIOS-e820: [mem 0x0000000140000000-0x000000027effffff]  System RAM
+[    0.000000] random: crng init done
+[    0.000000] earlycon: uart8250 at MMIO32 0x00000000c890e000 (options '')
+[    0.000000] printk: legacy bootconsole [uart8250] enabled
+[    0.000000] Kernel compiled without mitigations, ignoring 'mitigations'; system may still be vulnerable
+[    0.000000] NX (Execute Disable) protection: active
+[    0.000000] APIC: Static calls initialized
+[    0.000000] SMBIOS 2.1 present.
+[    0.000000] DMI:  , BIOS unde Wed 09/22/2021 16:2
+[    0.000000] DMI: Memory slots populated: 1/1
+[    0.000000] ps4: EMC timer is broken.
+[    0.000000] ps4: Unable to measure TSC frequency, assuming default.
+[    0.000000] tsc: Detected 1594.000 MHz processor
+[    0.001462] e820: update [mem 0x00000000-0x00000fff] System RAM ==> device reserved
+[    0.009290] e820: remove [mem 0x000a0000-0x000fffff] System RAM
+[    0.015345] last_pfn = 0x27f000 max_arch_pfn = 0x400000000
+[    0.020952] MTRR map: 6 entries (3 fixed + 3 variable; max 20), built from 9 variable MTRRs
+[    0.029483] x86/PAT: Configuration [0-7]: WB  WC  UC- UC  WB  WP  UC- WT  
+[    0.036842] e820: update [mem 0x80000000-0x13fffffff] System RAM ==> device reserved
+[    0.044771] last_pfn = 0x80000 max_arch_pfn = 0x400000000
+[    0.058368] Using GB pages for direct mapping
+[    0.072735] printk: log buffer data + meta data: 4194304 + 17825792 = 22020096 bytes
+[    0.080653] printk: early log buf free: 61352(93%)
+[    0.085542] RAMDISK: [mem 0x27b03d000-0x27bdfffff]
+[    0.090447] ACPI: Early table checksum verification disabled
+[    0.096230] ACPI: RSDP 0x00000000000E0000 000024 (v02 SIE   )
+[    0.102103] ACPI: XSDT 0x00000000000E0088 00004C (v01 SIE    ORBIS    20121218 INTL 20110211)
+[    0.110821] ACPI: FACP 0x00000000000E016C 0000F4 (v04 SIE    ORBIS    20130205 INTL 20110211)
+[    0.119537] ACPI: DSDT 0x00000000000E0430 00018C (v02 SIE    ORBIS    20121002 INTL 20110211)
+[    0.128250] ACPI: FACS 0x00000000000E012C 000040
+[    0.132965] ACPI: FACS 0x00000000000E012C 000040
+[    0.137680] ACPI: APIC 0x00000000000E0298 00006C (v02 SIE    ORBIS    20120725 INTL 20110211)
+[    0.146393] ACPI: MCFG 0x00000000000E0304 00003C (v01 SIE    ORBIS    20120725 INTL 20110211)
+[    0.155105] ACPI: SSDT 0x00000000000E0730 0001EC (v01 AMD    POWERNOW 00000001 AMD  00000001)
+[    0.163817] ACPI: IVRS 0x00000000000E091C 000054 (v01 F0F    PS4KEXEC 20161225 KEXC 20161225)
+[    0.172528] ACPI: Reserving FACP table memory at [mem 0xe016c-0xe025f]
+[    0.179194] ACPI: Reserving DSDT table memory at [mem 0xe0430-0xe05bb]
+[    0.185858] ACPI: Reserving FACS table memory at [mem 0xe012c-0xe016b]
+[    0.192522] ACPI: Reserving FACS table memory at [mem 0xe012c-0xe016b]
+[    0.199186] ACPI: Reserving APIC table memory at [mem 0xe0298-0xe0303]
+[    0.205849] ACPI: Reserving MCFG table memory at [mem 0xe0304-0xe033f]
+[    0.212513] ACPI: Reserving SSDT table memory at [mem 0xe0730-0xe091b]
+[    0.219176] ACPI: Reserving IVRS table memory at [mem 0xe091c-0xe096f]
+[    0.226766] ACPI: No IOAPIC entries present
+[    0.231033] ACPI: Using ACPI for processor (LAPIC) configuration information
+[    0.238238] CPU topo: Max. logical packages:   1
+[    0.242948] CPU topo: Max. logical nodes:      1
+[    0.247657] CPU topo: Num. nodes per package:  1
+[    0.252372] CPU topo: Max. logical dies:       1
+[    0.257081] CPU topo: Max. dies per package:   1
+[    0.261801] CPU topo: Max. threads per core:   1
+[    0.266511] CPU topo: Num. cores per package:     8
+[    0.271487] CPU topo: Num. threads per package:   8
+[    0.276463] CPU topo: Allowing 8 present CPUs plus 0 hotplug CPUs
+[    0.282708] [gap 0xfc000000-0xffffffff] available for PCI devices
+[    0.288932] clocksource: refined-jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645519600211568 ns
+[    0.299635] Zone ranges:
+[    0.302214]   DMA      [mem 0x0000000000001000-0x0000000000ffffff]
+[    0.308526]   DMA32    [mem 0x0000000001000000-0x00000000ffffffff]
+[    0.314836]   Normal   [mem 0x0000000100000000-0x000000027effffff]
+[    0.321147] Movable zone start for each node
+[    0.325501] Early memory node ranges
+[    0.329144]   node   0: [mem 0x0000000000001000-0x0000000000007fff]
+[    0.335543]   node   0: [mem 0x0000000000080000-0x0000000000099fff]
+[    0.341940]   node   0: [mem 0x0000000000100000-0x00000000003fffff]
+[    0.348338]   node   0: [mem 0x0000000000480000-0x000000000067ffff]
+[    0.354735]   node   0: [mem 0x0000000000700000-0x000000007efe7fff]
+[    0.361133]   node   0: [mem 0x000000007f000000-0x000000007fffffff]
+[    0.367530]   node   0: [mem 0x0000000140000000-0x000000027effffff]
+[    0.373929] Initmem setup node 0 [mem 0x0000000000001000-0x000000027effffff]
+[    0.381136] On node 0, zone DMA: 1 pages in unavailable ranges
+[    0.387093] On node 0, zone DMA: 120 pages in unavailable ranges
+[    0.393242] On node 0, zone DMA: 102 pages in unavailable ranges
+[    0.399386] On node 0, zone DMA: 128 pages in unavailable ranges
+[    0.405567] On node 0, zone DMA: 128 pages in unavailable ranges
+[    0.421994] On node 0, zone DMA32: 24 pages in unavailable ranges
+[    0.453766] On node 0, zone Normal: 4096 pages in unavailable ranges
+[    0.460281] setup_percpu: NR_CPUS:8 nr_cpumask_bits:8 nr_cpu_ids:8 nr_node_ids:1
+[    0.468567] percpu: Embedded 44 pages/cpu s142232 r8192 d29800 u262144
+[    0.475253] pcpu-alloc: s142232 r8192 d29800 u262144 alloc=1*2097152
+[    0.481745] pcpu-alloc: [0] 0 1 2 3 4 5 6 7 
+[    0.486144] Kernel command line: panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0 drm.debug=0x06 earlycon=uart8250,mmio32,0xC890E000 console=uart8250,mmio32,0xC890E000 console=tty0 earlyprintk=efi,keep loglevel=8 root=LABEL=psxitarch rw rootdelay=10 systemd.unified_cgroup_hierarchy=0 systemd.legacy_systemd_cgroup_controller=yes audit=0 amdgpu.audio=1 usbcore.autosuspend=-1 video=HDMI-A-1:1920x1080@60 mitigations=off zswap.enabled=1 log_buf_len=4M libata.force=1.00:3.0Gbps,noncq netconsole=@192.168.0.2/eth0,6666@192.168.0.1/ff:ff:ff:ff:ff:ff
+[    0.538431] audit: disabled (until reboot)
+[    0.544734] Dentry cache hash table entries: 1048576 (order: 11, 8388608 bytes, linear)
+[    0.553845] Inode-cache hash table entries: 524288 (order: 10, 4194304 bytes, linear)
+[    0.561911] software IO TLB: area num 8.
+[    0.595602] Built 1 zonelists, mobility grouping on.  Total pages: 1830409
+[    0.602637] mem auto-init: stack:off, heap alloc:off, heap free:off
+[    0.644894] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=8, Nodes=1
+[    0.651698] Dynamic Preempt: full
+[    0.655183] rcu: Preemptible hierarchical RCU implementation.
+[    0.661049] 	Trampoline variant of Tasks RCU enabled.
+[    0.666203] 	Tracing variant of Tasks RCU enabled.
+[    0.671090] rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.
+[    0.678843] RCU Tasks: Setting shift to 3 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=8.
+[    0.687742] NR_IRQS: 4352, nr_irqs: 128, preallocated irqs: 0
+[    0.693666] rcu: 	Offload RCU callbacks from CPUs: 0-7.
+[    0.699006] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[    0.706138] Console: colour dummy device 80x25
+[    0.710678] printk: legacy console [tty0] enabled
+[    0.715481] printk: legacy bootconsole [uart8250] disabled

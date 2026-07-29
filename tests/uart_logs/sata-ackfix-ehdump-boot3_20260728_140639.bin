@@ -1,0 +1,405 @@
+[SceShellUI] I/PSM.UI : [NoDraw] : ClearFrameBuffer=False
+[SceShellUI] I/PSM.UI : [FirstClear] : ClearFrameBuffer=False
+[SceShellUI] I/PSM.UI : [NoDraw] : ClearFrameBuffer=False
+#LOGIN MGR# [IsRemotePlayDevice] DeviceId:0x50300, IsRemotePlay:0
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [AppScreen : ApplicationScreenScene] -> [QuickMenuScene : MenuScene]
+[SceShellUI] I/PSM.UI :      Scene [QuickMenuScene : MenuScene] : Alive
+SetDeviceIndexBehavior: mode=SpecificUser, param=0x1b6ebedc
+[Theme/I] : ActiveUserChanged : From : [ANONYMOUS(userId = ffffffff)]
+[Theme/I] : ActiveUserChanged : To   : [BLUE(userId = 1b6ebedc)]
+[Theme/I] : Apply [BLUE] : [Option:111110]: with preloaded user
+[SceShellUI] I/PSM.UI : [FirstClear] : ClearFrameBuffer=False
+GetPlusInfoJob : Run(Start)
+GetPlusInfoJob : Run(End)
+GetPlusInfoJob : Finish / Cancelled False / Result True
+[UpdateUserInfoforPlus] upd_userId : 460242652 / type : None
+[SceShellCore] Libc Heap Status: free 36%, in-use 3885.6 KB, trend -36.5 KB/min, peak 4441.6 KB, when 776 [sec]
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [QuickMenuScene : MenuScene] -> [AppScreen : ApplicationScreenScene]
+[SceShellUI] I/PSM.UI :      Scene [AppScreen : ApplicationScreenScene] : Alive
+SetDeviceIndexBehavior: mode=MergeAllConnectedDevice, param=null
+[Theme/I] : ActiveUserChanged : From : [BLUE(userId = 1b6ebedc)]
+[Theme/I] : ActiveUserChanged : To   : [ANONYMOUS(userId = ffffffff)]
+[Theme/I] : Apply [ANONYMOUS] : [Option:101000]: with not preloaded user
+[AppDb] openDb()[1063]: [File:Open] openDb() call dbutil::Connection::Open() path[/PEO6LWvhFu/priv/mms/app.db] flags[0x10000002] result[0x0, 0]
+[AppDb] AppInfoDbInitializeDaemon()[54]: [File:Open] AppInfoDbInitializeDaemon() call DbAccessor::Init() path[/PEO6LWvhFu/priv/mms/app.db] result[0x0, 0].
+[AppDb] AppInfoDbTerminateDaemon()[67]: [File:Close] AppInfoDbTerminateDaemon() call DbAccessor::Terminate().
+[AppDb] Terminate()[768]: [File:Close] DbAccessor::Terminate() call dbutil::Connection::Close().
+[SceShellUI] I/PSM.UI : [NoDraw] : ClearFrameBuffer=False
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [AppScreen : ApplicationScreenScene] -> [ContentAreaScene : ContentAreaScene]
+[SceShellUI] I/PSM.UI :      Scene [ContentAreaScene : ContentAreaScene] : Alive
+SetDeviceIndexBehavior: mode=SpecificUser, param=0x1b6ebedc
+[Theme/I] : ActiveUserChanged : From : [ANONYMOUS(userId = ffffffff)]
+[Theme/I] : ActiveUserChanged : To   : [BLUE(userId = 1b6ebedc)]
+[Theme/I] : Apply [BLUE] : [Option:111111]: with preloaded user
+[SceShellUI] I/PSM.UI : [FirstClear] : ClearFrameBuffer=False
+[SL] AppFocusChanged [AZIF00003] -> [NPXS20001]
+[SceLncService] BG MiniApp Status: AZIF00003, RSS 6 MiB (+0.000 MiB), PageOut 0.000 MiB
+[VCS]checkFocusStatus() [LNC->VCS] Focus Change. appType = 1(SHELL_UI). appId = 0x60000201.
+GetPlusInfoJob : Run(Start)
+GetPlusInfoJob : Run(End)
+GetPlusInfoJob : Finish / Cancelled False / Result True
+[UpdateUserInfoforPlus] upd_userId : 460242652 / type : None
+D/88391:000000001
+D/88391:
+D/88391:NPXS20108
+[SceShellUI] W/PSM.UI : UIImage.Create(): Failed to create Image from '/user/appmeta/push_resource/CUSA01780/icon0.png'
+[SceShellUI] W/PSM.UI : UIImage.Create(): Failed to create Image from '/user/appmeta/push_resource/NPXS20107/icon0_17.png'
+[AppDb] GetMediaDiscThumbnailPath()[294]: DiscThumbnailHddPath=[/user/temp/media_event_listener/thumbnail/logo.jpg]
+[AppDb] GetMediaDiscTitleName()[285]: DiscTitleName=[HenLoader LP]
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [ContentAreaScene : ContentAreaScene] -> [SystemArea : SystemAreaScene]
+[SceShellUI] I/PSM.UI :      Scene [SystemArea : SystemAreaScene] : Alive
+SetDeviceIndexBehavior: mode=SpecificUser, param=0x1b6ebedc
+[Theme/I] : Apply [BLUE] : [Option:111111]: with preloaded user
+[AppDb] GetMediaDiscThumbnailPath()[294]: DiscThumbnailHddPath=[/user/temp/media_event_listener/thumbnail/logo.jpg]
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.01msec] Layout[0.00msec/0widgets] : SystemAreaPSPlus : SystemAreaPluginPSPlus
+[SceShellUI] I/PSM.UI : ** Unload enqueue: SettingsBGScene : Scene
+[SceShellUI] I/PSM.UI : ** Unload enqueue: id_goldhen_menu : SettingPage
+[SceShellUI] I/PSM.UI : ** Unload enqueue: id_goldhen_utils : SettingPage
+[SceShellUI] I/PSM.UI : ** Unload enqueue: id_goldhen_utils_payloader : SettingPage
+[SceShellUI] I/PSM.UI : ** Unload enqueue: id_goldhen_utils_payloader_launchpad : SettingPage
+[SceShellUI] I/PSM.UI : ** Unload enqueue: NormalStack : SettingPageNormalStack
+[SceShellUI] I/PSM.UI : ** Unload enqueue: Noname : FrameScene
+[SceShellUI] I/PSM.UI : ** Unload enqueue: SettingsPlugin : SettingsApplication
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [SystemArea : SystemAreaScene] -> []
+SetDeviceIndexBehavior: mode=SpecificUser, param=0x1b6ebedc
+[SceShellUI] W/PSM.UI : SystemSound called when there is no FocusActiveScene !
+[SceShellUI] I/PSM.UI : SceneQ : Unloaded[0.00msec] : SettingsBGScene : Scene
+[SceShellUI] I/PSM.UI : SceneQ : Unloaded[0.00msec] : id_goldhen_menu : SettingPage
+[SceShellUI] I/PSM.UI : SceneQ : Unloaded[0.00msec] : id_goldhen_utils : SettingPage
+[SceShellUI] I/PSM.UI : SceneQ : Unloaded[0.00msec] : id_goldhen_utils_payloader : SettingPage
+[SceShellUI] I/PSM.UI : SceneQ : Unloaded[0.00msec] : id_goldhen_utils_payloader_launchpad : SettingPage
+[SceShellUI] I/PSM.UI : SceneQ : Unloaded[0.06msec] : NormalStack : SettingPageNormalStack
+[SceShellUI] I/PSM.UI : **** SceneQueue Reordered : rule 1-A: Noname to QueueTop.
+[SceShellUI] I/PSM.UI : ** Unload enqueue: Noname : FrameScene
+[SceShellUI] I/PSM.UI : SceneQ : Unloaded[0.18msec] : Noname : FrameScene
+[SceShellUI] I/PSM.UI : **** SceneQueue Reordered : rule 1-A: Noname to QueueTop.
+[SceShellUI] I/PSM.UI : SceneQ : Unloaded[0.00msec] : Noname : FrameScene
+[SceShellUI] I/PSM.UI : SceneQ : Unloaded[0.07msec] : Noname : FrameScene
+[SceShellUI] I/PSM.UI : SceneQ : Unloaded[0.06msec] : SettingsPlugin : SettingsApplication
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.01msec] Layout[0.00msec/0widgets] : SettingsPlugin : SettingsApplication
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.00msec] Layout[0.00msec/0widgets] : Noname : FrameScene
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.00msec] Layout[0.00msec/0widgets] : NormalStack : SettingPageNormalStack
+sceRemoteplayInitialize: 0x80fc0003
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.00msec] Layout[0.00msec/0widgets] : SettingsBGScene : Scene
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [] -> [id_goldhen_menu : SettingPage]
+[SceShellUI] I/PSM.UI :      Scene [id_goldhen_menu : SettingPage] : Alive
+SetDeviceIndexBehavior: mode=SpecificUser, param=0x1b6ebedc
+[Theme/I] : Apply [BLUE] : [Option:111111]: with preloaded user
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.00msec] Layout[0.00msec/0widgets] : id_goldhen_menu : SettingPage
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [id_goldhen_menu : SettingPage] -> [id_goldhen_utils : SettingPage]
+[SceShellUI] I/PSM.UI :      Scene [id_goldhen_utils : SettingPage] : Alive
+SetDeviceIndexBehavior: mode=SpecificUser, param=0x1b6ebedc
+[Theme/I] : Apply [BLUE] : [Option:111111]: with preloaded user
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.00msec] Layout[0.00msec/0widgets] : id_goldhen_utils : SettingPage
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [id_goldhen_utils : SettingPage] -> [id_goldhen_utils_payloader : SettingPage]
+[SceShellUI] I/PSM.UI :      Scene [id_goldhen_utils_payloader : SettingPage] : Alive
+SetDeviceIndexBehavior: mode=SpecificUser, param=0x1b6ebedc
+[Theme/I] : Apply [BLUE] : [Option:111111]: with preloaded user
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.00msec] Layout[0.00msec/0widgets] : id_goldhen_utils_payloader : SettingPage
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [id_goldhen_utils_payloader : SettingPage] -> [id_goldhen_utils_payloader_launchpad : SettingPage]
+[SceShellUI] I/PSM.UI :      Scene [id_goldhen_utils_payloader_launchpad : SettingPage] : Alive
+SetDeviceIndexBehavior: mode=SpecificUser, param=0x1b6ebedc
+[Theme/I] : Apply [BLUE] : [Option:111111]: with preloaded user
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.01msec] Layout[0.00msec/0widgets] : id_goldhen_utils_payloader_launchpad : SettingPage
+#
+# A user thread receives a fatal signal
+#
+# signal: 11 (SIGSEGV)
+# thread ID: 101665
+# thread name: 
+# proc ID: 46
+# proc name: ScePartyDaemon
+# reason: page fault (user read data, page not present)
+# fault address: 00000000000001e0
+#
+# registers:
+# rax: 00000000000001c6  rbx: 0000000881dafa00
+# rcx: 0000000881dafa00  rdx: 0000000000000006
+# rsi: 0000000000000000  rdi: 000000081088a430
+# rbp: 0000000000000000  rsp: 000000000021fff8
+# r8 : 0000000000000000  r9 : 0000000001020184
+# r10: 000000000515ca11  r11: 0000000000000212
+# r12: 0000000000000000  r13: 0000000881dafa60
+# r14: 0000000000000000  r15: 0000000000000000
+# rip: 000000000019c066  eflags: 00010246
+# BrF: ffffffffffffffff  BrT: 000000000019c063
+#
+# backtrace:
+#
+# dynamic libraries:
+# /app0/eboot.bin
+#  text: 000000002edb4000:000000002f468000 r-x
+#  data: 000000002f49c000:000000002f850000 rw-
+#  fingerprint: 99734c594ec1647ae9b079c303178f3000000000
+# /McHRizorbx/common/lib/libkernel_sys.sprx
+#  text: 000000082f050000:000000082f0a4000 r-x
+#  data: 000000082f0a8000:000000082f0e0000 rw-
+#  fingerprint: ff6501a2b83ec52ffd301e94af20490e00000000
+# /McHRizorbx/common/lib/libSceLibcInternal.sprx
+#  text: 00000008248fc000:0000000824a30000 r-x
+#  data: 0000000824a38000:0000000824a54000 rw-
+#  fingerprint: 880aa19881586dd24d1af615e7f62d5f00000000
+# /McHRizorbx/common/lib/libSceSysmodule.sprx
+#  text: 0000000834dc8000:0000000834dd4000 r-x
+#  data: 0000000834dd8000:0000000834de4000 rw-
+#  fingerprint: 24952bcab86cf2a9d28189970de43dec00000000
+# /McHRizorbx/common/lib/libSceIpmi.sprx
+#  text: 0000000805abc000:0000000805ac8000 r-x
+#  data: 0000000805acc000:0000000805ae0000 rw-
+#  fingerprint: ad88c9a36cb671bf4a151e6fc7cbe75900000000
+# /McHRizorbx/common/lib/libSceNetCtl.sprx
+#  text: 00000008170a8000:00000008170b0000 r-x
+#  data: 00000008170b4000:00000008170b8000 rw-
+#  fingerprint: 90c7d7f9dda248dbf50cab103888e92700000000
+# /McHRizorbx/common/lib/libSceNet.sprx
+#  text: 000000083ae00000:000000083ae38000 r-x
+#  data: 000000083ae3c000:000000083af50000 rw-
+#  fingerprint: eb5bcc3b92d7eb4dd854652b85ad45ae00000000
+# /McHRizorbx/common/lib/libSceRtc.sprx
+#  text: 000000083e5d8000:000000083e5e0000 r-x
+#  data: 000000083e5e4000:000000083e5e8000 rw-
+#  fingerprint: 8be85f06d81503a312f2681d1f9b0ca500000000
+# /McHRizorbx/common/lib/libSceSsl2.sprx
+#  text: 00000008218c8000:0000000821a10000 r-x
+#  data: 0000000821a2c000:0000000821a30000 rw-
+#  fingerprint: 20fd8127a00a5057d8f9e4f3979cb28c00000000
+# /McHRizorbx/common/lib/libSceHttp.sprx
+#  text: 000000081f854000:000000081f88c000 r-x
+#  data: 000000081f890000:000000081f898000 rw-
+#  fingerprint: 6889bac51cbd58cf91ad80fe4dd9750100000000
+# /McHRizorbx/common/lib/libSceHttp2.sprx
+#  text: 000000082866c000:00000008286a0000 r-x
+#  data: 00000008286a4000:00000008286a8000 rw-
+#  fingerprint: 8739981bc9e8bfe7b41a737cb0679aba00000000
+# /McHRizorbx/common/lib/libSceNpCommon.sprx
+#  text: 000000080ee60000:000000080eea4000 r-x
+#  data: 000000080eea8000:000000080eeac000 rw-
+#  fingerprint: aac3293e2054105511ece0b3a61ac90c00000000
+# /McHRizorbx/common/lib/libSceNpUtility.sprx
+#  text: 000000080cc6c000:000000080cc94000 r-x
+#  data: 000000080cc98000:000000080cc9c000 rw-
+#  fingerprint: b2d69a8b9c4e68ce863298eaf04a11fe00000000
+# /McHRizorbx/common/lib/libSceRegMgr.sprx
+#  text: 0000000827d68000:0000000827d6c000 r-x
+#  data: 0000000827d70000:0000000827d74000 rw-
+#  fingerprint: 9a98ef885f467a289cba6ce20b8cca3c00000000
+# /McHRizorbx/common/lib/libSceNpManager.sprx
+#  text: 0000000824170000:00000008241c4000 r-x
+#  data: 00000008241c8000:00000008241cc000 rw-
+#  fingerprint: 803300c1060e5eff7fd03a50b311dfcf00000000
+# /McHRizorbx/common/lib/libSceNpWebApi.sprx
+#  text: 000000081b8f8000:000000081b910000 r-x
+#  data: 000000081b914000:000000081b918000 rw-
+#  fingerprint: e0381af624565d167f06c360c8b8bc7000000000
+# /McHRizorbx/common/lib/libSceNpWebApi2.sprx
+#  text: 000000080736c000:0000000807390000 r-x
+#  data: 0000000807394000:0000000807398000 rw-
+#  fingerprint: a7288a3003806fc9f0a73ff2d36fe12600000000
+# /McHRizorbx/common/lib/libSceSystemService.sprx
+#  text: 00000008275c0000:00000008275fc000 r-x
+#  data: 0000000827600000:000000082760c000 rw-
+#  fingerprint: fa8364051adaf2d3611c0a6d2913d07500000000
+# /McHRizorbx/common/lib/libSceUserService.sprx
+#  text: 00000008157d4000:00000008157e4000 r-x
+#  data: 00000008157e8000:00000008157ec000 rw-
+#  fingerprint: a3a5b3a6361c2d3f2579ddb912d1265a00000000
+# /McHRizorbx/common/lib/libSceSysUtil.sprx
+#  text: 0000000814b54000:0000000814b58000 r-x
+#  data: 0000000814b5c000:0000000814b60000 rw-
+#  fingerprint: 3d7f6f61918fdf892e9aa8d9173bc0f000000000
+# /McHRizorbx/common/lib/libSceMbus.sprx
+#  text: 000000080b74c000:000000080b758000 r-x
+#  data: 000000080b75c000:000000080b760000 rw-
+#  fingerprint: b2b7c9ebc2ee1130b029e4a7d5bf5e7a00000000
+# /McHRizorbx/common/lib/libSceAudioOut.sprx
+#  text: 000000080e558000:000000080e570000 r-x
+#  data: 000000080e574000:000000080e578000 rw-
+#  fingerprint: 307afbb692d24a3757e48cce8c93b84300000000
+# /McHRizorbx/common/lib/libSceAudioIn.sprx
+#  text: 0000000825618000:0000000825620000 r-x
+#  data: 0000000825624000:0000000825628000 rw-
+#  fingerprint: f1a6dededf25814a01b343f2cc4718da00000000
+# /McHRizorbx/common/lib/libSceAvSetting.sprx
+#  text: 0000000808d20000:0000000808d2c000 r-x
+#  data: 0000000808d30000:0000000808d34000 rw-
+#  fingerprint: 6515c8bf5104d2befe0c7fc5b798ad7500000000
+# /McHRizorbx/common/lib/libSceAjm.sprx
+#  text: 000000080fca8000:000000080fcac000 r-x
+#  data: 000000080fcb0000:000000080fcb4000 rw-
+#  fingerprint: fb4bfb98c9c43f525e3f6c49670a6c5d00000000
+# /McHRizorbx/common/lib/libSceVoice.sprx
+#  text: 0000000816438000:0000000816458000 r-x
+#  data: 000000081645c000:000000081649c000 rw-
+#[SceLncService] No heart beat of Shell UI has been observed for 1085 msec.
+  fingerprint: 56e19570854b20028b202c340f4d6c7f00000000
+# /McHRizorbx/common/lib/libSceAppInstUtil.sprx
+#  text: 0000000811148000:0000000811154000 r-x
+#  data: 0000000811158000:0000000811160000 rw-
+#  fingerprint: aea345c55d8bf81db2e86bd9b11c012c00000000
+# /McHRizorbx/common/lib/libSceSharePlay.sprx
+#  text: 000000081bfa0000:000000081bfa4000 r-x
+#  data: 000000081bfa8000:000000081bfac000 rw-
+#  fingerprint: daaf0707d52f66534f26f3a2a633ff3400000000
+# /McHRizorbx/common/lib/libSceVnaInternal.sprx
+#  text: 000000082ba04000:000000082ba08000 r-x
+#  data: 000000082ba0c000:000000082ba10000 rw-
+#  fingerprint: 1f5c7242c3042dbaec12f31dcba3de2400000000
+# /McHRizorbx/common/lib/libSceRudp.sprx
+#  text: 000000083cff4000:000000083d01c000 r-x
+#  data: 000000083d020000:000000083d024000 rw-
+#  fingerprint: 95f3929d0a7e9e919ee745163bfa4a4c00000000
+# /McHRizorbx/common/lib/libSceJson2.sprx
+#  text: 00000008033cc000:00000008033e0000 r-x
+#  data: 00000008033e4000:00000008033e8000 rw-
+#  fingerprint: 3af0dc5fdc7e9d19adc7887830e3179000000000
+# /McHRizorbx/common/lib/libSceRandom.sprx
+#  text: 0000000824678000:000000082467c000 r-x
+#  data: 0000000824680000:0000000824684000 rw-
+#  fingerprint: a6355f17f2833cf413d7bc70d732ddb400000000
+# /McHRizorbx/common/lib/libSceRemoteplay.sprx
+#  text: 000000081bb0c000:000000081bb14000 r-x
+#  data: 000000081bb18000:000000081bb1c000 rw-
+#  fingerprint: 2c6b7478f70b7dab149d4ef2d493159500000000
+# /system/common/lib/libkernel.sprx
+#  text: 00000008107fc000:0000000810850000 r-x
+#  data: 0000000810854000:000000081088c000 rw-
+#  fingerprint: ba7aa6d44b714e22b0824c89d7436d0900000000
+# /system/common/lib/libSceSysUtil.sprx
+#  text: 000000082dcfc000:000000082dd00000 r-x
+#  data: 000000082dd04000:000000082dd08000 rw-
+#  fingerprint: 3d7f6f61918fdf892e9aa8d9173bc0f000000000
+[Syscore App] App Crash : PID=0x2e, reason=0xb
+[Syscore App] Syscore Event Queue Push : SCE_SYSCORE_EVENT_APP_CRASH
+[Syscore App] Syscore Event Queue Pop : SCE_SYSCORE_EVENT_APP_CRASH
+[SceLncService] AppCrash: pid={0x0000002e} appId={0x60000504} appLocalPid={0x10504050}
+[SceLncUCtil] blockAppSuspend: name={SceNpUds}, appId={0x60000100}, refCount={1}
+[SceLncUtil] unblockAppSuspend: name={SceNpUds}, appId={0x60000100}, refCount={0}
+[SceLncService] getCoredumpSequence() isDebuggable={0} isKeepProcess={1} isUserDebugRequest={0} isLimitKeepProcess={0} enableCrashReport={1}
+[SceLncService] CoredumpSequence = {DUMP_PROCESS}
+[SceLncService] getCoredumpMode() isSystem={0x00000001}, reason={0x0000000b}
+[SceLncService] notifyAppCrash() pid={0x0000002e}, appId={0x60000504}, appLocalPid={0x10504050}, coredump.path,name,mode={/user/data/sce_coredumps/NPXS21002_1785258884/,NPXS21002_1785258884.sorbisdmp,1}, enableCrashReport={1}, skipVshDump={0}
+[SceLncService] enableCrashReport={1}, crashReportMode={0}, isAllowed={0}
+[SceLncService] kick coredump is disabled.
+[Syscore App] Kill process: 0x2e
+[mbus] onSessionKilled. pid=46
+@ removeSession:L184
+ontext.cc:189 (ajmContextCleanup) - Codec CELP8 Decoder was not properly unregistered.
+Context.cc:189 (ajmContextCleanup) - Codec CELP8 Encoder was not properly unregistered.
+Context.cc:189 (ajmContextCleanup) - Codec CELP(16) Decoder was not properly unregistered.
+Context.cc:191 (ajmContextCleanup) - More codecs were not properly unregistered...
+[Syscore App] EVFILT_PROC NOTE_EXIT received : pid=0x2e
+[Syscore App] Kill process: 0x2e => 0
+[AppMgr Trace]: pid=0x2e, deleted.
+[Syscore App] Syscore Event Queue Push : SCE_SYSCORE_EVENT_ON_PROCESS_UNLOADED
+[AppMgr] checkAppTerminated pid=0x31 is still alive in 0x60000504
+[Syscore App] Kill process: 0x31
+[Syscore App] Syscore Event Queue Pop : SCE_SYSCORE_EVENT_ON_PROCESS_UNLOADED
+[Syscore App] process delete event : pid=0x2e
+[Syscore App] EVFILT_PROC NOTE_EXIT received : pid=0x31
+[Syscore App] Kill process: 0x31 => 0
+[Syscore App] process delete event : pid=0x31
+[AppMgr Trace]: pid=0x31, deleted.
+[Syscore App] Syscore Event Queue Push : SCE_SYSCORE_EVENT_ON_PROCESS_UNLOADED
+[AppMgr] All processes exited
+[Syscore App] Syscore Event Queue Push : SCE_SYSCORE_EVENT_ON_APP_UNLOADED
+[AppMgr Trace]: AppId=0x60000504  deleted
+[Syscore App] Syscore Event Queue Pop : SCE_SYSCORE_EVENT_ON_PROCESS_UNLOADED
+[SceLncService] KillApp() appId={0x60000504}, withSuspend={0}, forceKill={1} killReason={0}
+[Syscore App] Syscore Event Queue Pop : SCE_SYSCORE_EVENT_ON_APP_UNLOADED
+[SceLncService] BlockingKill() appId={0x60000504}, titleId={NPXS21002}, is_coredumpFinished={0}, forceKill={1}
+[SceLncService] convertToSysCoreKillReason: {0x00000000}->{0x00000000}
+[Syscore App]  ExpandCpuSetMode : disable
+[SceLncService] this app has already exited. appId={0x60000504}
+[SceLncService] start unmountAllForShellCoreInternal()
+[SceLncService] end unmountAllForShellCoreInternal()
+[SceLncUtil] blockAppSuspend: name={SceNpUds}, appId={0x60000100}, refCount={1}
+[SceLncUtil] unblockAppSuspend: name={SceNpUds}, appId={0x60000100}, refCount={0}
+[libSceSaveData] wait 0 msec for session killed
+[SceRnpsAppMgr] UnblockAllAppInstall(): NPXS21002(appId=0x60000504)
+[UIProcess] malloc stats freeSize:41184736 (98%) inuseSize:758304 peakSize:761184 [pid:0x3a]
+[SceLncService] onAppExit() appId={0x60000504}
+[SceLncService] ProcessTerm()
+[SceLncService] ProcessTerm() returned
+[SceLncService] convertToSysCoreKillReason: {0x00000000}->{0x00000000}
+[SceShellCore] RESTART Party Daemon
+[SceLncService] launchApp(NPXS21002)
+[SceLncService] category={gdd} VRMode={0,0}
+[SceLncService] hnm,psnf,pc,tk,ns={1,0,0,0,0} appBootMode={-1}
+[SceLncService] appType={SCE_LNC_APP_TYPE_DAEMON} [] appVer={00.00}
+[SceLncService] Num. of logged-in users is 1
+[SceLncService] PrepareProcessLaunchDebuggerCheck()
+[SceLncService] PrepareProcessLaunchDebuggerCheck() returned
+[SceLncService] PrepareProcessLaunchDebugger()
+[SceLncService] PrepareProcessLaunchDebugger() returned
+[SceLncService] spawnApp
+[Syscore App] createApp NPXS21002
+[Syscore App] processSpawn(pid, 0x60001504, 0x115041d0, appParam,m processParam, 0, 0, 1, param, debug, 0)
+[Syscore App] appParam: appType = 0x2, rootPath = /mnt/sandbox/NPXS21002_000, titleId = NPXS21002
+[Syscore App] processParam: elfPath = /app0/eboot.bin, fullPath = /system/vsh/app/NPXS21002/eboot.bin
+[Syscore App] new pid=0x67[Syscore App] attributeExe= 0
+[Syscore App] Ready to exec
+[Syscore App] wait for NOTE_EXIT|NOTE_EXEC
+[Syscore App] Add event : pid=0x67
+[AppMgr Trace]: New Process, pid=0x67, created.
+[AppMgr Trace]: New App, appId=0x60001504, created
+[Syscore App]  ExpandCpuSetMode : disable
+DBG: Process 103 untraced!
+<103> EXEC /app0/eboot.bin [system], vm#0, dmem#0  <809658 msec>
+[Syscore App] Start sceApplicationAddProcess /app0/webrtc_daemon.self
+[Syscore App] calling add process
+[Syscomre App] processSpawn(pid, 0x60001504, 0x115041e1, appParam, processParam, 0, 0, 0, param, debug, 0)
+[Syscore App] appParam: appType = 0x2, rootPath = /mnt/sandbox/NPXS21002_000, titleId = NPXS21002
+[Syscore App] processParam: elfPath = /app0/webrtc_daemon.self, fullPath = /system/vsh/app/NPXS21002/webrtc_daemon.self
+[Syscore App] new pid=0x68[Syscore App] attributeExe= 0
+[Syscore App] Ready to exec
+[Syscore App] wait for NOTE_EXIT|NOTE_EXEC
+[Syscore App] Add event : pid=0x68
+[AppMgr Trace]: New Process, pid=0x68, created.
+DBG: Process 104 untraced!
+<104> EXEC /app0/webrtc_daemon.self [unspecified], vm#0, dmem#0  <809914 msec>
+[mbus] onNewClient. clientNum 10 over 8
+SQLite MSG pthreadMutexInit 138: redundant call.
+SQLite MSG pthreadMutexInit 138: redundant call.
+SQLite MSG pthreadMutexInit 138: redundant call.
+SQLite MSG pthreadMutexInit 138: redundant call.
+[SceLncService] W:\Build\J02690785\vsh\shell\shell_core\lnc_service\lnc_manager.cpp(2188) getAppId: LNC_ISOK::0x80940004->0xffffffff
+@ busStatusChangeSubscribe:L4750
+DBG AutoMounter(_getEventDetail 556):
+	NoChg.
+[SceShellCore] VM Stats: RSS 598.6, kernel 268.4, wire count 349.5, swap out 0.0, page table CPU 2490/6144 GPU 389/2048
+[SceShellCore] FMEM   1.3/   4.5 NPXS20977 SceSysAvControl.elf
+[SceShellCore] FMEM  10.7/  74.3 NPXS20991 SceSysCore.elf
+[SceShellCore] FMEM   9.3/  54.3 NPXS20973 orbis_audiod.elf
+[SceShellCore] FMEM   3.2/  11.2 NPXS20976 GnmCompositor.elf
+[SceShellCore] FMEM  28.6/ 346.9 NPXS20000 SceShellCore
+[SceShellCore] FMEM 380.1/ 900.8 NPXS20001 SceShellUI
+[SceShellCore] FMEM   3.5/   8.3 NPXS21003 SceAvCapture
+[SceShellCore] FMEM   8.2/  32.4 NPXS21000 SceGameLiveStreaming
+[SceShellCore] FMEM   4.3/  25.4 NPXS21004 SceVideoCoreServer
+[SceShellCore] FMEM   9.9/  51.3 NPXS21006 SceRemotePlay
+[SceShellCore] FMEM   7.0/  41.2 NPXS21010 SceCloudClientDaemon
+[SceShellCore] FMEM   3.3/  10.8 NPXS21016 SceSpZeroConf
+[SceShellCore] FMEM   6.4/  18.1 NPXS21019 SceSocialScreenMgr
+[SceShellCore] FMEM   4.3/   9.8 NPXS21007 SceMusicCoreServer
+[SceShellCore] FMEM   6.5/  14.4 NPXS21020 SceVoiceAndAgent
+[SceShellCore] FMEM   2.1/   5.1 NPXS20967 fs_cleaner.elf
+[SceShellCore] FMEM   2.0/  10.2 NPXS20974 SceVdecProxy.elf
+[SceShellCore] FMEM   2.0/  10.3 NPXS20975 SceVencProxy.elf
+[SceShellCore] FMEM  25.8/ 268.1 NPXS20001 SecureUIProcess.self
+[SceShellCore] FMEM  41.5/ 534.8 NPXS20001 SecureWebProcess.self
+[SceShellCore] FMEM  10.7/ 358.8 NPXS20001 orbis-jsc-compiler.self
+[SceShellCore] FMEM   6.3/  30.2 AZIF00003 guest.elf
+[SceShellCore] FMEM  13.7/  43.5 NPXS21002 ScePartyDaemon
+[SceShellCore] FMEM   7.9/ 156.0 NPXS21002 webrtc_daemon.self
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [id_goldhen_utils_payloader_launchpad : SettingPage] -> [ContentAreaScene : ContentAreaScene]
+[SceShellUI] I/PSM.UI :      Scene [ContentAreaScene : ContentAreaScene] : Alive
+SetDeviceIndexBehavior: mode=SpecificUser, param=0x1b6ebedc
+[Theme/I] : Apply [BLUE] : [Option:111111]: with preloaded user
+[SceShellUI] I/PSM.UI : ** Unload enqueue: SystemAreaPSPlus : SystemAreaPluginPSPlus
+D/88391:
+D/88391:000000001
+[SceShellUI] I/PSM.UI : SceneQ : Unloaded[0.25msec] : SystemAreaPSPlus : SystemAreaPluginPSPlus
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [ContentAreaScene : ContentAreaScene] -> [SystemArea : SystemAreaScene]
+[SceShellUI] I/PSM.UI :      Scene [SystemArea : SystemAreaScene] : Alive
+SetDeviceIndexBehavior: mode=SpecificUser, param=0x1b6ebedc
+[Theme/I] : Apply [BLUE] : [Option:111111]: with preloaded user

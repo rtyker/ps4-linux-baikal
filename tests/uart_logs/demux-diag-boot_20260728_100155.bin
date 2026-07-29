@@ -1,0 +1,175 @@
+14NW
+µëù¡’Å0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:42:crtc-0] Setting connector DPMS state to on
+[    6.375160] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 	[CONNECTOR:54:HDMI-A-1] set DPMS on
+[    6.375384] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[    6.375392] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:44:crtc-1] [NOFB]
+[    6.379383] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[    6.379388] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:46:crtc-2] [NOFB]
+[    6.379402] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[    6.379402] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:48:crtc-3] [NOFB]
+[    6.379403] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[    6.379403] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:50:crtc-4] [NOFB]
+[    6.379403] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[    6.379403] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:52:crtc-5] [NOFB]
+[    6.379441] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[    6.379449] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:42:crtc-0] [FB:56] #connectors=1 (x y) (0 0)
+[    6.379460] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CONNECTOR:54:HDMI-A-1] to [CRTC:42:crtc-0]
+[    6.382127] Console: switching to colour frame buffer device 240x67
+[    6.382159] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[    6.382173] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:42:crtc-0] [FB:56] #connectors=1 (x y) (0 0)
+[    6.382186] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CONNECTOR:54:HDMI-A-1] to [CRTC:42:crtc-0]
+[    7.655211] amdgpu 0000:00:01.0: [drm] fb0: amdgpudrmfb frame buffer device
+[    7.663526] ahci 0000:00:14.2: DMA bits = 32
+[    7.665433] amdgpu 0000:00:01.0: [drm:drm_fb_helper_hotplug_event] 
+[    7.667194] ahci 0000:00:14.2: DMA enable
+[    7.668332] amdgpu 0000:00:01.0: [drm:drm_client_modeset_probe] 
+[    7.671216] ahci 0000:00:14.2: AHCI vers 0001.0300, 32 command slots, 3 Gbps, unknown mode
+[    7.672695] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] [CONNECTOR:54:HDMI-A-1]
+[    7.674194] ahci 0000:00:14.2: 1/1 ports implemented (port mask 0x1)
+[    7.675677] [drm:amdgpu_atombios_dp_get_dpcd] DPCD: 12 14 c4 41 01 06 01 80 02 00 00 00 00 00 00
+[    7.676723] ahci 0000:00:14.2: flags: ncq sntf pm clo only pmp pio slum part ccc apst 
+[    7.679588] [drm:amdgpu_atombios_dp_get_dpcd] Sink OUI: 000000
+[    7.679452] scsi host2: ahci
+[    7.682715] [drm:amdgpu_atombios_dp_get_dpcd] Branch OUI: 000000
+[    7.683337] ata2: SATA max UDMA/133 abar m32768@0xc4000000 port 0xc4000100 irq 38 lpm-pol 1 ext
+[    7.685196] [drm:ps4_bridge_detect] ps4_bridge_detect: force=1 dpcd_ret=0 lanes=4 clock=162000
+[    7.687227] netconsole: netconsole: local port 6665
+[    7.688808] [drm:ps4_bridge_get_modes] ps4_bridge_get_modes
+[    7.691189] netconsole: netconsole: local IPv4 address 192.168.0.2
+[    7.690968] amdgpu 0000:00:01.0: [drm:drm_edid_connector_update] [CONNECTOR:54:HDMI-A-1] EDID changed, epoch counter 2
+[    7.693318] netconsole: netconsole: interface name 'eth0'
+[    7.693328] netconsole: netconsole: local ethernet address 'ff:ff:ff:ff:ff:ff'
+[    7.693332] netconsole: netconsole: remote port 6666
+[    7.692393] [drm:ps4_bridge_get_modes] ps4_bridge_get_modes: using firmware EDID (256 bytes)
+[    7.695192] netconsole: netconsole: remote IPv4 address 192.168.0.1
+[    7.695224] amdgpu 0000:00:01.0: [drm:update_display_info] [CONNECTOR:54:HDMI-A-1] HDMI: DVI dual 0, max TMDS clock 200000 kHz
+[    7.697447] netconsole: netconsole: remote ethernet address ff:ff:ff:ff:ff:ff
+[    7.697451] amdgpu 0000:00:01.0: [drm:update_display_info] [CONNECTOR:54:HDMI-A-1] No deep color support on this HDMI sink.
+[    7.697476] amdgpu 0000:00:01.0: [drm:update_display_info] [CONNECTOR:54:HDMI-A-1] ELD monitor LG FULL HD
+[    7.697447] netpoll: netconsole: eth0 doesn't exist, aborting
+[    7.699210] amdgpu 0000:00:01.0: [drm:update_display_info] [CONNECTOR:54:HDMI-A-1] HDMI: latency present 0 0, video latency 0 0, audio latency 0 0
+[    7.699198] netconsole: Not enabling netconsole for cmdline0. Netpoll setup failed
+[    7.701641] amdgpu 0000:00:01.0: [drm:update_display_info] [CONNECTOR:54:HDMI-A-1] ELD size 36, SAD count 1
+[    7.701796] printk: console [netcon0] enabled
+[    7.704905] [drm:ps4_bridge_get_modes] ps4_bridge_get_modes: EDID ok, 36 modes, extensions=1
+[    7.707210] netconsole: network logging started
+[    7.707917] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1360x768": 60 85500 1360 1424 1536 1792 768 771 777 795 0x40 0x5 (BAD)
+[    7.707487] cfg80211: Loading compiled-in X.509 certificates for regulatory database
+[    7.709831] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1366x768": 60 85500 1366 1436 1579 1792 768 771 774 798 0x40 0x5 (BAD)
+[    7.711759] Loaded X.509 cert 'sforshee: 00b28ddf47aef9cea7'
+[    7.712598] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x480": 60 27000 720 736 798 858 480 489 495 525 0x40 0xa (BAD)
+[    7.715814] Loaded X.509 cert 'wens: 61c038651aabdcf94bd0ac7ff06c7248db18c600'
+[    7.715204] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1152x864": 75 108000 1152 1216 1344 1600 864 865 868 900 0x40 0x5 (BAD)
+[    7.715814] faux_driver regulatory: Direct firmware load for regulatory.db failed with error -2
+[    7.718148] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1280x1024": 60 108000 1280 1328 1440 1688 1024 1025 1028 1066 0x40 0x5 (BAD)
+[    7.718163] cfg80211: failed to load regulatory.db
+[    7.718238] clk: Disabling unused clocks
+[    7.720718] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1440x900": 60 88750 1440 1488 1520 1600 900 903 909 926 0x40 0x9 (BAD)
+[    7.724733] ALSA device list:
+[    7.724743]   #0: HD-Audio Generic at 0xe4840000 irq 36
+[    8.111234] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1680x1050": 60 119000 1680 1728 1760 1840 1050 1053 1059 1080 0x40 0x9 (BAD)
+[    8.111256] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1600x900": 60 108000 1600 1624 1704 1800 900 901 904 1000 0x40 0x5 (BAD)
+[    8.140884] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1280x800": 60 71000 1280 1328 1360 1440 800 803 809 823 0x40 0x9 (BAD)
+[    8.140913] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1400x1050": 60 101000 1400 1448 1480 1560 1050 1053 1057 1080 0x40 0x9 (BAD)
+[    8.163248] ata2: SATA link up 1.5 Gbps (SStatus 113 SControl 300)
+[    8.171230] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "800x600": 60 40000 800 840 968 1056 600 601 605 628 0x40 0x5 (BAD)
+[    8.175254] ata2.00: ATAPI: SONY    PS-SYSTEM   420R, 6141, max UDMA/133
+[    8.175227] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "640x480": 75 31500 640 656 720 840 480 481 484 500 0x40 0xa (BAD)
+[    8.179254] ata2.00: configured for UDMA/133
+[    8.179226] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "640x480": 60 25175 640 656 752 800 480 490 492 525 0x40 0xa (BAD)
+[    8.239224] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x400": 70 28320 720 738 846 900 400 412 414 449 0x40 0x6 (BAD)
+[    8.255232] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1280x1024": 75 135000 1280 1296 1440 1688 1024 1025 1028 1066 0x40 0x5 (BAD)
+[    8.271243] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1024x768": 75 78750 1024 1040 1136 1312 768 769 772 800 0x40 0x5 (BAD)
+[    8.287238] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1024x768": 60 65000 1024 1048 1184 1344 768 771 777 806 0x40 0xa (BAD)
+[    8.303231] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "800x600": 75 49500 800 816 896 1056 600 601 604 625 0x40 0x5 (BAD)
+[    8.315232] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x480": 60 27000 720 736 798 858 480 489 495 525 0x40 0xa (BAD)
+[    8.331258] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x576": 50 27000 720 732 796 864 576 581 586 625 0x40 0xa (BAD)
+[    8.347252] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1280x720": 50 74250 1280 1720 1760 1980 720 725 730 750 0x40 0x5 (BAD)
+[    8.363272] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1920x1080": 50 148500 1920 2448 2492 2640 1080 1084 1089 1125 0x40 0x5 (BAD)
+[    8.379284] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x480": 60 27000 720 736 798 858 480 489 495 525 0x40 0xa (BAD)
+[    8.395299] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x480": 60 27027 720 736 798 858 480 489 495 525 0x40 0xa (BAD)
+[    8.407240] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "640x480": 60 25200 640 656 752 800 480 490 492 525 0x40 0xa (BAD)
+[    8.423243] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x480": 60 27027 720 736 798 858 480 489 495 525 0x40 0xa (BAD)
+[    8.439250] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] [CONNECTOR:54:HDMI-A-1] probed modes:
+[    8.451246] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1920x1080": 60 148500 1920 2008 2052 2200 1080 1084 1089 1125 0x68 0x5
+[    8.467250] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1920x1080": 60 148500 1920 2008 2052 2200 1080 1084 1089 1125 0x48 0x5
+[    8.487250] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1920x1080": 60 148352 1920 2008 2052 2200 1080 1084 1089 1125 0x40 0x5
+[    8.503247] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1280x720": 60 74250 1280 1390 1430 1650 720 725 730 750 0x40 0x5
+[    8.519249] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1280x720": 60 74250 1280 1390 1430 1650 720 725 730 750 0x40 0x5
+[    8.535281] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1280x720": 60 74176 1280 1390 1430 1650 720 725 730 750 0x40 0x5
+[    8.551252] amdgpu 0000:00:01.0: [drm:drm_client_modeset_probe] [CONNECTOR:54:HDMI-A-1] enabled? yes
+[    8.563252] amdgpu 0000:00:01.0: [drm:drm_client_modeset_probe] [CONNECTOR:54:HDMI-A-1] found cmdline mode: 1920x1080
+[    8.575251] amdgpu 0000:00:01.0: [drm:drm_client_modeset_probe] picking CRTCs for 1920x1080 config
+[    8.587260] amdgpu 0000:00:01.0: [drm:drm_client_modeset_probe] [CRTC:42:crtc-0] desired mode 1920x1080 set (0,0)
+[    8.599271] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[    8.607249] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:42:crtc-0] [FB:56] #connectors=1 (x y) (0 0)
+[    8.619256] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CONNECTOR:54:HDMI-A-1] to [CRTC:42:crtc-0]
+[    8.631269] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[    8.639258] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:44:crtc-1] [NOFB]
+[    8.651527] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[    8.659252] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:46:crtc-2] [NOFB]
+[    8.667528] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[    8.675263] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:48:crtc-3] [NOFB]
+[    8.687530] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[    8.695265] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:50:crtc-4] [NOFB]
+[    8.707531] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[    8.715255] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:52:crtc-5] [NOFB]
+[    8.723540] amdgpu 0000:00:01.0: [drm:drm_client_hotplug] fbdev: ret=0
+[   10.399408] [wlan][142]wlanProcessCommandQueue:(INIT WARN) NO Res CMD TYPE[1] ID[0x14] SEQ[49]
+[   10.411422] [wlan][143]halPrintMailbox:(INIT ERROR) MailBox Status = 0x0003005A, 0x00FF00FF
+[   10.423427] [wlan][143]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[   10.431397] [wlan][143]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0000EC2
+[   10.439430] [wlan][143]halPollDbgCr:(INIT WARN) SWPCDBGR 0x00001DDE
+[   10.447398] [wlan][143]halPollDbgCr:(INIT WARN) SWPCDBGR 0x00001DDE
+[   10.455423] [wlan][143]halPollDbgCr:(INIT WARN) SWPCDBGR 0x00001DDE
+[   36.781025] ata1.00: exception Emask 0x0 SAct 0x0 SErr 0x0 action 0x6 frozen
+[   36.789055] ata1.00: failed command: READ DMA EXT
+[   36.793036] ata1.00: cmd 25/00:08:90:6d:70/00:00:74:00:00/e0 tag 29 dma 4096 in
+[   36.793036]          res 40/00:00:00:00:00/00:00:00:00:00/00 Emask 0x4 (timeout)
+[   36.813023] ata1.00: status: { DRDY }
+[   36.817019] ata1: hard resetting link
+[   37.301077] ata1: SATA link up 3.0 Gbps (SStatus 123 SControl 300)
+[   37.313037] reevaluate_vector: 7 callbacks suppressed
+[   37.313046] No irq handler for 0.37
+[   42.401397] ata1.00: qc timeout after 5000 msecs (cmd 0xec)
+[   42.409367] ata1.00: failed to IDENTIFY (I/O error, err_mask=0x4)
+[   42.417357] ata1.00: revalidation failed (errno=-5)
+[   42.425364] ata1: hard resetting link
+[   42.905436] ata1: SATA link up 3.0 Gbps (SStatus 123 SControl 300)
+[   42.917388] No irq handler for 0.37
+[   53.154069] ata1.00: qc timeout after 10000 msecs (cmd 0xec)
+[   53.162078] ata1.00: failed to IDENTIFY (I/O error, err_mask=0x4)
+[   53.170890] ata1.00: revalidation failed (errno=-5)
+[   53.178054] ata1: limiting SATA link speed to 1.5 Gbps
+[   53.186055] ata1: hard resetting link
+[   53.666108] ata1: SATA link up 1.5 Gbps (SStatus 113 SControl 310)
+[   53.674061] No irq handler for 0.37
+[   59.870476] random: crng init done
+[   83.875986] ata1.00: qc timeout after 30000 msecs (cmd 0xec)
+[   83.879996] ata1.00: failed to IDENTIFY (I/O error, err_mask=0x4)
+[   83.887971] ata1.00: revalidation failed (errno=-5)
+[   83.891955] ata1.00: disable device
+[   84.384024] ata1: SATA link up 1.5 Gbps (SStatus 113 SControl 310)
+[   84.400015] ata1: EH complete
+[   84.404054] sd 0:0:0:0: [sda] tag#1 UNKNOWN(0x2003) Result: hostbyte=0x04 driverbyte=DRIVER_OK cmd_age=79s
+[   84.407996] sd 0:0:0:0: [sda] tag#1 CDB: opcode=0x28 28 00 74 70 6d 90 00 00 08 00
+[   84.415984] I/O error, dev sda, sector 1953525136 op 0x0:(READ) flags 0x800000 phys_seg 1 prio class 2
+[   84.419991] Buffer I/O error on dev sda, logical block 244190642, async page read
+[   84.424003] Alternate GPT is invalid, using primary GPT.
+[   84.432014]  sda: sda1 sda3 sda5 sda7 sda9 sda10 sda11 sda12 sda13 sda17 sda19 sda25 sda27 sda29
+[   84.444090] sd 0:0:0:0: [sda] Attached SCSI disk
+[   84.452143] scsi 2:0:0:0: CD-ROM            SONY     PS-SYSTEM   420R 6141 PQ: 0 ANSI: 5
+[   84.476206] sr 2:0:0:0: [sr0] scsi3-mmc drive: 0x/0x cd/rw xa/form2 cdda tray
+[   84.483997] cdrom: Uniform CD-ROM driver Revision: 3.20
+[   84.500138] sr 2:0:0:0: Attached scsi CD-ROM sr0
+[   84.504170] sr 2:0:0:0: Attached scsi generic sg2 type 5
+[   84.512747] Freeing unused kernel image (initmem) memory: 1160K
+[   84.520002] Write protecting the kernel read-only data: 43008k
+[   84.528471] Freeing unused kernel image (text/rodata gap) memory: 124K
+[   84.536086] Freeing unused kernel image (rodata/data gap) memory: 1176K
+[   84.544007] Run /init as init process
+[   84.551994]   with arguments:
+[   84.556000]     /init
+[   84.560000]   with environment:
+[   84.563997]     HOME=/
+[   84.567996]     TERM=linux

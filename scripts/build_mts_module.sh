@@ -30,11 +30,15 @@ mkdir -p "$KERNEL_BUILD_DIR/drivers/net/ethernet/sony"
 cp -v "$MTS_SRC_DIR/mts.c" "$KERNEL_BUILD_DIR/drivers/net/ethernet/sony/mts.c"
 cp -v "$MTS_SRC_DIR/mts.h" "$KERNEL_BUILD_DIR/drivers/net/ethernet/sony/mts.h"
 
-# 4. Compilar o módulo usando os mesmos parâmetros do Kernel (GCC / ARCH=x86_64)
-echo "[+] Compilando módulo mts.ko com GCC..."
+# 4. Compilar o módulo usando os mesmos parâmetros do Kernel (clang + LLD / ARCH=x86_64)
+echo "[+] Compilando módulo mts.ko com clang + LLD..."
 make -C "$KERNEL_BUILD_DIR" \
      M="drivers/net/ethernet/sony" \
      ARCH=x86_64 \
+     CC=clang \
+     LD=ld.lld \
+     AR=llvm-ar \
+     NM=llvm-nm \
      -j"$(nproc)" \
      modules
 

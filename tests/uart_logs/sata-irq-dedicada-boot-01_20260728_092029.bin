@@ -1,0 +1,143 @@
+[36m[Debug] src/PayloadsView.cpp:319: Loading: /data/payloads/linux-1024mb.bin[0m
+[GoldHEN] <payloader> accepted a new payload
+[GoldHEN] <payloader> TCP Mode
+[36m[Debug[Go]l dsrc/PayHlEN]oa d<paysVilew.oadcppe:r18> 6: paGyeneloratad eParyecloades is calivlede ad!n[0m
+d [36m[sDeabvueg] srd [ct/ePmpa_ylofilade:s V/iuseew.cpr/tep:mp2/p1ay2: loCaled.anu497p p4ayl5oad1  li- st..size:. [029619m2 -
+ ip: 1[27.036m.0.[Debug] s1rc]/Pay
+loadsView.c[ppGo:l2d0H6: GEeNn] er<paayloadeterPa> yloadfos:un Refrde asnhedd [0jam
+ilbroken target process [proc: ScePartyDaemon - pid: 46]
+[GoldHEN] <payloader> launching payload... [format: BIN]
+[GoldHEN] <payloader> payload launched successfully
+[SceShellUI] I/PSM.UI : [FirstClear] : ClearFrameBuffer=False
+kernel_init()
+Kernel base = ffffffff985ec000
+Direct map base = ffffa4a100000000
+Testing global variable access (write protection)...
+OK.
+Kernel interface initialized
+Installing sys_kexec to system call #153
+kexec_init() successful
+
+sys_kexec invoked
+========================================
+PS4 Linux Payloads AIO
+FW 12.52 (1252)
+VRAM 1024 MB
+Southbridge: Baikal
+========================================
+sys_kexec(0x200444000, 15844352, 0x201364000, 3289116, "panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0 drm.debug=0x06 console=tty0 earlyprintk=efi,keep loglevel=8 root=LABEL=psxitarch rw rootdelay=10 systemd.unified_cgroup_hierarchy=0 systemd.legacy_systemd_cgroup_controller=yes audit=0 amdgpu.audio=1 usbcore.autosuspend=-1 video=HDMI-A-1:1920x1080@60 mitigations=off zswap.enabled=1 log_buf_len=4M netconsole=@192.168.0.2/eth0,6666@192.168.0.1/ff:ff:ff:ff:ff:ff")
+firmware_extract: Extract lib/firmware/amdgpu/gladius_pfp.bin 
+Copying PFP firmware
+NOP handler at 0xff0
+firmware_extract: Extract lib/firmware/amdgpu/gladius_me.bin 
+Copying ME firmware
+firmware_extract: Extract lib/firmware/amdgpu/gladius_ce.bin 
+Copying CE firmware
+NOP handler at 0x7f0
+firmware_extract: Extract lib/firmware/amdgpu/gladius_mec.bin 
+Copying MEC firmware
+NOP handler at 0xff0
+firmware_extract: Extract lib/firmware/amdgpu/gladius_mec2.bin 
+Copying MEC2 firmware
+NOP handler at 0xff0
+firmware_extract: Extract lib/firmware/amdgpu/gladius_rlc.bin 
+Copying RLC firmware
+firmware_extract: Extract lib/firmware/amdgpu/gladius_sdma.bin 
+Copying SDMA firmware
+firmware_extract: Extract lib/firmware/amdgpu/gladius_sdma1.bin 
+Copying SDMA1 firmware
+
+kexec parameters:
+    Kernel image size:   15844352 bytes
+    Initramfs size:      3385888 bytes (3289116 from user)
+    Kernel command line: panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0 drm.debug=0x06 console=tty0 earlyprintk=efi,keep loglevel=8 root=LABEL=psxitarch rw rootdelay=10 systemd.unified_cgroup_hierarchy=0 systemd.legacy_systemd_cgroup_controller=yes audit=0 amdgpu.audio=1 usbcore.autosuspend=-1 video=HDMI-A-1:1920x1080@60 mitigations=off zswap.enabled=1 log_buf_len=4M netconsole=@192.168.0.2/eth0,6666@192.168.0.1/ff:ff:ff:ff:ff:ff
+    Kernel image buffer: 0xffffffffffffffff
+    Initramfs buffer:    0xffffa4a12d400000
+kernel_hook_install(0xffffff8078f710f4, 0xffffffff98a33b10)
+  Using 64bit absolute jump
+******************************************************
+kexec successfully armed. Please shut down the system.
+******************************************************
+
+[KE]sceCameraDevKill::2685 ERROR: sceCameraProcConfigStop 0x802e0006 i=0 handle=257 pid=43
+Context.cc:174 (ajmContexCtonCtext.cclea:17n4 (ajmupCo) n- textCIleannstuap[KERnc)e N -EL] d2m e7m8_5Ih3n2ans wtdaalensc_vm en ospt1ace_e6 x3p8ited prop9ide : 6wa9,s r ptynlype=o1 t, 0d xffffestparr4ooapy12eedrc7d3.ly3
+d Cd8-es>otpt_rnlooytadeexetd i.ds c.Tc:
+R1Co8UE
+9n[ tK(eEaxRNjtmECL] .odncmtcee:1mx8_hat9n Cl(deleaa_njmvCupontem)sx pac-tCe lC_oeedaxeintcue pd map #0O) p 0x-f usf fCffSffoIdfLeKc fM fPEn3fc ffoDdfeefcfr woad
+e[rKs EwR aNELns]o  dmentm_hand oletp_ rvmspacoepp_erexirotpleyde  upidr:ln 6y9r ue,gnr apiep_mgsatipesst_recoeurent[1], dd1 .-.> 0
+
+
+CConontetxext.tc.cc:1c8:9 (ajmC1onte74xtCleanup) ( a-j CmoCdecont ATReAC9 DxetCcoder leawnuaps no)t  pr- Ioperlnys untaregistered.nc
+e 344067 was not properly destroyed.
+Context.cc:189 (ajmContextCleanup) - Codec Opus Decoder was not properly unregistered.
+Context.cc:189 (ajmContextCleanup) - Codec Opus SILKCont eEnxt.ccc:189od (ajmContextCleanup)e r- Codec  Opuws as CnoEt LT Encoprdoer was notpe properly ruly nurnergeisgtiered.
+sContteext.ccr:18ed9 (ajm.Co
+ntCoenxtCleanutpe)x -t Code.c Opus CELcT Decoder wca:s n189ot pro pe(rlay unregistejrmed.
+ContextCleaCnuontext.pcc) :-1 89 (CajmCoontexdetcCleanup)  Opu- s CECodec CLELPT8 D Eeconcoder dweas nor tw aprosper ly unrenogisttered .pr
+oConpetrext.cc:ly189 (ajmCont exuntClreanup) eg- isCodec tCeELP8 reEncod.der was
+ nCoot prntoeperlxyt unregiste.rced.c:
+1Co8n9te x(at.cjcm:C189 (ajmConontextCleanteuxtClpe) -a Codneuc CELP(p16))  Deco-d er wCodaes noct properly O puusnregistered D.
+eContcexot.dcc:1e9r1 (a wjams noCt proontpexerly tunrClegisteeraendu.
+p) - More codCoenctext.s cc:189 (wajmeContexrtCleea nnuop) t -p ropCodec MPEGe4rl AAC Eyn unrceodgeris wteras nedot pro.perly unregi..st
+ered.
+Context.cc:174 (ajmContextCleanup) - Instance 114689 was not properly destroyed.
+Context.cc:189 (ajmContextCleanup) - Codec AC3 Encoder was not properly unregistered.
+Context.cc:174 (ajmContextCleanup) - Instance 163842 was not properly destroyed.
+Context.cc:189 (ajmContextCleanup) - Codec DTS Encoder was not properly unregistered.
+[SceSysCore mini] killall timeout 5[sec]...
+[SceSysCore mini] forcibly unmount 4 nullfses
+[SceSysCore mini] forcibly unmount /mnt/usb0
+[SceSysCore mini[REGMGR] 000006 ...
+] sceKernelPollE[ventFlag(reboot_flag): failed 80020010
+[SceSysCore mini] call reboot(4000)
+REGMGR] (    165.534 sec) 010006 ...
+[REGMGR] (   0.011781 sec) 010007 ...
+[REGMGR] 000108 ...
+Waiting (max 60 seconds) for system process `SceVnlru' to stop...done
+Waiting (max 60 seconds) for system process `SceBufdaemon1' to stop...SD Manual Tuning done. MaxPassWindowSize=23, TunePoint=20 CORE_CTRL=0x184094
+done
+Waiting (max 60 seconds) for system process `SceBufdaemon2' to stop...done
+Waiting (max 60 seconds) for system process `SceBufdaemon0' to stop...done
+W
+aiStiynng (macx 60 sieconds) nfor sgyst dem priocskess `SceSynscer,'  to stop..v.nodes remaining...1 0 0 sched_sync: flush softdep (iter=2)
+sched_sync: flush softdep (iter=1)
+done
+All buffers synced.
+[PFS] umount[0x00005eeb3e3f19c4] finished 0
+[PFS] umount[0x00005eeb3e3c8201] finished 0
+Uptime: 2m52s
+icc post sync:Thermal alert LED off
+Change memory pstate to MM failed(19)
+[REGMGR] 000007 @2@ ...
+icc08-4001 0802
+icc:failed to disabled reset button notification: 0005
+icc:disabled thermal notification
+eth0: link state changed to DOWN
+ICC: howto:00004000 depth:2 cause:00 hand:01
+ICC: Shutdown.
+hook_icc_query_nowait called
+ICC 05-00 polling
+Fixing ACPI tables at 0xe0000 (0xffffffffffffffff)
+RSDT at 0xe0024
+XSDT at 0xe0088
+FACP at 0xe016c
+FACS at 0xe012c
+DSDT at 0xe0430
+APIC at 0xe0298
+MCFG at 0xe0304
+SSDT at 0xe0730
+ACPI tables fixed
+kexec: Waiting for secondary CPUs...
+kexec: Secondary CPUs quiesced
+kexec: Setting up GDT...
+kexec: Relocating stub...
+kexec: Setting up boot params...
+kexec: Cleaning up hardware...
+Current sb_id: 3
+
+SB_BAIKAL constant: 3
+
+kexec: Detected Baikal Southbridge, disabling IOMMU...
+kexec: Reconfiguring VRAM...
+kexec: Resetting GPU...
+kexec: About to relocate and jump to kernel

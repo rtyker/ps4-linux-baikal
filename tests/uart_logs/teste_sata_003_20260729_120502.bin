@@ -1,0 +1,140 @@
+[36m[Debug] src/PayloadsView.cpp:319: Loading: /data/payloads/linux-1024mb.bin[0m
+[GoldHEN] <payloader> accepted a new payload
+[GoldHEN] <payloader> TCP Mode
+[36m[De[Gbuolg] dHEN]src /P<aylpaoyaloaddseVr>i epw.cpp:ay1l86:o Gead nerartePaecyloeiavdse dis a called!n[d0m
+ [s3a6vedm [[temp_Debufilge] sr: c//PuasyeloadrsV/iew.ctpepm:2p12:/ Cleapnupay loapd.a2y3lo5487ad  -list... s[0mize: 
+296192[36 - m[iDp: e1bug] src/P27ayl.0oadsView..c0pp.:12]0
+6: GeneratePayloads: Refreshed[0m
+[GoldHEN] <payloader> found and jailbroken target process [proc: ScePartyDaemon - pid: 46]
+[GoldHEN] <payloader> launching payload... [format: BIN]
+[GoldHEN] <payloader> payload launched successfully
+[SceShellUI] I/PSM.UI : [FirstClear] : ClearFrameBuffer=False
+[SceWorkaroundCtl] PERIODIC_DOWNLOAD_INTERVAL_SEC={86400} elapsed={473} isFirstTime={1}
+[SceWorkaroundCtl] start DownloadFile
+[SceWorkaroundCtl] ifModifiedSince={Thu, 10 Dec 2020 08:29:25 +0000}
+[SceWorkaroundCtl] W:\Build\J02690785\vsh\shell\shell_core\workaround_ctl\http_client.cpp(132) Get: WC_ISOK::0x8041013d
+[SceWorkaroundCtl] W:\Build\J02690785\vsh\shell\shell_core\workaround_ctl\workaround_ctl_manager.cpp(288) DownloadFile: WC_ISOK::0x8041013d
+[SceWorkaroundCtl] W:\Build\J02690785\vsh\shell\shell_core\workaround_ctl\workaround_ctl_manager.cpp(451) Run: WC_CONTINUE::0x8041013d
+[SceWorkaroundCtl] PERIODIC_CHECK_INTERVAL_SEC={420}
+[SceShellUI] I/PSM.UI : [NoDraw] : ClearFrameBuffer=False
+[SceShellUI] I/PSM.UI : [FirstClear] : ClearFrameBuffer=False
+#LOGIN MGR# Receive Event : SCE_MBUS_EVENT_DEVICE_STATUS_UPDATED [DeviceId:0x30300]
+[SceShellUI] I/PSM.UI : [NoDraw] : ClearFrameBuffer=False
+[SceShellCore] VM Stats: RSS 551.4, kernel 263.6, wire count 339.1, swap out 0.0, page table CPU 2533/6144 GPU 387/2048
+[SceShellCore] FMEM   1.3/   4.5 NPXS20977 SceSysAvControl.elf
+[SceShellCore] FMEM  10.6/  74.3 NPXS20991 SceSysCore.elf
+[SceShellCore] FMEM   9.3/  54.3 NPXS20973 orbis_audiod.elf
+[SceShellCore] FMEM   3.2/  11.2 NPXS20976 GnmCompositor.elf
+[SceShellCore] FMEM  28.4/ 344.9 NPXS20000 SceShellCore
+[SceShellCore] FMEM 326.3/ 844.0 NPXS20001 SceShellUI
+[SceShellCore] FMEM   3.4/   8.3 NPXS21003 SceAvCapture
+[SceShellCore] FMEM   8.1/  32.4 NPXS21000 SceGameLiveStreaming
+[SceShellCore] FMEM  21.1/  53.8 NPXS21002 ScePartyDaemon
+[SceShellCore] FMEM   4.3/  25.4 NPXS21004 SceVideoCoreServer
+[SceShellCore] FMEM   9.8/  51.3 NPXS21006 SceRemotePlay
+[SceShellCore] FMEM   6.8/  39.0 NPXS21010 SceCloudClientDaemon
+[SceShellCore] FMEM   3.3/  10.9 NPXS21016 SceSpZeroConf
+[SceShellCore] FMEM   7.9/ 156.0 NPXS21002 webrtc_daemon.self
+[SceShellCore] FMEM   6.4/  18.1 NPXS21019 SceSocialScreenMgr
+[SceShellCore] FMEM   4.3/   9.8 NPXS21007 SceMusicCoreServer
+[SceShellCore] FMEM   6.5/  14.4 NPXS21020 SceVoiceAndAgent
+[SceShellCore] FMEM   2.1/   5.1 NPXS20967 fs_cleaner.elf
+[SceShellCore] FMEM   2.0/  10.2 NPXS20974 SceVdecProxy.elf
+[SceShellCore] FMEM   2.0/  10.3 NPXS20975 SceVencProxy.elf
+[SceShellCore] FMEM  25.7/ 270.0 NPXS20001 SecureUIProcess.self
+[SceShellCore] FMEM  41.7/ 535.1 NPXS20001 SecureWebProcess.self
+[SceShellCore] FMEM  10.7/ 358.8 NPXS20001 orbis-jsc-compiler.self
+[SceShellCore] FMEM   6.3/  30.2 AZIF00003 guest.elf
+[SceShellCore] Libc Heap Status: free 36%, in-use 3905.4 KB, trend +4.7 KB/min, peak 4387.2 KB, when 495 [sec]
+[SceShellCore] Libc Heap Status: free 36%, in-use 3905.8 KB, trend +5.5 KB/min, peak 4387.2 KB, when 526 [sec]
+[SceSystemStateMgr] No user input for 60 seconds
+[SceNetEv] PERIODIC_DOWNLOAD_INTERVAL_SEC={86400} contentId={8}, serviceName={netev}
+[SceNetEv] start DownloadFile, contentId={8}, serviceName={netev}
+[SceNetEv] ifModifiedSince={Tue, 02 Mar 2021 16:11:59 +0000}
+[SceNetEv] W:\Build\J02690785\vsh\shell\shell_core\netev\netev_http_client.cpp(132) Get: NETEV_ISOK::0x8041013d
+[SceNetEv] W:\Build\J02690785\vsh\shell\shell_core\netev\netev_manager.cpp(345) DownloadFile: NETEV_ISOK::0x8041013d
+[SceNetEv] W:\Build\J02690785\vsh\shell\shell_core\netev\netev_manager.cpp(493) Run: NETEV_CONTINUE::0x8041013d
+[SceNetEv] PERIODIC_CHECK_INTERVAL_SEC={480}
+[SceShellCore] Libc Heap Status: free 36%, in-use 3908.9 KB, trend +4.2 KB/min, peak 4387.2 KB, when 557 [sec]
+ugen0.5: <Innostor, Ext. HDD, 20230206>(VID=0x1f75 PID=0x0621 depth=2 port=1 speed=4) at usbus0
+umass1: <Innostor Ext. HDD, class 0/0, rev 3.00/0.36, addr 4> on usbus0
+umass1: sim_unit:0x00000001 device_unit:0x00000001
+umass1:  SCSI over Bulk-Only; quirks = 0x0000
+umass1:3:1:-1: Attached to scbus3
+da1 at umass-sim1 bus 1 scbus3 target 0 lun 0
+da1: <Innostor Ext. HDD > Fixed Direct Access SCSI-6 device 
+da1: 400.000MB/s transfers
+da1: 114473MB (234441648 512 byte sectors: 255H 63S/T 14593C)
+
+DBG AutoMounter(checkSpecAndHub 494):
+	device(/dev/da1) is SUPER_SPEED.
+DBG AutoMounter(checkSpecAndHub 504):
+	deviceFilePath[/dev/da1] is connected to the USB port in general
+WARNING AutoMounter(bool AutoMounter::DevctlReader::UsbStartupHandler::isStartUp() 76):
+	fake implementation.
+MSG AutoMounter(void AutoMount::PsmEventNotifier::callback_connection(void **) 360):
+	Notify PsmEvent OnUsbStorageInserted
+MSG AutoMounter(int32_t AutoMounter::Util::checkFsFormat(const char *, uint32_t *) 888):
+	device(/dev/da1) has unknown format(0).
+MSG AutoMounter(int32_t _AutoMounter::UsbHandler::(anonymous namespace)::_mountFileSystem(std::string, bool, std::string &, uint32_t *, uint64_t *, uint64_t *, uint64_t *) 542):
+	/dev/da1 has unknown format.
+MSG AutoMounter(int32_t _AutoMounter::UsbHandler::requestMount(const char *, bool) 763): _mountFileSystem(deviceFilePath, false, mountPoint, &fsFormatType, &space, &freeSpace, &availableSpace) returned 0x80f4001c.
+MSG AutoMounter(int32_t _AutoMounter::UsbHandler::(anonymous namespace)::_acquireEncryptDevice(std::string, uint32_t *, uint32_t *, std::string &, uint64_t *) 592):
+	device(/dev/da1) is not qualified for encrypt device. ng_capability(0x2)
+verify_metadata: sceSblExternalHDDVerifyMetadata(0) failed 800f0435
+MSG AutoMounter(int32_t _AutoMounter::UsbHandler::(anonymous namespace)::checkEncryption(std::string, bool *) 347):
+	sceFsExternalStorageVerifyMetadata(/dev/da1) returned 0x80020050. device is not encrypted.
+MSG AutoMounter(int32_t _AutoMounter::UsbHandler::requestMount(const char *, bool) 795): _acquireEncryptDevice(deviceFilePath, &encryptDeviceFormat, &encryptDeviceStatus, encryptDeviceFilePath, &encryptDeviceId) returned 0x80f4001a.
+DBG AutoMounter(notifyMount 435):
+	eventArg.additionalFeatures[0x2000].
+MSG AutoMounter(int32_t AutoMounter::DevctlReader::handleCreateUsbDevice(const char *) 174): AutoMounter::UsbHandler::requestMount(deviceFilePath.c_str(), true) returned 0x80f4001a.
+MSG AutoMounter(void AutoMount::PsmEventNotifier::callback_mount(void **) 270):
+	Notify PsmEvent OnUsbStorageMounted
+
+DBG AutoMounter(checkSpecAndHub 494):
+	device(/dev/da1) is SUPER_SPEED.
+DBG AutoMounter(checkSpecAndHub 504):
+	deviceFilePath[/dev/da1] is connected to the USB port in general
+WARNING AutoMounter(bool AutoMounter::DevctlReader::UsbStartupHandler::isStartUp() 76):
+	fake implementation.
+MSG AutoMounter(void AutoMount::PsmEventNotifier::callback_connection(void **) 360):
+	Notify PsmEvent OnUsbStorageInserted
+MSG AutoMounter(int32_t _AutoMounter::UsbHandler::(anonymous namespace)::tryExfatMount(std::string, bool, std::string &, uint64_t *, uint64_t *, uint64_t *) 129):
+	device(/dev/da1s1) is mounted to /mnt/usb0 with exfat.
+DBG AutoMounter(notifyMount 435):
+	eventArg.additionalFeatures[0x2040].
+MSG AutoMounter(void AutoMount::PsmEventNotifier::callback_mount(void **) 270):
+	Notify PsmEvent OnUsbStorageMounted
+MSG AutoMounterMelUtil(void sceAutomounterMelUtil::callbackMountAll(void **) 279):
+		device(/dev/da1s1): exfat(mediaType=0x1001) is mounted at /mnt/usb0.
+callbackUsbStorageMountInternal()[374]: [MediaEvent] callbackUsbStorageMountInternal() devNum=0
+callbackUsbStorageMountInternal()[377]: [MediaEvent] callbackUsbStorageMountInternal() locked.
+
+MSG AutoMounterWrapper(void callbackUsbMount(SceUsbStorageEventDatas *, void *) 102):
+	DeviceId=0x2aa9fa63
+[SceLncUtil] blockAppSuspend: name={SceSaveData}, appId={0x60000100}, refCount={1}
+[SceLncUtil] unblockAppSuspend: name={SceSaveData}, appId={0x60000100}, refCount={0}
+DBG AutoMounter(checkSpecAndHub 494):
+	device(/dev/da1) is SUPER_SPEED.
+DBG AutoMounter(checkSpecAndHub 504):
+	deviceFilePath[/dev/da1] is connected to the USB port in general
+WARNING AutoMounter(bool AutoMounter::DevctlReader::UsbStartupHandler::isStartUp() 76):
+	fake implementation.
+MSG AutoMounter(void AutoMount::PsmEventNotifier::callback_connection(void **) 360):
+	Notify PsmEvent OnUsbStorageInserted
+MSG AutoMounter(int32_t AutoMounter::Util::checkFsFormat(const char *, uint32_t *) 888):
+	device(/dev/da1s2) has unknown format(0).
+MSG AutoMounter(int32_t _AutoMounter::UsbHandler::(anonymous namespace)::_mountFileSystem(std::string, bool, std::string &, uint32_t *, uint64_t *, uint64_t *, uint64_t *) 542):
+	/dev/da1s2 has unknown format.
+MSG AutoMounter(int32_t _AutoMounter::UsbHandler::requestMount(const char *, bool) 763): _mountFileSystem(deviceFilePath, false, mountPoint, &fsFormatType, &space, &freeSpace, &availableSpace) returned 0x80f4001c.
+MSG AutoMounter(int32_t _AutoMounter::UsbHandler::(anonymous namespace)::_acquireEncryptDevice(std::string, uint32_t *, uint32_t *, std::string &, uint64_t *) 592):
+	device(/dev/da1s2) is not qualified for encrypt device. ng_capability(0x12)
+verify_metadata: sceSblExternalHDDVerifyMetadata(0) failed 800f0435
+MSG AutoMounter(int32_t _AutoMounter::UsbHandler::(anonymous namespace)::checkEncryption(std::string, bool *) 347):
+	sceFsExternalStorageVerifyMetadata(/dev/da1s2) returned 0x80020050. device is not encrypted.
+MSG AutoMounter(int32_t _AutoMounter::UsbHandler::requestMount(const char *, bool) 795): _acquireEncryptDevice(deviceFilePath, &encryptDeviceFormat, &encryptDeviceStatus, encryptDeviceFilePath, &encryptDeviceId) returned 0x80f4001a.
+DBG AutoMounter(notifyMount 435):
+	eventArg.additionalFeatures[0x2000].
+MSG AutoMounter(int32_t AutoMounter::DevctlReader::handleCreateUsbDevice(const char *) 174): AutoMounter::UsbHandler::requestMount(deviceFilePath.c_str(), true) returned 0x80f4001a.
+MSG AutoMounter(void AutoMount::PsmEventNotifier::callback_mount(void **) 270):
+	Notify PsmEvent OnUsbStorageMounted
