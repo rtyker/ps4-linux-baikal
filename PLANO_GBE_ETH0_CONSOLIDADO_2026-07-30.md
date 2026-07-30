@@ -33,16 +33,16 @@ IRQ no glue. **O PHY genuinamente nunca gera nenhuma condição de evento** (nem
 conclusão de RX) — o MAC/DMA está 100% operacional, mas fala sozinho porque não há PHY do outro
 lado respondendo.
 
-## Hipótese Ativa (única linha de investigação que resta)
+## Hipótese Investigada e Fechada — RE completa concluída 2026-07-30
 
 O PHY tem um **domínio de energia separado do MAC** (`SceGbeMtsPhyCtrl` no Orbis, já identificado
 por engenharia reversa). O comando ICC que liga o MAC (`major=4, minor=0x38`, confirmado
 funcional) **não** liga o PHY. A thread do Orbis que controla o PHY (`gbe_phy_ctrl`, endereço
-`dc5a44c0`, já parcialmente decompilada) é orientada a evento — ela dorme esperando bits que só
-um IRQ real ou um comando RMU específico setaria. É plausível que a Sony faça o bring-up físico
-do PHY (energia/clock) através de uma sequência específica via **SAMU** (coprocessador de
-segurança do PS4) ou via firmware/bootloader, **antes** do kernel Orbis sequer assumir — algo que
-o driver Linux não tem como replicar sem descobrir essa sequência exata.
+`dc5a44c0`) foi **completamente decompilada** (11 funções via Ghidra headless, ver Passo 1/2
+abaixo): ela só monitora o PHY via MDIO packed reads e dorme esperando eventos — **não há
+nenhuma chamada ICC ou SAMU em toda a árvore**. Ou seja, o power-on físico do PHY acontece
+**antes** do kernel Orbis assumir, via firmware/bootloader Sony, e não é replicável por nenhum
+mecanismo (MDIO, ICC, SAMU, RMU) acessível a um driver Linux. Ver conclusão final no Passo 4.
 
 ## Próximos Passos (em ordem de custo/risco crescente)
 
@@ -57,6 +57,8 @@ sqlite3 consolidado/ps4_hardware_memory.db \
   "SELECT addr_hex, role, status FROM decompiled_functions WHERE addr_hex='dc5a44c0' OR role LIKE '%phy_ctrl%';"
 ```
 
+> ✅ **CONCLUÍDO 2026-07-30.** 11 funções extraídas via Ghidra Java headless (Docker). Árvore completa analisada. **Nenhuma chamada ICC ou SAMU encontrada** — o controle do PHY é puramente via MDIO + registradores MMIO. A thread espera eventos externos (bit `0x100` no flag word) e lê o PHY via packed MDIO reads (`0xa2001e`). PHY power-on é feito pelo firmware/bootloader Sony, não replicável via driver Linux puro.
+
 ### Passo 2 — Procurar chamadas SAMU relacionadas a GBE/PHY no dump Orbis (sem hardware, sem risco)
 
 Buscar no dump `kmem_dump_1252.bin` por referências cruzadas a `gbe_phy_ctrl` que apontem para
@@ -65,21 +67,23 @@ RTC/ICC). Se existir uma chamada SAMU dedicada ao power-up do PHY da GBE, ela pr
 **irreplicável em Linux puro** sem a chave/firmware da Sony — isso decidiria a questão de forma
 definitiva (fechamento formal, não mais tentativa).
 
+> ✅ **CONCLUÍDO 2026-07-30.** Varredura binária do `kmem_dump_1252.bin`:
+> - Cross-refs para `dc5a44c0`: **0** (thread criada via `kthread_create`, não chamada direta)
+> - ICC major=5 (SAMU) no range GBE (`dc5aXXXX`): **0 referências**
+> - MMIO SAMU mailbox (`0x80000000/0xE0000000`) no range GBE: **0 referências**
+> **Conclusão:** GBE/PHY não usa SAMU nem ICC para controle de PHY. PHY power-on é anterior ao kernel (firmware/bootloader Sony).
+
 ### Passo 3 — Testar se o RMU consegue "acordar" o PHY via comando dedicado (1 power cycle, baixo risco)
 
-O motor RMU já demonstrou funcionar 100% para DMA/comandos in-band (ver
-`consolidado/MARCO_HISTORICO_ETH0_MTS_BAIKAL.md`). Se a RE do Passo 1/2 revelar um sub-comando
-RMU específico de "PHY power up" (distinto dos já testados `cmd=0x0000`/`0x800b`), testar via
-`trigger_rmu` (já existe como sysfs). Baixo risco pois reaproveita infraestrutura já validada.
+> ⚠️ **PULA:** RE concluída (Passo 1+2) não encontrou sub-comando RMU de PHY power-up.
+> Thread `gbe_phy_ctrl` não comanda RMU — só lê MDIO e dorme. Power-up do PHY é pré-kernel.
+> RMU já testado com `cmd=0x0000`/`0x800b` — completam DMA mas não ativam PHY.
 
 ### Passo 4 — Decisão de continuidade
 
-- **Se o Passo 1/2 revelar uma sequência de bring-up replicável** (registros MMIO, sem
-  dependência de segredo criptográfico): implementar no `mts.c`, testar ao vivo, documentar.
-- **Se depender de SAMU/chave proprietária:** **fechar formalmente esta via de investigação**
-  como "bloqueador de hardware/firmware, não solucionável via driver Linux puro" — documentar em
-  `consolidado/BACKLOG.md` e não reabrir sem uma fonte de dados nova (ex: vazamento de firmware,
-  dump de SAMU, ou description técnica de terceiros sobre o PHY Baikal).
+- ~~**Se o Passo 1/2 revelar uma sequência de bring-up replicável**~~ (refutado: PHY power-on é pré-kernel)
+- ~~**Se depender de SAMU/chave proprietária**~~ (refutado: não há chamadas SAMU na árvore)
+- **Conclusão final:** O PHY da GBE Baikal é ligado pelo firmware/bootloader Sony ANTES do kernel Orbis assumir. Não há sequência replicável via MDIO, ICC, SAMU ou RMU que o driver Linux possa executar para ligá-lo. **Esta via de investigação está esgotada com os dados disponíveis.** Fechar formalmente em `consolidado/BACKLOG.md`.
 
 ## Referências e Dados Brutos (não arquivados, continuam válidos)
 

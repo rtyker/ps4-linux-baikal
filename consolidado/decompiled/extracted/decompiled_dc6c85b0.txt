@@ -1,0 +1,86 @@
+// Extraido por Ghidra headless (ExtractMtsNamespaceNoAnalysis.java)
+// addr: 0xffffffffdc6c85b0  name: FUN_ffffffffdc6c85b0  size: 96
+// escopo: lacuna MTS/GBE/ICC/glue identificada em testes ao vivo
+// chamadores (1):
+//   FUN_ffffffffdc5a44c0 @ 0xffffffffdc5a44c0
+// chamadas (0):
+
+
+ulong FUN_ffffffffdc6c85b0(long param_1)
+
+{
+  int *piVar1;
+  short *psVar2;
+  long lVar3;
+  code *pcVar4;
+  uint uVar5;
+  ulong uVar6;
+  undefined8 uVar8;
+  ulong *in_GS_OFFSET;
+  bool bVar9;
+  ulong uVar7;
+  
+  uVar6 = *in_GS_OFFSET;
+  psVar2 = (short *)(uVar6 + 0xfc);
+  *psVar2 = *psVar2 + -1;
+  if (*psVar2 < 0) {
+    func_0xffffffffdcabbf00();
+    func_0xffffffffdcabc5e0
+              (&LAB_ffffffffdc6c8662,&UNK_ffffffffdcb2f69a,(long)*(short *)(uVar6 + 0xfc));
+    func_0xffffffffdc460780
+              (0xf,&UNK_ffffffffdcb2f689,&UNK_ffffffffdcb2f69a,(int)*(short *)(uVar6 + 0xfc));
+                    /* WARNING: Does not return */
+    pcVar4 = (code *)invalidInstructionException();
+    (*pcVar4)();
+  }
+  if ((*(int *)(param_1 + 0xc) == 0) && (iRamffffffffde58c260 != 0)) {
+    (*pcRamffffffffde58c2c8)(iRamffffffffde58c260,param_1,0,0,0,0);
+  }
+  LOCK();
+  uVar7 = *(ulong *)(param_1 + 0x18);
+  bVar9 = uVar6 == uVar7;
+  if (bVar9) {
+    *(ulong *)(param_1 + 0x18) = 4;
+    uVar7 = uVar6;
+  }
+  UNLOCK();
+  if (!bVar9) {
+    if (*(int *)(param_1 + 0xc) == 0) {
+      func_0xffffffffdc45e8c0(param_1);
+      uVar8 = func_0xffffffffdc45ea20(param_1);
+      func_0xffffffffdc45f0c0(uVar8,0);
+      LOCK();
+      *(undefined8 *)(param_1 + 0x18) = 4;
+      UNLOCK();
+      func_0xffffffffdc45f1f0(uVar8,0);
+      uVar6 = (ulong)((uint)param_1 >> 8 & 0x7f);
+      lVar3 = uVar6 * 0x28;
+      if (*(int *)(lVar3 + -0x21b1002c) == 0) {
+        if (iRamffffffffde58c254 != 0) {
+          (*pcRamffffffffde58c2c8)(iRamffffffffde58c254,lVar3 + -0x21b10038,0,0,0,0,uVar6 * 5);
+        }
+        LOCK();
+        *(undefined8 *)(lVar3 + -0x21b10020) = 4;
+        UNLOCK();
+      }
+      else {
+        *(int *)(lVar3 + -0x21b1002c) = *(int *)(lVar3 + -0x21b1002c) + -1;
+      }
+      uVar6 = *in_GS_OFFSET;
+      func_0xffffffffdc6b4890();
+      piVar1 = (int *)(uVar6 + 0x400);
+      *piVar1 = *piVar1 + -1;
+      return *(ulong *)(uVar6 + 0x408);
+    }
+    uVar5 = *(int *)(param_1 + 0xc) - 1;
+    uVar7 = (ulong)uVar5;
+    *(uint *)(param_1 + 0xc) = uVar5;
+    if (uVar5 == 0) {
+      LOCK();
+      *(ulong *)(param_1 + 0x18) = *(ulong *)(param_1 + 0x18) & 0xfffffffffffffffe;
+      UNLOCK();
+    }
+  }
+  return uVar7;
+}
+

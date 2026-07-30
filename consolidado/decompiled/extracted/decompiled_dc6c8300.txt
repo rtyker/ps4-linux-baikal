@@ -1,0 +1,43 @@
+// Extraido por Ghidra headless (ExtractMtsNamespaceNoAnalysis.java)
+// addr: 0xffffffffdc6c8300  name: FUN_ffffffffdc6c8300  size: 77
+// escopo: lacuna MTS/GBE/ICC/glue identificada em testes ao vivo
+// chamadores (1):
+//   FUN_ffffffffdc5a44c0 @ 0xffffffffdc5a44c0
+// chamadas (0):
+
+
+void FUN_ffffffffdc6c8300(long param_1)
+
+{
+  long lVar1;
+  code *pcVar2;
+  long *in_GS_OFFSET;
+  bool bVar3;
+  
+  lVar1 = *in_GS_OFFSET;
+  if (*(int *)(lVar1 + 0x128) != 0) {
+    func_0xffffffffdcabbf00();
+    func_0xffffffffdcabbe70(&LAB_ffffffffdc6c8366);
+    func_0xffffffffdc460780(0xb,&UNK_ffffffffdcb2f66b);
+                    /* WARNING: Does not return */
+    pcVar2 = (code *)invalidInstructionException();
+    (*pcVar2)();
+  }
+  LOCK();
+  bVar3 = *(long *)(param_1 + 0x18) == 4;
+  if (bVar3) {
+    *(long *)(param_1 + 0x18) = lVar1;
+  }
+  UNLOCK();
+  if (bVar3) {
+    if (iRamffffffffde58c25c != 0) {
+      (*pcRamffffffffde58c2c8)(iRamffffffffde58c25c,param_1,0,0,0,0);
+    }
+  }
+  else {
+    func_0xffffffffdc6c8390(param_1,lVar1);
+  }
+  *(short *)(lVar1 + 0xfc) = *(short *)(lVar1 + 0xfc) + 1;
+  return;
+}
+

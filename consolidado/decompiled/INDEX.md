@@ -19,7 +19,7 @@
 | `dc5a0070` | `mtsc_pci_attach_asm.txt` | 418 | ⚠️ | disassembly raw (complementar) |
 | `dc5a34f0` | `mts_attach_dc5a34f0.txt` | 99 | ⚠️ | `mts_attach` — attach da interface de rede |
 | `dc5a41d0` | `legacy_raiz/decompiled_gbe_mac_attach.txt` | 95 | ⚠️ | `SceGbeMtsCtrl_attach` — attach do MAC GBE |
-| `dc5a44c0` | `legacy_raiz/decompiled_gbe_phy_attach.txt` | 161 | ⚠️ | `SceGbeMtsPhyCtrl_attach` — attach do PHY (thread gbe_phy_ctrl) |
+| `dc5a44c0` | `legacy_raiz/decompiled_gbe_phy_attach.txt` + `extracted/decompiled_dc5a44c0.txt` | 166 | ✅ **revisado 2026-07-30** | `SceGbeMtsPhyCtrl_attach` — thread gbe_phy_ctrl. Monitora PHY via MDIO reads (0xa2001e = packed addr). Poll bit15=status, bit2=link_change. **NENHUMA ICC/SAMU na arvore completa.** |
 
 ### Mac Start / Stop / Calibração
 
@@ -36,11 +36,29 @@
 
 | Função | Arquivo | Linhas | Status | Papel |
 |---|---|---|---|---|
-| `dc5a2680` | `legacy_raiz/decompiled_dc5a2680.txt` | 102 | ⚠️ | papel desconhecido, args `(arg1,arg2,arg3)` |
+| `dc5a2680` | `extracted/decompiled_dc5a2680.txt` | 108 | ✅ **revisado 2026-07-30** | `mts_phy_mdio_read_packed` — leitura PHY MDIO via packed addr (0xa2001e). Poll bit15 ate pronto. Chamada 2x em gbe_phy_ctrl (trigger + ler). |
 | `dc5a2bd0` | `legacy_raiz/decompiled_dc5a2bd0.txt` | 164 | ⚠️ | papel desconhecido, 11 vars locais — provável setup de descritor |
 | `dc5a2d00` | `legacy_raiz/decompiled_dc5a2d00.txt` | 46 | ⚠️ | papel desconhecido |
 | `dc5a5ae0` | `legacy_raiz/decompiled_dc5a5ae0.txt` | 199 | ⚠️ | papel desconhecido |
 | `dc5a5ec0` | `legacy_raiz/decompiled_dc5a5ec0.txt` | 186 | ⚠️ | **RMU frame build** — confirmado por teste `2026-07-25 01:20`. Frame RMU de 34B (magic `0xfa42`) reconstruído das linhas 131-148 deste arquivo. |
+
+### Árvore de chamada da thread gbe_phy_ctrl (dc5a44c0) — extração 2026-07-30
+
+11 funções extraídas via Ghidra Java headless (Docker). **Nenhuma chamada ICC ou SAMU encontrada.**
+
+| Função | Arquivo | Linhas | Status | Papel |
+|---|---|---|---|---|
+| `dc5a44c0` | `extracted/decompiled_dc5a44c0.txt` | 166 | ✅ | `gbe_phy_ctrl` — thread principal. Monitora PHY via MDIO packed reads. Aguarda eventos (sleep/wake). |
+| `dc524770` | `extracted/decompiled_dc524770.txt` | 61 | ✅ | `print_debug` — logging/diagnóstico. Chamado no init da thread. |
+| `dc5a2680` | `extracted/decompiled_dc5a2680.txt` | 108 | ✅ | `mts_phy_mdio_read_packed` — leitura MDIO. Packed addr 0xa2001e. Poll bit15. |
+| `dc48fe00` | `extracted/decompiled_dc48fe00.txt` | 101 | ✅ | `wait_event_timeout` — kernel wait/sleep (completion/waitqueue). Genérico. |
+| `dc6c8300` | `extracted/decompiled_dc6c8300.txt` | 43 | ✅ | `mutex_lock_intr` — mutex lock. Genérico. |
+| `dc6c85b0` | `extracted/decompiled_dc6c85b0.txt` | 86 | ✅ | `mutex_unlock_intr` — mutex unlock. Genérico. |
+| `dcabbf00` | `extracted/decompiled_dcabbf00.txt` | 58 | ✅ | `spinlock_debug_lock` — error handler. Genérico. |
+| `dcabbe70` | `extracted/decompiled_dcabbe70.txt` | 50 | ✅ | `spinlock_debug_unlock` — error handler. Genérico. |
+| `dc460780` | `extracted/decompiled_dc460780.txt` | 38 | ✅ | `panic_printk` — kernel panic. Genérico. |
+| `dc524510` | `extracted/decompiled_dc524510.txt` | 112 | ✅ | `kernel_thread_exit` — terminação de thread. Genérico. |
+| `dc524a80` | `extracted/decompiled_dc524a80.txt` | 22 | ✅ | `small_wrapper_fn` — wrapper. **Não é SAMU.** |
 
 ### Lacunas MTS **ainda não decompiladas** (validadas em testes ao vivo)
 
@@ -251,4 +269,4 @@ Prioridade baixa:
 - **2026-07-20**: Primeira leva de decompilações geradas por Ghidra manual — driver MTS, GBE attach.
 - **2026-07-21**: Decompilação cirúrgica dos PHY init (SATA, USB), glue, ICC.
 - **2026-07-25**: Testes ao vivo confirmaram/refutaram múltiplas funções MTS. GBE hold corrigido para `0x180020`. MDIO Clause 22 ativo.
-- **2026-07-26** (este INDEX): Consolidação de 49 arquivos em catálogo único. 42 funções únicas, 3 com versão dupla/tripla.
+- **2026-07-30**: Extração massiva via Ghidra Java headless (Docker). Árvore completa de `gbe_phy_ctrl` (dc5a44c0): 11 funções extraídas, analisadas e registradas no SQLite. Cross-ref SAMU no dump concluído — **zero referências SAMU/ICC no range GBE**. Conclusão: PHY power-on é pré-kernel (firmware/bootloader Sony). Script `.java` adicionado ao repositório (`ExtractMtsNamespaceNoAnalysis.java`).

@@ -1,0 +1,112 @@
+// Extraido por Ghidra headless (ExtractMtsNamespaceNoAnalysis.java)
+// addr: 0xffffffffdc524510  name: FUN_ffffffffdc524510  size: 115
+// escopo: lacuna MTS/GBE/ICC/glue identificada em testes ao vivo
+// chamadores (0):
+// chamadas (1):
+//   FUN_ffffffffdc6c8300 @ 0xffffffffdc6c8300
+
+
+ulong FUN_ffffffffdc524510(void)
+
+{
+  int *piVar1;
+  short *psVar2;
+  long lVar3;
+  code *pcVar4;
+  uint uVar5;
+  ulong uVar6;
+  undefined8 uVar8;
+  undefined8 unaff_RBX;
+  undefined8 unaff_RBP;
+  undefined8 unaff_R14;
+  long lVar9;
+  ulong *in_GS_OFFSET;
+  bool bVar10;
+  ulong uVar7;
+  
+  uVar6 = *in_GS_OFFSET;
+  if ((*(byte *)(uVar6 + 0xde) & 0x20) == 0) {
+    FUN_ffffffffdcabbf00();
+    func_0xffffffffdcabc530(&LAB_ffffffffdc5245e2,&UNK_ffffffffdcaff82d);
+    FUN_ffffffffdc460780(0x1b,&UNK_ffffffffdcaff808,&UNK_ffffffffdcaff82d);
+                    /* WARNING: Does not return */
+    pcVar4 = (code *)invalidInstructionException();
+    (*pcVar4)();
+  }
+  lVar3 = *(long *)(uVar6 + 8);
+  lVar9 = lVar3 + 0xf8;
+  FUN_ffffffffdc6c8300(lVar9,0,&UNK_ffffffffdcaff706,0x1dd);
+  if ((*(byte *)(uVar6 + 0xd5) & 1) != 0) {
+    do {
+      if (*(char *)(uVar6 + 0x498) != '\0') {
+        *(undefined1 *)(uVar6 + 0x498) = 0;
+        func_0xffffffffdc767250(uVar6 + 0x4a0,0);
+      }
+      func_0xffffffffdc4902b0(uVar6 + 0xd4);
+      FUN_ffffffffdc48fe00(uVar6 + 0xd4,lVar9,100,&UNK_ffffffffdcaff843,0);
+    } while ((*(byte *)(uVar6 + 0xd5) & 1) != 0);
+  }
+  uVar6 = *in_GS_OFFSET;
+  psVar2 = (short *)(uVar6 + 0xfc);
+  *psVar2 = *psVar2 + -1;
+  if (-1 < *psVar2) {
+    if ((*(int *)(lVar3 + 0x104) == 0) && (iRamffffffffde58c260 != 0)) {
+      (*pcRamffffffffde58c2c8)(iRamffffffffde58c260,lVar9,0,0,0,0,unaff_RBX,unaff_R14,unaff_RBP);
+    }
+    LOCK();
+    uVar7 = *(ulong *)(lVar3 + 0x110);
+    bVar10 = uVar6 == uVar7;
+    if (bVar10) {
+      *(ulong *)(lVar3 + 0x110) = 4;
+      uVar7 = uVar6;
+    }
+    UNLOCK();
+    if (!bVar10) {
+      if (*(int *)(lVar3 + 0x104) == 0) {
+        func_0xffffffffdc45e8c0(lVar9);
+        uVar8 = func_0xffffffffdc45ea20(lVar9);
+        func_0xffffffffdc45f0c0(uVar8,0);
+        LOCK();
+        *(undefined8 *)(lVar3 + 0x110) = 4;
+        UNLOCK();
+        func_0xffffffffdc45f1f0(uVar8,0);
+        uVar6 = (ulong)((uint)lVar9 >> 8 & 0x7f);
+        lVar3 = uVar6 * 0x28;
+        if (*(int *)(lVar3 + -0x21b1002c) == 0) {
+          if (iRamffffffffde58c254 != 0) {
+            (*pcRamffffffffde58c2c8)(iRamffffffffde58c254,lVar3 + -0x21b10038,0,0,0,0,uVar6 * 5);
+          }
+          LOCK();
+          *(undefined8 *)(lVar3 + -0x21b10020) = 4;
+          UNLOCK();
+        }
+        else {
+          *(int *)(lVar3 + -0x21b1002c) = *(int *)(lVar3 + -0x21b1002c) + -1;
+        }
+        uVar6 = *in_GS_OFFSET;
+        func_0xffffffffdc6b4890();
+        piVar1 = (int *)(uVar6 + 0x400);
+        *piVar1 = *piVar1 + -1;
+        return *(ulong *)(uVar6 + 0x408);
+      }
+      uVar5 = *(int *)(lVar3 + 0x104) - 1;
+      uVar7 = (ulong)uVar5;
+      *(uint *)(lVar3 + 0x104) = uVar5;
+      if (uVar5 == 0) {
+        LOCK();
+        *(ulong *)(lVar3 + 0x110) = *(ulong *)(lVar3 + 0x110) & 0xfffffffffffffffe;
+        UNLOCK();
+      }
+    }
+    return uVar7;
+  }
+  FUN_ffffffffdcabbf00(lVar9,0);
+  func_0xffffffffdcabc5e0
+            (&LAB_ffffffffdc6c8662,&UNK_ffffffffdcb2f69a,(long)*(short *)(uVar6 + 0xfc));
+  FUN_ffffffffdc460780
+            (0xf,&UNK_ffffffffdcb2f689,&UNK_ffffffffdcb2f69a,(int)*(short *)(uVar6 + 0xfc));
+                    /* WARNING: Does not return */
+  pcVar4 = (code *)invalidInstructionException();
+  (*pcVar4)();
+}
+

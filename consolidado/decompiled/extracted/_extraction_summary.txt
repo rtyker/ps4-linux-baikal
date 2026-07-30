@@ -1,0 +1,8 @@
+Resumo ExtractMtsNamespaceNoAnalysis.java
+==================================================
+Enderecos-alvo:     31
+Extraidos agora:    11
+Skipped (ja existiam): 20
+Falhas (decomp):    0
+Fora da MEM:        0
+Funcoes criadas:    11

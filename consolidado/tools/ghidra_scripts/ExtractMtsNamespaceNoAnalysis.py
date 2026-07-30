@@ -58,6 +58,18 @@ TARGET_ADDRS = [
     0xffffffffdc529f40,  # lacuna GBE
     0xffffffffdc52a4f0,  # lacuna GBE
 
+    # ===== GBE PHY Control Thread (gbe_phy_ctrl / dc5a44c0) - PASSO 1 DO PLANO =====
+    0xffffffffdc5a44c0,  # gbe_phy_ctrl - thread principal PHY (revisado mas lacunas nas chamadas)
+    0xffffffffdc524770,  # chamado por dc5a44c0 linha 31
+    0xffffffffdc6c8300,  # mutex lock - chamado múltiplas vezes em dc5a44c0
+    0xffffffffdc6c85b0,  # mutex unlock - chamado múltiplas vezes em dc5a44c0
+    0xffffffffdc48fe00,  # chamado por dc5a44c0 linha 48
+    0xffffffffdcabbf00,  # chamado por dc5a44c0 linha 56
+    0xffffffffdcabbe70,  # chamado por dc5a44c0 linha 57
+    0xffffffffdc460780,  # chamado por dc5a44c0 linha 58
+    0xffffffffdc5a2680,  # chamado 2x por dc5a44c0 linhas 78-79
+    0xffffffffdc5a2840,  # chamado por dc5a44c0 linhas 86 e 95
+
     # ===== MTS - funções já decompiladas cuja versão bruta Ghidra ajuda a validar =====
     # (Não extrairemos essas — já existem. Apenas para conferência futura.)
 ]
