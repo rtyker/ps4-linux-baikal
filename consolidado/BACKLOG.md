@@ -1,6 +1,6 @@
 # Backlog do Projeto — Fonte Única de Pendências
 
-**Última atualização:** 2026-07-29 (Vídeo HDMI: SOLUCIONADO em 1080p@60Hz; SATA interno: PENDENTE - tag `20260729-sata-globallock` refutada via UART, spinlock global não impediu parada de sinalização no Glue a 4.89s)
+**Última atualização:** 2026-07-29 (Vídeo HDMI: SOLUCIONADO em 1080p@60Hz com ressalva de hardware — exige adaptador HDMI energizado; SATA interno: PENDENTE - tag `20260729-sata-polling-clean` implantada no HD USB e pronta para teste de boot)
 
 Este é o **único documento** onde a lista de tarefas pendentes do projeto deve ser mantida. Nenhum outro arquivo (`STATUS_ATUAL.md`, `MASTER_CONSOLIDADO.md`, `O_QUE_FALTA.md`, etc.) deve manter sua própria lista de "próximos passos" — todos apontam para cá, para evitar itens duplicados ou desatualizados espalhados pelo projeto.
 
@@ -20,7 +20,17 @@ O trabalho **ativo no momento** (investigação detalhada, passo a passo) fica n
 
 **Próximo passo exato:** validar pós-power-cycle os fixes de `mts_mac_stop()`/doorbell TX, depois varredura read-only da janela Glue BAR2 `0x140000`-`0x180000+` e reordenar o diagnóstico MDIO para rodar após o release do hold.
 
-**Documentos:** plano ativo em [`../PLANO_FASES_GBE_2026-07-25.md`](../PLANO_FASES_GBE_2026-07-25.md); histórico de RE em [`RE_KERNEL_GBE_ATTACH.md`](RE_KERNEL_GBE_ATTACH.md) e [`ICC_GBE_TEST_LOG.md`](ICC_GBE_TEST_LOG.md).
+**Documentos:** plano consolidado ATIVO (2026-07-29, revisão de UART+SQLite+código) em [`../PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md`](../PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md) — substitui o plano de 07-25 como fonte de próximos passos (o de 07-25 fica só como histórico); histórico de RE em [`RE_KERNEL_GBE_ATTACH.md`](RE_KERNEL_GBE_ATTACH.md) e [`ICC_GBE_TEST_LOG.md`](ICC_GBE_TEST_LOG.md).
+
+**Status 2026-07-30:** bug de polaridade MDIO Clause 22 corrigido em `mts.c` (ver `memory/mdio-clause22-bug-polaridade-corrigido-2026-07-29.md`) e testado ao vivo — eliminou o falso-positivo de dado residual, mas PHY continua sem link. **🏆 Tag `20260730-sata-reverted` CONFIRMADA ao vivo como o novo BASELINE OFICIAL/ponto de rollback** (boot completo, SSH ok, `eth0` sobe com MAC real) — ver `memory/baseline-oficial-20260730-sata-reverted.md`.
+
+**Fase 2 do plano consolidado (MSI/IMR) — CONCLUÍDA E REFUTADA 2026-07-30, com evidência direta (`test_history` id 72):** o achado "`RX_CLEAN ... cleaned=N`" de ontem era só o contador de chamadas de NAPI poll, não atividade de hardware real (confirmado lendo `mts.c:1608-1685`). Testado ao vivo, sem rebuild:
+1. `lspci -vv 00:14.1` (GBE) mostra MSI `Enable+ Count=1/1 Maskable+ Masking=00000000` — **NÃO mascarado em hardware**, diferente do caso AHCI (`Masking=000000fe`). Refuta a hipótese de mascaramento MSI análogo ao SATA.
+2. Recarregado `mts.ko` com `irq_mask=0x7d` (IMR real desmascarado, era `0x0`=tudo mascarado por padrão) — confirmado via `mts_regs` (`0x54=0x0000007d`). Mesmo assim, `/proc/interrupts` ficou em **`irq_count=0`** por 5+s, ping continuou 100% perda, `eth0` continuou `NO-CARRIER`. Refuta também a hipótese de que o IMR default estava simplesmente mascarando eventos reais que já estavam acontecendo.
+3. **Conclusão:** não é bug de MSI/demux nem de IMR — o PHY genuinamente nunca gera nenhuma condição de IRQ (nem link change, nem RX). Fecha esta via de investigação por evidência direta, conforme critério da Fase 3 do plano (`PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md`): o bloqueador é anterior a qualquer coisa que o driver Linux possa fazer — energia/clock físico do PHY, ou sequência de bring-up da Sony fora do alcance replicável via software puro.
+4. **Bug novo, não-bloqueante, achado de bônus:** `rmmod mts` sempre gera um `WARNING: kernel/irq/msi.c:294 at msi_device_data_release` (sistema não trava, fica só `tainted (O)`) — bug real no cleanup de MSI do driver, nunca documentado antes. Não impede reload (`insmod` funcionou normalmente na sequência).
+
+**Não repetir esta investigação em sessões futuras sem novo dado concreto.** Próxima prioridade redirecionada para as frentes já ativas (SATA interno, S5 shutdown) ou para uma via totalmente nova (ex: comparar diretamente com a sequência de bring-up do PHY feita pelo Orbis via SAMU/ICC, já parcialmente decompilada).
 
 ---
 
@@ -47,6 +57,19 @@ O trabalho **ativo no momento** (investigação detalhada, passo a passo) fica n
 ---
 
 ## Prioridade média
+
+### [x] 🏆 SATA interno (HD Toshiba MQ04ABF100) — FEATURE CONCLUÍDA 2026-07-30, funcional pela primeira vez
+
+**Resolvido via Fase B (polling timer de 1ms) do `PLANO_SATA_POLLING_CORRECAO_2026-07-29.md`, testado ao vivo na tag `20260730-sata-polling-fase-ab`:**
+- `ata1.00: configured for UDMA/100`, zero exceções/`disable device` em todo o dmesg (1322 linhas).
+- Leitura real confirmada: `dd if=/dev/sda bs=1M count=50` → 71.2 MB/s sem erro. `fdisk -l /dev/sda` retorna a tabela completa (931.51 GiB).
+- `PxIE` ficou em `0x7840007f` após o único `thaw()` do probe (t=3.02s) e nunca mais zerou (antes reincidia ~37s e desabilitava ~84s).
+- **Novo baseline oficial/ponto de rollback:** tag `20260730-sata-polling-fase-ab` (kernel do baseline GBE `20260730-sata-reverted` + fix de SATA). Ver `memory/marco-sata-interno-funcional-2026-07-30.md` e `test_history` id 73.
+
+**Limpeza pendente (não bloqueante):** remover a instrumentação de debug (`ahci_dbg:` em `freeze()`/`thaw()`/`ahci_error_handler()`, já marcada "REMOVER quando a investigação terminar" no código) num próximo rebuild.
+
+<details>
+<summary>Histórico da investigação (hipóteses refutadas antes da solução) — clique para expandir</summary>
 
 ### [~] 🔴 SATA interno (HD Toshiba MQ04ABF100) — **PRIORIDADE ALTA: custa 78s no boot e desabilita dispositivo aos 84s**
 
@@ -281,6 +304,8 @@ Ver documento dedicado: [`PLANO_SATA_INTERNO_100PCT_2026-07-28.md`](../PLANO_SAT
 - **Bloqueia uso do HD interno** como armazenamento confiável
 - **Prioridade média mantida** — foco principal continua GBE Ethernet (RX morto)
 
+</details>
+
 ---
 
 ### [x] Testar renderização 3D ao vivo (glxgears/vulkaninfo) — **VALIDADO ao vivo 2026-07-25**
@@ -322,6 +347,28 @@ Ver documento dedicado: [`PLANO_SATA_INTERNO_100PCT_2026-07-28.md`](../PLANO_SAT
 
 ## Prioridade baixa
 
+### [~] KVM-AMD para VMs QEMU (uso como ambiente de desenvolvimento)
+
+**Objetivo:** habilitar `CONFIG_KVM`/`CONFIG_KVM_AMD` no kernel 7.0 Baikal para rodar máquinas
+virtuais QEMU aceleradas por hardware diretamente no PS4, como ambiente de desenvolvimento.
+
+**Contexto:** estudo de viabilidade já feito em 2026-07-24 — veredito **tecnicamente viável**.
+O SoC Jaguar do PS4 (`DG1501SML87LB`, AMD family 0x16 model 0x67) expõe todo o conjunto
+SVM/NPT necessário (`svm npt lbrv svm_lock nrip_save tsc_scale flushbyasid decodeassists
+pausefilter pfthreshold vmmcall` em `/proc/cpuinfo`), `lscpu` confirma `Virtualization: AMD-V`,
+~5.1 GB de RAM disponível. Única barreira real identificada: `# CONFIG_KVM is not set` no
+`.config` atual — o código KVM já está presente na árvore do kernel, só falta habilitar via
+Kconfig e reconstruir.
+
+**Status:** Fase 1 (levantamento/build estático) concluída — ver `PLANO_KVM_PS4_VIABILIDADE_2026-07-24.md`
+para o roadmap técnico completo (Kconfigs necessárias, ordem de habilitação, riscos).
+
+**Próximo passo:** habilitar `CONFIG_KVM`/`CONFIG_KVM_AMD` no `.config`, rebuild via
+`00-build-kernel-7.0.sh`, testar `/dev/kvm` aparece e `qemu-system-x86_64 -enable-kvm` sobe uma
+VM básica.
+
+---
+
 ### [ ] Enxugar o kernel: remover tudo que não é específico do PS4 nem tem uso prático
 
 **Objetivo:** reduzir o `.config` ao que o console realmente usa. Ganhos esperados: builds mais rápidos, menor pico de memória (hoje um build chega a exigir mais RAM do que a máquina tem), `bzImage` menor e menos superfície para bug/regressão.
@@ -349,59 +396,6 @@ Ver documento dedicado: [`PLANO_SATA_INTERNO_100PCT_2026-07-28.md`](../PLANO_SAT
 
 `radeon.dpm=0 amdgpu.dpm=0` está fixo hoje por instabilidade de clocks dinâmicos. Reativar com testes de estresse quando houver tempo, não é bloqueador.
 
-### [ ] Boot via disco AIO (`HEN.AIO`) — erros de R/W constantes/recorrentes
-
-**Contexto (2026-07-27):** o boot é via disco (`sr0`, label `HEN.AIO`, montado como UDF), não via injeção manual de payload. Ao testar reboot remoto (`reboot` via SSH) para validar `console=ttyS0` na UART recém-soldada, o usuário relatou erro de R/W na leitura do disco durante o boot, exigindo reiniciar o console novamente. Usuário classifica esse erro como **recorrente/constante**, não um evento isolado.
-
-**Não investigado ainda:** se é o drive óptico do PS4 degradando, a mídia gravada (qualidade da queima do disco AIO), ou algo no próprio processo de boot/kexec. Sem causa raiz levantada nesta sessão — só registrado a pedido do usuário.
-
-**Próximo passo:** quando for retomado, levantar se o erro é reproduzível (todo boot ou intermitente), se troca de mídia/velocidade de gravação resolve, e se há log de erro legível (drive óptico costuma logar no `dmesg` do firmware oficial, não do Linux, já que ocorre antes do kexec).
-
----
-
-### [ ] Jailbreak via Blu-ray instável — `Fatal fail(-6), please REBOOT PS4`
-
-**Contexto:** o boot via disco AIO (`HEN.AIO`) falha frequentemente com o erro:
-```
-Fatal fail(-6), please REBOOT PS4
-```
-
-O erro `-6` no payload GoldHEN/Blu-ray geralmente indica falha no `jailbreak()` (ex: `rootvnode` corrompido, ou falha no `sceKernelJailbreak`/`kpayload` chain). O usuário relata que é **recorrente**, não isolado.
-
-**Hipóteses:**
-- Drive óptico degradando (leitura instável do setor do payload)
-- Mídia gravada (velocidade/qualidade da queima do BD-R)
-- `jailbreak()` da libPS4 original corrompe `rootvnode` (já documentado como **NÃO USAR** — ver `CLAUDE.md` linha 65)
-- Race condition no kernel/firmware entre montagem do UDF e execução do payload
-
-**Já documentado em `CLAUDE.md`:**
-- Linha 65: `jailbreak()` da libPS4 original corrompe `rootvnode`, bloqueando USB. **NÃO usar.**
-- Linha 72: O binário original `app.bin` do `scene-kmem-dumper` morre logo após "iniciado" — pode ser o mesmo código base.
-
----
-
-### [ ] Jailbreak via Blu-ray — erros de pré-configuração (`Fatal fail(-4)`)
-
-**Contexto:** outro erro frequente no boot via disco AIO:
-```
-Pre-configuration
-initial triple free
-Twins failed
-Triple free failed
-Fatal fail(-4), please REBOOT PS4
-```
-
-O erro `-4` ocorre **antes** do `-6` (fase de "Pre-configuration"). A sequência `initial triple free` → `Twins failed` → `Triple free failed` sugere falha no **heap spray / memory preparation** do exploit (técnica de "triple free" para manipular o allocator do kernel e ganhar write primitiva).
-
-**Hipóteses:**
-- Layout de memória do kernel 12.52 difere do esperado pelo exploit (offsets errados)
-- Race condition: heap não está no estado esperado quando o exploit roda
-- Mitigações de kernel (KASLR, freelist randomization) interferindo no triple-free
-- Versão do payload GoldHEN desatualizada para o FW 12.52 específico
-
-**Relação com `-6`:** `-4` = falha na preparação do exploit (memory prep); `-6` = falha no jailbreak propriamente dito. Se `-4` falha, `-6` quase certamente falhará em seguida.
-
-**Próximo passo:** confirmar se o payload no disco AIO é a versão mais recente do GoldHEN para FW 12.52. Comparar offsets do exploit com o `ps4-payload-sdk` usado no projeto (`K1252_*` em `fw_defines.h`). Testar injeção manual via Payload Server (mesmo payload) para isolar se é mídia/drive ou o próprio exploit.
 ---
 
 ## Concluídos recentemente (referência — não repetir)

@@ -13,7 +13,7 @@
 | **SSH** | root/ps4 em 192.168.6.128 (Dropbear/OpenSSH) |
 | **Vídeo HDMI** | 1920x1080@60 forçado, ps4_bridge VIC mode 16 |
 | **EDID Persistente** | Firmware override `/lib/firmware/edid/ps4_tv_edid.bin` |
-| **Rede** | ⚠️ WiFi/SSH 100% funcionais. Ethernet cabeada (`eth0`, driver próprio `mts.ko`, MAC real `2c:cc:44:3f:69:5f`) parcial: MAC core ligado via ICC + TX por software (~95%, doorbell corrigido em 2026-07-25, pendente validação ao vivo); **PHY nunca sai de power-down** (MDIO Clause 45/22 sempre zero/timeout) e **RX está morto** — bloqueador ativo, ver `PLANO_FASES_GBE_2026-07-25.md`. Netconsole ativo por padrão. |
+| **Rede** | ⚠️ WiFi/SSH 100% funcionais. Ethernet cabeada (`eth0`, driver próprio `mts.ko`, MAC real `2c:cc:44:3f:69:5f`) parcial: MAC core ligado via ICC + TX por software (~95%, doorbell corrigido em 2026-07-25, pendente validação ao vivo); **PHY nunca sai de power-down** (MDIO Clause 45/22 sempre zero/timeout) e **RX está morto** — bloqueador ativo, ver `../PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md`. Netconsole ativo por padrão. |
 | **Áudio HDMI** | snd_hda_intel (1002:9921) |
 | **RTC/Time** | Payload injeta `time=UNIX_TS`, hook early seta relógio |
 | **VRAM Control** | `vram.txt` (FAT32) lido pelo payload, default 1024MB |
@@ -128,7 +128,7 @@ cat /sys/class/drm/card0-HDMI-A-1/{status,enabled,modes}
 
 ## 📋 PRÓXIMOS PASSOS
 
-> A lista completa e priorizada de pendências vive **exclusivamente em [`BACKLOG.md`](BACKLOG.md)** — não duplicar aqui. O item de maior prioridade ativo hoje é a GBE (PHY mudo), com plano detalhado em [`PLANO_FASES_GBE_2026-07-25.md`](../../PLANO_FASES_GBE_2026-07-25.md).
+> A lista completa e priorizada de pendências vive **exclusivamente em [`BACKLOG.md`](BACKLOG.md)** — não duplicar aqui. O item de maior prioridade ativo hoje é a GBE (PHY mudo), com plano detalhado em [`../PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md`](../PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md).
 
 ---
 

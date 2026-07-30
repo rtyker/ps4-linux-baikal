@@ -1,5 +1,7 @@
 # Plano em Fases — Driver GBE Baikal (mts.ko), pós-sessão 2026-07-24/25 (v2)
 
+> **⚠️ SUBSTITUÍDO (2026-07-29) por [`PLANO_MTS_SOLUCAO_CONSOLIDADO_2026-07-29.md`](PLANO_MTS_SOLUCAO_CONSOLIDADO_2026-07-29.md)** — mantido aqui só como histórico. O plano novo corrige uma inconsistência séria achada neste documento: os testes #61/#62 (item "7. ❌ REFUTADO" abaixo) nunca tiveram a refutação refletida no SQLite `test_history` (corrigido agora). Ler o plano novo antes de continuar qualquer investigação do GBE.
+>
 > Substitui/atualiza `PLANO_FASES_GBE_2026-07-24.md` (mantido como histórico) — vários itens daquele plano já foram implementados nesta rodada, ver "Contexto" abaixo.
 
 ## Contexto — o que mudou desde o plano anterior (PLANO_FASES_GBE_2026-07-24.md)

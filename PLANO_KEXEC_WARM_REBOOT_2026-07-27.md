@@ -61,10 +61,8 @@ inteiro, não só o topo, para entender a evolução do entendimento).
 ## Contexto
 
 Cada iteração de teste de kernel hoje custa um ciclo completo: reboot → volta
-ao firmware oficial da Sony → boot do disco `HEN.AIO` (às vezes falha com
-erro de R/W, já registrado como pendência recorrente no `BACKLOG.md`) →
-payload reinjeta o exploit `kexec` customizado do Orbis (não é o kexec do
-Linux) → carrega o Linux de novo. Isso está bloqueando a velocidade de
+ao firmware oficial da Sony → payload reinjeta o mecanismo `kexec` customizado
+do Orbis (não é o kexec do Linux) → carrega o Linux de novo. Isso está bloqueando a velocidade de
 depuração do bug de S5/poweroff (kernel `s5-poweroff-fix-20260725-v5`), que
 já foi testado ao vivo mas ainda não teve seu ciclo de iteração acelerado.
 

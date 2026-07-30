@@ -16,7 +16,7 @@ Sessão de teste da solda de UART TTL feita pelo usuário no southbridge Baikal.
 1. Confirmado que o `cmdline` ativo padrão usa só `console=tty0` — o log de boot nunca foi direcionado à UART física.
 2. `/dev/ttyS0-3` do kernel são portas 8250 legadas (`port:0x3F8` etc.) reportadas como `uart:unknown` — não são a UART física do Baikal (que fica em MMIO `0xC890E000`, dentro do BAR `bpcie.glue` 00:14.4, região já documentada como perigosa para pokes cegos).
 3. Editado `bootargs.txt` (partição `/dev/sdb1`, montada em `/mnt/bootpart` via SSH) adicionando `console=ttyS0,115200n8` antes do `console=tty0` existente (backup salvo em `bootargs.txt.bak`).
-4. `reboot` via SSH → boot via disco `HEN.AIO` (não payload de rede) deu **erro de R/W no disco** na primeira tentativa (ver pendência separada no `BACKLOG.md`, "Boot via disco AIO — erros de R/W constantes").
+4. `reboot` via SSH → primeira tentativa deu **erro de R/W no disco** durante o boot.
 5. Segunda tentativa de boot (mesmo bootargs com `ttyS0` incluído) → **tela preta**, sem ping, sem dados na UART em nenhum baud rate testado (115200/9600/57600/38400/19200/230400).
 6. Restaurado `bootargs.txt.bak` (HD conectado direto no PC via leitor, sem precisar de SSH). Boot seguinte com bootargs original → **subiu normal** (ping OK, SSH OK, `uptime` confirmado).
 

@@ -213,7 +213,7 @@ Testes que confirmaram o papel de funções específicas:
 
 | Teste | Função | Achado |
 |---|---|---|
-| #61 — `Correcao Clause 22 MDIO BMCR=0x1040` | `dc5a2840` + `dc5a2950` | MDIO Clause 22 ativado (BMCR=0x1040 estável). **Bring-up PHY ativo.** |
+| #61 — `Correcao Clause 22 MDIO BMCR=0x1040` | `dc5a2840` + `dc5a2950` | ⚠️ **REFUTADO no mesmo dia (2026-07-25)** — reteste mostrou dado residual do barramento MDIO (mesma assinatura do falso positivo #38), não PHY vivo. Ver `test_history` id 61/70 e `../PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md`. O formato de opcode em si (transcrito nas duas funções) segue em uso no driver, sem confirmação de que o hardware completa a transação. |
 | #60 — `RMU sub-header 0x9807` | `dc5a5200` | RMU TX processado com sub-header 0x9807. |
 | #59 — `BAR0 0x1c Trigger` | `dc5a4950` | Confirmado: BAR0+0x1c=0x80000000 ativa motor MAC/PHY (0x0→0x80030000, bit 17). |
 | #54 — `handshake RMU` | `dc5a5ec0` | RMU 34B (+magic 0xfa42) enviado via DMA TX. Hardware aceitou. |
@@ -223,21 +223,21 @@ Testes que confirmaram o papel de funções específicas:
 
 ## 8. Próximos alvos para decompilação (Fase 3 deste plano)
 
-Prioridade alta (já validadas em testes, impactam diretamente o bring-up):
+> **HIGIENE 2026-07-29:** `dc5a2840`, `dc5a2950`, `dc5a4950`, `dc5a4e90`, `dc5a5050`, `dc5a5200`, `dc5a6290`
+> **já foram extraídas via PyGhidra em 2026-07-24** (arquivos `.txt` existem em `decompiled/extracted/`) e
+> promovidas a `status='revisado'` no `decompiled_functions` (SQLite). Não pedir RE duplicada delas — a
+> lista abaixo foi corrigida para refletir isso. Ver `../PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md`.
 
-1. `dc5a2840` — MDIO read high word
-2. `dc5a2950` — MDIO write opcode
-3. `dc5a4950` — gatilho BAR0+0x1c
-4. `dc5a5200` — RMU sub-header 0x9807
-5. `dc3f5bd0` — wrapper `icc_query(4, 0x38)` fundamental
+Prioridade alta (callgraph MTS, ainda sem arquivo de RE dedicado):
+
+1. `dc3f5bd0` — wrapper `icc_query(4, 0x38)` fundamental
 
 Prioridade média (callgraph MTS):
 
-6. `dc5a3810` (254 linhas — grande, provável núcleo de TX/NAPI)
-7. `dc5a4e90`, `dc5a5050` ( sequência pós-trigger)
-8. `dc5baa30`, `dc5ba8d0` (alocador e criação de ifnet)
-9. `dc6dfb60` (primitiva de reset do glue)
-10. `dc7187a0/d/800` (primitivas read/write do glue)
+2. `dc5a3810` (254 linhas — grande, provável núcleo de TX/NAPI)
+3. `dc5baa30`, `dc5ba8d0` (alocador e criação de ifnet)
+4. `dc6dfb60` (primitiva de reset do glue)
+5. `dc7187a0/d/800` (primitivas read/write do glue)
 
 Prioridade baixa:
 

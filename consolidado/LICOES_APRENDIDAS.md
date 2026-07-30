@@ -363,3 +363,75 @@ Antes de desconectar o HD e testar no PS4, verificar:
 - [ ] `IgnorePkg` configurado em `/etc/pacman.conf`
 - [ ] Permissões corrigidas (shadow 600, ssh_host_* 600, binários 755, etc.)
 
+
+## SATA interno (ata1, Baikal): não confiar em uma única leitura de PxIE/PxIS sem cruzar com a memória/documentação já existente (2026-07-29)
+
+Durante a avaliação do `PLANO_SATA_POLLING_CORRECAO_2026-07-29.md`, encontrou-se uma
+contradição direta entre o plano e `memory/MEMORY.md` para o **mesmo evento** (t≈36,8s,
+tag `20260729-sata-globallock`, `test_history` id 68): o plano registrou `PxIE=0x00000000`
+(culpando o `libahci`/AHCI), enquanto a memória já tinha registrado `PxIS=0x2`/`IS=0x1`
+(interrupção ativa no AHCI, culpando o Glue) para o mesmo log UART. As duas conclusões
+levam a correções de causa raiz completamente diferentes (driver vs. glue PCIe).
+
+**Por quê aconteceu:** o plano foi escrito reanalisando o log bruto sem antes conferir se
+já havia uma leitura registrada em `memory/` para o mesmo teste/timestamp.
+
+**RESOLVIDO 2026-07-29 (reabertura do log UART bruto `tests/uart_logs/sata_teste_20260729_145146.log`):**
+decodificado byte a byte o hexdump em torno dos 3 EH entries reais do `ata1` (linhas
+~2496-2500, ~6064-6068 e ~6160-6169 do `.log`). **O UART bruto confirma os valores do
+plano, não os de `memory/MEMORY.md`:** `t=36,777086s` (falha) tem `IS=0x00000001
+PxIS=0x00000001 PxIE=0x00000000`; `t=83,916040s` (pós-`disable device`) tem
+`PxIS=0x00000002 PxIE=0x7840007f`. A entrada antiga em `memory/MEMORY.md` (`PxIS=0x2`,
+"interrupção ativa, Glue não propaga") era uma transcrição imprecisa de uma análise
+anterior, não uma segunda medição — já corrigida em `memory/MEMORY.md`,
+`consolidado/ESTADO_E_HISTORICO.md` e `test_history` id 68.
+
+**Lição confirmada e reforçada:** o UART bruto é a fonte da verdade — qualquer resumo em
+`memory/`, `BACKLOG.md` ou `ESTADO_E_HISTORICO.md` é uma transcrição e pode ter erro. Antes
+de fixar uma hipótese de causa raiz em um documento novo, sempre grep em `memory/*.md` e em
+`consolidado/BACKLOG.md`/`ESTADO_E_HISTORICO.md` por menções ao mesmo `tag`/teste já citado;
+se houver divergência entre a memória e o plano novo, **reabrir o `.log`/`.bin` bruto do
+teste e decodificar diretamente** (não assumir que a transcrição mais antiga está certa só
+por ser mais antiga) antes de descartar ou aceitar qualquer hipótese.
+
+**Achado técnico relacionado (útil para não repetir):** mesmo assumindo `PxIE=0` como
+correto, isso não implica bug em `ahci_freeze()`/`ahci_thaw()` — essas funções são código
+100% stock upstream neste kernel_build_7.0, sem nenhum patch/quirk PS4. O valor
+`PxIE=0x7840007f` citado no plano (3º EH entry) é matematicamente igual a `DEF_PORT_IRQ`
+(`0x78C0007F`) menos o bit `BAD_PMP` — exatamente o esperado sem PMP conectado. Ou seja,
+quando o `ahci_thaw()` roda, ele restaura o valor certo; não há evidência de bug de lógica
+nessas duas funções especificamente. Ver `test_history` ids 65, 67, 68.
+
+---
+
+## Lição Aprendida #69 (2026-07-29) — Mascaramento PCI MSI (`0x000000fe`) no Dispositivo Composto `0000:00:14.7`
+
+**Fatos Medidos ao Vivo via SSH (IP `192.168.6.128`):**
+1. O controlador composto `0000:00:14.7` (Sony Baikal xHCI + AHCI) possui capacidade MSI com **8 vetores** (`Capabilities: [e0] MSI: Enable+ Count=1/8 Maskable+`).
+2. O registrador de máscara MSI PCI em `Capabilities [e0] offset +0x10` continha o valor **`0x000000fe`**:
+   - Vetor 0 (USB xHCI1): `0` (Unmasked / Habilitado) ➔ 77.824+ IRQs recebidas com sucesso.
+   - Vetor 1 (AHCI SATA): `1` (Masked / Bloqueado no Hardware PCI) ➔ 0 IRQs recebidas após probe.
+3. Como o Vetor 1 estava mascarado no registrador de configuração PCI pelo Linux durante o probe, o hardware PCI silenciou as interrupções físicas de conclusão do SATA.
+4. Consequentemente, o `libahci` zerou `PxIE`, o SCSI estourou o timeout de 30s e desabilitou o dispositivo (`sda` capacidade 1TB ➔ 0).
+5. **Erros no código a evitar:**
+   - Em `bpcie_msi_unmask()` / `bpcie_msi_mask()`, NUNCA dar `return;` sem chamar `pci_msi_unmask_irq(data)` / `pci_msi_mask_irq(data)`, pois isso impede o subsistema de IRQ do Linux de unmascarar os vetores pai do barramento, causando congelamento imediato no `kexec`.
+   - O controlador `0000:00:14.7` (SATA ata1) é inicializado pelo driver customizado `drivers/usb/host/xhci-aeolia.c` (não por `ahci_init_one()` do `ahci.c`), logo a inicialização do timer de polling deve obrigatoriamente estar dentro do `xhci_aeolia_probe_one()`.
+
+---
+
+## Lição Aprendida #70 (2026-07-29) — Manipulação ao Vivo do Registrador PCI MSI Capability (`0xe0+0x10`) no Dispositivo Composto `0000:00:14.7` Causa Crash do Controlador USB e Congelamento do Sistema no Boot
+
+**Contexto e Incidente:**
+No intuito de desmascarar o sinal MSI no hardware PCI para a subfunção SATA (`0000:00:14.7`), foram inseridas chamadas `pci_write_config_dword(pdev, 0xe0 + 0x10, 0x00000000)` dentro de `bpcie_msi_mask()`, `bpcie_msi_unmask()` e `bpcie_assign_irqs()` no driver `ps4-bpcie.c` (tag `20260729-sata-msi-polling-fix`).
+
+**Resultado no Boot:**
+O console congelou **imediatamente na tela do payload do kexec**, sem conseguir avançar para o dmesg do Linux.
+
+**Causa Raiz:**
+1. O dispositivo `0000:00:14.7` é um **dispositivo PCI composto** que aloja tanto a subfunção 1 (AHCI SATA) quanto a subfunção 0 (**USB xHCI1**, por onde o HD USB externo bootável do sistema está conectado).
+2. As rotinas de mask/unmask do `bpcie_msi_controller` são invocadas para TODOS os vetores MSI gerenciados. Ao gravar diretamente no registrador PCI Capability `0xe0+0x10` (`0xf0`) de forma genérica para a função `14.7`, o controlador USB xHCI1 teve seus registradores de MSI alterados em tempo de execução/inicialização do PCI, provocando o colapso imediato do barramento USB.
+3. Como o rootfs (`psxitarch`) e os arquivos do kernel estão no HD USB, a perda do barramento xHCI travou a leitura do disco e congelou o boot na transição do kexec.
+
+**Regra Absoluta:**
+- **NUNCA executar escritas diretas via `pci_write_config_dword` no registrador PCI MSI Capability (`0xe0+0x10`) do dispositivo composto `0000:00:14.7`**. A manipulação ao vivo de registradores de MSI desse dispositivo é sabidamente destrutiva para o USB (já registrado em `memory/MEMORY.md` item 13).
+

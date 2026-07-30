@@ -363,7 +363,7 @@ cat /sys/kernel/debug/dri/0/amdgpu_vram_mm 2>/dev/null
 - ❌ Ethernet GBE — RX (bloqueador atual: PHY nunca sai de power-down, MDIO Clause 45/22 sempre zero/timeout)
 
 ### 🔄 EM PROGRESSO
-- 🔄 Ethernet GBE — driver próprio `mts.ko` (não é `sky2`; MAC ligado via ICC, TX por software ~95%, PHY mudo é o bloqueador). Ver `../../PLANO_FASES_GBE_2026-07-25.md`.
+- 🔄 Ethernet GBE — driver próprio `mts.ko` (não é `sky2`; MAC ligado via ICC, TX por software ~95%, PHY mudo é o bloqueador). Ver `../PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md`.
 - 🔄 WiFi/BT: dados de manufatura/regdomain (baixa prioridade)
 - 🔄 Mesa/Vulkan RADV otimizado
 

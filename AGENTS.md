@@ -12,6 +12,8 @@
    - **NETCONSOLE PRONTO PARA OS PRÓXIMOS BUILDS:** Configurado `bootargs` com `netconsole=@192.168.0.2/eth0,6666@192.168.0.1/ff:ff:ff:ff:ff:ff` (IP PS4 `192.168.0.2` -> Host PC `192.168.0.1:6666/UDP`). Script de recepção ao vivo disponível em `scripts/netconsole_listener.py`.
    - **BUILD AUTOMÁTICO ETH0 + NETCONSOLE (2026-07-23):** Criada e implantada no HD a tag `20260723-mts-autoeth0`. O driver `mts.ko` agora possui o padrão `stage=4` e auto-carregamento no boot, subindo a interface `eth0` automaticamente sem necessidade de intervenção via Telnet. Netconsole ativado por padrão no boot.
    - **DESLIGAMENTO REMOTO VIA TELNET (2026-07-22):** O comando `sync && poweroff -f` (ou `echo o > /proc/sysrq-trigger`) encerra o sistema operacional e a rede limpos (ping cai 100%), porém o console permanece em **luz azul (luz azul acesa/pulsando)** pois o desligamento de energia total da fonte (S5) exige comando ICC dedicado ou desligamento manual no botão.
+   - **🏆 NOVO BASELINE OFICIAL (2026-07-30), tag `20260730-sata-reverted` — MELHOR VERSÃO ATÉ AGORA, PONTO DE ROLLBACK:** kernel `7.0.8-Strawberry-ThinLTO-Baikal-+ #23` com o fix de polaridade MDIO Clause 22 (`mts.c`) ativo e as mudanças de SATA polling-timer da noite de 2026-07-29 revertidas (só instrumentação não validada). Boot completo confirmado ao vivo: `kexec` → shutdown normal da Orbis → `Run /init as init process` → `systemd[1]` sem erros, vídeo HDMI OK, **SSH via WiFi confirmado**, `eth0` sobe com MAC real (PHY ainda sem link, bug conhecido, não é regressão). Artefatos em `distros/arch_minimal_v2/boot_referencia/*-7.0-20260730-sata-reverted*` **NUNCA podem ser sobrescritos/descartados** — em caso de regressão futura, restaurar com `sudo ./deploy-boot-7.0.sh 20260730-sata-reverted` (boot-only, mantém rootfs). Ver `memory/baseline-oficial-20260730-sata-reverted.md` (checksums MD5 e detalhes completos).
+   - **🏆🏆 NOVO BASELINE OFICIAL, MAIS RECENTE (2026-07-30), tag `20260730-sata-polling-fase-ab` — SUPERA O ANTERIOR, SATA INTERNO FUNCIONAL PELA PRIMEIRA VEZ:** mesmo kernel do baseline acima + Fase A/B do `PLANO_SATA_POLLING_CORRECAO_2026-07-29.md` (polling timer de 1ms) reaplicada e validada ao vivo. `ata1.00: configured for UDMA/100` sem nenhuma exceção, `dd`/`fdisk` confirmam leitura real do HD interno (931.51 GiB), zero `disable device` em todo o dmesg. **Este é o baseline mais completo/recomendado a partir de agora** — GBE (com PHY ainda mudo, bug conhecido) + SATA interno funcional juntos. Artefatos em `distros/arch_minimal_v2/boot_referencia/*-7.0-20260730-sata-polling-fase-ab*` **NUNCA podem ser sobrescritos/descartados**. Rollback: `sudo ./deploy-boot-7.0.sh 20260730-sata-polling-fase-ab` (boot-only). Ver `memory/marco-sata-interno-funcional-2026-07-30.md`.
 
 ---
 
@@ -82,6 +84,15 @@ Derivar dele deixa a UART cega ao kernel. Para diagnóstico use
 
 ⚠️ **`libata.force=...,noncq` no cmdline NÃO desliga NCQ neste projeto** — o quirk está hardcoded em
 `drivers/ata/libata-core.c:4199` para o `TOSHIBA MQ04ABF100`. Remover do bootargs não reativa NCQ.
+
+✅ **Corrigido 2026-07-30:** o heredoc de `bootargs-7.0.txt` dentro de `01-build-image-7.0.sh`
+(gerado a cada `01-build-image-7.0.sh`/`02-burn-image-7.0.sh`, **não** o arquivo tageado em
+`boot_referencia/`) estava desatualizado — usava `console=tty0` sem UART e `rootdelay=10`. Como
+`02-burn-image-7.0.sh` grava esse `bootargs.txt` genérico direto no HD (não passa pela tag
+validada), um `01-build-image` + `02-burn-image` sem revisão manual regravava o boot com a
+configuração errada. O heredoc já foi atualizado para UART + `rootwait` por padrão — não precisa
+mais corrigir manualmente após um burn completo, mas **confira sempre** (`cat` no `bootargs.txt`
+da partição BOOT) antes de considerar um burn como definitivo.
 
 ### Procedimento OBRIGATÓRIO antes de qualquer deploy
 

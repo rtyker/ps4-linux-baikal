@@ -17,7 +17,7 @@
 | **Vídeo HDMI** | ✅ | 1920×1080@60 forçado, ps4_bridge VIC mode 16 |
 | **EDID Persistente** | ✅ | Firmware override `/lib/firmware/edid/ps4_tv_edid.bin` |
 | **Rede (WiFi)** | ✅ | WiFi/SSH 100% funcionais |
-| **Rede (Ethernet)** | ⚠️ | `eth0` via driver próprio `mts.ko` (não é sky2), MAC real `2c:cc:44:3f:69:5f`. MAC core ligado via ICC, TX por software (~95%, doorbell corrigido 2026-07-25). **PHY nunca sai de power-down** (MDIO Clause 45/22 sempre zero/timeout) — RX morto. Ver `PLANO_FASES_GBE_2026-07-25.md` |
+| **Rede (Ethernet)** | ⚠️ | `eth0` via driver próprio `mts.ko` (não é sky2), MAC real `2c:cc:44:3f:69:5f`. MAC core ligado via ICC, TX por software (~95%, doorbell corrigido 2026-07-25). **PHY nunca sai de power-down** (MDIO Clause 45/22 sempre zero/timeout) — RX morto. Ver `../PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md` |
 | **Áudio HDMI** | ✅ | snd_hda_intel (1002:9921) |
 | **RTC/Time** | ✅ | Payload injeta `time=UNIX_TS`, hook early seta relógio |
 | **VRAM Control** | ✅ | `vram.txt` (FAT32) lido pelo payload, default 1024 MB |
@@ -134,7 +134,7 @@ A ferramenta `ps4-pup-unpacker` extrai 0 bytes — o fluxo ZLIB/Deflate a partir
 
 Com o kernel em mãos (dump da Seção 18), a engenharia reversa foi concluída:
 - **Interface `gbe0` (Orbis)** — identificado como driver **MTS** próprio da Sony (`SceGbeMtsCtrl`), não Marvell Yukon/`sky2` — motivou a reescrita do driver Linux como `mts.ko` (não mais tentativa de reaproveitar `sky2`). Ver `consolidado/RE_KERNEL_GBE_ATTACH.md`.
-- **Syscon/ICC power management** — comando ICC major `0x04`/minor `0x38` identificado e replicado no driver Linux; MAC core liga com sucesso (`0x004=0xb19`). O PHY, porém, continua não respondendo a MDIO mesmo após o power-on do MAC — investigação ativa em `PLANO_FASES_GBE_2026-07-25.md`.
+- **Syscon/ICC power management** — comando ICC major `0x04`/minor `0x38` identificado e replicado no driver Linux; MAC core liga com sucesso (`0x004=0xb19`). O PHY, porém, continua não respondendo a MDIO mesmo após o power-on do MAC — investigação ativa em `../PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md`.
 - **S5 shutdown (`icc_power_shutdown`)** — disassembly do offset `0x1d8a3c` revelou payload real de 32 bytes (driver Linux enviava só 6 bytes truncados); patch aplicado nos drivers `ps4-bpcie-icc.c`/`ps4-apcie-icc.c`, pendente apenas de teste ao vivo (ver `BACKLOG.md`).
 
 ---
@@ -398,7 +398,7 @@ cat /sys/kernel/debug/dri/0/amdgpu_vram_mm 2>/dev/null
 | **Kernel cifrado offline** | Criptografia SAMU em hardware | Só dump de RAM ativa (payload rodando pós-boot) |
 | **`/dev/kmem` bloqueado** | GoldHEN bloqueia `open()` | Não usar kmem; ler via `kexec`+`copyout` |
 | **MSR direto em userland** | Instrução privilegiada → Kernel Panic | Sempre usar `kexec()` para código kernel |
-| **GBE PHY nunca sai de power-down** | MDIO Clause 45/22 sempre zero/timeout mesmo após MAC ligado via ICC | Ativo — ver `PLANO_FASES_GBE_2026-07-25.md`; RX morto até resolver |
+| **GBE PHY nunca sai de power-down** | MDIO Clause 45/22 sempre zero/timeout mesmo após MAC ligado via ICC | Ativo — ver `../PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md`; RX morto até resolver |
 | **S5 `poweroff -f` deixa luz azul** | Payload ICC shutdown enviado incompleto (6 de 32 bytes) | Patch de 32 bytes já aplicado nos drivers; pendente teste ao vivo (`BACKLOG.md`) |
 
 ---
@@ -506,7 +506,7 @@ cat /proc/cmdline
 
 ## 17. ROADMAP PRÓXIMOS PASSOS
 
-> A lista completa e priorizada de pendências vive **exclusivamente em [`BACKLOG.md`](BACKLOG.md)** — não duplicar aqui. Trabalho ativo da GBE em `PLANO_FASES_GBE_2026-07-25.md`.
+> A lista completa e priorizada de pendências vive **exclusivamente em [`BACKLOG.md`](BACKLOG.md)** — não duplicar aqui. Trabalho ativo da GBE em `../PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md`.
 
 ---
 
