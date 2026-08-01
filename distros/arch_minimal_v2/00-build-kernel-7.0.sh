@@ -301,6 +301,13 @@ MODULE_LICENSE("GPL");
 MODULE_ALIAS("platform:ps4-rtc-icc");
 RTCEOF
 echo "✓ drivers/rtc/rtc-ps4-icc.c restaurado"
+if ! grep -q "CONFIG_RTC_DRV_PS4_ICC" drivers/rtc/Makefile; then
+  echo 'obj-$(CONFIG_RTC_DRV_PS4_ICC) += rtc-ps4-icc.o' >> drivers/rtc/Makefile
+fi
+if ! grep -q "RTC_DRV_PS4_ICC" drivers/rtc/Kconfig; then
+  sed -i '/endif # RTC_CLASS/i config RTC_DRV_PS4_ICC\n\ttristate "PS4 RTC driver via ICC"\n\tdepends on X86_PS4\n\thelp\n\t  Real Time Clock driver for PS4 (Aeolia/Belize/Baikal) via ICC commands.\n' drivers/rtc/Kconfig
+fi
+echo "✓ drivers/rtc/Makefile e Kconfig atualizados para rtc-ps4-icc"
 
 # Aplicar patch de SATA polling (fallback para PxIE=0 no Baikal)
 # Este patch é ESSENCIAL para operação estável do ata1 (HD interno do PS4) —
