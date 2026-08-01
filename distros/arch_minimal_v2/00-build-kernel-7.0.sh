@@ -554,8 +554,8 @@ scripts/config --disable CONFIG_NUMA_BALANCING
 scripts/config --disable CONFIG_HYPERVISOR_GUEST
 scripts/config --disable CONFIG_PARAVIRT
 scripts/config --disable CONFIG_PARAVIRT_XXL
-scripts/config --disable CONFIG_KVM
-scripts/config --disable CONFIG_KVM_AMD
+# scripts/config --disable CONFIG_KVM
+# scripts/config --disable CONFIG_KVM_AMD
 scripts/config --disable CONFIG_KVM_INTEL
 
 # PS4 specific
