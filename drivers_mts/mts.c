@@ -274,12 +274,31 @@ static u8 gbe_phy_calib_lookup(u8 idx)
 #define MTS_MDIO_C22_OP_READ    0x02
 #define MTS_MDIO_C22_OP_WRITE   0x01
 
+/*
+ * AUDITORIA FRIA 2026-07-29 (Fase 1 do PLANO_MTS_SOLUCAO_CONSOLIDADO):
+ * confirmado por leitura lado a lado com a decompilacao Orbis
+ * (dc5a2840/dc5a2950, "if (sVar3 < 0) break" == bit 15 do word baixo
+ * TEM que virar 1 para o Orbis considerar pronto) que esta funcao
+ * esperava a polaridade ERRADA: `!(val & 0x8000)` retornava sucesso
+ * quando bit 15 estava ZERO. Como o comando Clause 22 (cmd = ...|0x4000
+ * ou |0x2000) nunca seta o bit 15, a leitura escrita por
+ * mts_write(MTS_MDIO, cmd) ja deixava o registrador com bit 15 = 0 --
+ * ou seja, a PRIMEIRA iteracao do poll ja "sucedia", sem o hardware ter
+ * processado a transacao. Isso bate com o padrao de dado residual/latched
+ * documentado em mts_mdio_probe() (linhas ~338) e com a refutacao dos
+ * testes #61/#62 no ps4_hardware_memory.db (test_history).
+ *
+ * FIX APLICADO 2026-07-29 (Fase 1->2): polaridade corrigida para esperar
+ * bit 15 SETAR (MTS_MDIO_READY), igual a mts_mdio_wait() (Clause 45,
+ * linha 164), que ja estava correta e bate com a decompilacao. Ainda
+ * NAO testado em hardware -- aguardando o proximo power cycle (Fase 2).
+ */
 static int mts_mdio_wait_write(struct mts_priv *mp)
 {
 	int i;
 
 	for (i = 0; i < MTS_MDIO_RETRIES; i++) {
-		if (!(mts_read(mp, MTS_MDIO) & 0x8000))
+		if (mts_read(mp, MTS_MDIO) & MTS_MDIO_READY)
 			return 0;
 		udelay(10);
 	}
@@ -294,8 +313,24 @@ static int mts_mdio_c22_read(struct mts_priv *mp, u8 phy_addr, u8 reg, u16 *out)
 	/*
 	 * Formato de Leitura Clause 22 do Orbis (decompilado em fcn.dc5a2840):
 	 * cmd = ((reg & 0x1f) << 8) | 0x4000
-	 * Aguarda bit 15 (BUSY) ser ZERADO pelo hardware (jns em dc5a28e7).
 	 * Dado retornado fica nos bits altos [31:16] (shr eax, 0x10 em dc5a2919).
+	 *
+	 * AUDITORIA FRIA 2026-07-29: o comentario antigo aqui dizia "aguarda
+	 * bit 15 (BUSY) ser ZERADO" -- ERRADO. A decompilacao real
+	 * (dc5a2840, "sVar3 = (short)uVar4; if (sVar3 < 0) break;") espera
+	 * o bit 15 do word baixo VIRAR 1 (sVar3 negativo = bit 15 setado).
+	 * Ver bug de polaridade documentado em mts_mdio_wait_write() acima.
+	 *
+	 * `phy_addr` (parametro desta funcao) e IGNORADO de proposito, nao
+	 * por omissao: a funcao Orbis original (FUN_ffffffffdc5a2840) tem
+	 * assinatura (contexto, reg, *out) -- SEM nenhum parametro de
+	 * endereco de PHY. Confirmado lendo o decompilado completo
+	 * (consolidado/decompiled/extracted/decompiled_dc5a2840.txt): o
+	 * hardware MDIO Clause 22 da GBE Baikal nao tem campo de endereco de
+	 * PHY, e' fixo/unico por design. O scan de phy_addr 0-31 no
+	 * trigger_phy_trigger (linha ~1884) e estruturalmente incapaz de
+	 * diferenciar enderecos -- nao repetir esse teste achando que prova
+	 * algo nesse eixo.
 	 */
 	cmd = ((u32)(reg & 0x1f) << 8) | 0x4000;
 
@@ -318,7 +353,11 @@ static int mts_mdio_c22_write(struct mts_priv *mp, u8 phy_addr, u8 reg, u16 val)
 	/*
 	 * Formato de Escrita Clause 22 do Orbis (decompilado em fcn.dc5a2950):
 	 * cmd = ((val & 0xffff) << 16) | ((reg & 0x1f) << 8) | 0x2000
-	 * Aguarda bit 15 (BUSY) ser ZERADO pelo hardware (jns em dc5a29f7).
+	 *
+	 * AUDITORIA FRIA 2026-07-29: mesmo bug de polaridade do read acima
+	 * (ver mts_mdio_wait_write()) e mesma confirmacao sobre phy_addr --
+	 * FUN_ffffffffdc5a2950 tambem nao tem parametro de endereco de PHY
+	 * na assinatura Orbis original (so contexto, reg, val).
 	 */
 	cmd = ((u32)val << 16) | ((u32)(reg & 0x1f) << 8) | 0x2000;
 
@@ -1881,7 +1920,14 @@ static ssize_t mts_regs_show(struct device *dev,
 				 phy_val, (phy_val & 0x8000) ? 1 : 0,
 				 (phy_val & 0x0800) ? 1 : 0, (phy_val & 0x0100) ? 1 : 0);
 
-	/* Scan Clause 22 phy_addr 0-31 for BMCR (reg=0x00) */
+	/* Scan Clause 22 phy_addr 0-31 for BMCR (reg=0x00)
+	 * AUDITORIA FRIA 2026-07-29: este scan e estruturalmente incapaz de
+	 * diferenciar phy_addr -- ver comentario em mts_mdio_c22_read() acima.
+	 * Alem disso, o bug de polaridade em mts_mdio_wait_write() faz
+	 * ret==0 SEMPRE (nunca timeout de verdade), entao "phy_addr=NN:
+	 * 0x%04x (ret=0, likely residual)" nas 32 linhas abaixo e o
+	 * resultado esperado ate o fix de polaridade ser aplicado e testado
+	 * (Fase 2 do PLANO_MTS_SOLUCAO_CONSOLIDADO_2026-07-29.md). */
 	len += scnprintf(buf + len, PAGE_SIZE - len,
 			 "\n=== PHY Clause 22 BMCR scan (phy_addr 0-31) ===\n");
 	for (i = 0; i < 32; i++) {

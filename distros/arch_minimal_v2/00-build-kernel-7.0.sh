@@ -436,11 +436,7 @@ scripts/config --disable CONFIG_DWMAC_GENERIC
 #   Bring-up em estágios via `mts.stage=N` (default 1 = só dump, não escreve).
 #   Ver memory/GBE-VIVA-driver-errado-mts-nao-sky2.md e
 #   consolidado/MTS_INIT_SEQUENCE_dc5a31f0.md
-if [ -f "drivers/net/ethernet/sony/mts.c" ]; then
-  echo "Copiando mts.c e mts.h atualizados para o diretório de build do kernel..."
-  cp "$SCRIPT_DIR/../../drivers_mts/mts.c" "drivers/net/ethernet/sony/mts.c"
-  cp "$SCRIPT_DIR/../../drivers_mts/mts.h" "drivers/net/ethernet/sony/mts.h"
-else
+if [ ! -f "drivers/net/ethernet/sony/mts.c" ]; then
   for P in ps4-icc-proc-debug.patch mts-baikal-gbe-driver.patch; do
     PATCH="$SCRIPT_DIR/patches/$P"
     if [ ! -f "$PATCH" ]; then
@@ -451,6 +447,10 @@ else
     git apply "$PATCH"
   done
 fi
+
+echo "Copiando mts.c e mts.h atualizados para o diretório de build do kernel..."
+cp -f "$SCRIPT_DIR/../../drivers_mts/mts.c" "drivers/net/ethernet/sony/mts.c"
+cp -f "$SCRIPT_DIR/../../drivers_mts/mts.h" "drivers/net/ethernet/sony/mts.h"
 
 # Patch Fase 2 do RTC: adiciona wrapper ps4_icc_rtc_cmd() com retry loop
 # (100x50ms) em ps4-bpcie-icc.c + declara em baikal.h/aeolia.h. Idempotente.
