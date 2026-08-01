@@ -142,3 +142,35 @@ index c79abdfcd..3f81db42f 100644
  
  static int ahci_skip_host_reset;
  int ahci_ignore_sss;
+diff --git a/drivers/usb/host/xhci-aeolia.c b/drivers/usb/host/xhci-aeolia.c
+index 24cf0ef79..5d4c3c740 100644
+--- a/drivers/usb/host/xhci-aeolia.c
++++ b/drivers/usb/host/xhci-aeolia.c
+@@ -382,6 +382,19 @@ static int ahci_init_one(struct pci_dev *pdev)
+ 		goto host_deactivate;
+ 	}
+ 
++	/* PS4 Baikal: Glue PCIe silently drops AHCI IRQs on this composite
++	 * xHCI+AHCI function (.7) after ~5s (PxIE=0) -- this is the actual
++	 * device that owns ata1 on Baikal, NOT the generic ahci_init_one()
++	 * in drivers/ata/ahci.c (that one only serves the unrelated AHCI
++	 * function .2). Confirmed live 2026-08-01: starting the polling
++	 * timer on .2 had zero effect on ata1's qc timeout/disable device
++	 * cascade, because ata1 hangs off .7's ahci_host_priv, not .2's. */
++	if (baikal) {
++		ahci_baikal_start_poll_timer(hpriv, host);
++		dev_info(&pdev->dev,
++			"PS4 Baikal: AHCI polling timer started on xhci-aeolia (func .7, 1ms)\n");
++	}
++
+ 	pm_runtime_put_noidle(&pdev->dev);
+ 	return 0;
+ 
+@@ -409,6 +422,7 @@ static void ahci_remove_one(struct pci_dev *pdev)
+ 		ata_host_detach(axhci->host);
+ 		struct ahci_host_priv *hpriv = axhci->host->private_data;
+ 		if (hpriv) {
++			ahci_baikal_stop_poll_timer(hpriv);
+ 			iounmap(hpriv->mmio);
+ 		}
+ 		axhci->host = NULL;
