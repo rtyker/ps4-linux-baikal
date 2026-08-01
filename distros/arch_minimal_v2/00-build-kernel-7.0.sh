@@ -114,200 +114,14 @@ else
   cd "$KERNEL_SRC_DIR"
 fi
 
-# Reconstruir drivers/rtc/rtc-ps4-icc.c (perdido em git reset --hard)
-# Este arquivo NÃO é parte do upstream, só do projeto PS4 Linux.
-# Copiá-lo aqui garante que não seja perdido após clean/reset.
-echo "=== Restaurando drivers PS4 customizados ==="
-cat > drivers/rtc/rtc-ps4-icc.c << 'RTCEOF'
-// SPDX-License-Identifier: GPL-2.0
-/*
- * PS4 RTC driver via ICC (Baikal/Aeolia/Belize)
- *
- * Based on RE of Orbis 12.52 kernel (rtc.c / rtc_mvl.c)
- * Validated 2026-07-25: ICC major=2 minor=0x0b/0x0c (save/load context),
- * major=4 minor=0x50 (alarm bitmask), MMIO 0x5180000/0x5140000.
- *
- * Follows the high-level rtc.c (ICC + MMIO), NOT the low-level rtc_mvl.c
- * which is read-only and uses different MMIO offsets.
- */
-
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/mod_devicetable.h>
-#include <linux/rtc.h>
-#include <linux/io.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-
-extern int ps4_icc_rtc_cmd(u8 major, u16 minor, const void *data, u16 length,
-			    void *reply, u16 reply_length);
-
-#define PS4_RTC_MMIO_READ	0x5180000
-#define PS4_RTC_MMIO_WRITE	0x5140000
-#define PS4_RTC_MMIO_SIZE	8
-
-struct ps4_rtc_softc {
-	void __iomem *mmio_read;
-	void __iomem *mmio_write;
-};
-
-static int ps4_rtc_read_time(struct device *dev, struct rtc_time *tm)
-{
-	struct ps4_rtc_softc *sc = dev_get_drvdata(dev);
-	u8 ctx_loaded = 0;
-	u64 mmio_time;
-	int rc;
-
-	rc = ps4_icc_rtc_cmd(2, 0x0c, &ctx_loaded, 1, &ctx_loaded, 1);
-	if (rc < 0)
-		dev_warn(dev, "RTC: icc load context fail %d\n", rc);
-
-	mmio_time = readq(sc->mmio_read);
-	rtc_time64_to_tm(mmio_time, tm);
-	return 0;
-}
-
-static int ps4_rtc_set_time(struct device *dev, struct rtc_time *tm)
-{
-	struct ps4_rtc_softc *sc = dev_get_drvdata(dev);
-	u64 t = rtc_tm_to_time64(tm);
-	u8 flag = 1;
-
-	writeq(t, sc->mmio_write);
-	ps4_icc_rtc_cmd(2, 0x0b, &flag, 1, &flag, 1);
-	return 0;
-}
-
-static int ps4_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alrm)
-{
-	u8 bitmask = 0;
-	int rc;
-
-	rc = ps4_icc_rtc_cmd(4, 0x50, &bitmask, 1, &bitmask, 1);
-	if (rc < 0)
-		return rc;
-
-	if (bitmask == 0xff) {
-		alrm->enabled = 0;
-	} else {
-		alrm->enabled = !!(bitmask & 0x7);
-		alrm->time.tm_sec = 0;
-		alrm->time.tm_min = 0;
-		alrm->time.tm_hour = 0;
-		alrm->time.tm_mday = 1;
-		alrm->time.tm_mon = 0;
-		alrm->time.tm_year = 70;
-	}
-	return 0;
-}
-
-static int ps4_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alrm)
-{
-	u8 new = alrm->enabled ? 0x7 : 0x00;
-	int rc;
-
-	rc = ps4_icc_rtc_cmd(4, 0x50, &new, 1, &new, 1);
-	return rc;
-}
-
-static int ps4_rtc_alarm_irq_enable(struct device *dev, unsigned int enabled)
-{
-	return 0;
-}
-
-static const struct rtc_class_ops ps4_rtc_ops = {
-	.read_time		= ps4_rtc_read_time,
-	.set_time		= ps4_rtc_set_time,
-	.read_alarm		= ps4_rtc_read_alarm,
-	.set_alarm		= ps4_rtc_set_alarm,
-	.alarm_irq_enable	= ps4_rtc_alarm_irq_enable,
-};
-
-static int ps4_rtc_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct ps4_rtc_softc *sc;
-	struct rtc_device *rtc;
-
-	sc = devm_kzalloc(dev, sizeof(*sc), GFP_KERNEL);
-	if (!sc)
-		return -ENOMEM;
-
-	sc->mmio_read = devm_ioremap(dev, PS4_RTC_MMIO_READ, PS4_RTC_MMIO_SIZE);
-	if (!sc->mmio_read)
-		return -ENXIO;
-
-	sc->mmio_write = devm_ioremap(dev, PS4_RTC_MMIO_WRITE, PS4_RTC_MMIO_SIZE);
-	if (!sc->mmio_write)
-		return -ENXIO;
-
-	platform_set_drvdata(pdev, sc);
-
-	rtc = devm_rtc_device_register(dev, "ps4-rtc-icc", &ps4_rtc_ops, THIS_MODULE);
-	if (IS_ERR(rtc))
-		return PTR_ERR(rtc);
-
-	dev_info(dev, "PS4 RTC via ICC registered (mmio_read=0x%lx, mmio_write=0x%lx)\n",
-		 (unsigned long)PS4_RTC_MMIO_READ, (unsigned long)PS4_RTC_MMIO_WRITE);
-
-	return 0;
-}
-
-static const struct platform_device_id ps4_rtc_id_table[] = {
-	{ "ps4-rtc-icc", 0 },
-	{ },
-};
-MODULE_DEVICE_TABLE(platform, ps4_rtc_id_table);
-
-static struct platform_driver ps4_rtc_driver = {
-	.driver = {
-		.name = "ps4-rtc-icc",
-	},
-	.probe = ps4_rtc_probe,
-	.id_table = ps4_rtc_id_table,
-};
-
-static struct platform_device *ps4_rtc_pdev;
-
-static int __init ps4_rtc_init(void)
-{
-	int ret;
-
-	ps4_rtc_pdev = platform_device_register_simple("ps4-rtc-icc", -1, NULL, 0);
-	if (IS_ERR(ps4_rtc_pdev))
-		return PTR_ERR(ps4_rtc_pdev);
-
-	ret = platform_driver_register(&ps4_rtc_driver);
-	if (ret) {
-		platform_device_unregister(ps4_rtc_pdev);
-		return ret;
-	}
-
-	return 0;
-}
-
-static void __exit ps4_rtc_exit(void)
-{
-	platform_driver_unregister(&ps4_rtc_driver);
-	platform_device_unregister(ps4_rtc_pdev);
-}
-
-module_init(ps4_rtc_init);
-module_exit(ps4_rtc_exit);
-
-MODULE_AUTHOR("PS4 Linux Baikal");
-MODULE_DESCRIPTION("PS4 RTC driver via ICC (Baikal/Aeolia/Belize)");
-MODULE_LICENSE("GPL");
-MODULE_ALIAS("platform:ps4-rtc-icc");
-RTCEOF
-echo "✓ drivers/rtc/rtc-ps4-icc.c restaurado"
-if ! grep -q "CONFIG_RTC_DRV_PS4_ICC" drivers/rtc/Makefile; then
-  echo 'obj-$(CONFIG_RTC_DRV_PS4_ICC) += rtc-ps4-icc.o' >> drivers/rtc/Makefile
-fi
-if ! grep -q "RTC_DRV_PS4_ICC" drivers/rtc/Kconfig; then
-  sed -i '/endif # RTC_CLASS/i config RTC_DRV_PS4_ICC\n\ttristate "PS4 RTC driver via ICC"\n\tdepends on X86_PS4\n\thelp\n\t  Real Time Clock driver for PS4 (Aeolia/Belize/Baikal) via ICC commands.\n' drivers/rtc/Kconfig
-fi
-echo "✓ drivers/rtc/Makefile e Kconfig atualizados para rtc-ps4-icc"
+# RTC via ICC (drivers/rtc/rtc-ps4-icc.c + Kconfig/Makefile + wrapper
+# ps4_icc_rtc_cmd() em drivers/ps4/) é aplicado inteiramente pelo patch
+# patches/ps4-icc-rtc-wrapper.patch mais abaixo (fonte única — um heredoc
+# criava rtc-ps4-icc.c aqui e um sed injetava Kconfig/Makefile em paralelo
+# ao patch, o que fazia o patch falhar por conflito de contexto todo build,
+# silenciosamente engolido pelo "|| echo AVISO"; ver
+# memory/regressao-sata-2026-08-01-diagnostico-e-solucao.md). NÃO recriar
+# esses arquivos aqui — deixar só para o patch.
 
 # Aplicar patch de SATA polling (fallback para PxIE=0 no Baikal)
 # Este patch é ESSENCIAL para operação estável do ata1 (HD interno do PS4) —
@@ -459,14 +273,34 @@ echo "Copiando mts.c e mts.h atualizados para o diretório de build do kernel...
 cp -f "$SCRIPT_DIR/../../drivers_mts/mts.c" "drivers/net/ethernet/sony/mts.c"
 cp -f "$SCRIPT_DIR/../../drivers_mts/mts.h" "drivers/net/ethernet/sony/mts.h"
 
-# Patch Fase 2 do RTC: adiciona wrapper ps4_icc_rtc_cmd() com retry loop
-# (100x50ms) em ps4-bpcie-icc.c + declara em baikal.h/aeolia.h. Idempotente.
+# RTC via ICC: wrapper ps4_icc_rtc_cmd() com retry loop (100x50ms) em
+# ps4-bpcie-icc.c + declaração em baikal.h/aeolia.h + Kconfig/Makefile +
+# drivers/rtc/rtc-ps4-icc.c inteiro — tudo num único patch (fonte única,
+# ver comentário mais acima sobre o heredoc/sed removidos). Mesmo padrão
+# rigoroso do patch AHCI: `--check` antes, `exit 1` se falhar — nunca
+# `|| echo AVISO` (isso já escondeu uma falha real: o patch não aplicava
+# por conflito com o heredoc/sed antigos, e o build seguia com
+# ps4_icc_rtc_cmd indefinido, sem ninguém perceber).
 # Veja consolidado/plans/rtc_via_icc_plan.md (RE 2026-07-25).
 PATCH_RTC="$SCRIPT_DIR/patches/ps4-icc-rtc-wrapper.patch"
-if [ -f "$PATCH_RTC" ]; then
-  echo "Aplicando patch $PATCH_RTC..."
-  git apply "$PATCH_RTC" || echo "AVISO: $PATCH_RTC já estava aplicado (idempotente)."
+if [ ! -f "$PATCH_RTC" ]; then
+  echo "❌ ERRO FATAL: $PATCH_RTC não encontrado"
+  echo "  RTC via ICC não vai compilar sem este patch."
+  exit 1
 fi
+
+if ! git apply --check "$PATCH_RTC" 2>/tmp/rtc_patch_check.log; then
+  echo "❌ ERRO FATAL: patch RTC wrapper não aplica contra o kernel atual:"
+  cat /tmp/rtc_patch_check.log
+  echo ""
+  echo "  Regenere o patch: edite os arquivos, valide com"
+  echo "  'make drivers/ps4/ps4-bpcie-icc.o drivers/rtc/rtc-ps4-icc.o', depois"
+  echo "  'git diff HEAD -- drivers/ps4/ drivers/rtc/' e substitua $PATCH_RTC."
+  exit 1
+fi
+
+git apply "$PATCH_RTC"
+echo "✓ Patch RTC wrapper aplicado com sucesso (git apply, validado com --check)"
 
 # build.sh (upstream rmuxnet/linux) NÃO é mais usado — em 2026-07-22 seu perfil
 # "General/ThinLTO/Baikal" (--option 3 use=General lto=ThinLTO southbridge=Baikal)
