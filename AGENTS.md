@@ -45,6 +45,40 @@
 
 4. **Limite de ~10 MB do bzImage em alguns loaders de kexec do PS4 (lição #23).** A build padrão do projeto mantém o kernel abaixo desse limite. Um `make` fora dos parâmetros pode inflar sem perceber — o `00-build-kernel` tem as opções certas já validadas.
 
+### 🔴 REGRA CRÍTICA — Idempotência de Alterações no Kernel
+
+**TODA alteração no kernel ou módulos DEVE ser idempotente e reproduzível através de patches. O script de build kernel naturalmente reseta `--hard`, e isso é normal/desejado.**
+
+**Por quê:**
+- Builds limpos garantem **reprodutibilidade**: clonar kernel + rodar script = resultado idêntico sem depender do working directory do dev
+- `git reset --hard` é NECESSÁRIO para descartar mudanças não-commitadas e estado contaminado
+- Mudanças **uncommitted são perdidas** no reset — não é bug, é design
+- Alterações que dependem de "changes not staged" desaparecem silenciosamente e causam regressões sem aviso
+
+**Regra na prática:**
+- Alterações **podem ser commitadas** no repositório (git commit + push), OU
+- Alterações **devem ser recriadas automaticamente** pelo script (patches + heredocs aplicados **após** o `git reset --hard`)
+  - Exemplo: `00-build-kernel-7.0.sh` reconstrói `drivers/rtc/rtc-ps4-icc.c` via heredoc após reset
+  - Exemplo: O mesmo script agora aplica `patches/ahci-baikal-polling-fallback.patch` (SATA polling) via `git apply --check` + `exit 1` se falhar (nunca `patch -p1` silencioso — falha alta é obrigatória, ver incidente abaixo)
+
+**Implementação (procedimento obrigatório, nesta ordem — não pular etapas):**
+1. Editar source em `/mnt/hdauxiliar/temp/kernel_build_7.0/`, a partir de uma árvore recém resetada (`git reset --hard origin/$BRANCH`) para garantir base limpa.
+2. Compilar ISOLADAMENTE só o(s) arquivo(s) tocado(s) (`make CC="ccache clang" LLVM=1 ARCH=x86_64 <arquivo>.o`) — nunca considerar uma mudança "pronta" sem essa validação. Um patch escrito à mão sem essa etapa quase certamente tem bugs de contexto/compilação que só aparecem no build oficial completo, horas depois.
+3. Gerar o patch **real** via `git diff HEAD -- <arquivos> > patches/<nome>.patch` — nunca escrever o `.patch` à mão.
+4. Resetar a árvore de novo (`git reset --hard origin/$BRANCH`) e validar `git apply --check patches/<nome>.patch` a partir do estado pristino.
+5. Adicionar/atualizar a lógica no `00-build-kernel-7.0.sh` para aplicar o patch após o reset, seguindo o padrão `git apply --check` + `exit 1` em caso de falha — **nunca** `|| echo AVISO` ou qualquer forma de engolir erro silenciosamente (isso já causou uma falha real: o patch RTC `ps4-icc-rtc-wrapper.patch` ficou meses aplicando silenciosamente errado).
+6. Só commitar no git do projeto principal depois que os passos 2-4 passarem sem erro.
+
+**Consequência da quebra desta regra:** Baseline fica não-reproduzível, próximo build sem a mudança reintroduzida sofre regressão silenciosa (exemplo: 2026-08-01, tag `20260801-kvm-rtc-ok` perdeu SATA polling — ver `memory/regressao-sata-2026-08-01-diagnostico-e-solucao.md`).
+
+### 🔴 REGRA CRÍTICA — Gatilhos de linguagem que exigem commit real no git
+
+Quando o usuário disser **"alteração aprovada"**, **"grave na memória e commite"**, ou **"registre e atualize os documentos"**, isso significa **COMMITAR NO GIT** — não apenas escrever/editar arquivos. Documentar em prosa sem nunca commitar já causou perda real de trabalho (o patch de SATA polling de 2026-07-30 foi descrito em detalhe em `memory/marco-sata-interno-funcional-2026-07-30.md`, mas o código-fonte em si nunca virou patch nem commit — foi apagado num `git reset --hard` de build posterior em 2026-08-01, exigindo reconstrução do zero). Git é a rede de segurança; memória em prosa não é.
+
+### 🔴 REGRA CRÍTICA — Menos velocidade, mais responsabilidade em mudanças de kernel
+
+Para mudanças de kernel/módulos (e por extensão, qualquer mudança técnica de risco/irreversibilidade não-trivial): priorizar responsabilidade sobre velocidade. Analisar patches com cuidado antes de aplicar, evitar ciclos de build/teste/desfazer repetidos sem plano claro, verificar cada mudança isoladamente (compilação isolada, `git apply --check`) antes de escalar para o build completo. **Não iniciar uma nova tentativa até entender completamente por que a anterior falhou.** Motivo: a sessão de 2026-08-01 teve múltiplos ciclos de tentativa-erro sem disciplina (patch escrito à mão com bugs reais de compilação, builds iniciados e cancelados repetidamente), o que gerou frustração e retrabalho evitável.
+
 ### Sequência típica de modificação de kernel
 
 ```bash

@@ -33,7 +33,8 @@ export HOSTCFLAGS="-Wno-error=incompatible-pointer-types-discards-qualifiers"
 # atribuição simples no makefile, uma atribuição na linha de comando tem
 # precedência. Isso mantém o build rápido e o pahole contido, sem precisar
 # desabilitar o BTF (o que quebrou o boot — ver comentário na seção DEBUG_INFO).
-MAKE_OPTS=(-j"$(nproc)" JOBS=2 LLVM=1 ARCH=x86_64 HOSTCFLAGS="${HOSTCFLAGS}")
+export CCACHE_DIR="/mnt/hdauxiliar/ccache"
+MAKE_OPTS=(-j"$(nproc)" JOBS=2 LLVM=1 CC="ccache clang" ARCH=x86_64 HOSTCFLAGS="${HOSTCFLAGS}")
 
 echo "=== Build tag: $TAG ==="
 
@@ -50,10 +51,43 @@ cleanup_build_dir() {
 }
 trap cleanup_build_dir EXIT INT TERM
 
+# 🔴 REGRA CRÍTICA (AGENTS.md "Idempotência de Alterações no Kernel"):
+# git reset --hard / git clean -fdx descartam SILENCIOSAMENTE qualquer mudança
+# não commitada em arquivos rastreados. Isso já causou perda real de trabalho
+# (SATA polling de 2026-07-30, nunca extraído para patches/, perdido no build
+# de 2026-08-01). Chamar esta função IMEDIATAMENTE ANTES de cada reset/clean
+# real força a extração ANTES da perda. NÃO chamar antes disso — no caminho
+# incremental (LOCAL==REMOTE, nenhum reset acontece), os patches já aplicados
+# em rodadas anteriores deixam drivers/ata/etc "sujos" de propósito (git apply
+# sem commit, por design), e isso é esperado/seguro ali, não motivo de abortar.
+abort_if_kernel_tree_dirty() {
+  local dirty
+  dirty=$(git status --porcelain --untracked-files=no -- drivers/ arch/ include/ 2>/dev/null)
+  if [ -n "$dirty" ]; then
+    echo ""
+    echo "❌ ERRO: mudanças NÃO commitadas detectadas em arquivos rastreados do kernel:"
+    echo "$dirty"
+    echo ""
+    echo "Este comando vai rodar 'git reset --hard'/'git clean -fdx', que APAGA"
+    echo "essas mudanças sem aviso. Antes de continuar:"
+    echo "  1. Gere um patch real (não escrito à mão):"
+    echo "       git diff HEAD -- <arquivos> > $SCRIPT_DIR/patches/<nome>.patch"
+    echo "  2. Valide que compila isoladamente:"
+    echo "       make CC=\"ccache clang\" LLVM=1 ARCH=x86_64 <arquivo>.o"
+    echo "  3. Adicione a aplicação do patch a este script (ver bloco RTC/SATA"
+    echo "     como exemplo), para que sobreviva ao próximo reset."
+    echo "  4. Só então rode este script de novo."
+    echo ""
+    echo "Abortando para não repetir a perda de 2026-08-01 (memory/regressao-sata-2026-08-01-diagnostico-e-solucao.md)."
+    exit 1
+  fi
+}
+
 echo "=== Configurando diretório de build ==="
 cleanup_build_dir
 if [ -d "$KERNEL_SRC_DIR" ]; then
   cd "$KERNEL_SRC_DIR"
+
   CURRENT_BRANCH=$(git branch --show-current 2>/dev/null || echo "")
   if [ "$CURRENT_BRANCH" = "$BRANCH" ] && [ -f ".config" ] && [ -f "vmlinux" ]; then
     echo "Build anterior encontrado no branch $BRANCH, aproveitando cache..."
@@ -64,12 +98,13 @@ if [ -d "$KERNEL_SRC_DIR" ]; then
       echo "Código já atualizado, build incremental será usado."
     else
       echo "Atualizando para origin/$BRANCH..."
-      git merge --ff-only "origin/$BRANCH" || { git reset --hard "origin/$BRANCH"; }
+      git merge --ff-only "origin/$BRANCH" || { abort_if_kernel_tree_dirty; git reset --hard "origin/$BRANCH"; }
     fi
   else
     echo "Limpando build anterior (branch ou config diferente)..."
     git fetch origin
     git checkout "$BRANCH"
+    abort_if_kernel_tree_dirty
     git reset --hard "origin/$BRANCH"
     git clean -fdx
   fi
@@ -78,6 +113,222 @@ else
   git clone "$REPO_URL" "$KERNEL_SRC_DIR" --depth 1 -b "$BRANCH"
   cd "$KERNEL_SRC_DIR"
 fi
+
+# Reconstruir drivers/rtc/rtc-ps4-icc.c (perdido em git reset --hard)
+# Este arquivo NÃO é parte do upstream, só do projeto PS4 Linux.
+# Copiá-lo aqui garante que não seja perdido após clean/reset.
+echo "=== Restaurando drivers PS4 customizados ==="
+cat > drivers/rtc/rtc-ps4-icc.c << 'RTCEOF'
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * PS4 RTC driver via ICC (Baikal/Aeolia/Belize)
+ *
+ * Based on RE of Orbis 12.52 kernel (rtc.c / rtc_mvl.c)
+ * Validated 2026-07-25: ICC major=2 minor=0x0b/0x0c (save/load context),
+ * major=4 minor=0x50 (alarm bitmask), MMIO 0x5180000/0x5140000.
+ *
+ * Follows the high-level rtc.c (ICC + MMIO), NOT the low-level rtc_mvl.c
+ * which is read-only and uses different MMIO offsets.
+ */
+
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/mod_devicetable.h>
+#include <linux/rtc.h>
+#include <linux/io.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+
+extern int ps4_icc_rtc_cmd(u8 major, u16 minor, const void *data, u16 length,
+			    void *reply, u16 reply_length);
+
+#define PS4_RTC_MMIO_READ	0x5180000
+#define PS4_RTC_MMIO_WRITE	0x5140000
+#define PS4_RTC_MMIO_SIZE	8
+
+struct ps4_rtc_softc {
+	void __iomem *mmio_read;
+	void __iomem *mmio_write;
+};
+
+static int ps4_rtc_read_time(struct device *dev, struct rtc_time *tm)
+{
+	struct ps4_rtc_softc *sc = dev_get_drvdata(dev);
+	u8 ctx_loaded = 0;
+	u64 mmio_time;
+	int rc;
+
+	rc = ps4_icc_rtc_cmd(2, 0x0c, &ctx_loaded, 1, &ctx_loaded, 1);
+	if (rc < 0)
+		dev_warn(dev, "RTC: icc load context fail %d\n", rc);
+
+	mmio_time = readq(sc->mmio_read);
+	rtc_time64_to_tm(mmio_time, tm);
+	return 0;
+}
+
+static int ps4_rtc_set_time(struct device *dev, struct rtc_time *tm)
+{
+	struct ps4_rtc_softc *sc = dev_get_drvdata(dev);
+	u64 t = rtc_tm_to_time64(tm);
+	u8 flag = 1;
+
+	writeq(t, sc->mmio_write);
+	ps4_icc_rtc_cmd(2, 0x0b, &flag, 1, &flag, 1);
+	return 0;
+}
+
+static int ps4_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alrm)
+{
+	u8 bitmask = 0;
+	int rc;
+
+	rc = ps4_icc_rtc_cmd(4, 0x50, &bitmask, 1, &bitmask, 1);
+	if (rc < 0)
+		return rc;
+
+	if (bitmask == 0xff) {
+		alrm->enabled = 0;
+	} else {
+		alrm->enabled = !!(bitmask & 0x7);
+		alrm->time.tm_sec = 0;
+		alrm->time.tm_min = 0;
+		alrm->time.tm_hour = 0;
+		alrm->time.tm_mday = 1;
+		alrm->time.tm_mon = 0;
+		alrm->time.tm_year = 70;
+	}
+	return 0;
+}
+
+static int ps4_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alrm)
+{
+	u8 new = alrm->enabled ? 0x7 : 0x00;
+	int rc;
+
+	rc = ps4_icc_rtc_cmd(4, 0x50, &new, 1, &new, 1);
+	return rc;
+}
+
+static int ps4_rtc_alarm_irq_enable(struct device *dev, unsigned int enabled)
+{
+	return 0;
+}
+
+static const struct rtc_class_ops ps4_rtc_ops = {
+	.read_time		= ps4_rtc_read_time,
+	.set_time		= ps4_rtc_set_time,
+	.read_alarm		= ps4_rtc_read_alarm,
+	.set_alarm		= ps4_rtc_set_alarm,
+	.alarm_irq_enable	= ps4_rtc_alarm_irq_enable,
+};
+
+static int ps4_rtc_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct ps4_rtc_softc *sc;
+	struct rtc_device *rtc;
+
+	sc = devm_kzalloc(dev, sizeof(*sc), GFP_KERNEL);
+	if (!sc)
+		return -ENOMEM;
+
+	sc->mmio_read = devm_ioremap(dev, PS4_RTC_MMIO_READ, PS4_RTC_MMIO_SIZE);
+	if (!sc->mmio_read)
+		return -ENXIO;
+
+	sc->mmio_write = devm_ioremap(dev, PS4_RTC_MMIO_WRITE, PS4_RTC_MMIO_SIZE);
+	if (!sc->mmio_write)
+		return -ENXIO;
+
+	platform_set_drvdata(pdev, sc);
+
+	rtc = devm_rtc_device_register(dev, "ps4-rtc-icc", &ps4_rtc_ops, THIS_MODULE);
+	if (IS_ERR(rtc))
+		return PTR_ERR(rtc);
+
+	dev_info(dev, "PS4 RTC via ICC registered (mmio_read=0x%lx, mmio_write=0x%lx)\n",
+		 (unsigned long)PS4_RTC_MMIO_READ, (unsigned long)PS4_RTC_MMIO_WRITE);
+
+	return 0;
+}
+
+static const struct platform_device_id ps4_rtc_id_table[] = {
+	{ "ps4-rtc-icc", 0 },
+	{ },
+};
+MODULE_DEVICE_TABLE(platform, ps4_rtc_id_table);
+
+static struct platform_driver ps4_rtc_driver = {
+	.driver = {
+		.name = "ps4-rtc-icc",
+	},
+	.probe = ps4_rtc_probe,
+	.id_table = ps4_rtc_id_table,
+};
+
+static struct platform_device *ps4_rtc_pdev;
+
+static int __init ps4_rtc_init(void)
+{
+	int ret;
+
+	ps4_rtc_pdev = platform_device_register_simple("ps4-rtc-icc", -1, NULL, 0);
+	if (IS_ERR(ps4_rtc_pdev))
+		return PTR_ERR(ps4_rtc_pdev);
+
+	ret = platform_driver_register(&ps4_rtc_driver);
+	if (ret) {
+		platform_device_unregister(ps4_rtc_pdev);
+		return ret;
+	}
+
+	return 0;
+}
+
+static void __exit ps4_rtc_exit(void)
+{
+	platform_driver_unregister(&ps4_rtc_driver);
+	platform_device_unregister(ps4_rtc_pdev);
+}
+
+module_init(ps4_rtc_init);
+module_exit(ps4_rtc_exit);
+
+MODULE_AUTHOR("PS4 Linux Baikal");
+MODULE_DESCRIPTION("PS4 RTC driver via ICC (Baikal/Aeolia/Belize)");
+MODULE_LICENSE("GPL");
+MODULE_ALIAS("platform:ps4-rtc-icc");
+RTCEOF
+echo "✓ drivers/rtc/rtc-ps4-icc.c restaurado"
+
+# Aplicar patch de SATA polling (fallback para PxIE=0 no Baikal)
+# Este patch é ESSENCIAL para operação estável do ata1 (HD interno do PS4) —
+# ver memory/regressao-sata-2026-08-01-diagnostico-e-solucao.md. Usa `git apply`
+# (não `patch -p1`) porque é não-interativo, falha com exit code claro em vez
+# de gerar .rej silenciosos, e valida a árvore inteira antes de tocar em
+# qualquer arquivo (--check).
+echo "=== Aplicando patch de AHCI polling fallback (SATA Baikal) ==="
+AHCI_PATCH="$SCRIPT_DIR/patches/ahci-baikal-polling-fallback.patch"
+if [ ! -f "$AHCI_PATCH" ]; then
+  echo "❌ ERRO FATAL: $AHCI_PATCH não encontrado"
+  echo "  SATA interno (ata1) sofrerá timeout/disable device sem este patch."
+  exit 1
+fi
+
+if ! git apply --check "$AHCI_PATCH" 2>/tmp/ahci_patch_check.log; then
+  echo "❌ ERRO FATAL: patch AHCI polling não aplica contra o kernel atual:"
+  cat /tmp/ahci_patch_check.log
+  echo ""
+  echo "  Isso normalmente significa que o upstream do kernel mudou drivers/ata/."
+  echo "  Regenere o patch: edite ahci.h/ahci.c/libahci.c, valide com"
+  echo "  'make drivers/ata/{ahci,libahci}.o', depois 'git diff HEAD -- drivers/ata/'"
+  echo "  e substitua $AHCI_PATCH."
+  exit 1
+fi
+
+git apply "$AHCI_PATCH"
+echo "✓ Patch AHCI polling aplicado com sucesso (git apply, validado com --check)"
 
 echo "=== Preparando firmware extra ==="
 mkdir -p extra_firmware/{mrvl,mediatek,amdgpu}
@@ -521,21 +772,26 @@ scripts/config --disable CONFIG_DEFAULT_PFIFO_FAST
 scripts/config --set-str CONFIG_DEFAULT_NET_SCH "fq_codel"
 
 # RTC: habilitar infraestrutura padrao do Linux para /dev/rtc, /sys/class/rtc e hwclock.
-# Suporte real via PS4 ICC (Fase 3 do plano rtc_via_icc_plan.md) ainda vai ser
-# implementado em drivers/rtc/rtc-ps4-icc.c; por enquanto ativamos so o core +
-# RTC_DRV_CMOS (que ja estava em CONFIG_RTC_MC146818_LIB=y) e HCTOSYS para que
-# hwclock/date tenham onde se apoiar.
-# IMPORTANTE: NAO habilitar CONFIG_RTC_DRV_PS4_ICC aqui enquanto o driver
-# nao existir -- faria o olddefconfig falhar ("unknown symbol").
+# Suporte real via PS4 ICC (Fase 3 do plano rtc_via_icc_plan.md) implementado em
+# drivers/rtc/rtc-ps4-icc.c (2026-07-31) -- ainda PENDENTE de teste ao vivo no
+# hardware, ver consolidado/BACKLOG.md. RTC_DRV_CMOS continua habilitado como
+# fallback caso o rtc-ps4-icc nao registre /dev/rtc0 corretamente.
 scripts/config --enable  CONFIG_RTC_CLASS
 scripts/config --enable  CONFIG_RTC_INTF_DEV
 scripts/config --enable  CONFIG_RTC_INTF_SYSFS
 scripts/config --enable  CONFIG_RTC_INTF_PROC
 scripts/config --enable  CONFIG_RTC_DRV_CMOS
+scripts/config --module  CONFIG_RTC_DRV_PS4_ICC
 scripts/config --enable  CONFIG_RTC_HCTOSYS
 scripts/config --set-str CONFIG_RTC_HCTOSYS_DEVICE "rtc0"
 scripts/config --enable  CONFIG_RTC_SYSTOHC
 scripts/config --set-str CONFIG_RTC_SYSTOHC_DEVICE "rtc0"
+
+# KVM-AMD: virtualização por hardware para VMs QEMU (investigação de viabilidade
+# completa em PLANO_KVM_PS4_VIABILIDADE_2026-07-24.md). CPU Jaguar expõe SVM/NPT.
+# Habilitado em 2026-08-01 para teste prático.
+scripts/config --enable  CONFIG_KVM
+scripts/config --enable  CONFIG_KVM_AMD
 
 echo "=== Executando olddefconfig ==="
 make "${MAKE_OPTS[@]}" olddefconfig

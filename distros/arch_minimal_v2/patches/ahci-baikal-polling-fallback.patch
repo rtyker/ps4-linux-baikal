@@ -1,0 +1,144 @@
+diff --git a/drivers/ata/ahci.c b/drivers/ata/ahci.c
+index f8610b861..6a3f9f14a 100644
+--- a/drivers/ata/ahci.c
++++ b/drivers/ata/ahci.c
+@@ -2245,6 +2245,16 @@ static int ahci_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
+ 	if (rc)
+ 		goto err_rm_sysfs_file;
+ 
++	/* PS4 Baikal: Glue PCIe silently drops AHCI IRQs after ~5s (PxIE=0).
++	 * Start a 1ms polling timer as fallback. The real IRQ handler
++	 * still works if/when interrupts resume (e.g. after EH reset). */
++	if (pdev->vendor == PCI_VENDOR_ID_SONY &&
++	    pdev->device == PCI_DEVICE_ID_SONY_BAIKAL_AHCI) {
++		ahci_baikal_start_poll_timer(hpriv, host);
++		dev_info(&pdev->dev,
++			"PS4 Baikal: AHCI polling timer started (1ms)\n");
++	}
++
+ 	pm_runtime_put_noidle(&pdev->dev);
+ 	return 0;
+ 
+@@ -2261,6 +2271,13 @@ static void ahci_shutdown_one(struct pci_dev *pdev)
+ 
+ static void ahci_remove_one(struct pci_dev *pdev)
+ {
++	struct ata_host *host = dev_get_drvdata(&pdev->dev);
++	struct ahci_host_priv *hpriv = host->private_data;
++
++	/* Cancel polling timer if active (PS4 Baikal fallback) */
++	if (hpriv)
++		ahci_baikal_stop_poll_timer(hpriv);
++
+ 	sysfs_remove_file_from_group(&pdev->dev.kobj,
+ 				     &dev_attr_remapped_nvme.attr,
+ 				     NULL);
+diff --git a/drivers/ata/ahci.h b/drivers/ata/ahci.h
+index 2a608e08f..79ee1ad68 100644
+--- a/drivers/ata/ahci.h
++++ b/drivers/ata/ahci.h
+@@ -380,6 +380,11 @@ struct ahci_host_priv {
+ 	/* only required for per-port MSI(-X) support */
+ 	int			(*get_irq_vector)(struct ata_host *host,
+ 						  int port);
++
++	/* PS4 Baikal: polling fallback for PxIE=0 bug */
++	struct hrtimer		poll_timer;
++	struct ata_host		*poll_host;
++	bool			poll_enabled;
+ };
+ 
+ /*
+@@ -429,6 +434,11 @@ void ahci_save_initial_config(struct device *dev,
+ void ahci_init_controller(struct ata_host *host);
+ int ahci_reset_controller(struct ata_host *host);
+ 
++/* PS4 Baikal: polling fallback for PxIE=0 bug (drivers/ata/libahci.c) */
++void ahci_baikal_start_poll_timer(struct ahci_host_priv *hpriv,
++				   struct ata_host *host);
++void ahci_baikal_stop_poll_timer(struct ahci_host_priv *hpriv);
++
+ int ahci_do_softreset(struct ata_link *link, unsigned int *class,
+ 		      int pmp, unsigned long deadline,
+ 		      int (*check_ready)(struct ata_link *link));
+diff --git a/drivers/ata/libahci.c b/drivers/ata/libahci.c
+index c79abdfcd..3f81db42f 100644
+--- a/drivers/ata/libahci.c
++++ b/drivers/ata/libahci.c
+@@ -32,6 +32,76 @@
+ #include <linux/pci.h>
+ #include "ahci.h"
+ #include "libata.h"
++#include <linux/hrtimer.h>
++
++/* PS4 Baikal: forward declaration so the polling fallback below can call the
++ * real interrupt handler, which is defined further down in this file. */
++static void ahci_port_intr(struct ata_port *ap);
++
++/* PS4 Baikal: fallback polling if PxIE stays zero (interrupt delivery broken).
++ * NOTE: Must check PxIS directly because HOST_IRQ_STAT = PxIS & PxIE (which is 0 when PxIE=0).
++ * NOTE: skips ports frozen/under EH — PORT_IRQ_STAT can latch even with PxIE=0, and
++ * processing it here while the EH resets the engine risks double-completing a qc.
++ */
++static enum hrtimer_restart ahci_poll_timer_fn(struct hrtimer *timer)
++{
++	struct ahci_host_priv *hpriv = container_of(timer,
++		struct ahci_host_priv, poll_timer);
++	struct ata_host *host = hpriv->poll_host;
++	unsigned long flags;
++	unsigned int i;
++
++	if (!host)
++		goto rearm;
++
++	for (i = 0; i < host->n_ports; i++) {
++		struct ata_port *ap = host->ports[i];
++		void __iomem *port_mmio;
++		u32 px_is;
++
++		if (!ap || ata_port_is_frozen(ap))
++			continue;
++
++		port_mmio = ahci_port_base(ap);
++		px_is = readl(port_mmio + PORT_IRQ_STAT);
++
++		if (px_is) {
++			/* ap->lock aliases host->lock (already a pointer, see
++			 * libata-core.c:ata_host_init()) */
++			spin_lock_irqsave(ap->lock, flags);
++			ahci_port_intr(ap);
++			/* ack at host level, which ahci_port_intr() does not do alone
++			 * (only the wrapper ahci_single_level_irq_intr() does that) */
++			writel(1 << ap->port_no, hpriv->mmio + HOST_IRQ_STAT);
++			spin_unlock_irqrestore(ap->lock, flags);
++		}
++	}
++
++rearm:
++	hrtimer_forward_now(timer, ms_to_ktime(1));
++	return HRTIMER_RESTART;
++}
++
++/* PS4 Baikal: start/stop helpers for the polling fallback, called from
++ * ahci.c (mirrors the ahci_save_initial_config/ahci_reset_controller
++ * export pattern already used in this file). */
++void ahci_baikal_start_poll_timer(struct ahci_host_priv *hpriv,
++				   struct ata_host *host)
++{
++	hpriv->poll_host = host;
++	hpriv->poll_enabled = true;
++	hrtimer_setup(&hpriv->poll_timer, ahci_poll_timer_fn,
++		      CLOCK_MONOTONIC, HRTIMER_MODE_REL);
++	hrtimer_start(&hpriv->poll_timer, ms_to_ktime(1), HRTIMER_MODE_REL);
++}
++EXPORT_SYMBOL_GPL(ahci_baikal_start_poll_timer);
++
++void ahci_baikal_stop_poll_timer(struct ahci_host_priv *hpriv)
++{
++	if (hpriv->poll_enabled)
++		hrtimer_cancel(&hpriv->poll_timer);
++}
++EXPORT_SYMBOL_GPL(ahci_baikal_stop_poll_timer);
+ 
+ static int ahci_skip_host_reset;
+ int ahci_ignore_sss;
