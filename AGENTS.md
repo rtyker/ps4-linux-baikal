@@ -71,6 +71,8 @@
 
 **Consequência da quebra desta regra:** Baseline fica não-reproduzível, próximo build sem a mudança reintroduzida sofre regressão silenciosa (exemplo: 2026-08-01, tag `20260801-kvm-rtc-ok` perdeu SATA polling — ver `memory/regressao-sata-2026-08-01-diagnostico-e-solucao.md`).
 
+**Salvaguarda adicional (redundante ao mecanismo de patches, 2026-08-01):** todo build bem-sucedido do `00-build-kernel-7.0.sh` gera automaticamente um snapshot bruto da árvore fonte já patcheada em `/mnt/hdauxiliar/kernel_source_snapshots/kernel-src-<YYYYMMDD>-<TAG>.tar.zst` (via `tar -I 'zstd -T0 -9'`, excluindo artefatos de build como `.o`/`.cmd`/`.ko`/`vmlinux`/etc, mas **incluindo `.git`** — o clone é raso, ~300MB, e permite `git diff` dentro do snapshot para ver exatamente o que foi patcheado vs. pristino). Isso não substitui o mecanismo de patches — é um "se tudo mais falhar, temos a fonte exata que gerou este bzImage". Falha do snapshot não bloqueia o build (só avisa).
+
 ### 🔴 REGRA CRÍTICA — Gatilhos de linguagem que exigem commit real no git
 
 Quando o usuário disser **"alteração aprovada"**, **"grave na memória e commite"**, ou **"registre e atualize os documentos"**, isso significa **COMMITAR NO GIT** — não apenas escrever/editar arquivos. Documentar em prosa sem nunca commitar já causou perda real de trabalho (o patch de SATA polling de 2026-07-30 foi descrito em detalhe em `memory/marco-sata-interno-funcional-2026-07-30.md`, mas o código-fonte em si nunca virou patch nem commit — foi apagado num `git reset --hard` de build posterior em 2026-08-01, exigindo reconstrução do zero). Git é a rede de segurança; memória em prosa não é.

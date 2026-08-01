@@ -834,6 +834,35 @@ else
   exit 1
 fi
 
+# 🔴 SALVAGUARDA (pedida pelo usuário 2026-08-01, ver AGENTS.md "Idempotência
+# de Alterações no Kernel"): snapshot bruto da árvore fonte já patcheada,
+# capturado logo após um build bem-sucedido — redundante ao mecanismo de
+# patches/heredocs em patches/, para o caso de algum patch não cobrir tudo ou
+# algum mecanismo falhar silenciosamente sem ninguém perceber. Fica só como
+# referência de emergência ("se tudo der errado, temos a fonte exata que
+# gerou este bzImage"); não é o mecanismo de reprodutibilidade principal.
+echo ""
+echo "=== Gerando snapshot de segurança da árvore fonte (pós-build) ==="
+# zstd -T0 -9 escolhido sobre xz depois de medir os dois ao vivo nesta árvore
+# (2026-08-01): xz -T0 -6 levou 5m48s para 444M, zstd -T0 -9 levou 23s para
+# 479M (~8% maior, ~15x mais rápido) — melhor trade-off para rodar em TODO
+# build sem virar gargalo perceptível.
+SNAPSHOT_DIR="/mnt/hdauxiliar/kernel_source_snapshots"
+mkdir -p "$SNAPSHOT_DIR"
+SNAPSHOT_DATE="$(date +%Y%m%d)"
+SNAPSHOT_FILE="$SNAPSHOT_DIR/kernel-src-${SNAPSHOT_DATE}-${TAG}.tar.zst"
+if tar -I 'zstd -T0 -9' -cf "$SNAPSHOT_FILE" \
+    --exclude='*.o' --exclude='*.cmd' --exclude='*.ko' --exclude='*.a' \
+    --exclude='*.mod' --exclude='*.mod.c' --exclude='*.symvers' \
+    --exclude='vmlinux*' --exclude='System.map' --exclude='.tmp_*' \
+    --exclude='include/generated' --exclude='include/config' \
+    -C "$(dirname "$KERNEL_SRC_DIR")" "$(basename "$KERNEL_SRC_DIR")" 2>/tmp/snapshot_err.log; then
+  echo "✓ Snapshot salvo em $SNAPSHOT_FILE ($(du -h "$SNAPSHOT_FILE" | cut -f1))"
+else
+  echo "⚠ AVISO: snapshot de segurança falhou (não bloqueia o build, só avisa):"
+  cat /tmp/snapshot_err.log
+fi
+
 echo ""
 echo "=== Build concluído (tag: $TAG) ==="
 echo "Arquivos gerados:"
