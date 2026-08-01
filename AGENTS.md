@@ -71,7 +71,9 @@
 
 **Consequência da quebra desta regra:** Baseline fica não-reproduzível, próximo build sem a mudança reintroduzida sofre regressão silenciosa (exemplo: 2026-08-01, tag `20260801-kvm-rtc-ok` perdeu SATA polling — ver `memory/regressao-sata-2026-08-01-diagnostico-e-solucao.md`).
 
-**Salvaguarda adicional (redundante ao mecanismo de patches, 2026-08-01):** todo build bem-sucedido do `00-build-kernel-7.0.sh` gera automaticamente um snapshot bruto da árvore fonte já patcheada em `/mnt/hdauxiliar/kernel_source_snapshots/kernel-src-<YYYYMMDD>-<TAG>.tar.zst` (via `tar -I 'zstd -T0 -9'`, excluindo artefatos de build como `.o`/`.cmd`/`.ko`/`vmlinux`/etc, mas **incluindo `.git`** — o clone é raso, ~300MB, e permite `git diff` dentro do snapshot para ver exatamente o que foi patcheado vs. pristino). Isso não substitui o mecanismo de patches — é um "se tudo mais falhar, temos a fonte exata que gerou este bzImage". Falha do snapshot não bloqueia o build (só avisa).
+### 🔴 REGRA CRÍTICA — Snapshot de Segurança Obrigatório Pós-Build
+
+Todo build bem-sucedido executado por `00-build-kernel-7.0.sh` DEVE obrigatoriamente gerar um snapshot bruto da árvore fonte já patcheada em `/mnt/hdauxiliar/kernel_source_snapshots/kernel-src-<YYYYMMDD>-<TAG>.tar.zst` (via `tar -I 'zstd -T0 -9'`, excluindo artefatos `.o`/`.ko`/`vmlinux` mas **incluindo o `.git`** do clone raso, ~300MB). Isso garante redundância absoluta contra perda de alterações efêmeras no repositório do kernel. Falhas de snapshot geram alerta no terminal.
 
 ### 🔴 REGRA CRÍTICA — Gatilhos de linguagem que exigem commit real no git
 
