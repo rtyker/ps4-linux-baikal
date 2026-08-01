@@ -57,9 +57,11 @@
 
 **Regra na prática:**
 - Alterações **podem ser commitadas** no repositório (git commit + push), OU
-- Alterações **devem ser recriadas automaticamente** pelo script (patches + heredocs aplicados **após** o `git reset --hard`)
-  - Exemplo: `00-build-kernel-7.0.sh` reconstrói `drivers/rtc/rtc-ps4-icc.c` via heredoc após reset
-  - Exemplo: O mesmo script agora aplica `patches/ahci-baikal-polling-fallback.patch` (SATA polling) via `git apply --check` + `exit 1` se falhar (nunca `patch -p1` silencioso — falha alta é obrigatória, ver incidente abaixo)
+- Alterações **devem ser integradas via patches `.patch` confiáveis** aplicados **após** o `git reset --hard`.
+- **PROIBIDO usar heredocs (`cat << 'EOF'`), `sed` ou `echo >>` inline no script de build** para injetar código ou modificar `Makefile`/`Kconfig` do kernel. Toda modificação deve estar encapsulada em um arquivo `.patch` limpo em `patches/`.
+  - Motivo: injeções inline (heredocs/sed) alteram o contexto dos arquivos do kernel e fazem com que patches subsequentes falhem silenciosamente ao tentar aplicar no mesmo arquivo.
+  - Exemplo: `patches/ps4-icc-rtc-wrapper.patch` contém 100% da implementação do RTC (`rtc-ps4-icc.c`, `Kconfig`, `Makefile` e wrappers) de forma autocontida.
+  - Exemplo: `patches/ahci-baikal-polling-fallback.patch` (SATA polling) é aplicado via `git apply --check` + `exit 1` em caso de falha (falha alta é obrigatória).
 
 **Implementação (procedimento obrigatório, nesta ordem — não pular etapas):**
 1. Editar source em `/mnt/hdauxiliar/temp/kernel_build_7.0/`, a partir de uma árvore recém resetada (`git reset --hard origin/$BRANCH`) para garantir base limpa.
