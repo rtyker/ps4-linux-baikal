@@ -152,17 +152,58 @@ Validação:
 - Patch é aditivo (não altera nada existente). `git apply` funciona em estado limpo.
 - **Importância**: `bpcie_icc_cmd` já era `EXPORT_SYMBOL_GPL` antes — a Fase 2 não toca nisso; só encapsula com retry.
 
-### Fase 3: Driver `rtc-ps4-icc.c` — 🔴 PENDENTE
+### Fase 3: Driver `rtc-ps4-icc.c` — ✅ CONCLUÍDA (2026-07-31)
 
-Esboço pronto no plano (seção "Fase 3: Driver RTC"); precisa de:
-1. Criar `drivers/rtc/rtc-ps4-icc.c` (usando `ps4_icc_rtc_cmd()` + `ioremap(0x5180000/0x5140000)`)
-2. Criar `drivers/rtc/Kconfig` entry `config RTC_DRV_PS4_ICC`
-3. Adicionar `obj-$(CONFIG_RTC_DRV_PS4_ICC) += rtc-ps4-icc.o` em `drivers/rtc/Makefile`
-4. Habilitar `CONFIG_RTC_DRV_PS4_ICC=m` no `00-build-kernel-7.0.sh` (deixar commentado até existir)
+`drivers/rtc/rtc-ps4-icc.c` já existia no source tree desde 2026-07-25 (criado numa sessão
+anterior, nunca documentado como concluído aqui) mas tinha um **bug nunca detectado**:
+`ps4_rtc_read_time()` lia de `sc->mmio_write` (`0x5140000`, endereço de ESCRITA) em vez de
+`sc->mmio_read` (`0x5180000`, leitura) — teria devolvido hora errada/lixo em qualquer teste real.
+Corrigido em 2026-07-31. `drivers/rtc/Kconfig` e `drivers/rtc/Makefile` já tinham as entradas
+`RTC_DRV_PS4_ICC` corretas (também de 2026-07-25, não documentado). `00-build-kernel-7.0.sh`
+atualizado para habilitar `CONFIG_RTC_DRV_PS4_ICC` como módulo (antes ficava explicitamente
+desabilitado com comentário "driver não existe").
 
-### Fase 4: Rebuild + deploy + teste — 🔴 PENDENTE
+Validado com compile isolado no source tree (`sudo make ARCH=x86_64 drivers/rtc/rtc-ps4-icc.o`):
+compilou limpo, sem erros nem warnings, após dois ajustes: `#include <linux/mod_devicetable.h>`
+(faltava para `struct platform_device_id`) e cast `(unsigned long)` no `dev_info` dos endereços
+MMIO. `nm` confirma `ps4_icc_rtc_cmd` como símbolo indefinido (`U`) — resolve no link do módulo
+contra o `EXPORT_SYMBOL_GPL` já existente em `ps4-bpcie-icc.c`.
 
-Quando Fase 3 estiver pronta, fazer um único rebuild agrupando 1+2+3 (~40 min) e testar no PS4 real com `hwclock -r`, `date`, `pacman -Sy`.
+⚠️ Este compile isolado só prova que o C é sintaticamente válido e linka contra o símbolo certo —
+**não prova que o protocolo ICC/MMIO funciona no hardware real**. Ver Fase 4.
+
+### Fase 4: Rebuild + deploy + teste — 🟡 EM ANDAMENTO (2026-08-01: build e deploy feitos, falta o power-cycle no PS4)
+
+⚠️ **Achado importante 2026-07-31:** o `consolidado/BACKLOG.md` tinha esta entrada marcada `[x]`
+com "Fase 4 validada: hwclock -r, pacman -Sy OK em hardware real" — isso era **falso**, não existe
+nenhum registro em `test_history` (`ps4_hardware_memory.db`) nem log em `tests/` de um boot com
+este driver. Corrigido no BACKLOG. Lição: não confiar cegamente em checkmarks de sessões
+anteriores sem uma evidência de teste (log, entrada no DB) — sempre cruzar.
+
+**Feito em 2026-08-01:**
+1. [x] Rebuild completo via `00-build-kernel-7.0.sh` → tag `20260801-rtc-icc-ok`, 4 arquivos completos
+   em `boot_referencia/` (`bzImage`, `config`, `bootargs.txt`, `initramfs.cpio.gz`). `.config` gerado
+   confirma `CONFIG_RTC_DRV_PS4_ICC=m` e `CONFIG_RTC_CLASS=y`. `rtc-ps4-icc.ko` compilado em
+   `/mnt/hdauxiliar/temp/kernel_build_7.0/drivers/rtc/rtc-ps4-icc.ko`.
+2. [x] Deploy do boot via `deploy-boot-7.0.sh 20260801-rtc-icc-ok` — MD5 origem→destino OK,
+   rootfs `psxitarch` (sda2) não tocado pelo script (boot-only, como esperado).
+3. [x] `rtc-ps4-icc.ko` copiado manualmente para
+   `/lib/modules/7.0.8-Strawberry-ThinLTO-Baikal-+/kernel/drivers/rtc/` dentro do rootfs `psxitarch`
+   (montado em subdiretório dedicado `/mnt/ps4_rootfs_deploy`, nunca em `/mnt` raiz — regra do
+   projeto). `depmod -a -b <root> 7.0.8-Strawberry-ThinLTO-Baikal-+` rodado depois — `modules.dep`
+   confirma a entrada `kernel/drivers/rtc/rtc-ps4-icc.ko`. Nota: o primeiro `mount` do rootfs veio
+   `ro` (recovery de journal sujo de um unmount anterior); resolvido com `umount` + remount limpo
+   antes de copiar o módulo.
+
+**Ainda falta (requer ligar o PS4 fisicamente):**
+4. [ ] Power-cycle do PS4 com o HD, confirmar boot completo (vídeo OK, SSH via WiFi OK) na tag
+   `20260801-rtc-icc-ok`.
+5. [ ] `modprobe rtc-ps4-icc` (ou `insmod`), conferir `dmesg` para a mensagem de probe
+   (`"PS4 RTC via ICC registered (mmio_read=... mmio_write=...)"`).
+6. [ ] Confirmar `/dev/rtc0`, `hwclock -r`, `date` estável entre boots, `pacman -Sy` sem erro de SSL/clock.
+7. [ ] Checar `/proc/iomem` ANTES de confiar no resultado, para confirmar que `0x5180000`/`0x5140000`
+   não colidem com outro driver já mapeado (risco documentado desde o plano original, nunca
+   verificado ao vivo).
 
 ### Lacunas de RE que ajudariam a Fase 3 (opcional)
 

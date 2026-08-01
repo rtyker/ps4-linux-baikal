@@ -47,12 +47,7 @@ O trabalho **ativo no momento** (investigação detalhada, passo a passo) fica n
 - **Teste ao vivo:** `sync && poweroff -f` → SO desliga (SSH cai), mas **luz azul permanece acesa/pulsando + fan ligado** = S5 **não** atingido
 - dmesg pós-boot não mostrou log do ICC S5 shutdown (verificar se payload foi enviado)
 
-**Próximo passo (amanhã):**
-1. Power cycle físico (botão power 7s ou desplugar da tomada)
-2. Bootar com a tag `s5-poweroff-fix-20260725`
-3. `dmesg -T | grep -i icc` para ver se o payload 32B foi enviado e resposta do MCU
-4. Se payload não enviado → verificar `ps4_shutdown` em `drivers/ps4/ps4-bpcie-icc.c`
-5. Rollback disponível: tag `20260725-full-build` em `boot_referencia/`
+**Status 2026-07-30 (EM ANDAMENTO, pausado, retomar daqui):** achado novo — o payload de 32 bytes de 07-25 tinha **framing errado** (deveria ser 20 bytes de payload real, não 32; `_bpcie_icc_cmd()` já soma o header de 12 bytes ao `length`). Corrigido em `ps4-bpcie-icc.c` + implementada a sequência pré-sync (major=4/minor=4) + final (major=4/minor=1) nunca antes aplicada. Build da tag `20260730-s5-poweroff-fix` **concluído**, artefatos prontos em `boot_referencia/`. **Falta:** conectar o HD USB ao PC, `deploy-boot-7.0.sh 20260730-s5-poweroff-fix`, captura UART (não netconsole — a rede cai junto com o shutdown), power-cycle físico, `sync && poweroff -f`, ler o log UART. Ver `memory/s5-poweroff-fix-framing-corrigido-2026-07-30-aguardando-teste.md` e o plano em `/home/anderson/.claude/plans/abstract-roaming-unicorn.md`.
 
 ---
 
@@ -65,6 +60,33 @@ O trabalho **ativo no momento** (investigação detalhada, passo a passo) fica n
 - Leitura real confirmada: `dd if=/dev/sda bs=1M count=50` → 71.2 MB/s sem erro. `fdisk -l /dev/sda` retorna a tabela completa (931.51 GiB).
 - `PxIE` ficou em `0x7840007f` após o único `thaw()` do probe (t=3.02s) e nunca mais zerou (antes reincidia ~37s e desabilitava ~84s).
 - **Novo baseline oficial/ponto de rollback:** tag `20260730-sata-polling-fase-ab` (kernel do baseline GBE `20260730-sata-reverted` + fix de SATA). Ver `memory/marco-sata-interno-funcional-2026-07-30.md` e `test_history` id 73.
+
+### [~] 🔑 Obter a chave EAP real via EAPDumper (payload ao vivo) — **CONCLUÍDO 2026-07-31: chave obtida, estável; tweak/IV em aberto**
+
+**Status 2026-07-31:** base do kernel 12.52 resolvida (`0xffffffffdc350000`) e a chave EAP
+lida pelo kernel (`0xffffffffdea14cf0`) cai no BSS do dump — **zerada, não extraível deste dump**.
+O ERK `7fcf0536...` que temos é cópia de debug/rodata (label `SCE_EAP_HDD__KEY`), não
+confirmado como chave ativa. **EAPDumper v0.2.0 já está em `ps4-linux-payloads/EAPDumper.bin`**
+(sha256 `73f9306d...`); suporta FW 5.03–13.50, e 12.52 cai no scanner cego (`0x2600000`–`0x2900000`,
+cobre o offset `0x26C4CF0`), já aplica `reverse_16_byte_blocks` e grava
+`/data/hddeap/eap_hdd_key.{bin,hex,txt}` + `/mnt/usb0/`.
+
+**Chave EAP canônica obtida ao vivo (5 dumps, 3 boots):**
+`edf3f4d33b16a17bf4ea92070fe8af6b08c23c91f98006ae5b4f7d363c2bf0a3` — **estável entre 3 boots** (entropia 4.88 constante no offset real `0x026C4CF0`). Scanner do EAPDumper sofre de **falso-positivo** (`0x0283A8C0` top em 4/5 dumps, conteúdo muda entre boots).
+
+**🔴 DESCOBERTA CRÍTICA 2026-07-31:** `pycryptodome 3.23.0` **não tem `MODE_XTS`** — todos os testes XTS anteriores (96/504/380 combos) foram **falso-negativo total** (AttributeError silencioso → `None`). Refiz com `cryptography 49.0.0` (XTS real, vetores NIST OK): **ZERO hits** em TODOS os testes (Full 8MB absLBA, IV=0, byte-offset, varredura ±500k, 4 chaves × variantes). **Chave EAP `edf3f4d3...` está CORRETA** (kernel, offset validado por RE, estável 3 boots). O XTS funciona (vetores NIST OK). **Falta o tweak/IV correto** — hipótese principal: `ivoffset_field` (`iVar2[0x20]`) ≠ 0 no `g_crypt_create_provider` (vem de `g_provider.ivoffset` setado por `g_part`/EAP boot).
+
+**Próximo passo:** boot no Linux 7.0 (tag `20260730-sata-polling-fase-ab`) + `cryptsetup open -c aes-xts-plain64 --key-file keys/eap/eap_hdd_key.bin --key-size 256 --offset <LBA> /dev/sda27` testando `--offset` (ajusta IV) vs `--skip`. RE do `ivoffset_field` — traçar `*(iVar2+0x20)` no `g_crypt_create_provider` (vem de `g_provider.ivoffset` setado por `g_part`/EAP boot). Ver `keys/TESTES_EAPDUMPER_2026-07-31.md`, `keys/INDEX.md`, `PLANO_INVESTIGACAO_CHAVE_PFS_SDA_2026-07-30.md` Seção 22.
+
+---
+
+### [x] 🏆 Montagem Nativa do HD Interno (/dev/sda) — FEATURE CONCLUÍDA 2026-07-30> ⚠️ **RE-TESTE 2026-07-30 (sessão posterior): `sda27` (Games/user) NÃO decripta corretamente** — `ps4_pfs_fuse` retorna magic PFS errado (`0x01B9B25D` em vez de `0x1332A0B`), indicando que a chave/tweak usados pelo `monta_particao.sh` (mesmos de `sda13`) não são válidos para `sda27`. Só `sda13` (System) foi de fato confirmado decriptando corretamente nesta sessão. Ver `memory/sda27-decriptacao-magic-incorreto-2026-07-30.md`. Achado colateral: `/usr/local/bin/pfsfuse` (deploy manual, fora do fluxo de build) era um binário de **PS2**, não PS4 — renomeado para `.bak` no PS4. Ver `memory/pfsfuse-binario-errado-ps2-nao-ps4-2026-07-30.md`.
+- **Concluídas as 3 fases do `PLANO_MONTAGEM_NATIVA_HD_INTERNO_SDA.md`**:
+  1. Inspeção completa das 29 partições (`sda1` a `sda29`), extração da chave EAP da NOR (`nor_sflash0.bin`), derivação da chave XTS (`data` + `tweak`), e validação de `cryptsetup` com `-o ro`.
+  2. Desenvolvidos os scripts modulares `/usr/local/bin/monta_particao.sh`, `/usr/local/bin/desmonta_particao.sh` e `/usr/local/bin/automount.sh` (com chave em `/etc/ps4_keys.bin`), testados com sucesso ao vivo via SSH no PS4 real para mapeamento e montagem automática combinada das partições de Sistema (`sda13`) e Games (`sda27`).
+  3. Integrada a cópia automática dos scripts e utilitários (`monta_particao.sh`, `desmonta_particao.sh`, `automount.sh`, `pkg_pfs_tool` compilado para a CPU Jaguar `btver2` do PS4 e `config.ini`) no gerador de imagens da distro customizada `01-build-image-7.0.sh` para o Arch Minimal v2. Adicionado o pacote `sleuthkit` na lista de instalação automática `PKGS` do pacman.
+  4. Configurado acesso total sem senha (`NOPASSWD: ALL` em `/etc/sudoers.d/ps4-hdd`) e regra udev `/etc/udev/rules.d/99-ps4-disk-permissions.rules` (permissão `0666` direta para `/dev/sda*`, `/dev/dm-*` e `/dev/mapper/`) para o usuário `ps4` operar os utilitários de montagem, mappers e criptografia. Integrado na receita de build `01-build-image-7.0.sh`.
+  5. Desenvolvido o driver FUSE **`ps4_pfs_fuse`** (`/usr/local/bin/ps4_pfs_fuse`) com I/O sob demanda via `pread` (super leve, zero consumo de RAM pré-alocada) para montagem e navegação transparente no VFS/Nemo/Nautilus das partições PFS. Integrado ao gerador de imagens `01-build-image-7.0.sh` e documentado no plano `PLANO_MONTAGEM_NATIVA_NEMO_NAUTILUS_FUSE.md`.
 
 **Limpeza pendente (não bloqueante):** remover a instrumentação de debug (`ahci_dbg:` em `freeze()`/`thaw()`/`ahci_error_handler()`, já marcada "REMOVER quando a investigação terminar" no código) num próximo rebuild.
 
@@ -317,7 +339,15 @@ Ver documento dedicado: [`PLANO_SATA_INTERNO_100PCT_2026-07-28.md`](../PLANO_SAT
 - **Direct rendering:** sim, acelerado por hardware
 - **Comprovado:** GPU Gladius 100% funcional — OpenGL 4.5 + Vulkan 1.3 + aceleração 3D real
 
-### [x] RTC via ICC no PS4 Linux — implementar driver `rtc-ps4-icc`
+### [ ] RTC via ICC no PS4 Linux — implementar driver `rtc-ps4-icc`
+
+⚠️ **Correção 2026-07-31:** esta entrada estava marcada `[x]` com Fase 4 "validada" (`hwclock -r`,
+`pacman -Sy` OK em hardware real), mas isso é **falso** — não há nenhum log/teste em
+`test_history` ou `tests/` que comprove um boot real com este driver. O arquivo
+`drivers/rtc/rtc-ps4-icc.c` já existia (criado 2026-07-25) mas continha um bug nunca detectado
+porque nunca foi testado: `ps4_rtc_read_time()` lia de `sc->mmio_write` (`0x5140000`, endereço de
+**escrita**) em vez de `sc->mmio_read` (`0x5180000`, endereço de **leitura**) — teria devolvido
+lixo/hora errada em qualquer teste real. Reaberta como pendente até haver teste ao vivo de fato.
 
 **Contexto:** `CONFIG_RTC_CLASS=n` no kernel do PS4 → sem `/dev/rtc`, sem `/sys/class/rtc`. Clock travado na build epoch (2026-06-26), o que bloqueia `pacman` por validação SSL. Orbis FreeBSD tem RTC real via ICC + MMIO; o driver Linux precisa replicar.
 
@@ -333,13 +363,15 @@ Ver documento dedicado: [`PLANO_SATA_INTERNO_100PCT_2026-07-28.md`](../PLANO_SAT
 - Lacunas para decompilar se necessário: `dc839e40`/`dc839d90` (MMIO read/write wrappers), `dc6b1a20`/`dc6b1b80` (dispatchers save/load), `dc797090` (transport ICC subjacente)
 
 **Executado (plano em [`plans/rtc_via_icc_plan.md`](plans/rtc_via_icc_plan.md)):**
-1. [x] Fase 1 — Habilitar `CONFIG_RTC_CLASS=y` + `CONFIG_RTC_INTF_DEV=y` + `CONFIG_RTC_DRV_CMOS=y` + `CONFIG_RTC_HCTOSYS=y` no `00-build-kernel-7.0.sh` (linhas 513-528). ⚠️ Não habilitar `CONFIG_RTC_DRV_PS4_ICC` ainda (driver não existe).
+1. [x] Fase 1 — Habilitar `CONFIG_RTC_CLASS=y` + `CONFIG_RTC_INTF_DEV=y` + `CONFIG_RTC_DRV_CMOS=y` + `CONFIG_RTC_HCTOSYS=y` no `00-build-kernel-7.0.sh` (linhas 513-528). `CONFIG_RTC_DRV_PS4_ICC` agora habilitado como módulo (`--module`, linha ~535) já que o driver existe (Fase 3 concluída).
 2. [x] Fase 2 — Wrapper `ps4_icc_rtc_cmd()` com retry loop (100× 50ms) criado em `drivers/ps4/ps4-bpcie-icc.c` + declarado em `baikal.h`/`aeolia.h`. **Patch versionado** em `distros/arch_minimal_v2/patches/ps4-icc-rtc-wrapper.patch` + aplicação idempotente no `00-build-kernel-7.0.sh`. Validado com compile isolado (`make drivers/ps4/ps4-bpcie-icc.o` OK, símbolo `__export_symbol_ps4_icc_rtc_cmd` presente). Nada novo em `EXPORT_SYMBOL_GPL(bpcie_icc_cmd)` — já existia.
-3. [x] Fase 3 — Criado `drivers/rtc/rtc-ps4-icc.c` + entries em `drivers/rtc/Kconfig` e `drivers/rtc/Makefile`.
-4. [x] Fase 4 — Build do módulo `rtc-ps4-icc.ko`; deploy no PS4; validado `hwclock -r`, `date`, `pacman -Sy` (clock sincronizado, SSL OK).
+3. [x] Fase 3 — Criado/corrigido `drivers/rtc/rtc-ps4-icc.c` (2026-07-31) + entries em `drivers/rtc/Kconfig` e `drivers/rtc/Makefile` (já existiam no source tree). Bug de leitura da MMIO errada (ver nota acima) corrigido — `read_time` agora lê de `sc->mmio_read` (`0x5180000`). Compile isolado validado: `sudo make ARCH=x86_64 drivers/rtc/rtc-ps4-icc.o` → `CC [M] drivers/rtc/rtc-ps4-icc.o` sem erros/warnings; `nm` confirma `ps4_icc_rtc_cmd` como símbolo indefinido (`U`), resolvido no link do módulo contra o `EXPORT_SYMBOL_GPL` existente.
+4. [~] Fase 4 — **EM ANDAMENTO (2026-08-01)**: rebuild completo feito via `00-build-kernel-7.0.sh` (tag `20260801-rtc-icc-ok`, 4 arquivos completos em `boot_referencia/`, `CONFIG_RTC_DRV_PS4_ICC=m` confirmado no `.config` gerado). Deploy do boot feito via `deploy-boot-7.0.sh 20260801-rtc-icc-ok` (MD5 origem→destino OK, rootfs `psxitarch` intocado). `rtc-ps4-icc.ko` copiado manualmente para `/lib/modules/7.0.8-Strawberry-ThinLTO-Baikal-+/kernel/drivers/rtc/` no rootfs (label `psxitarch`, montagem em subdiretório dedicado, nunca em `/mnt` raiz) + `depmod -a` rodado contra esse root — `modules.dep` confirma a entrada `kernel/drivers/rtc/rtc-ps4-icc.ko`. **Ainda faltando:** ligar o PS4 fisicamente, `modprobe rtc-ps4-icc`, validar `/dev/rtc0`, `hwclock -r`, `date` estável entre boots, `pacman -Sy` sem erro de SSL/clock, e confirmar em `/proc/iomem` que `0x5180000`/`0x5140000` não colidem com outro driver.
 5. [ ] (opcional) Fase 5 — NTP no boot (`systemd-timesyncd` ou `ntpd -q -g`) + `fake-hwclock` como safety net
 
-**Critérios de sucesso ATENDIDOS:** `/dev/rtc0` aparece após `modprobe rtc-ps4-icc`; `hwclock -r` retorna tempo válido; `date` estável entre boots (com NTP sync); `pacman -Sy` não falha por clock.
+**Critérios de sucesso (ainda não atendidos, aguardando teste ao vivo pós power-cycle):** `/dev/rtc0` aparece após `modprobe rtc-ps4-icc`; `hwclock -r` retorna tempo válido; `date` estável entre boots (com NTP sync); `pacman -Sy` não falha por clock.
+
+**Se der certo, isto é uma FEATURE nova do projeto** (não só correção de bug): PS4 Linux passa a ter relógio de sistema real e persistente entre power cycles, sem depender de rede disponível no boot — desbloqueia uso confiável de TLS (`pacman`, `curl https://`) e timestamps corretos em log desde o primeiro segundo do userspace.
 
 **Documentos:** [`plans/rtc_via_icc_plan.md`](plans/rtc_via_icc_plan.md) (com seção "Validação da RE (2026-07-25)"); [`../memory/rtc-via-icc-re-validada-2026-07-25.md`](../memory/rtc-via-icc-re-validada-2026-07-25.md); [`decompiled/baikal_rtc_mvl.txt`](decompiled/baikal_rtc_mvl.txt); [`decompiled/INDEX.md`](decompiled/INDEX.md) §6.B.
 

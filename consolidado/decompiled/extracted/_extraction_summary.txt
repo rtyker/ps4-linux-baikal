@@ -1,8 +1,8 @@
-Resumo ExtractMtsNamespaceNoAnalysis.java
+Resumo ExtractMtsNamespace (PyGhidra)
 ==================================================
-Enderecos-alvo:     31
-Extraidos agora:    11
-Skipped (ja existiam): 20
-Falhas (decomp):    0
-Fora da MEM:        0
-Funcoes criadas:    11
+Enderecos-alvo:           26
+Extraidos agora:          7
+Skipped (ja existiam):    19
+Falhas:                   0
+Fora da mem do program:   0
+Funcoes criadas:          0

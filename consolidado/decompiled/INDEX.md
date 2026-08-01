@@ -128,6 +128,22 @@
 
 ---
 
+## 4.B. ICC device_power (major=5) — **extração 2026-07-31 via PyGhidra headless**
+
+**Conclusão crítica: GBE NÃO está no device_power (major=5).** O dispatcher `icc_device_power_main` (`dc7c8b80`) só trata device types 0 e 1 (wlan/bt/usb/hdd/bd). O PHY GBE é ligado pelo firmware/bootloader Sony ANTES do kernel — não há comando ICC/SAMU replicável.
+
+| Função | Arquivo | Linhas | Status | Papel |
+|---|---|---|---|---|
+| `dc7c8b80` | `extracted/decompiled_dc7c8b80.txt` | 133 | ✅ **revisado 2026-07-31** | `icc_device_power_main` — dispatcher ICC major=5. Chama `icc_devpower_get(0x31)` e `icc_devpower_set(0x30)` para device types 0/1. **GBE não está na lista.** |
+| `dc7c8fb0` | `extracted/decompiled_dc7c8fb0.txt` | 38 | ✅ **revisado 2026-07-31** | `icc_devpower_get` — lê estado de power via ICC major=5. Minor=0x31 (GET). |
+| `dc7c8a70` | `extracted/decompiled_dc7c8a70.txt` | 28 | ✅ **revisado 2026-07-31** | `icc_devpower_set` variante B — escreve estado via ICC major=5. Minor=0x30 (SET). |
+| `dc7c8a30` | `extracted/decompiled_dc7c8a30.txt` | 26 | ✅ **revisado 2026-07-31** | Wrapper `icc_devpower_set` — chama `dc7c8a70` com minor=0, value=param_1. |
+| `dc528600` | `extracted/decompiled_dc528600.txt` | 42 | ✅ **revisado 2026-07-31** | `icc_power` dispatcher — registra 5 handlers via `dc574150` + handler GBE `dc528ef0` (4/0x38). Envia query ICC major=4 minor=4. |
+| `dc478a70` | `extracted/decompiled_dc478a70.txt` | 44 | ⚠️ bruto | `icc_power_set` alias — decompilação falhou (bad instruction data). Provável alias de `dc7c8a70`. |
+| `dc478b80` | `extracted/decompiled_dc478b80.txt` | 173 | ✅ **revisado 2026-07-31** | Clone de `icc_device_power_main` — lógica complexa de power para múltiplos devices. |
+
+---
+
 ## 5. Glue &Baikal PCIe (`dc6df`, `dc718`, `dc719`)
 
 | Função | Arquivo | Linhas | Status | Papel |
@@ -269,4 +285,6 @@ Prioridade baixa:
 - **2026-07-20**: Primeira leva de decompilações geradas por Ghidra manual — driver MTS, GBE attach.
 - **2026-07-21**: Decompilação cirúrgica dos PHY init (SATA, USB), glue, ICC.
 - **2026-07-25**: Testes ao vivo confirmaram/refutaram múltiplas funções MTS. GBE hold corrigido para `0x180020`. MDIO Clause 22 ativo.
-- **2026-07-30**: Extração massiva via Ghidra Java headless (Docker). Árvore completa de `gbe_phy_ctrl` (dc5a44c0): 11 funções extraídas, analisadas e registradas no SQLite. Cross-ref SAMU no dump concluído — **zero referências SAMU/ICC no range GBE**. Conclusão: PHY power-on é pré-kernel (firmware/bootloader Sony). Script `.java` adicionado ao repositório (`ExtractMtsNamespaceNoAnalysis.java`).
+- **2026-07-31**: Extração massiva via PyGhidra headless (Docker). **7 funções ICC device_power (major=5) extraídas**: `dc7c8b80` (main), `dc7c8fb0` (get), `dc7c8a70` (set), `dc7c8a30` (wrapper), `dc528600` (icc_power), `dc478a70` (alias), `dc478b80` (clone). **Conclusão**: GBE não está no device_power — ICC major=5 só cobre wlan/bt/usb/hdd/bd. GBE power-on via ICC 4/0x38 só liga MAC core. PHY power-on é pré-kernel (firmware/bootloader Sony).
+- **2026-07-31 (Sessão GEOM_CRYPT)**: RE completa da função central `0xffffffffdc9a40d0` (`g_crypt_create_provider`) e seus chamadores (`dc9a3de7`). Confirmado: EAP key de 64B (`ERK`+`RIV`) fica em `0xffffffffdea14cf0`, copia os primeiros 32B (`ERK`), e o tweak AES-XTS/CBC calcula offset absoluto em setores no disco (`offset_particao + offset_disco`). Salvo em `geom_crypt/decompiled_dc9a40d0_g_crypt_create.c`.
+

@@ -121,6 +121,7 @@ PKGS=(
   mdadm
   lvm2
   cryptsetup
+  sleuthkit
   btrfs-progs
   dosfstools
   e2fsprogs
@@ -442,6 +443,64 @@ if [ -f "$KERNEL_BUILD_DIR/extra_firmware/WIFI_RAM_CODE_MT7668.bin" ]; then
   cp -v "$KERNEL_BUILD_DIR/extra_firmware/WIFI_RAM_CODE_MT7668.bin" "$ROOTFS_DIR/lib/firmware/mediatek/" || true
 fi
 
+# Copiar scripts de montagem nativa do HD interno PS4 (/dev/sda)
+echo "=== Copiando scripts de montagem nativa do HD interno ==="
+mkdir -p "$ROOTFS_DIR/usr/local/bin"
+if [ -f "$SCRIPT_DIR/monta_particao.sh" ]; then
+  cp -v "$SCRIPT_DIR/monta_particao.sh" "$ROOTFS_DIR/usr/local/bin/monta_particao.sh"
+  cp -v "$SCRIPT_DIR/desmonta_particao.sh" "$ROOTFS_DIR/usr/local/bin/desmonta_particao.sh"
+  cp -v "$SCRIPT_DIR/automount.sh" "$ROOTFS_DIR/usr/local/bin/automount.sh"
+  chmod +x "$ROOTFS_DIR/usr/local/bin/monta_particao.sh" "$ROOTFS_DIR/usr/local/bin/desmonta_particao.sh" "$ROOTFS_DIR/usr/local/bin/automount.sh"
+fi
+if [ -f "/mnt/t/downloads/PS4/utilities/pkg_pfs_tool/build/pkg_pfs_tool" ]; then
+  cp -v "/mnt/t/downloads/PS4/utilities/pkg_pfs_tool/build/pkg_pfs_tool" "$ROOTFS_DIR/usr/local/bin/pkg_pfs_tool"
+  cp -v "/mnt/t/downloads/PS4/utilities/pkg_pfs_tool/config.ini" "$ROOTFS_DIR/usr/local/bin/config.ini"
+  chmod +x "$ROOTFS_DIR/usr/local/bin/pkg_pfs_tool"
+fi
+if [ -f "/mnt/t/downloads/PS4/utilities/pkg_pfs_tool/build/ps4_pfs_fuse" ]; then
+  cp -v "/mnt/t/downloads/PS4/utilities/pkg_pfs_tool/build/ps4_pfs_fuse" "$ROOTFS_DIR/usr/local/bin/ps4_pfs_fuse"
+  chmod +x "$ROOTFS_DIR/usr/local/bin/ps4_pfs_fuse"
+fi
+
+# Configurar permissões full NOPASSWD e diretórios de montagem para usuário ps4
+echo "=== Configurando permissões do usuário ps4 para o HD interno ==="
+mkdir -p "$ROOTFS_DIR/mnt/ps4_internal"
+chmod 777 "$ROOTFS_DIR/mnt/ps4_internal"
+mkdir -p "$ROOTFS_DIR/etc/sudoers.d"
+echo "ps4 ALL=(ALL:ALL) NOPASSWD: ALL" > "$ROOTFS_DIR/etc/sudoers.d/ps4-hdd"
+chmod 440 "$ROOTFS_DIR/etc/sudoers.d/ps4-hdd"
+
+# Regra udev para acesso direto aos dispositivos sda, mapper e dm-* sem sudo
+mkdir -p "$ROOTFS_DIR/etc/udev/rules.d"
+cat > "$ROOTFS_DIR/etc/udev/rules.d/99-ps4-disk-permissions.rules" << 'UDEVEOF'
+KERNEL=="sda*", GROUP="disk", MODE="0666"
+KERNEL=="dm-*", GROUP="disk", MODE="0666"
+ENV{DM_NAME}=="ps4_*", GROUP="disk", MODE="0666"
+UDEVEOF
+
+cat > "$ROOTFS_DIR/etc/udev/rules.d/99-ps4-media.rules" << 'UDEVEOF'
+ENV{DM_NAME}=="ps4_sda27", ENV{ID_FS_LABEL}="PS4_HDD_Games", ENV{ID_FS_TYPE}="pfs", ENV{UDISKS_CAN_MOUNT}="1", ENV{UDISKS_SYSTEM}="0", ENV{UDISKS_NAME}="PS4 Internal HDD (Games)"
+ENV{DM_NAME}=="ps4_sda13", ENV{ID_FS_LABEL}="PS4_HDD_System", ENV{ID_FS_TYPE}="ufs2", ENV{UDISKS_CAN_MOUNT}="1", ENV{UDISKS_SYSTEM}="0", ENV{UDISKS_NAME}="PS4 Internal HDD (System)"
+UDEVEOF
+
+# Serviço systemd de montagem automática no boot
+cat > "$ROOTFS_DIR/etc/systemd/system/ps4-automount.service" << 'SERVICEEOF'
+[Unit]
+Description=PS4 Internal HDD Automatic Partition Mapper and FUSE Mount
+After=local-fs.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/automount.sh
+ExecStop=/usr/local/bin/desmonta_particao.sh /dev/sda27
+
+[Install]
+WantedBy=multi-user.target
+SERVICEEOF
+
+ln -sf /etc/systemd/system/ps4-automount.service "$ROOTFS_DIR/etc/systemd/system/multi-user.target.wants/ps4-automount.service"
+
 # Hook custom para time= do payload
 mkdir -p "$ROOTFS_DIR/etc/initcpio/install"
 cat > "$ROOTFS_DIR/etc/initcpio/install/set-time-from-cmdline" << 'HOOKEOF'
@@ -481,8 +540,15 @@ echo "=== Usando initramfs recem-gerado (mkinitcpio, reflete o rootfs desta buil
 cp "$ROOTFS_DIR/boot/initramfs-$KVER_FULL.img" "$BOOT_DIR/initramfs-7.0.cpio.gz"
 
 echo "=== Criando bootargs-7.0.txt ==="
+# UART (earlycon+console=uart8250,mmio32,0xC890E000 + console=tty0) e rootwait
+# (nao rootdelay) sao obrigatorios aqui -- ver AGENTS.md secao "Convencoes de
+# bootargs (validadas ao vivo)". Sem UART o log de boot fica cego; rootdelay=N
+# dorme os N segundos completos mesmo com o disco pronto (rootwait mede ~10.5s
+# mais rapido, validado 2026-07-28). Incidente 2026-07-30: este heredoc ainda
+# tinha console=tty0 sem UART e rootdelay=10 -- 02-burn-image-7.0.sh grava
+# esse bootargs.txt direto, sem passar pela tag validada em boot_referencia/.
 cat > "$BOOT_DIR/bootargs-7.0.txt" << 'CMDLINEEOF'
-panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0 drm.debug=0x06 console=tty0 earlyprintk=efi,keep loglevel=8 root=LABEL=psxitarch rw rootdelay=10 systemd.unified_cgroup_hierarchy=0 systemd.legacy_systemd_cgroup_controller=yes audit=0 amdgpu.audio=1 usbcore.autosuspend=-1 video=HDMI-A-1:1920x1080@60 mitigations=off zswap.enabled=1 log_buf_len=4M libata.force=1.00:3.0Gbps,noncq ahci.mobile_lpm_policy=1 netconsole=@192.168.0.2/eth0,6666@192.168.0.1/ff:ff:ff:ff:ff:ff
+panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0 drm.debug=0x06 earlycon=uart8250,mmio32,0xC890E000 console=uart8250,mmio32,0xC890E000 console=tty0 keep_bootcon earlyprintk=efi,keep loglevel=8 root=LABEL=psxitarch rw rootwait systemd.unified_cgroup_hierarchy=0 systemd.legacy_systemd_cgroup_controller=yes audit=0 amdgpu.audio=1 usbcore.autosuspend=-1 video=HDMI-A-1:1920x1080@60 mitigations=off zswap.enabled=1 log_buf_len=4M libata.force=1.00:3.0Gbps,noncq ahci.mobile_lpm_policy=1 netconsole=@192.168.0.2/eth0,6666@192.168.0.1/ff:ff:ff:ff:ff:ff
 CMDLINEEOF
 
 echo "=== Copiando vram.txt ==="
