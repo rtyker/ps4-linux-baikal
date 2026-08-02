@@ -219,4 +219,6 @@ Documentos de suporte:
 - **Artefatos:** `bzImage` (MD5: `3f4c29fc2be209cfc3617651c07b4dac`), `initramfs` (9.4 MB produção, MD5: `2e8140bdcb76360684d4618a73dfb0e3`).
 - **Deploy:** Gravado via `deploy-boot-7.0.sh` no HD USB (`/dev/sda1`). Partições desmontadas com segurança.
 
+## 🔴 RTC via ICC — patch quebrado (idempotência), corrigido 2026-08-01; driver é decorativo (hora não persiste)
+- `patches/ps4-icc-rtc-wrapper.patch` tinha perdido o hunk que cria `drivers/rtc/rtc-ps4-icc.c` num commit anterior (`7d59131`) — só funcionava porque o arquivo sobrou untracked na árvore efêmera. Reconstruído via `git diff` real, revalidado do zero (`git apply --check` + compilação isolada) a partir de árvore pristina, e removida uma duplicata (`ps4-icc-debug.o`) que causaria conflito em build frio. Achado extra: o driver hoje é um contador de software que reinicia em epoch 0 todo boot — o "load context" via ICC nunca usa o valor retornado. Ver [rtc-patch-idempotencia-quebrada-e-corrigida-2026-08-01](rtc-patch-idempotencia-quebrada-e-corrigida-2026-08-01.md).
 
