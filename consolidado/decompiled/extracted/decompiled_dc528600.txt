@@ -1,0 +1,42 @@
+// Extraido por Ghidra PyGhidra headless
+// addr: 0xffffffffdc528600  name: FUN_ffffffffdc528600  size: 256
+// escopo: lacuna MTS/GBE/ICC/glue
+// chamadores (0):
+// chamadas (1):
+//   FUN_ffffffffdc574150 @ 0x-000000023a8beb0
+
+
+void FUN_ffffffffdc528600(void)
+
+{
+  code *pcVar1;
+  undefined1 uStack_818;
+  undefined1 uStack_817;
+  undefined2 uStack_816;
+  undefined2 uStack_810;
+  undefined1 uStack_80c;
+  long lStack_28;
+  
+  lStack_28 = lRamffffffffdeaacea0;
+  FUN_ffffffffdc574150(0,&UNK_ffffffffdcafffdd,&UNK_ffffffffdc528760,&UNK_ffffffffdcafffef,0,0);
+  FUN_ffffffffdc574150(0,&UNK_ffffffffdcb0000b,&UNK_ffffffffdc528790,&UNK_ffffffffdcb0001e,0,0);
+  FUN_ffffffffdc574150(0,&UNK_ffffffffdcb0003b,&UNK_ffffffffdc5288a0,&UNK_ffffffffdcb0004a,0,20000);
+  FUN_ffffffffdc574150(0,&UNK_ffffffffdcb00063,&UNK_ffffffffdc5288a0,&UNK_ffffffffdcb0004a,0,20000);
+  FUN_ffffffffdc574150(0,&UNK_ffffffffdcb00072,&UNK_ffffffffdc528c10,&UNK_ffffffffdcb00080,0,10000);
+  func_0xffffffffdc528d10(0);
+  func_0xffffffffdc797f00(4,0,FUN_ffffffffdc528ef0,0);
+  func_0xffffffffdc60d400(&uStack_818,0x7f0);
+  uStack_817 = 4;
+  uStack_816 = 4;
+  uStack_810 = 0x20;
+  uStack_80c = 1;
+  func_0xffffffffdc797090(&uStack_818,&uStack_818);
+  if (lRamffffffffdeaacea0 == lStack_28) {
+    return;
+  }
+  func_0xffffffffdca17ba0();
+                    /* WARNING: Does not return */
+  pcVar1 = (code *)invalidInstructionException();
+  (*pcVar1)();
+}
+

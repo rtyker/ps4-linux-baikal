@@ -1,0 +1,5 @@
+Callers of g_crypt_start_disk / g_crypt_create_provider (BFS up to depth 3)
+======================================================================
+
+0x-00000002365c8b0  FUN_ffffffffdc9a3750
+0x-00000002365bf30  FUN_ffffffffdc9a40d0

@@ -1,0 +1,3 @@
+/mnt/t/downloads/PS4/linux_project/tools/ps4_hdd_tools/pkg_pfs_tool/build/CMakeFiles/pkg_pfs_tool.dir
+/mnt/t/downloads/PS4/linux_project/tools/ps4_hdd_tools/pkg_pfs_tool/build/CMakeFiles/edit_cache.dir
+/mnt/t/downloads/PS4/linux_project/tools/ps4_hdd_tools/pkg_pfs_tool/build/CMakeFiles/rebuild_cache.dir

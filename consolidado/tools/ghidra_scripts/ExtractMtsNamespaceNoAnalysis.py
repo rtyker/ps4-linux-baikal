@@ -48,6 +48,12 @@ TARGET_ADDRS = [
     0xffffffffdc7187d0,  # glue read (chamado em dc6df850)
     0xffffffffdc718800,  # glue write (chamado em dc6df850)
 
+    # ===== GEOM_CRYPT - start callback (ivoffset handling) =====
+    0xffffffffdc9a4020,  # g_crypt_start - where ivoffset_field is read/used
+
+    # ===== Geom part/g_part_gpt (ivoffset source) =====
+    0xffffffffdc8dabae,  # g_part_gpt taste/create - may set ivoffset_field
+
     # ===== ICC =====
     0xffffffffdc3f5bd0,  # wrapper icc_query(4, 0x38) - FUNDAMENTAL
     0xffffffffdc574150,  # registra handlers ICC (chama 6x em dc528760)

@@ -1,0 +1,10 @@
+FROM blacktop/ghidra:latest
+
+USER root
+RUN apt-get update && apt-get install -y python3 python3-pip python3-venv build-essential && rm -rf /var/lib/apt/lists/*
+
+# Install PyGhidra from the included source
+WORKDIR /ghidra/Ghidra/Features/PyGhidra/pypkg
+RUN pip3 install -e . --break-system-packages
+
+WORKDIR /workspace

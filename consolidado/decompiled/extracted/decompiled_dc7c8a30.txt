@@ -1,0 +1,26 @@
+// Extraido por Ghidra PyGhidra headless
+// addr: 0xffffffffdc7c8a30  name: FUN_ffffffffdc7c8a30  size: 59
+// escopo: lacuna MTS/GBE/ICC/glue
+// chamadores (0):
+// chamadas (1):
+//   FUN_ffffffffdc7c8a70 @ 0x-000000023837590
+
+
+void FUN_ffffffffdc7c8a30(undefined4 param_1)
+
+{
+  code *pcVar1;
+  undefined1 auStack_1a [2];
+  long lStack_18;
+  
+  lStack_18 = lRamffffffffdeaacea0;
+  FUN_ffffffffdc7c8a70(0,param_1,auStack_1a);
+  if (lRamffffffffdeaacea0 == lStack_18) {
+    return;
+  }
+  func_0xffffffffdca17ba0();
+                    /* WARNING: Does not return */
+  pcVar1 = (code *)invalidInstructionException();
+  (*pcVar1)();
+}
+

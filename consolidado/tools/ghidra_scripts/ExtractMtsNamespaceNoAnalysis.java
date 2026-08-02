@@ -57,6 +57,17 @@ public class ExtractMtsNamespaceNoAnalysis extends GhidraScript {
         0xffffffffdc574150L,  // handlers ICC (6x em dc528760)
         0xffffffffdc528ef0L,  // handler 4/0x38 = GBE power-on
 
+        // ===== ICC device_power (major=5) =====
+        0xffffffffdc7c8b80L,  // icc_device_power_main - dispatcher ICC major=5
+        0xffffffffdc7c8a70L,  // icc_devpower_set variante B
+        0xffffffffdc7c8a30L,  // icc_devpower_set variante dc7c8860
+        0xffffffffdc7c8fb0L,  // icc_devpower_get
+
+        // ===== ICC power =====
+        0xffffffffdc528600L,  // icc_power - dispatcher (6 handlers via dc574150)
+        0xffffffffdc478a70L,  // alias icc_power_set - wrapper ICC
+        0xffffffffdc478b80L,  // provavel clone de dc7c8b80
+
         // ===== GBE clk/phy =====
         0xffffffffdc529ed0L,  // lacuna GBE
         0xffffffffdc529f40L,  // lacuna GBE
