@@ -2,6 +2,11 @@
 
 > Registro cronológico de achados positivos e negativos desta sessão (2026-07-30 a 2026-08-01), para não perder tracking. Atualizar a cada novo teste, mesmo que negativo.
 
+### 24. [ENGENHARIA REVERSA — 2026-08-01] Mapeamento do Subsistema `ServiceCryptAsync` / Coprocessador SAMU
+- **Achado:** Mapeadas as strings `ServiceCrypt error %d` (`0xaee3d3`) e `ServiceCryptAsync error %d` (`0xaeeb94`) no `memoriateste.bin`.
+- **Arquitetura:** O `GEOM_CRYPT` no Orbis OS utiliza a API `ServiceCryptAsync` para submeter blocos I/O ao coprocessador SAMU/SBL (`sceSblKeymgrSmCallfuncWithID`), que executa a decriptação XTS-AES via acelerador de hardware embutido na Southbridge.
+- **Registro:** [`memory/servicecrypt-samu-hardware-crypto-2026-08-01.md`](memory/servicecrypt-samu-hardware-crypto-2026-08-01.md).
+
 ### 23. [TESTE AO VIVO — 2026-08-01] Decriptação via `dmsetup` com LBA IV_OFFSET Absoluto (`sda27` e `sda13`)
 - **Procedimento:** Executado o `ps4_crypt_mount.sh` e `dmsetup` com `IV_OFFSET` explícito de LBA (`57147392` para `sda27` e `25165824` para `sda13`) com a chave EAP canônica (`keys/eap/eap_hdd_key.bin`, 32 bytes).
 - **Resultado `sda27`:** Magic do superbloco PFS = `0x946D0394` (com IV 0 era `0x01B9B25D`).
