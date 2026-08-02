@@ -11,6 +11,12 @@ __pycache__/
 netconsole_ps4.log
 dmesg.log
 
+# --- Segredos e Chaves de Hardware (Não compartilhar) ---
+.env
+*.env
+.env.keys
+keys/
+
 # --- Dumps/binários brutos ---
 *.tar
 *.tar.xz
@@ -19,6 +25,15 @@ dmesg.log
 *.zip
 dummy_mem.bin
 fake_mem
+
+# --- Dumps de firmware proprietário (kernel Orbis/Ghidra) ---
+consolidado/dumps_orbis/
+consolidado/memoriateste.bin
+
+# --- Logs de hardware/capturas UART (grandes e efêmeros) ---
+tests/uart_logs/
+dmesg_output/
+netconsole_ps4_captures/
 
 # --- IDE/ambiente ---
 .claude/
