@@ -1,6 +1,6 @@
 # PS4 Linux Baikal — v1.0.0
 
-Primeira versão de distribuição consolidada do projeto.
+Primeira versão de distribuição consolidada do projeto (vivendo em `RELEASE/v1.0.0/`).
 
 ## Origem
 
@@ -8,7 +8,7 @@ Primeira versão de distribuição consolidada do projeto.
 - Kernel: `7.0.8-Strawberry-ThinLTO-Baikal-+ #3` (ThinLTO, profile General, Baikal)
 - Commit do repo principal no momento do build: `e40154e` (fix RTC idempotência)
 - Artefatos originais em `distros/arch_minimal_v2/boot_referencia/*-20260801-kvm-rtc-sata-final*`
-  (**não apagar** — são a fonte de verdade; os arquivos aqui em `RETAIL/` são cópias renomeadas)
+  (**não apagar** — são a fonte de verdade; os arquivos aqui em `RELEASE/v1.0.0/` são cópias renomeadas)
 
 ## Arquivos
 
@@ -43,9 +43,9 @@ automaticamente. Duas opções:
    ```
 2. **Copiar manualmente** para a partição BOOT do HD (`psxitarch`), montada em ex. `/mnt/ps4_boot`:
    ```bash
-   sudo cp RETAIL/bzImage-7.0-v1.0.0        /mnt/ps4_boot/bzImage
-   sudo cp RETAIL/bootargs-7.0-v1.0.0.txt   /mnt/ps4_boot/bootargs.txt
-   sudo cp RETAIL/initramfs-7.0-v1.0.0.cpio.gz /mnt/ps4_boot/initramfs.cpio.gz
+   sudo cp RELEASE/v1.0.0/bzImage-7.0-v1.0.0        /mnt/ps4_boot/bzImage
+   sudo cp RELEASE/v1.0.0/bootargs-7.0-v1.0.0.txt   /mnt/ps4_boot/bootargs.txt
+   sudo cp RELEASE/v1.0.0/initramfs-7.0-v1.0.0.cpio.gz /mnt/ps4_boot/initramfs.cpio.gz
    ```
    Conferir MD5 depois de copiar, igual a todo deploy do projeto (ver `AGENTS.md`).
 
