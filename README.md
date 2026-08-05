@@ -39,20 +39,21 @@ ver [`consolidado/BACKLOG.md`](consolidado/BACKLOG.md).
 
 ## Primeira release: v1.0.0
 
-A pasta [`RETAIL/`](RETAIL/) contém a primeira versão consolidada para distribuição — o kernel
+A pasta [`RELEASE/`](RELEASE/) contém a primeira versão consolidada para distribuição — o kernel
 `bzImage`, `bootargs` e `initramfs` prontos para gravar no boot, combinando os três avanços acima
 (SATA interno funcional + KVM + RTC manual) num único build validado ao vivo. Ver
-[`RETAIL/README.md`](RETAIL/README.md) para instruções de deploy e os MD5 de cada arquivo.
+[`RELEASE/README.md`](RELEASE/README.md) para instruções de deploy e os MD5 de cada arquivo.
 
 ## Estrutura do repositório
 
 ```
 distros/arch_minimal_v2/   # scripts oficiais de build/deploy do kernel + rootfs Arch
 drivers_mts/                # driver Ethernet (GBE) do Baikal, escrito do zero
-patches/ (dentro de distros) # patches idempotentes aplicados a cada build (SATA, RTC, KVM, MTS)
-consolidado/                # documentação técnica consolidada, banco de RE (SQLite), scripts Ghidra
+docs/                       # planos de ação, relatórios de testes e investigações (planos e relatórios)
 memory/                     # registro cronológico de descobertas e decisões de cada sessão
-RETAIL/                     # releases prontas para deploy
+consolidado/                # documentação técnica consolidada, banco de RE (SQLite), scripts Ghidra
+tools/                      # ferramentas de diagnósticos, harnesses de teste e ps4_hdd_tools
+RELEASE/                    # releases prontas para deploy
 AGENTS.md                   # regras e procedimentos do projeto (fonte única — ler antes de contribuir)
 ```
 

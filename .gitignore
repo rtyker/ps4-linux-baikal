@@ -38,7 +38,12 @@ netconsole_ps4_captures/
 # --- IDE/ambiente ---
 .claude/
 .claude-memory.yml
+.opencode/
+opencode.json
 .vscode/
+.DS_Store
+*.swp
+*.swo
 
 # ============================================================
 # PROJETOS IGNORADOS (não são do Baikal)
