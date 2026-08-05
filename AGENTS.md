@@ -13,7 +13,7 @@
    - **BUILD AUTOMÁTICO ETH0 + NETCONSOLE (2026-07-23):** Criada e implantada no HD a tag `20260723-mts-autoeth0`. O driver `mts.ko` agora possui o padrão `stage=4` e auto-carregamento no boot, subindo a interface `eth0` automaticamente sem necessidade de intervenção via Telnet. Netconsole ativado por padrão no boot.
    - **DESLIGAMENTO REMOTO VIA TELNET (2026-07-22):** O comando `sync && poweroff -f` (ou `echo o > /proc/sysrq-trigger`) encerra o sistema operacional e a rede limpos (ping cai 100%), porém o console permanece em **luz azul (luz azul acesa/pulsando)** pois o desligamento de energia total da fonte (S5) exige comando ICC dedicado ou desligamento manual no botão.
    - **🏆 NOVO BASELINE OFICIAL (2026-07-30), tag `20260730-sata-reverted` — MELHOR VERSÃO ATÉ AGORA, PONTO DE ROLLBACK:** kernel `7.0.8-Strawberry-ThinLTO-Baikal-+ #23` com o fix de polaridade MDIO Clause 22 (`mts.c`) ativo e as mudanças de SATA polling-timer da noite de 2026-07-29 revertidas (só instrumentação não validada). Boot completo confirmado ao vivo: `kexec` → shutdown normal da Orbis → `Run /init as init process` → `systemd[1]` sem erros, vídeo HDMI OK, **SSH via WiFi confirmado**, `eth0` sobe com MAC real (PHY ainda sem link, bug conhecido, não é regressão). Artefatos em `distros/arch_minimal_v2/boot_referencia/*-7.0-20260730-sata-reverted*` **NUNCA podem ser sobrescritos/descartados** — em caso de regressão futura, restaurar com `sudo ./deploy-boot-7.0.sh 20260730-sata-reverted` (boot-only, mantém rootfs). Ver `memory/baseline-oficial-20260730-sata-reverted.md` (checksums MD5 e detalhes completos).
-   - **🏆🏆 NOVO BASELINE OFICIAL, MAIS RECENTE (2026-07-30), tag `20260730-sata-polling-fase-ab` — SUPERA O ANTERIOR, SATA INTERNO FUNCIONAL PELA PRIMEIRA VEZ:** mesmo kernel do baseline acima + Fase A/B do `PLANO_SATA_POLLING_CORRECAO_2026-07-29.md` (polling timer de 1ms) reaplicada e validada ao vivo. `ata1.00: configured for UDMA/100` sem nenhuma exceção, `dd`/`fdisk` confirmam leitura real do HD interno (931.51 GiB), zero `disable device` em todo o dmesg. **Este é o baseline mais completo/recomendado a partir de agora** — GBE (com PHY ainda mudo, bug conhecido) + SATA interno funcional juntos. Artefatos em `distros/arch_minimal_v2/boot_referencia/*-7.0-20260730-sata-polling-fase-ab*` **NUNCA podem ser sobrescritos/descartados**. Rollback: `sudo ./deploy-boot-7.0.sh 20260730-sata-polling-fase-ab` (boot-only). Ver `memory/marco-sata-interno-funcional-2026-07-30.md`.
+   - **🏆🏆 NOVO BASELINE OFICIAL, MAIS RECENTE (2026-07-30), tag `20260730-sata-polling-fase-ab` — SUPERA O ANTERIOR, SATA INTERNO FUNCIONAL PELA PRIMEIRA VEZ:** mesmo kernel do baseline acima + Fase A/B do `docs/planos/PLANO_SATA_POLLING_CORRECAO_2026-07-29.md` (polling timer de 1ms) reaplicada e validada ao vivo. `ata1.00: configured for UDMA/100` sem nenhuma exceção, `dd`/`fdisk` confirmam leitura real do HD interno (931.51 GiB), zero `disable device` em todo o dmesg. **Este é o baseline mais completo/recomendado a partir de agora** — GBE (com PHY ainda mudo, bug conhecido) + SATA interno funcional juntos. Artefatos em `distros/arch_minimal_v2/boot_referencia/*-7.0-20260730-sata-polling-fase-ab*` **NUNCA podem ser sobrescritos/descartados**. Rollback: `sudo ./deploy-boot-7.0.sh 20260730-sata-polling-fase-ab` (boot-only). Ver `memory/marco-sata-interno-funcional-2026-07-30.md`.
 
 ---
 
@@ -347,20 +347,21 @@ Adicionar novo endereço em `TARGET_ADDRS` do `ExtractMtsNamespaceNoAnalysis.py`
 - O arquivo de lições imperativas (REGRA #0, ler antes de qualquer ação) é `consolidado/LICOES_APRENDIDAS.md`.
 - **Memórias do assistente movidas para o projeto (2026-07-20):** os arquivos de memória foram relocados de `/home/anderson/.claude/projects/-mnt-t-downloads-PS4-linux-in-ps4/memory/` para `./memory/` (pasta na raiz do projeto) para que múltiplos agentes/sessões possam acessá-los. O índice está em `memory/MEMORY.md`.
 
-### Mapa de arquivos (reorganizado em 2026-07-28 — fonte única)
+### Mapa de arquivos (reorganizado em 2026-08-05 — fonte única)
 
-Antes desta data havia regras em `AGENTS.md` **e** estado/regras em `CLAUDE.md` (32 KB), o que
-criava ambiguidade sobre onde escrever e inflava o contexto de toda sessão. Layout atual:
+Antes desta data havia planos e scripts espalhados na raiz, o que poluía o repositório no GitHub. Layout atual:
 
-| Arquivo | Papel | Auto-carregado? |
-|---------|-------|-----------------|
+| Arquivo / Pasta | Papel | Auto-carregado? |
+|-----------------|-------|-----------------|
 | `AGENTS.md` | **Fonte única de regras e procedimentos.** Escreva aqui. | Sim, via import do stub |
 | `CLAUDE.md` | Stub de uma linha (`@AGENTS.md`). **Não escrever regras aqui.** | Sim (o Claude Code só lê este nome) |
-| `consolidado/BACKLOG.md` | Fonte única de pendências e próximos passos | Não |
-| `consolidado/LICOES_APRENDIDAS.md` | Lições imperativas (REGRA #0) | Não |
-| `consolidado/ESTADO_E_HISTORICO.md` | Estado narrativo e histórico das sagas (payloads, dumper) | Não |
-| `memory/MEMORY.md` | Índice das memórias curtas do assistente | Não |
-| `PLANO_*.md` (raiz) | Planos de investigação por tema | Não |
+| `docs/planos/` | Planos de investigação, descobertas e arquitetura (`PLANO_*.md`, `DESCOBERTA_*.md`) | Não |
+| `docs/relatorios/` | Relatórios de testes, sessões de debug e resultados (`TESTE_*.md`, `PHY_DEBUG_*.md`, etc.) | Não |
+| `consolidado/` | Documentação técnica consolidada, banco de RE (SQLite), scripts Ghidra, `BACKLOG.md` e `LICOES_APRENDIDAS.md` | Não |
+| `memory/` | Registro cronológico de descobertas e memórias de sessão (`MEMORY.md`) | Não |
+| `tools/harness/` | Scripts Python de diagnóstico, varredura de registradores e testes de hardware | Não |
+| `tools/ps4_hdd_tools/` | Ferramentas de manipulação de disco e utilitários PS4 HDD | Não |
+| `RELEASE/` | Releases de boot/kernel compiladas e consolidadas para distribuição (`v1.0.0/`) | Não |
 
 **Por que o stub existe:** a documentação oficial do Claude Code diz textualmente *"Claude Code
 reads `CLAUDE.md`, not `AGENTS.md`"* e recomenda exatamente este padrão — um `CLAUDE.md` que
