@@ -1,8 +1,18 @@
 # RELEASE — Artefatos Compilados
 
-Vitrine final de cada tag validada. O pipeline oficial (`00-build-kernel-7.0.sh`,
-`01-build-image-7.0.sh`, `deploy-boot-7.0.sh`) continua gravando em
-`distros/arch_minimal_v2/boot_referencia/` — **este diretório é montado por**:
+## 📦 Versão de distribuição: `v1.0.0`
+
+A pasta `v1.0.0/` é a **versão de distribuição** oficial (versionada no git):
+`bzImage-7.0-v1.0.0`, `config-7.0-v1.0.0`, `bootargs-7.0-v1.0.0.txt`,
+`initramfs-7.0-v1.0.0.cpio.gz` + README com features e deploy. Build de origem:
+`20260801-kvm-rtc-sata-final` (KVM-AMD + RTC via ICC + SATA interno). Ver
+`v1.0.0/README.md`.
+
+## Demais tags (build output local, gitignored)
+
+O pipeline oficial (`00-build-kernel-7.0.sh`, `01-build-image-7.0.sh`,
+`deploy-boot-7.0.sh`) continua gravando em `distros/arch_minimal_v2/boot_referencia/`
+— as tags aqui são montadas por:
 
 ```bash
 scripts/promote-release.sh <TAG> [--no-tar]

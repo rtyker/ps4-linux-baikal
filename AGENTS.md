@@ -116,7 +116,9 @@ sudo ./deploy-boot-7.0.sh 20260725-sata-fix
 O pipeline oficial NÃO muda: `00/01/02/deploy` continuam gravando em
 `distros/arch_minimal_v2/boot_referencia/`. `RELEASE/` é montado por
 `scripts/promote-release.sh <TAG>` (copiar artefatos + symlink do tarball da
-distro + `sha256sums.txt`) — `RELEASE/` é gitignored exceto o `README.md`.
+distro + `sha256sums.txt`) — demais tags são gitignored; apenas o `README.md`
+e a **versão de distribuição `v1.0.0/`** (4 artefatos de boot + README, origem
+`20260801-kvm-rtc-sata-final`) são versionados no git.
 
 - **Kernel mainline:** NUNCA fica dentro do projeto (é NTFS). Só existe o symlink
   `kernels/ps4-baikal-7.0.8-kernel -> /mnt/hdauxiliar/temp/kernel_build_7.0`
