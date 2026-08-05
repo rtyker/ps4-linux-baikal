@@ -73,6 +73,10 @@ distros/arch_minimal_v2/systemd_cache/
 distros/arch_minimal_v2/logs/
 distros/arch_minimal_v2/extra_firmware/
 
+# RELEASE — artefatos compilados (mantém apenas o README versionado)
+RELEASE/*
+!RELEASE/README.md
+
 # MTS module build
 drivers_mts/build/
 

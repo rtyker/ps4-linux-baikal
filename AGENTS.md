@@ -104,9 +104,26 @@ sudo ./deploy-boot-7.0.sh 20260725-sata-fix
 # (grava só o boot, mantém rootfs psxitarch intacto, confere MD5 origem→destino)
 
 # 5. Plugar HD de volta no PS4, ligar, SSH em 192.168.6.128, smoke test.
+
+# 6. Depois que a tag passou no teste ao vivo, promover para RELEASE/:
+../../scripts/promote-release.sh 20260725-sata-fix
 ```
 
 **Rollback:** rodar `deploy-boot-7.0.sh <tag-anterior>` restaura em 1 power cycle — todo histórico fica em `boot_referencia/`.
+
+### 📦 RELEASE/ — vitrine dos artefatos compilados (2026-08-05)
+
+O pipeline oficial NÃO muda: `00/01/02/deploy` continuam gravando em
+`distros/arch_minimal_v2/boot_referencia/`. `RELEASE/` é montado por
+`scripts/promote-release.sh <TAG>` (copiar artefatos + symlink do tarball da
+distro + `sha256sums.txt`) — `RELEASE/` é gitignored exceto o `README.md`.
+
+- **Kernel mainline:** NUNCA fica dentro do projeto (é NTFS). Só existe o symlink
+  `kernels/ps4-baikal-7.0.8-kernel -> /mnt/hdauxiliar/temp/kernel_build_7.0`
+  (ext4). `kernels/patches -> ../distros/arch_minimal_v2/patches` é symlink —
+  fonte única dos patches, que vivem versionados em `distros/arch_minimal_v2/patches/`
+  e são referenciados pelo `00-build-kernel-7.0.sh`.
+- Baseline atual promovido: `20260730-sata-polling-fase-ab`.
 
 ### Convenções de bootargs (validadas ao vivo)
 
