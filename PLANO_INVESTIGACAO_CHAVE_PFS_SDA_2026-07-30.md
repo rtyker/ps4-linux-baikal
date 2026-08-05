@@ -2,6 +2,15 @@
 
 > Registro cronológico de achados positivos e negativos desta sessão (2026-07-30 a 2026-08-01), para não perder tracking. Atualizar a cada novo teste, mesmo que negativo.
 
+### 25. 🔴 [TESTE AO VIVO — 2026-08-01] **PREMISSA REFUTADA: o tweak NÃO é o LBA absoluto** (prova pelos pares A/B)
+- **Contexto:** primeiro teste com o **SATA interno funcional**, lendo `/dev/sda` direto no Linux.
+- **Prova:** `sda9` (start `1941694464`) e `sda10` (start `1939597312`) são **byte-a-byte idênticos nos primeiros 262832 bytes**; `sda11`/`sda12` idem por 262816 bytes. Divergências **exatamente alinhadas a blocos AES de 16 B** (`16427×16`, `16426×16`), não a setores — assinatura de XEX/XTS.
+- **Dedução:** plaintexts idênticos em LBAs absolutos diferentes gerando ciphertext idêntico ⟹ **o tweak é relativo ao início da partição (começa em 0)** e os pares A/B **compartilham a mesma chave**.
+- **Impacto:** invalida as ~1.000.001 combinações de tweak varridas em 2026-07-31 (todas em torno do LBA absoluto `57147392` ±500k) e os mappers `dmsetup` vivos (que usam LBA absoluto; o do `sda27` usa `114294784` = **2× o start real**).
+- **Negativo:** chave EAP flat + tweak=0 relativo → entropia ~7.95 nas 14 partições, nenhuma decripta. **O bloqueador passou a ser a derivação de chave**, não o tweak (consistente com o item 24, `sceSblWrapHddEapPartitionKeyData`). Derivação é por **tipo** de partição (A/B compartilham chave), não por posição.
+- **Negativo:** gap de 256 MB antes da 1ª partição tem **674 bytes não-zero**, todos no GPT (setores 0-33); LBA 34+ é zero absoluto — sem blob de chaves ali.
+- **Ferramenta:** `consolidado/tools/ps4_partition_crypto_survey.py`. **Registro:** `test_history` id 79, [`memory/tweak-xts-nao-e-lba-absoluto-prova-pares-ab-2026-08-01.md`](memory/tweak-xts-nao-e-lba-absoluto-prova-pares-ab-2026-08-01.md).
+
 ### 24. [ENGENHARIA REVERSA — 2026-08-01] Mapeamento do Subsistema `ServiceCryptAsync` / Coprocessador SAMU
 - **Achado:** Mapeadas as strings `ServiceCrypt error %d` (`0xaee3d3`) e `ServiceCryptAsync error %d` (`0xaeeb94`) no `memoriateste.bin`.
 - **Arquitetura:** O `GEOM_CRYPT` no Orbis OS utiliza a API `ServiceCryptAsync` para submeter blocos I/O ao coprocessador SAMU/SBL (`sceSblKeymgrSmCallfuncWithID`), que executa a decriptação XTS-AES via acelerador de hardware embutido na Southbridge.
