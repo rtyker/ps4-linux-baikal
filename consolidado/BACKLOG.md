@@ -1,6 +1,10 @@
 # Backlog do Projeto — Fonte Única de Pendências
 
-**Última atualização:** 2026-07-29 (Vídeo HDMI: SOLUCIONADO em 1080p@60Hz com ressalva de hardware — exige adaptador HDMI energizado; SATA interno: PENDENTE - tag `20260729-sata-polling-clean` implantada no HD USB e pronta para teste de boot)
+**Última atualização:** 2026-08-01 (revisão de documentação em 2026-11-11: links corrigidos para o layout atual do repositório — `docs/planos/`, `consolidado/obsoleto/`; nenhum item de conteúdo foi acrescentado)
+
+> ℹ️ **Como ler este arquivo:** itens `[x]` fechados guardam o histórico da solução; itens dentro de
+> `<details>` com o título "Histórico da investigação" são **registro do que foi refutado**, não
+> pendências ativas. O estado do momento é sempre a entrada mais recente por data dentro de cada item.
 
 Este é o **único documento** onde a lista de tarefas pendentes do projeto deve ser mantida. Nenhum outro arquivo (`STATUS_ATUAL.md`, `MASTER_CONSOLIDADO.md`, `O_QUE_FALTA.md`, etc.) deve manter sua própria lista de "próximos passos" — todos apontam para cá, para evitar itens duplicados ou desatualizados espalhados pelo projeto.
 
@@ -26,7 +30,7 @@ O trabalho **ativo no momento** (investigação detalhada, passo a passo) fica n
 
 **Próximo passo exato:** validar pós-power-cycle os fixes de `mts_mac_stop()`/doorbell TX, depois varredura read-only da janela Glue BAR2 `0x140000`-`0x180000+` e reordenar o diagnóstico MDIO para rodar após o release do hold.
 
-**Documentos:** plano consolidado ATIVO (2026-07-29, revisão de UART+SQLite+código) em [`../PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md`](../PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md) — substitui o plano de 07-25 como fonte de próximos passos (o de 07-25 fica só como histórico); histórico de RE em [`RE_KERNEL_GBE_ATTACH.md`](RE_KERNEL_GBE_ATTACH.md) e [`ICC_GBE_TEST_LOG.md`](ICC_GBE_TEST_LOG.md).
+**Documentos:** plano consolidado ATIVO (2026-07-29, revisão de UART+SQLite+código) em [`../docs/planos/PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md`](../docs/planos/PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md) — substitui o plano de 07-25 como fonte de próximos passos (o de 07-25 fica só como histórico); histórico de RE em [`RE_KERNEL_GBE_ATTACH.md`](RE_KERNEL_GBE_ATTACH.md) e [`ICC_GBE_TEST_LOG.md`](ICC_GBE_TEST_LOG.md).
 
 **Status 2026-07-30:** bug de polaridade MDIO Clause 22 corrigido em `mts.c` (ver `memory/mdio-clause22-bug-polaridade-corrigido-2026-07-29.md`) e testado ao vivo — eliminou o falso-positivo de dado residual, mas PHY continua sem link. **🏆 Tag `20260730-sata-reverted` CONFIRMADA ao vivo como o novo BASELINE OFICIAL/ponto de rollback** (boot completo, SSH ok, `eth0` sobe com MAC real) — ver `memory/baseline-oficial-20260730-sata-reverted.md`.
 
@@ -53,7 +57,7 @@ O trabalho **ativo no momento** (investigação detalhada, passo a passo) fica n
 - **Teste ao vivo:** `sync && poweroff -f` → SO desliga (SSH cai), mas **luz azul permanece acesa/pulsando + fan ligado** = S5 **não** atingido
 - dmesg pós-boot não mostrou log do ICC S5 shutdown (verificar se payload foi enviado)
 
-**Status 2026-07-30 (EM ANDAMENTO, pausado, retomar daqui):** achado novo — o payload de 32 bytes de 07-25 tinha **framing errado** (deveria ser 20 bytes de payload real, não 32; `_bpcie_icc_cmd()` já soma o header de 12 bytes ao `length`). Corrigido em `ps4-bpcie-icc.c` + implementada a sequência pré-sync (major=4/minor=4) + final (major=4/minor=1) nunca antes aplicada. Build da tag `20260730-s5-poweroff-fix` **concluído**, artefatos prontos em `boot_referencia/`. **Falta:** conectar o HD USB ao PC, `deploy-boot-7.0.sh 20260730-s5-poweroff-fix`, captura UART (não netconsole — a rede cai junto com o shutdown), power-cycle físico, `sync && poweroff -f`, ler o log UART. Ver `memory/s5-poweroff-fix-framing-corrigido-2026-07-30-aguardando-teste.md` e o plano em `/home/anderson/.claude/plans/abstract-roaming-unicorn.md`.
+**Status 2026-07-30 (EM ANDAMENTO, pausado, retomar daqui):** achado novo — o payload de 32 bytes de 07-25 tinha **framing errado** (deveria ser 20 bytes de payload real, não 32; `_bpcie_icc_cmd()` já soma o header de 12 bytes ao `length`). Corrigido em `ps4-bpcie-icc.c` + implementada a sequência pré-sync (major=4/minor=4) + final (major=4/minor=1) nunca antes aplicada. Build da tag `20260730-s5-poweroff-fix` **concluído**, artefatos prontos em `boot_referencia/`. **Falta:** conectar o HD USB ao PC, `deploy-boot-7.0.sh 20260730-s5-poweroff-fix`, captura UART (não netconsole — a rede cai junto com o shutdown), power-cycle físico, `sync && poweroff -f`, ler o log UART. Ver `memory/s5-poweroff-fix-framing-corrigido-2026-07-30-aguardando-teste.md` (o plano detalhado ficou fora do repositório, em `~/.claude/plans/`, e não é versionado — a memória acima é a fonte disponível no projeto).
 
 ---
 
@@ -66,6 +70,7 @@ O trabalho **ativo no momento** (investigação detalhada, passo a passo) fica n
 - Leitura real confirmada: `dd if=/dev/sda bs=1M count=50` → 71.2 MB/s sem erro. `fdisk -l /dev/sda` retorna a tabela completa (931.51 GiB).
 - `PxIE` ficou em `0x7840007f` após o único `thaw()` do probe (t=3.02s) e nunca mais zerou (antes reincidia ~37s e desabilitava ~84s).
 - **Novo baseline oficial/ponto de rollback:** tag `20260730-sata-polling-fase-ab` (kernel do baseline GBE `20260730-sata-reverted` + fix de SATA). Ver `memory/marco-sata-interno-funcional-2026-07-30.md` e `test_history` id 73.
+- **Ressalva 2026-08-01 (importante para não superestimar o estado):** o patch foi **perdido e reconstruído** naquele dia (ver `memory/regressao-sata-2026-08-01-diagnostico-e-solucao.md`), e a reconstrução inicial colocou o timer na PCI function errada (`.2`, AHCI genérico) — `ata1` pertence à function `.7` (`xhci_aeolia`), ver `memory/sata-polling-device-errado-14-2-vs-14-7-2026-08-01.md` e `test_history` id 78. O patch atual (`patches/ahci-baikal-polling-fallback.patch`) já contém as duas pontas (`.2` e `.7`) e compila/aplica limpo, mas **não há registro de boot validando a tag `20260801-kvm-rtc-sata-final`** (a base do `RELEASE/v1.0.0`). A validação ao vivo documentada é a de `20260730-sata-polling-fase-ab`. Antes de tratar o `v1.0.0` como "SATA comprovado", um boot com `dmesg | grep 'polling timer started on xhci-aeolia'` + `ata1.00: configured for UDMA/100` por 90s+ é obrigatório.
 
 ### [~] 🔑 Obter a chave EAP real via EAPDumper (payload ao vivo) — **CONCLUÍDO 2026-07-31: chave obtida, estável; tweak/IV em aberto**
 
@@ -82,7 +87,7 @@ cobre o offset `0x26C4CF0`), já aplica `reverse_16_byte_blocks` e grava
 
 **🔴 DESCOBERTA CRÍTICA 2026-07-31:** `pycryptodome 3.23.0` **não tem `MODE_XTS`** — todos os testes XTS anteriores (96/504/380 combos) foram **falso-negativo total** (AttributeError silencioso → `None`). Refiz com `cryptography 49.0.0` (XTS real, vetores NIST OK): **ZERO hits** em TODOS os testes (Full 8MB absLBA, IV=0, byte-offset, varredura ±500k, 4 chaves × variantes). **Chave EAP `edf3f4d3...` está CORRETA** (kernel, offset validado por RE, estável 3 boots). O XTS funciona (vetores NIST OK). **Falta o tweak/IV correto** — hipótese principal: `ivoffset_field` (`iVar2[0x20]`) ≠ 0 no `g_crypt_create_provider` (vem de `g_provider.ivoffset` setado por `g_part`/EAP boot).
 
-**Próximo passo:** boot no Linux 7.0 (tag `20260730-sata-polling-fase-ab`) + `cryptsetup open -c aes-xts-plain64 --key-file keys/eap/eap_hdd_key.bin --key-size 256 --offset <LBA> /dev/sda27` testando `--offset` (ajusta IV) vs `--skip`. RE do `ivoffset_field` — traçar `*(iVar2+0x20)` no `g_crypt_create_provider` (vem de `g_provider.ivoffset` setado por `g_part`/EAP boot). Ver `keys/TESTES_EAPDUMPER_2026-07-31.md`, `keys/INDEX.md`, `PLANO_INVESTIGACAO_CHAVE_PFS_SDA_2026-07-30.md` Seção 22.
+**Próximo passo:** boot no Linux 7.0 (tag `20260730-sata-polling-fase-ab`) + `cryptsetup open -c aes-xts-plain64 --key-file keys/eap/eap_hdd_key.bin --key-size 256 --offset <LBA> /dev/sda27` testando `--offset` (ajusta IV) vs `--skip`. RE do `ivoffset_field` — traçar `*(iVar2+0x20)` no `g_crypt_create_provider` (vem de `g_provider.ivoffset` setado por `g_part`/EAP boot). Ver `PLANO_INVESTIGACAO_CHAVE_PFS_SDA_2026-07-30.md` Seção 22 (⚠️ os arquivos `keys/TESTES_EAPDUMPER_2026-07-31.md` e `keys/INDEX.md` vivem em `keys/`, que é **gitignored** — só existem na máquina que rodou os testes, não neste clone).
 
 ---
 
@@ -310,7 +315,7 @@ Registro no banco: `test_history` id **63**. Memória:
 ---
 
 ### **Plano detalhado — SATA interno 100% funcional:**
-Ver documento dedicado: [`PLANO_SATA_INTERNO_100PCT_2026-07-28.md`](../PLANO_SATA_INTERNO_100PCT_2026-07-28.md)
+Ver documento dedicado: [`obsoleto/PLANO_SATA_INTERNO_100PCT_2026-07-28.md`](obsoleto/PLANO_SATA_INTERNO_100PCT_2026-07-28.md) (plano histórico da investigação; a solução final está em `patches/ahci-baikal-polling-fallback.patch`)
 
 
 **Custo restante (muito menor que o estimado antes):**
@@ -368,7 +373,7 @@ lixo/hora errada em qualquer teste real. Reaberta como pendente até haver teste
 - 8 funções RE registradas no `ps4_hardware_memory.db` (`decompiled_functions`, categorias "RTC (rtc_mvl.c)" e "RTC (rtc.c)")
 - Lacunas para decompilar se necessário: `dc839e40`/`dc839d90` (MMIO read/write wrappers), `dc6b1a20`/`dc6b1b80` (dispatchers save/load), `dc797090` (transport ICC subjacente)
 
-**Executado (plano em [`plans/rtc_via_icc_plan.md`](plans/rtc_via_icc_plan.md)):**
+**Executado (plano em [`obsoleto/rtc_via_icc_plan.md`](obsoleto/rtc_via_icc_plan.md)):**
 1. [x] Fase 1 — Habilitar `CONFIG_RTC_CLASS=y` + `CONFIG_RTC_INTF_DEV=y` + `CONFIG_RTC_DRV_CMOS=y` + `CONFIG_RTC_HCTOSYS=y` no `00-build-kernel-7.0.sh` (linhas 513-528). `CONFIG_RTC_DRV_PS4_ICC` agora habilitado como módulo (`--module`, linha ~535) já que o driver existe (Fase 3 concluída).
 2. [x] Fase 2 — Wrapper `ps4_icc_rtc_cmd()` com retry loop (100× 50ms) criado em `drivers/ps4/ps4-bpcie-icc.c` + declarado em `baikal.h`/`aeolia.h`. **Patch versionado** em `distros/arch_minimal_v2/patches/ps4-icc-rtc-wrapper.patch` + aplicação idempotente no `00-build-kernel-7.0.sh`. Validado com compile isolado (`make drivers/ps4/ps4-bpcie-icc.o` OK, símbolo `__export_symbol_ps4_icc_rtc_cmd` presente). Nada novo em `EXPORT_SYMBOL_GPL(bpcie_icc_cmd)` — já existia.
 3. [x] Fase 3 — Criado/corrigido `drivers/rtc/rtc-ps4-icc.c` (2026-07-31) + entries em `drivers/rtc/Kconfig` e `drivers/rtc/Makefile` (já existiam no source tree). Bug de leitura da MMIO errada (ver nota acima) corrigido — `read_time` agora lê de `sc->mmio_read` (`0x5180000`). Compile isolado validado: `sudo make ARCH=x86_64 drivers/rtc/rtc-ps4-icc.o` → `CC [M] drivers/rtc/rtc-ps4-icc.o` sem erros/warnings; `nm` confirma `ps4_icc_rtc_cmd` como símbolo indefinido (`U`), resolvido no link do módulo contra o `EXPORT_SYMBOL_GPL` existente.
@@ -379,7 +384,7 @@ lixo/hora errada em qualquer teste real. Reaberta como pendente até haver teste
 
 **Se der certo, isto é uma FEATURE nova do projeto** (não só correção de bug): PS4 Linux passa a ter relógio de sistema real e persistente entre power cycles, sem depender de rede disponível no boot — desbloqueia uso confiável de TLS (`pacman`, `curl https://`) e timestamps corretos em log desde o primeiro segundo do userspace.
 
-**Documentos:** [`plans/rtc_via_icc_plan.md`](plans/rtc_via_icc_plan.md) (com seção "Validação da RE (2026-07-25)"); [`../memory/rtc-via-icc-re-validada-2026-07-25.md`](../memory/rtc-via-icc-re-validada-2026-07-25.md); [`decompiled/baikal_rtc_mvl.txt`](decompiled/baikal_rtc_mvl.txt); [`decompiled/INDEX.md`](decompiled/INDEX.md) §6.B.
+**Documentos:** [`obsoleto/rtc_via_icc_plan.md`](obsoleto/rtc_via_icc_plan.md) (com seção "Validação da RE (2026-07-25)"; foi movido para `obsoleto/` na reorganização de 2026-08-05 — o protocolo ICC/MMIO que ele descreve continua sendo a referência usada pela Fase 4); [`../memory/rtc-via-icc-re-validada-2026-07-25.md`](../memory/rtc-via-icc-re-validada-2026-07-25.md); [`decompiled/baikal_rtc_mvl.txt`](decompiled/baikal_rtc_mvl.txt); [`decompiled/INDEX.md`](decompiled/INDEX.md) §6.B.
 
 ---
 

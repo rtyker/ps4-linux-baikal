@@ -21,7 +21,7 @@
      ```
 
 3. **Extração da Tabela LUT Autêntica do Orbis 12.52**:
-   - Extraída diretamente do dump [kmem_dump_1252.bin](file:///mnt/t/downloads/PS4/linux_in_ps4/consolidado/dumps_orbis/kmem_dump_1252.bin) (offset `0x7bdb40`) a tabela de 64 bytes `gbe_phy_calib_lut`.
+   - Extraída diretamente do dump [kmem_dump_1252.bin](../consolidado/dumps_orbis/kmem_dump_1252.bin) (offset `0x7bdb40`) a tabela de 64 bytes `gbe_phy_calib_lut`.
    - Substituídas as escritas fictícias por read-modify-writes precisos nos registradores `0x174001e` (DEVAD 30, Reg 0x1740) e `0x175001e` (DEVAD 31, Reg 0x1750).
 
 4. **Reordenamento do Diagnóstico MDIO Pós-Calibração**:

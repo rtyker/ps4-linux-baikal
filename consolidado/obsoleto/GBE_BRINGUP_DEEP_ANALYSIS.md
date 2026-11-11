@@ -78,7 +78,7 @@ A GBE (Ethernet) foi completamente omitida da inicialização de energia do Linu
 
 ## 3.5. A Desconexão dos Testes Anteriores (Causa das Falhas Individuais)
 
-Analisando a tabela de depuração em [ICC_GBE_TEST_LOG.md](file:///mnt/t/downloads/PS4/linux_in_ps4/consolidado/ICC_GBE_TEST_LOG.md#L21), identificamos por que os testes anteriores falharam de forma independente:
+Analisando a tabela de depuração em [ICC_GBE_TEST_LOG.md](../ICC_GBE_TEST_LOG.md#L21), identificamos por que os testes anteriores falharam de forma independente:
 
 * **Nos Testes #3 e #4 (ICC sem Clock):** O comando `4 0x38` foi enviado com sucesso, mas o registrador de clock `BAR2+0x10a030` **não** tinha sido ativado. A GBE permaneceu sem clock, lendo `ChipID = 00 00`.
 * **No Teste M3 (Clock sem ICC):** A escrita do strobe de clock em `BAR2+0x10a030` foi realizada, mas o comando ICC `4 0x38` **não** foi enviado naquela sessão. O bloco físico permaneceu power-gated pelo Syscon, lendo `ChipID = 00 00`.

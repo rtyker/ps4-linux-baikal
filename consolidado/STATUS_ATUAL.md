@@ -1,7 +1,16 @@
-# Status Atual - PS4 Linux (Baikal/Arch Minimal v2)
+# Status Atual — PS4 Linux Baikal
 
-**Última atualização**: 2026-07-25  
-**Versão**: Arch Minimal v2 - Kernel 7.0 Baikal (`7.0.8-Strawberry-ThinLTO-Baikal-+`), baseline `v7.0-20260722-clean-video-ok`, ativo `bzImage-7.0-20260723-RELEASE`
+**Última atualização:** 2026-11-11 (revisão de documentação: caminhos, bootargs e estrutura
+corrigidos para o estado real do repositório; **status técnico inalterado desde 2026-08-01**)
+
+**Kernel:** `7.0.8-Strawberry-ThinLTO-Baikal-+` (branch `baikal/7.0.8-Stable`, ThinLTO, profile General)
+**Build de distribuição:** `RELEASE/v1.0.0` (origem: tag `20260801-kvm-rtc-sata-final`)
+**Último baseline validado ao vivo para rollback:** tag `20260730-sata-polling-fase-ab`
+(⚠️ os artefatos dessa tag vivem em `distros/arch_minimal_v2/boot_referencia/`, que é **build
+output gitignored** — não existem neste clone. Ver "Pendências de infraestrutura" no fim.)
+
+> Para pendências e próximos passos, a fonte única é [`BACKLOG.md`](BACKLOG.md).
+> Para regras e procedimentos, [`../AGENTS.md`](../AGENTS.md).
 
 ---
 
@@ -9,105 +18,88 @@
 
 | Subsistema | Detalhes |
 |------------|----------|
-| **Boot** | kexec via payload (PSFree/GoldHEN) → kernel → initramfs → rootfs |
-| **SSH** | root/ps4 em 192.168.6.128 (Dropbear/OpenSSH) |
-| **Vídeo HDMI** | 1920x1080@60 forçado, ps4_bridge VIC mode 16 |
-| **EDID Persistente** | Firmware override `/lib/firmware/edid/ps4_tv_edid.bin` |
-| **Rede** | ⚠️ WiFi/SSH 100% funcionais. Ethernet cabeada (`eth0`, driver próprio `mts.ko`, MAC real `2c:cc:44:3f:69:5f`) parcial: MAC core ligado via ICC + TX por software (~95%, doorbell corrigido em 2026-07-25, pendente validação ao vivo); **PHY nunca sai de power-down** (MDIO Clause 45/22 sempre zero/timeout) e **RX está morto** — bloqueador ativo, ver `../PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md`. Netconsole ativo por padrão. |
-| **Áudio HDMI** | snd_hda_intel (1002:9921) |
-| **RTC/Time** | Payload injeta `time=UNIX_TS`, hook early seta relógio |
-| **VRAM Control** | `vram.txt` (FAT32) lido pelo payload, default 1024MB |
-| **Storage** | SATA AHCI + USB 3.0 xHCI + SD/MMC |
-| **Build System** | 3 scripts: build-kernel, build-image, burn-image |
-| **NOR Dump (Orbis)** | `nor_sflash0.bin` (32MB) dumpado do PS4 real via ps4-sflash0-dumper. Partição `C0020001` (WiFi calibration) extraída. |
-| **sd8797_uapsta.bin** | ✅ Obtido do feeRnt/ps4-linux-initramfs — Orbis custom (443 KB) confirmado vs upstream (522 KB) |
-| **Kernel Dump 12.52** | ✅ Concluído em 2026-07-20 via `scene-kmem-dumper` TCP (porta 9020): 32.2 MB, 3s, 11.3 MB/s, zero corrupção (tag `milestone-dump-success`). Dumper USB antigo descartado (open() falhava no 12.52 por rootvnode corrompido). |
-| **CoreOS/SLB2** | ✅ Analisado: 4 contêineres SLB2 extraídos, build#1281815, kernel cifrado via SAMU (dump offline inviável) |
+| **Boot** | `kexec` via payload (PSFree/GoldHEN) → kernel 7.0 → initramfs → rootfs Arch |
+| **Vídeo HDMI** | 1920x1080@60, GPU Gladius via `amdgpu` + `ps4_bridge` (VIC 16) |
+| **Áudio HDMI** | `snd_hda_intel` (1002:9921) — confirmado em uso real |
+| **GPU 3D** | OpenGL 4.5 (`glxinfo` → `gladius`), Vulkan 1.3 (RADV), Mesa patchado |
+| **SSH (WiFi admin)** | `root@192.168.6.128` / senha `ps4`; sobe automático por systemd |
+| **EDID persistente** | `drm.edid_firmware=edid/ps4_tv_edid.bin` no initramfs |
+| **RTC** | `/dev/rtc0` funciona **manualmente** (`date`/`hwclock`) — não persiste sozinho entre boots |
+| **USB 3.0** | `xhci_aeolia` |
+| **SD/MMC** | `sdhci` |
+| **KVM-AMD** | `/dev/kvm` responde a ioctls reais (API 12), nested paging OK, QEMU no rootfs |
+| **SATA interno (`ata1`)** | ✅ no baseline `20260730-sata-polling-fase-ab` (polling timer 1ms na function `.7`). ⚠️ a build `v1.0.0` já contém o mecanismo, mas **não tem boot de validação registrado** — ver ressalva no `BACKLOG.md` |
+| **VRAM** | `vram.txt` (FAT32) lido pelo payload, default 1024 MB |
+| **Banco de RE** | `ps4_hardware_memory.db`: integridade `ok` — 1338 registradores, 866 leituras verificadas, 87 funções decompiladas, 79 testes |
+| **Dump do kernel Orbis 12.52** | `consolidado/dumps_orbis/kmem_dump_1252.bin` (gitignored, 32 MB) |
+
+---
+
+## ⚠️ PARCIAL / NÃO FUNCIONA
+
+| Subsistema | Estado |
+|------------|--------|
+| **Ethernet cabeada (`eth0`, driver próprio `mts.ko`)** | MAC liga via ICC (`BAR0+0x004=0xb19`), tem MAC real `2c:cc:44:3f:69:5f`, DMA TX funciona (RMU/DMA completam, OWN devolvido). **PHY nunca sai de power-down**: MDIO Clause 45 devolve zeros, Clause 22 dá timeout, RX morto, link DOWN. **Investigação encerrada em 2026-07-30** — o power-on físico do PHY é feito pelo firmware Sony antes do kernel; não há sequência replicável. Não reabrir sem fonte de dados nova |
+| **Desligamento total (S5)** | `poweroff -f` encerra SO e rede, mas a luz azul não apaga (falta comando ICC correto). Fix de framing do payload ICC construído (`20260730-s5-poweroff-fix`), **aguardando teste ao vivo** |
+| **WiFi/BT MT7668** | Driver `mt76x8` funciona para `wlan0`; dados de manufatura/regdomain ainda ausentes (baixa prioridade) |
+| **Decriptação das partições do HD interno (PFS/EAP)** | Chave EAP obtida e estável; premissa de tweak XTS = LBA absoluto **refutada** (pares A/B). Bloqueador migrou para derivação de chave/tweak. Ver [`../docs/planos/PLANO_INVESTIGACAO_CHAVE_PFS_SDA_2026-07-30.md`](../docs/planos/PLANO_INVESTIGACAO_CHAVE_PFS_SDA_2026-07-30.md) |
+| **`kexec` a partir do Linux nativo** | Mecanismo funciona, mas trava após o `mts_driver_init` (~127s) no kernel-alvo. Ver [`../docs/planos/PLANO_KEXEC_WARM_REBOOT_2026-07-27.md`](../docs/planos/PLANO_KEXEC_WARM_REBOOT_2026-07-27.md) |
 
 ---
 
 ## ⚙️ CONFIGURAÇÕES CRÍTICAS
 
-### bootargs.txt (kernel cmdline)
-```bash
-video=HDMI-A-1:1920x1080@60
-drm.edid_firmware=edid/ps4_tv_edid.bin
-radeon.dpm=0 amdgpu.dpm=0
-console=ttyS0,115200n8 console=tty0
-netconsole=@192.168.0.2/eth0,6666@192.168.0.1/ff:ff:ff:ff:ff:ff  # ✅ ATIVO — eth0 sobe em stage=4 no boot
-```
+### bootargs (kernel cmdline) — modelo validado
 
-### Arquivos na partição FAT32 (/dev/sda1)
+Ver o arquivo real do build em [`../RELEASE/v1.0.0/bootargs-7.0-v1.0.0.txt`](../RELEASE/v1.0.0/bootargs-7.0-v1.0.0.txt).
+Pontos que **não** podem ser "otimizados" sem medir:
+
+| Regra | Detalhe |
+|-------|---------|
+| `rootwait`, **nunca** `rootdelay=N` | `rootdelay` dorme os N segundos mesmo com o disco pronto: 10,5 s perdidos (medido em 2026-07-28) |
+| `earlycon=uart8250,mmio32,0xC890E000` + `console=uart8250,mmio32,0xC890E000` + `console=tty0` | **`console=ttyS0,115200n8` NÃO funciona** — é a 8250 legada x86, sem hardware no PS4; dá tela preta |
+| `root=LABEL=psxitarch` | Label hardcoded no `init` do initramfs; outra label cai em rescue shell |
+| `netconsole=@192.168.0.2/eth0,6666@192.168.0.1/ff:ff:ff:ff:ff:ff` | Logs UDP para o PC (`scripts/netconsole_listener.py`) |
+| Console serial **custa tempo de boot** | Com UART o `ata1` proba em 2,4–7 s; sem ela, em 0,68 s. Só comparar tempos entre boots com a mesma config de console |
+
+### Initramfs
+
+- `mkinitcpio.conf`: `COMPRESSION="gzip"` **obrigatório** — o kernel 7.0 Baikal não tem `CONFIG_RD_ZSTD`.
+  Conferir: `xxd boot_referencia/initramfs-7.0-<TAG>.cpio.gz | head -1` deve começar com `1f8b 0800`.
+- Hooks: `/hooks/early/set-time-from-cmdline` (lê `time=` injetado pelo payload) e
+  `/hooks/init/00-settime`.
+
+### Arquivos na partição BOOT (FAT32, `/dev/sdX1`)
+
 ```
-bzImage              # 9.3MB - kernel
-initramfs.cpio.gz    # 7.1MB - initramfs com hooks
-bootargs.txt         # cmdline acima
+bzImage              # kernel da tag ativa
+initramfs.cpio.gz    # initramfs da MESMA tag (nunca o genérico)
+bootargs.txt         # cmdline
 vram.txt             # "1024" (MB)
-bootlog.txt          # vazio (payload escreve)
-```
-
-### Initramfs Hooks
-```
-/hooks/early/set-time-from-cmdline   # lê time= do cmdline
-/hooks/init/00-settime               # backup no rootfs
+bootlog.txt          # escrito pelo payload
 ```
 
 ---
 
-## 🔧 HARDWARE (Baikal CUH-2xxx)
-
-| Componente | Driver | Status |
-|------------|--------|--------|
-| GPU Gladius (1002:9924) | amdgpu (CIK) | ✅ |
-| Display DCE v8.0 | amdgpu DC/DCN1 | ✅ |
-| HDMI Bridge | ps4_bridge (custom) | ✅ |
-| Ethernet | mts.ko (driver próprio, não é sky2) | ⚠️ MAC ligado via ICC power-on (0x004=0xb19), TX por software funcional (~95%, doorbell corrigido 2026-07-25); PHY continua power-gated (MDIO Clause 45/22 sempre zero/timeout) e RX morto |
-| USB 3.0 | xhci_aeolia | ✅ |
-| SATA AHCI | ahci | ✅ |
-| SD/MMC | sdhci | ✅ |
-| HDMI Audio | snd_hda_intel | ✅ |
-| WiFi/BT MT7668 | mt76x8 | ❌ fw ausente |
-
----
-
-## 📁 ESTRUTURA DO PROJETO
+## 📁 ESTRUTURA DO REPOSITÓRIO
 
 ```
-/mnt/t/downloads/PS4/linux_in_ps4/
-├── CLAUDE.md                 # Regras + estado (carregado auto pelo assistente)
-├── consolidado/              # Documentação (fonte única)
-├── memory/                   # Memórias de sessões (24 arquivos)
-├── scene-kmem-dumper/        # Payload dumper TCP (12.52)
-├── ps4-payload-sdk/          # SDK C para payloads
-├── ps4-linux-payloads/       # Payloads kexec Linux
-├── kernels/                  # Kernels compilados
-├── distros/                  # Distribuições Linux
-└── scripts/                  # Scripts auxiliares
+AGENTS.md                  # regras/procedimentos (fonte única; CLAUDE.md só importa este)
+README.md                  # visão geral e status
+distros/arch_minimal_v2/   # scripts oficiais (00/01/02/deploy) + patches/ (fonte dos patches)
+drivers_mts/               # driver Ethernet mts.ko
+docs/planos/ · docs/relatorios/   # planos ativos e resultados de testes
+memory/                    # registro cronológico por sessão (índice em MEMORY.md)
+consolidado/               # documentação consolidada, SQLite de RE, decompilado, obsoleto/
+RELEASE/                   # artefatos de distribuição (v1.0.0 versionado)
+scripts/ · tools/ · mesa/ · monitor_edid/ · tests/
 ```
 
----
-
-## 🚀 COMANDOS RÁPIDOS
-
-```bash
-# Build completo
-sudo ./00-build-kernel.sh && sudo ./01-build-image.sh && sudo ./02-burn-image.sh /dev/sda
-
-# Apenas rebuild initramfs (após mudar hooks)
-./rebuild-initramfs.sh && sudo cp boot_referencia/initramfs.cpio.gz /mnt/boot/
-
-# SSH no PS4
-ssh root@192.168.6.128  # senha: ps4
-
-# Netconsole (logs kernel)
-nc -u -l -p 6666
-
-# Ver EDID raw
-cat /sys/bus/i2c/devices/3-0050/eeprom | xxd
-
-# Status display
-cat /sys/class/drm/card0-HDMI-A-1/{status,enabled,modes}
-```
+**Não versionados neste clone (build output / binários grandes):** `distros/arch_minimal_v2/boot_referencia/`,
+`kernels/` (symlink para `/mnt/hdauxiliar/temp/kernel_build_7.0`), `consolidado/dumps_orbis/`,
+`keys/`, `tests/uart_logs/`, `old_project/`, `ps4-linux-payloads/`. Ver `.gitignore`.
+O source do kernel **não vive no repositório**: fica na árvore ext4 `/mnt/hdauxiliar/temp/kernel_build_7.0`
+(reconstruída pelos patches a cada build).
 
 ---
 
@@ -115,26 +107,35 @@ cat /sys/class/drm/card0-HDMI-A-1/{status,enabled,modes}
 
 | Problema | Causa | Workaround |
 |----------|-------|------------|
-| TV desligada = sem vídeo | EDID lido via I2C falha | `drm.edid_firmware=edid/ps4_tv_edid.bin` ✅ |
-| DP link training error | ps4_bridge usa caminho custom | Normal, bridge força enable |
-| DPM causa instabilidade | Clocks dinâmicos bugados | `radeon.dpm=0 amdgpu.dpm=0` ✅ |
-| systemd > 258 quebra boot | Incompatibilidade cgroup | Downgrade fixo 258.1-1 ✅ |
-| UART + vídeo não coexistem | Conflito console | NÃO usar `console=uart8250...` com vídeo |
-| Dumper USB falha no 12.52 | `jailbreak()` corrompe `rootvnode` | Usar TCP (`scene-kmem-dumper`) em vez de filesystem |
-| Kernel cifrado offline | Criptografia SAMU em hardware | Só dump de RAM ativa (payload rodando pós-boot) |
-| `__readmsr()` em userland | Instrução privilegiada → Kernel Panic | Sempre usar `kexec()` para código kernel |
+| Sem vídeo em 1080p em monitores lentos | Bridge PS4 (MN86471A/29) não vê HPD a tempo | `drm.edid_firmware` + adaptador HDMI energizado |
+| `DP link training error` no log | Caminho custom da bridge | Normal, a bridge força enable |
+| DPM causa instabilidade | Clocks dinâmicos bugados | `radeon.dpm=0 amdgpu.dpm=0` |
+| systemd > 258 quebra boot | Incompatibilidade de cgroup | Fixar 258.1-1 (`IgnorePkg`) |
+| `rmmod mts` gera `WARNING ... msi.c:294` | Bug de cleanup de MSI no driver | Não bloqueia reload; sistema só fica tainted |
+| HD interno desabilita após ~84 s (kernels antigos) | Glue PCIe para de entregar IRQ do AHCI | Polling timer de 1 ms (patch) — ver ressalva de validação |
+| `__readmsr()` em userland | Instrução privilegiada | Nunca; usar `kexec()` para código de kernel |
+| Luz azul não apaga no `poweroff` | Falta comando ICC de S5 | Desligar no botão (ou aguardar fix de S5) |
 
 ---
 
-## 📋 PRÓXIMOS PASSOS
+## 🔧 PENDÊNCIAS DE INFRAESTRUTURA (achadas na revisão de 2026-11-11)
 
-> A lista completa e priorizada de pendências vive **exclusivamente em [`BACKLOG.md`](BACKLOG.md)** — não duplicar aqui. O item de maior prioridade ativo hoje é a GBE (PHY mudo), com plano detalhado em [`../PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md`](../PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md).
+Nenhuma delas é regressão de código — são artefatos ausentes/desatualizados neste clone:
+
+1. `distros/arch_minimal_v2/boot_referencia/` **não existe** neste checkout (é gitignored). Ou seja:
+   `deploy-boot-7.0.sh <TAG>` e o rollback documentado **não funcionam aqui** até a pasta ser
+   repopulada (novo build com `00-build-kernel-7.0.sh`, ou cópia dos artefatos da máquina de build).
+2. `kernels/ps4-baikal-7.0.8-kernel` (symlink para o source do kernel) **não existe**, e o destino
+   `/mnt/hdauxiliar/temp/kernel_build_7.0` também não — qualquer build exigirá clonar a árvore de novo.
+3. `keys/` (chave EAP + testes do EAPDumper) é gitignored e não existe aqui.
+4. Documentos citados em `BACKLOG.md`/memórias que vivem fora do repositório (`~/.claude/plans/*`)
+   não são recuperáveis por este clone.
 
 ---
 
 ## 📚 REFERÊNCIAS
 
-- Kernel: https://github.com/feeRnt/ps4-linux-12xx (branch v5.4.247__neocine-1.1) (Clonado localmente em `/mnt/hdauxiliar/temp/kernel_build`)
-- Payloads: https://github.com/ArabPixel/ps4-linux-payloads
-- Guia: https://dionkill.github.io/ps4-linux-tutorial/
-- PSFree: https://arabpixel.github.io/PSFree-Enhanced/
+- Índice completo da documentação: [`INDEX_DOCUMENTACAO.md`](INDEX_DOCUMENTACAO.md)
+- Pendências: [`BACKLOG.md`](BACKLOG.md) · Lições: [`LICOES_APRENDIDAS.md`](LICOES_APRENDIDAS.md)
+- Kernel base: https://github.com/rmuxnet/linux (branch `baikal/7.0.8-Stable`)
+- Payloads: https://github.com/ArabPixel/ps4-linux-payloads · Guia: https://dionkill.github.io/ps4-linux-tutorial/

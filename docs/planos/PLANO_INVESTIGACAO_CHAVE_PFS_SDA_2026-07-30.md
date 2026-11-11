@@ -9,19 +9,19 @@
 - **Impacto:** invalida as ~1.000.001 combinações de tweak varridas em 2026-07-31 (todas em torno do LBA absoluto `57147392` ±500k) e os mappers `dmsetup` vivos (que usam LBA absoluto; o do `sda27` usa `114294784` = **2× o start real**).
 - **Negativo:** chave EAP flat + tweak=0 relativo → entropia ~7.95 nas 14 partições, nenhuma decripta. **O bloqueador passou a ser a derivação de chave**, não o tweak (consistente com o item 24, `sceSblWrapHddEapPartitionKeyData`). Derivação é por **tipo** de partição (A/B compartilham chave), não por posição.
 - **Negativo:** gap de 256 MB antes da 1ª partição tem **674 bytes não-zero**, todos no GPT (setores 0-33); LBA 34+ é zero absoluto — sem blob de chaves ali.
-- **Ferramenta:** `consolidado/tools/ps4_partition_crypto_survey.py`. **Registro:** `test_history` id 79, [`memory/tweak-xts-nao-e-lba-absoluto-prova-pares-ab-2026-08-01.md`](memory/tweak-xts-nao-e-lba-absoluto-prova-pares-ab-2026-08-01.md).
+- **Ferramenta:** `consolidado/tools/ps4_partition_crypto_survey.py`. **Registro:** `test_history` id 79, [`memory/tweak-xts-nao-e-lba-absoluto-prova-pares-ab-2026-08-01.md`](../../memory/tweak-xts-nao-e-lba-absoluto-prova-pares-ab-2026-08-01.md).
 
 ### 24. [ENGENHARIA REVERSA — 2026-08-01] Mapeamento do Subsistema `ServiceCryptAsync` / Coprocessador SAMU
 - **Achado:** Mapeadas as strings `ServiceCrypt error %d` (`0xaee3d3`) e `ServiceCryptAsync error %d` (`0xaeeb94`) no `memoriateste.bin`.
 - **Arquitetura:** O `GEOM_CRYPT` no Orbis OS utiliza a API `ServiceCryptAsync` para submeter blocos I/O ao coprocessador SAMU/SBL (`sceSblKeymgrSmCallfuncWithID`), que executa a decriptação XTS-AES via acelerador de hardware embutido na Southbridge.
-- **Registro:** [`memory/servicecrypt-samu-hardware-crypto-2026-08-01.md`](memory/servicecrypt-samu-hardware-crypto-2026-08-01.md).
+- **Registro:** [`memory/servicecrypt-samu-hardware-crypto-2026-08-01.md`](../../memory/servicecrypt-samu-hardware-crypto-2026-08-01.md).
 
 ### 23. [TESTE AO VIVO — 2026-08-01] Decriptação via `dmsetup` com LBA IV_OFFSET Absoluto (`sda27` e `sda13`)
 - **Procedimento:** Executado o `ps4_crypt_mount.sh` e `dmsetup` com `IV_OFFSET` explícito de LBA (`57147392` para `sda27` e `25165824` para `sda13`) com a chave EAP canônica (`keys/eap/eap_hdd_key.bin`, 32 bytes).
 - **Resultado `sda27`:** Magic do superbloco PFS = `0x946D0394` (com IV 0 era `0x01B9B25D`).
 - **Resultado `sda13`:** Magic do superbloco PFS = `0x7C42D7E2`.
 - **Diagnóstico:** O cálculo de IV_OFFSET por LBA altera de fato os bytes decriptados do superbloco. A chave EAP base passa por derivação de sub-chaves por partição (`sceSblWrapHddEapPartitionKeyData`) no `GEOM_CRYPT` antes do XTS-AES.
-- **Registro:** [`memory/sda27-sda13-dmsetup-lba-tweak-teste-2026-08-01.md`](memory/sda27-sda13-dmsetup-lba-tweak-teste-2026-08-01.md).
+- **Registro:** [`memory/sda27-sda13-dmsetup-lba-tweak-teste-2026-08-01.md`](../../memory/sda27-sda13-dmsetup-lba-tweak-teste-2026-08-01.md).
 
 ## Contexto
 `BACKLOG.md` marcava a montagem nativa de `sda13` (System) e `sda27` (Games)
@@ -234,7 +234,7 @@ Analisei a função central `g_crypt_create_provider` em `0xffffffffdc9a40d0` (`
 
 5. **Registro no SQLite & Repositório:**
    - Registrado na tabela `decompiled_functions` do `consolidado/ps4_hardware_memory.db`.
-   - Código C decompilado salvo em [`consolidado/decompiled/geom_crypt/decompiled_dc9a40d0_g_crypt_create.c`](file:///mnt/t/downloads/PS4/linux_project/consolidado/decompiled/geom_crypt/decompiled_dc9a40d0_g_crypt_create.c).
+   - Código C decompilado salvo em [`consolidado/decompiled/geom_crypt/decompiled_dc9a40d0_g_crypt_create.c`](../../consolidado/decompiled/geom_crypt/decompiled_dc9a40d0_g_crypt_create.c).
 
 ### 10. [CONCLUÍDO — SUCESSO] Localização e Engenharia Reversa da Função `g_crypt_taste` (`0xffffffffdc9a1ce0`) (2026-07-31)
 
@@ -260,7 +260,7 @@ O prólogo real da função fica em **`0xffffffffdc9a1ce0`** (`g_crypt_taste`).
 **Conclusão Final da Engenharia Reversa:**
 Tanto a função de criação (`g_crypt_create_provider`) quanto a função de atach (`g_crypt_taste`) da classe `GEOM_CRYPT` estão completamente localizadas, decompiladas e registradas.
 
-Salvo em [`consolidado/decompiled/geom_crypt/decompiled_dc9a1ce0_g_crypt_taste.c`](file:///mnt/t/downloads/PS4/linux_project/consolidado/decompiled/geom_crypt/decompiled_dc9a1ce0_g_crypt_taste.c).
+Salvo em [`consolidado/decompiled/geom_crypt/decompiled_dc9a1ce0_g_crypt_taste.c`](../../consolidado/decompiled/geom_crypt/decompiled_dc9a1ce0_g_crypt_taste.c).
 
 
 ### 11. [ROTA B — TESTES AO VIVO, 2026-07-31] Disco é GPT real + tabela de 16 GUIDs de tipo de partição encontrada no kernel

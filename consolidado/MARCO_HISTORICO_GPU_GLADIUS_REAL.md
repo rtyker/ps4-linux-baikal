@@ -77,4 +77,4 @@ Os binários validados foram organizados nos seguintes locais no projeto:
 1. `distros/arch_minimal_v2/firmware_gpu/amdgpu/` (substituindo as cópias antigas)
 2. `consolidado/firmware_gladius_real/` (backup dedicado de referência)
 
-Script utilitário de extração utilizado: [`scripts/fetch_gladius_fw.py`](file:///mnt/t/downloads/PS4/linux_in_ps4/scripts/fetch_gladius_fw.py).
+Script utilitário de extração utilizado: [`scripts/fetch_gladius_fw.py`](../scripts/fetch_gladius_fw.py).

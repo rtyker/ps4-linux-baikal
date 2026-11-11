@@ -40,7 +40,7 @@ Também os testes intermediários `CHIPID_STEP_BY_STEP` e `REPEAT_SEQUENCE` (8 c
 
 ## O método que funciona: `printf` octal + `dd`
 
-Já estava documentado no projeto em [escrita-mmio-telnet-printf-octal-nao-hex](escrita-mmio-telnet-printf-octal-nao-hex.md) (escaping `\xHH` não é confiável via telnet — usar `\NNN` octal). Medido funcionando:
+Já estava documentado no projeto (nota original `escrita-mmio-telnet-printf-octal-nao-hex`, removida na consolidação — o conteúdo relevante está resumido aqui): escaping `\xHH` não é confiável via telnet — usar `\NNN` octal. Medido funcionando:
 
 ```sh
 printf '\001\000\000\000' | dd of=/dev/mem bs=4 count=1 seek=$((0xc2000034/4))

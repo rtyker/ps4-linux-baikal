@@ -13,7 +13,7 @@
    - **BUILD AUTOMÁTICO ETH0 + NETCONSOLE (2026-07-23):** Criada e implantada no HD a tag `20260723-mts-autoeth0`. O driver `mts.ko` agora possui o padrão `stage=4` e auto-carregamento no boot, subindo a interface `eth0` automaticamente sem necessidade de intervenção via Telnet. Netconsole ativado por padrão no boot.
    - **DESLIGAMENTO REMOTO VIA TELNET (2026-07-22):** O comando `sync && poweroff -f` (ou `echo o > /proc/sysrq-trigger`) encerra o sistema operacional e a rede limpos (ping cai 100%), porém o console permanece em **luz azul (luz azul acesa/pulsando)** pois o desligamento de energia total da fonte (S5) exige comando ICC dedicado ou desligamento manual no botão.
    - **🏆 NOVO BASELINE OFICIAL (2026-07-30), tag `20260730-sata-reverted` — MELHOR VERSÃO ATÉ AGORA, PONTO DE ROLLBACK:** kernel `7.0.8-Strawberry-ThinLTO-Baikal-+ #23` com o fix de polaridade MDIO Clause 22 (`mts.c`) ativo e as mudanças de SATA polling-timer da noite de 2026-07-29 revertidas (só instrumentação não validada). Boot completo confirmado ao vivo: `kexec` → shutdown normal da Orbis → `Run /init as init process` → `systemd[1]` sem erros, vídeo HDMI OK, **SSH via WiFi confirmado**, `eth0` sobe com MAC real (PHY ainda sem link, bug conhecido, não é regressão). Artefatos em `distros/arch_minimal_v2/boot_referencia/*-7.0-20260730-sata-reverted*` **NUNCA podem ser sobrescritos/descartados** — em caso de regressão futura, restaurar com `sudo ./deploy-boot-7.0.sh 20260730-sata-reverted` (boot-only, mantém rootfs). Ver `memory/baseline-oficial-20260730-sata-reverted.md` (checksums MD5 e detalhes completos).
-   - **🏆🏆 NOVO BASELINE OFICIAL, MAIS RECENTE (2026-07-30), tag `20260730-sata-polling-fase-ab` — SUPERA O ANTERIOR, SATA INTERNO FUNCIONAL PELA PRIMEIRA VEZ:** mesmo kernel do baseline acima + Fase A/B do `docs/planos/PLANO_SATA_POLLING_CORRECAO_2026-07-29.md` (polling timer de 1ms) reaplicada e validada ao vivo. `ata1.00: configured for UDMA/100` sem nenhuma exceção, `dd`/`fdisk` confirmam leitura real do HD interno (931.51 GiB), zero `disable device` em todo o dmesg. **Este é o baseline mais completo/recomendado a partir de agora** — GBE (com PHY ainda mudo, bug conhecido) + SATA interno funcional juntos. Artefatos em `distros/arch_minimal_v2/boot_referencia/*-7.0-20260730-sata-polling-fase-ab*` **NUNCA podem ser sobrescritos/descartados**. Rollback: `sudo ./deploy-boot-7.0.sh 20260730-sata-polling-fase-ab` (boot-only). Ver `memory/marco-sata-interno-funcional-2026-07-30.md`.
+   - **🏆🏆 NOVO BASELINE OFICIAL, MAIS RECENTE (2026-07-30), tag `20260730-sata-polling-fase-ab` — SUPERA O ANTERIOR, SATA INTERNO FUNCIONAL PELA PRIMEIRA VEZ:** mesmo kernel do baseline acima + Fase A/B do plano de correção do SATA polling (documento original hoje em `consolidado/obsoleto/PLANO_SATA_POLLING_CORRECAO_2026-07-29.md`; o código vivo é `patches/ahci-baikal-polling-fallback.patch`) reaplicada e validada ao vivo. `ata1.00: configured for UDMA/100` sem nenhuma exceção, `dd`/`fdisk` confirmam leitura real do HD interno (931.51 GiB), zero `disable device` em todo o dmesg. **Este é o baseline mais completo/recomendado a partir de agora** — GBE (com PHY ainda mudo, bug conhecido) + SATA interno funcional juntos. Artefatos em `distros/arch_minimal_v2/boot_referencia/*-7.0-20260730-sata-polling-fase-ab*` **NUNCA podem ser sobrescritos/descartados**. Rollback: `sudo ./deploy-boot-7.0.sh 20260730-sata-polling-fase-ab` (boot-only). Ver `memory/marco-sata-interno-funcional-2026-07-30.md`.
 
 ---
 
@@ -88,7 +88,7 @@ Para mudanças de kernel/módulos (e por extensão, qualquer mudança técnica d
 ### Sequência típica de modificação de kernel
 
 ```bash
-cd /mnt/t/downloads/PS4/linux_in_ps4/distros/arch_minimal_v2
+cd "$(git rev-parse --show-toplevel)/distros/arch_minimal_v2"   # caminho relativo ao repo, que hoje vive em ext4 (/mnt/hdauxiliar/ps4-linux-baikal) — NÃO em /mnt/t (NTFS)
 
 # 1. Editou source em /mnt/hdauxiliar/temp/kernel_build_7.0/ (com sudo)
 
@@ -122,6 +122,11 @@ e a **versão de distribuição `v1.0.0/`** (4 artefatos de boot + README, orige
 
 - **Kernel mainline:** NUNCA fica dentro do projeto (é NTFS). Só existe o symlink
   `kernels/ps4-baikal-7.0.8-kernel -> /mnt/hdauxiliar/temp/kernel_build_7.0`
+  (⚠️ **este symlink e o destino não existem num clone novo** — `kernels/` é gitignored e a árvore
+  do kernel é efêmera. O primeiro `00-build-kernel-7.0.sh` numa máquina limpa precisa clonar a
+  árvore antes; o próprio script faz o reset/clone. Mesma coisa para
+  `distros/arch_minimal_v2/boot_referencia/`: é build output e **não vem no clone**, então
+  `deploy-boot-7.0.sh <TAG>` falha alto (por design) até os artefatos serem gerados/copiados)
   (ext4). `kernels/patches -> ../distros/arch_minimal_v2/patches` é symlink —
   fonte única dos patches, que vivem versionados em `distros/arch_minimal_v2/patches/`
   e são referenciados pelo `00-build-kernel-7.0.sh`.

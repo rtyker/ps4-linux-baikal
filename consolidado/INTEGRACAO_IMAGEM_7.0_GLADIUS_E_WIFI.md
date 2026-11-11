@@ -2,7 +2,7 @@
 
 **Data:** 23 de Julho de 2026  
 **Kernel Alvo:** Linux 7.0.8 (Strawberry Baikal)  
-**Script Principal de Imagem:** [`distros/arch_minimal_v2/01-build-image-7.0.sh`](file:///mnt/t/downloads/PS4/linux_in_ps4/distros/arch_minimal_v2/01-build-image-7.0.sh)
+**Script Principal de Imagem:** [`distros/arch_minimal_v2/01-build-image-7.0.sh`](../distros/arch_minimal_v2/01-build-image-7.0.sh)
 
 ---
 

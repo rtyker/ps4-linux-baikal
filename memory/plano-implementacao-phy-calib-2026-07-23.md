@@ -189,6 +189,6 @@ Recomendo: **1 → 3 → 2** (validação antes de código).
 
 ## Referências
 
-- [analise-profunda-phy-carrier-2026-07-23.md](file:///mnt/t/downloads/PS4/linux_in_ps4/memory/analise-profunda-phy-carrier-2026-07-23.md)
+- [analise-profunda-phy-carrier-2026-07-23.md](analise-profunda-phy-carrier-2026-07-23.md)
 - `consolidado/decompiled_dc5a0ba0_gbe_phy_calib.txt` (200+ linhas)
-- [tentativas-frustradas-mts-carrier.md](file:///mnt/t/downloads/PS4/linux_in_ps4/memory/tentativas-frustradas-mts-carrier.md) (histórico de testes)
+- [tentativas-frustradas-mts-carrier.md](tentativas-frustradas-mts-carrier.md) (histórico de testes)

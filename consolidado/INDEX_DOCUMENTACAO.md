@@ -1,399 +1,202 @@
-# Índice Completo da Documentação — PS4 Linux (Baikal/Arch Minimal v2)
+# Índice da Documentação — PS4 Linux Baikal
 
-> **Última atualização**: 2026-07-20  
-> **Versão**: Arch Minimal v2 — Kernel 5.4.247-neocine-1.1  
-> **Status**: ✅ Consolidado e organizado (RELATORIO_COLETA_DUMPS.md incorporado ao MASTER Seção 3)
+> **Revisão:** 2026-11-11 (reescrito). A versão anterior deste índice descrevia a era do kernel
+> 5.4.247 (feeRnt/neocine) e uma árvore de `consolidado/` com subpastas (`HARDWARE/`,
+> `VIDEO_EDID_MONITOR/`, `KERNEL_BUILD/`…) que **nunca existiram no layout atual** e listava
+> documentos já removidos. Se algo aqui divergir do disco, o disco está certo — corrija este
+> arquivo em vez de confiar na memória.
 
----
-
-## 📋 SUMÁRIO EXECUTIVO
-
-| Documento | Propósito | Público-Alvo |
-|-----------|-----------|--------------|
-| **MASTER_CONSOLIDADO.md** | Documento mestre completo (boot, hardware, kernel, build system) | Todos |
-| **README.md** | Quick start e primeiros passos | Iniciantes |
-| **INSTRUCOES.md** | Instruções detalhadas em português | Usuários |
+> **Projeto:** PS4 Slim/Pro **Baikal** (CUH-2xxx) rodando Linux **7.0.8-Strawberry-ThinLTO-Baikal-+**
+> carregado por `kexec` a partir de payload de jailbreak. Distribuição: Arch Linux mínima.
 
 ---
 
-## 🚀 INÍCIO RÁPIDO (Primeira vez?)
+## 1. Comece por aqui (ordem de leitura)
 
-1. Leia: **README.md** (5 min)
-2. Leia: **INSTRUCOES.md** (20 min)
-3. Consulte: **MASTER_CONSOLIDADO.md** seção 1-4 (boot, hardware, kernel args)
-4. Execute: Scripts em `distros/arch_minimal_v2/` (build-kernel, build-image, burn-image)
-
----
-
-## 📚 DOCUMENTAÇÃO POR CATEGORIA
-
-### 1. **VISÃO GERAL & ARQUITETURA**
-
-| Arquivo | Conteúdo | Tamanho | Atualização |
-|---------|----------|--------|------------|
-| **MASTER_CONSOLIDADO.md** | Tudo em um: boot, hardware, kernel, scripts, troubleshooting | 457 linhas | 14/07/2026 |
-| **DOCUMENTACAO_COMPLETA.md** | Visão geral do projeto (estrutura histórica) | 159 linhas | - |
-| **STATUS_ATUAL.md** | Status atual do projeto | 147 linhas | - |
-| **RESUMO_TECNICO.md** | Resumo técnico condensado | 101 linhas | - |
-
-**📌 Recomendação**: Use **MASTER_CONSOLIDADO.md** como principal; DOCUMENTACAO_COMPLETA é histórico apenas.
+| # | Arquivo | Para quê |
+|---|---------|----------|
+| 1 | [`../README.md`](../README.md) | Visão geral, status por subsistema, estrutura do repo |
+| 2 | [`../AGENTS.md`](../AGENTS.md) | **Fonte única de regras e procedimentos** (build, deploy, SSH, UART, banco de RE). Auto-carregado via `../CLAUDE.md` |
+| 3 | [`LICOES_APRENDIDAS.md`](LICOES_APRENDIDAS.md) | Lições imperativas — o que já quebrou o console e por quê |
+| 4 | [`BACKLOG.md`](BACKLOG.md) | **Único** lugar com pendências e próximos passos |
+| 5 | [`STATUS_ATUAL.md`](STATUS_ATUAL.md) | Retrato do estado corrente (o que funciona / o que não funciona) |
+| 6 | [`../RELEASE/README.md`](../RELEASE/README.md) | Artefatos prontos para deploy (`v1.0.0`) |
 
 ---
 
-### 2. **HARDWARE & SOUTHBRIDGE BAIKAL**
+## 2. Estado, histórico e planejamento
 
-| Arquivo | Conteúdo | Casos de Uso |
-|---------|----------|-------------|
-| **HARDWARE.md** | Especificações do PS4 (CPU, GPU, RAM, southbridge) | Referência geral |
-| **PS4_HARDWARE_DOCS.md** | Documentação técnica profunda do hardware | Debug de hardware |
-| **HARDWARE_PS4_BAIKAL.md** | Foco em Baikal B1 (pinout, UART, adressen) | Soldagem, pinout |
-| **BAIKAL_STATUS.md** | Status de drivers/subsistemas Baikal | Compatibilidade |
-| **BAIKAL_HARDWARE_DISCOVERIES.md** | Descobertas experimentais do Baikal | Research/debugging |
+| Arquivo | Conteúdo | Natureza |
+|---------|----------|----------|
+| [`STATUS_ATUAL.md`](STATUS_ATUAL.md) | Subsistemas funcionando, configs críticas, problemas conhecidos | **Vivo** |
+| [`BACKLOG.md`](BACKLOG.md) | Pendências priorizadas (`[ ]`/`[~]`/`[x]`) | **Vivo** |
+| [`ESTADO_E_HISTORICO.md`](ESTADO_E_HISTORICO.md) | Narrativa das grandes sagas técnicas (migração 7.0, GBE, SATA) e mapa de onde achar cada coisa | Histórico + mapa |
+| [`MASTER_CONSOLIDADO.md`](MASTER_CONSOLIDADO.md) | Documento mestre (boot, hardware, kernel, build, troubleshooting). Migração 5.4 → 7.0 já concluída; trechos do 5.4 são registro histórico | Histórico/referência |
+| [`CONSOLIDACAO_RESUMO.md`](CONSOLIDACAO_RESUMO.md) | Resumo do processo de consolidação da documentação (2026-07) | Histórico |
+| [`RESUMO_TECNICO.md`](RESUMO_TECNICO.md) | Resumo técnico condensado | Histórico |
+| [`TESTES_LOG.md`](TESTES_LOG.md) | Log cronológico de testes (o estado estruturado vive no SQLite, ver §5) | Histórico |
+| [`BUILD_CHECKLIST_20260801_KVM_RTC_SATA.md`](BUILD_CHECKLIST_20260801_KVM_RTC_SATA.md) | Checklist do build da tag `20260801-kvm-rtc-sata-fix` (base do `RELEASE/v1.0.0`) | Registro de build |
 
-**📌 Recomendação**: Leia HARDWARE.md primeiro; depois PS4_HARDWARE_DOCS.md se precisar de detalhe.
-
----
-
-### 3. **VIDEO, EDID & MONITOR**
-
-| Arquivo | Conteúdo | Casos de Uso |
-|---------|----------|-------------|
-| **MONITOR_INFO.md** | Análise completa do monitor LG + compatibilidade EDID | Compatibilidade monitor |
-| **MONITOR_TENTATIVAS_LOG.md** | Log de testes com monitor | Debug vídeo |
-| **BOOTARGS.md** | Kernel command line (video, console, EDID) | Ajustes de boot |
-
-**🎯 Fluxo de Debug de Vídeo**:
-1. Consulte: **BOOTARGS.md** (parâmetros video)
-2. Se TV/monitor não funciona: **MONITOR_INFO.md**
-3. Se ainda falha: **MONITOR_TENTATIVAS_LOG.md** (reproduza testes)
+Planejamento ativo fica em [`../docs/planos/`](../docs/planos/) e relatórios de teste em
+[`../docs/relatorios/`](../docs/relatorios/).
 
 ---
 
-### 4. **KERNEL & COMPILAÇÃO**
+## 3. Hardware do Baikal
 
-| Arquivo | Conteúdo | Casos de Uso |
-|---------|----------|-------------|
-| **KERNELS.md** | Comparação de kernels (5.4 vs 7.0, feeRnt vs DFAUS) | Seleção de kernel |
-| **ROTEIRO_KERNEL.md** | Guia passo-a-passo de compilação manual | Compilar kernel custom |
-| **MIGRACAO_7.0.md** | Histórico e status da migração para kernel 7.0 | Entender histórico |
-
-**📌 Recomendação**: Use o **00-build-kernel.sh** (automático); ROTEIRO_KERNEL.md só se customizar.
-
----
-
-### 5. **BOOT & INICIALIZAÇÃO**
-
-| Arquivo | Conteúdo | Casos de Uso |
-|---------|----------|-------------|
-| **PAYLOADS.md** | Payload kexec v24+, firmware-agnóstico | Entender boot |
-| **INSTALACAO.md** | Instalação de distro no HDD | Preparar disco |
-| **COMUNICACAO_PS4.md** | Comunicação PS4 ↔ PC (SSH, netconsole) | Debug remoto |
-
-**🔌 Fluxo de Boot**:
-1. Payload kexec → detecção de southbridge (Baikal/Aeolia/Belize)
-2. Lê `bootargs.txt`, `vram.txt` de FAT32 (sda1)
-3. Injeta `time=` (RTC), monta inicializa kernel
-4. Initramfs executa hooks: set-time, EDID firmware
-5. Mount rootfs ext4 (sda2), start systemd
+| Arquivo | Conteúdo |
+|---------|----------|
+| [`HARDWARE.md`](HARDWARE.md) | Visão geral do PS4 (CPU Jaguar, GPU Gladius, RAM, southbridge) |
+| [`PS4_HARDWARE_DOCS.md`](PS4_HARDWARE_DOCS.md) | Documentação técnica profunda do hardware |
+| [`HARDWARE_PS4_BAIKAL.md`](HARDWARE_PS4_BAIKAL.md) | Baikal B1: pinout, UART, endereços |
+| [`BAIKAL_HARDWARE_DISCOVERIES.md`](BAIKAL_HARDWARE_DISCOVERIES.md) | Descobertas experimentais (contém itens superados — checar datas) |
+| `chip_id`, `hardware_report.txt`, `hardware_search_results.txt`, `kernel_hardware_info.txt`, `ps4_system_files.txt`, `IP-default` | Saídas brutas de coleta no console |
 
 ---
 
-### 6. **PÓS-INSTALAÇÃO & CONFIGURAÇÃO**
+## 4. Subsistemas (documentos dedicados)
 
-| Arquivo | Conteúdo | Casos de Uso |
-|---------|----------|-------------|
-| **POS_INSTALACAO.md** | Configuração pós-boot (timezone, locale, swap, SSH) | Setup inicial |
-| **README_pos_install.md** | Documentação complementar de pós-instalação | Referência |
-| **SCRIPTS.md** | Descrição dos scripts de build | Entender automatização |
+### Ethernet GBE (`mts.ko`)
 
-**✅ Checklist pós-instalação**:
-- [ ] Timezone: `timedatectl set-timezone America/Sao_Paulo`
-- [ ] Locale: `echo "pt_BR.UTF-8 UTF-8" > /etc/locale.gen && locale-gen`
-- [ ] Swap: `fallocate -l 8G /swapfile && mkswap /swapfile && swapon /swapfile`
-- [ ] IgnorePkg: `IgnorePkg = systemd linux mesa` em `/etc/pacman.conf`
+| Arquivo | Conteúdo |
+|---------|----------|
+| [`../docs/planos/PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md`](../docs/planos/PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md) | Plano consolidado (fonte dos próximos passos da frente GBE) |
+| [`MARCO_HISTORICO_ETH0_MTS_BAIKAL.md`](MARCO_HISTORICO_ETH0_MTS_BAIKAL.md) | Marco: `eth0` registrada com MAC real e DMA funcionando |
+| [`RE_KERNEL_GBE_ATTACH.md`](RE_KERNEL_GBE_ATTACH.md) | RE do attach da GBE no kernel Orbis |
+| [`RE_IF_MSK.md`](RE_IF_MSK.md) | RE do mascaramento de interrupções (`IF_MSK`) |
+| [`MTS_INIT_SEQUENCE_dc5a31f0.md`](MTS_INIT_SEQUENCE_dc5a31f0.md) | Sequência de init do MAC (`dc5a31f0`) |
+| [`ICC_GBE_TEST_LOG.md`](ICC_GBE_TEST_LOG.md) | Log dos testes de energia via ICC |
+| [`../docs/relatorios/PHY_DEBUG_SESSION_20260724.md`](../docs/relatorios/PHY_DEBUG_SESSION_20260724.md) | Sessão de debug do PHY (2026-07-24) |
+| [`../docs/relatorios/TESTE_*`](../docs/relatorios/) | Resultados de testes pontuais (Clause 22, RX OWN, tail pointer, subnet) |
 
----
+**Resumo do estado:** MAC liga via ICC, DMA TX funciona, mas o PHY nunca sai de power-down —
+investigação de RE **encerrada** em 2026-07-30 (bloqueador é firmware Sony, não driver).
 
-### 7. **COMUNICAÇÃO & DEBUG**
+### SATA interno
 
-| Arquivo | Conteúdo | Casos de Uso |
-|---------|----------|-------------|
-| **CABO_UART.md** | Pinout UART Baikal (J1/J2), adaptador USB-serial — **FUNCIONAL** (2026-07-27: solda validada, stream 0x20 @ 115200 8N1) | Debug headless |
-| **COMUNICACAO_PS4.md** | SSH, netconsole, remote boot | Debug remoto |
-| **TODO_NETCONSOLE.md** | Implementação de netconsole | Logs kernel UDP |
-| **TESTES_LOG.md** | Log de testes e resultados | Referência histórica |
+| Arquivo | Conteúdo |
+|---------|----------|
+| [`INTERNAL_SATA_FIX.md`](INTERNAL_SATA_FIX.md) | Fix do SATA interno (polling timer) |
+| [`../docs/planos/DESCOBERTA_SATA_MSI_MASKING_2026-07-29.md`](../docs/planos/DESCOBERTA_SATA_MSI_MASKING_2026-07-29.md) | Descoberta do mascaramento MSI (`Masking=000000fe`) |
+| [`../memory/marco-sata-interno-funcional-2026-07-30.md`](../memory/marco-sata-interno-funcional-2026-07-30.md) | Marco: `ata1` funcional pela 1ª vez (tag `20260730-sata-polling-fase-ab`) |
+| [`../memory/sata-polling-device-errado-14-2-vs-14-7-2026-08-01.md`](../memory/sata-polling-device-errado-14-2-vs-14-7-2026-08-01.md) | `ata1` pertence à function `.7` (`xhci_aeolia`), não à `.2` |
+| `../distros/arch_minimal_v2/patches/ahci-baikal-polling-fallback.patch` | O patch em si (as duas pontas, `.2` e `.7`) |
+| [`obsoleto/PLANO_SATA_INTERNO_100PCT_2026-07-28.md`](obsoleto/PLANO_SATA_INTERNO_100PCT_2026-07-28.md) | Plano histórico da investigação (superado pela solução) |
 
-**🔧 Debug Remoto (SSH)**:
-```bash
-ssh root@192.168.6.128    # senha: ps4
-ssh ps4@192.168.6.128     # senha: ps4
-```
+### GPU / vídeo / Mesa
 
-**📡 Debug Headless (UART)**:
-```bash
-# PC host
-screen /dev/ttyUSB0 115200
-```
+| Arquivo | Conteúdo |
+|---------|----------|
+| [`MARCO_HISTORICO_GPU_GLADIUS_REAL.md`](MARCO_HISTORICO_GPU_GLADIUS_REAL.md) | Marco: firmware Gladius real + amdgpu |
+| [`MESA_GLADIUS_LIVERPOOL_FIX.md`](MESA_GLADIUS_LIVERPOOL_FIX.md) | Patch do Mesa para reconhecer `CHIP_GLADIUS`/`CHIP_LIVERPOOL` |
+| [`INTEGRACAO_IMAGEM_7.0_GLADIUS_E_WIFI.md`](INTEGRACAO_IMAGEM_7.0_GLADIUS_E_WIFI.md) | Como firmware/Mesa/WiFi entram no `01-build-image-7.0.sh` |
+| [`MESA_VULKAN.md`](MESA_VULKAN.md) | Estado de Mesa/Vulkan (RADV) |
+| [`MONITOR_INFO.md`](MONITOR_INFO.md) | EDID/limitações do monitor LG e modos que funcionam |
+| [`BOOTARGS.md`](BOOTARGS.md) | Parâmetros de vídeo/console validados (⚠️ `console=ttyS0` **não** funciona) |
+| [`../monitor_edid/`](../monitor_edid/) | EDID e utilitários do monitor |
 
----
+### Kernel, build e boot
 
-### 8. **FIRMWARE & EXTRAÇÃO**
+| Arquivo | Conteúdo |
+|---------|----------|
+| [`KERNELS.md`](KERNELS.md) | Comparação de kernels (5.4 neocine vs 7.0 Strawberry) |
+| [`MIGRACAO_7.0.md`](MIGRACAO_7.0.md) | Histórico da migração 5.4 → 7.0 |
+| [`FULL_BUILD.md`](FULL_BUILD.md) | Procedimento de build completo do Arch Minimal v2 |
+| [`ROTEIRO_KERNEL.md`](ROTEIRO_KERNEL.md) | Guia de compilação manual (⚠️ caminhos citados são da era 5.4 — o oficial é `../distros/arch_minimal_v2/00-build-kernel-7.0.sh`) |
+| [`SCRIPTS.md`](SCRIPTS.md) | Descrição dos scripts de build |
+| [`INSTALACAO.md`](INSTALACAO.md) | Instalação da distro no HD |
+| [`POS_INSTALACAO.md`](POS_INSTALACAO.md) · [`README_pos_install.md`](README_pos_install.md) | Pós-instalação (locale, timezone, swap, SSH) |
+| [`DISTROS.md`](DISTROS.md) · [`ARCH_ORIGINAL_README.md`](ARCH_ORIGINAL_README.md) | Distros usadas / README original do Arch (histórico) |
 
-| Arquivo | Conteúdo | Casos de Uso |
-|---------|----------|-------------|
-| **DUMP_FIRMWARE_ORBIS.md** | Dump de firmware, extração de blobs (EDID, WiFi) | Reverse engineering |
+### RE e banco de hardware
 
----
-
-### 9. **EXPERIÊNCIAS & LIÇÕES**
-
-| Arquivo | Conteúdo | Casos de Uso |
-|---------|----------|-------------|
-| **LICOES_APRENDIDAS.md** | Erros cometidos e soluções (18 lições) | Evitar armadilhas |
-| **MILESTONE_2026-07-14.md** | Milestone recente com descobertas | Histórico recente |
-
-**⚠️ Lições Críticas**:
-- **#18**: UART + vídeo HDMI **não coexistem** no Baikal. Use netconsole ou UART isolado.
-- **#1**: Não use `video=@60e` (sufixo `e`) — tela preta em TVs. Use `@60` (sem `e`).
-- **systemd**: Fixar em 258.1-1 — versões > 261 quebram boot cgroup.
-- **NTFS**: Nunca extrair tarball em NTFS (corrompe permissões Linux). Use ext4.
-
----
-
-### 10. **REFERÊNCIAS & LINKS**
-
-| Arquivo | Conteúdo | Casos de Uso |
-|---------|----------|-------------|
-| **REFERENCIAS.md** | Links para GitHub, documentação, ferramentas | Recursos externos |
-
-**🔗 Links Principais**:
-- Kernel Neocine: https://github.com/feeRnt/ps4-linux-12xx (v5.4.247__neocine-1.1)
-- Payload: https://github.com/ArabPixel/ps4-linux-payloads
-- Guia: https://dionkill.github.io/ps4-linux-tutorial/
-- Strawberry 7.0: https://github.com/rmuxnet/linux
-
----
-
-### 11. **DISTROS & VARIANTES**
-
-| Arquivo | Conteúdo | Casos de Uso |
-|---------|----------|-------------|
-| **DISTROS.md** | Lista de distros disponíveis | Escolher distro |
-| **MESA_VULKAN.md** | Mesa/Vulkan para PS4 (RADV, DRM) | Gráficos 3D |
-| **ARCH_ORIGINAL_README.md** | Arch original (deprecated, histórico) | Referência histórica |
-
----
-
-## 🔍 TABELA DE CONTEÚDO RÁPIDA (Por Situação)
-
-### "Quero iniciar do zero"
-1. **README.md** (visão geral)
-2. **INSTRUCOES.md** (passo-a-passo)
-3. **MASTER_CONSOLIDADO.md** (seções 1-9)
-
-### "Vídeo não funciona"
-1. **BOOTARGS.md** (parâmetros corretos)
-2. **MONITOR_INFO.md** (compatibilidade)
-3. **LICOES_APRENDIDAS.md** #1, #18
-
-### "Preciso recompilar o kernel"
-1. **KERNELS.md** (qual versão)
-2. **ROTEIRO_KERNEL.md** (passo-a-passo)
-3. **SCRIPTS.md** (00-build-kernel.sh)
-
-### "Sistema não bota"
-1. **MASTER_CONSOLIDADO.md** (seção 11, problemas)
-2. **LICOES_APRENDIDAS.md** (erros comuns)
-3. **CABO_UART.md** (debug headless)
-
-### "Quero entender o hardware"
-1. **HARDWARE.md** (visão geral)
-2. **PS4_HARDWARE_DOCS.md** (profundidade)
-3. **BAIKAL_HARDWARE_DISCOVERIES.md** (Baikal específico)
-
-### "Preciso debugar via SSH"
-1. **COMUNICACAO_PS4.md** (SSH, netconsole)
-2. **POS_INSTALACAO.md** (rede pré-configurada)
-
----
-
-## 📂 ESTRUTURA DO DIRETÓRIO CONSOLIDADO
-
-```
-/consolidado/
-├── INDEX_DOCUMENTACAO.md          ← Você está aqui
-├── MASTER_CONSOLIDADO.md          ← Documento mestre (comece aqui)
-├── LICOES_APRENDIDAS.md           ← Lições imperativas (leia antes de agir)
-├── STATUS_ATUAL.md                ← Estado resumido
-├── README.md                      ← Quick start
-├── INSTRUCOES.md                  ← Instruções detalhadas
-├── DOCUMENTACAO_COMPLETA.md       ← Visão geral histórica
-│
-├── HARDWARE/
-│   ├── HARDWARE.md
-│   ├── PS4_HARDWARE_DOCS.md
-│   ├── HARDWARE_PS4_BAIKAL.md
-│   ├── BAIKAL_STATUS.md
-│   ├── BAIKAL_HARDWARE_DISCOVERIES.md
-│   └── BAIKAL_GBE_EXPERIMENTS.md
-│
-├── VIDEO_EDID_MONITOR/
-│   ├── BOOTARGS.md
-│   ├── MONITOR_INFO.md
-│   └── MONITOR_TENTATIVAS_LOG.md
-│
-├── KERNEL_BUILD/
-│   ├── KERNELS.md
-│   ├── ROTEIRO_KERNEL.md
-│   └── MIGRACAO_7.0.md
-│
-├── BOOT_PAYLOAD/
-│   ├── PAYLOADS.md
-│   ├── INSTALACAO.md
-│   └── COMUNICACAO_PS4.md
-│
-├── POS_INSTALACAO/
-│   ├── POS_INSTALACAO.md
-│   └── README_pos_install.md
-│
-├── DEBUG_COMUNICACAO/
-│   ├── CABO_UART.md
-│   ├── TODO_NETCONSOLE.md
-│   └── TESTES_LOG.md
-│
-├── DISTROS_DRIVERS/
-│   ├── DISTROS.md
-│   ├── MESA_VULKAN.md
-│   └── ARCH_ORIGINAL_README.md
-│
-├── EXPERIENCIAS/
-│   ├── LICOES_APRENDIDAS.md
-│   └── MILESTONE_2026-07-14.md
-│
-├── FIRMWARE/
-│   └── DUMP_FIRMWARE_ORBIS.md     # NOR dump + sd8797_uapsta.bin
-│   (RELATORIO_COLETA_DUMPS.md → incorporado ao MASTER_CONSOLIDADO.md Seção 3)
-│
-└── REFERENCIA/
-    ├── REFERENCIAS.md
-    ├── SCRIPTS.md
-    ├── STATUS_ATUAL.md
-    ├── RESUMO_TECNICO.md
-    └── DOCUMENTACAO_COMPLETA.md  (histórico)
-```
-
----
-
-## ⚡ COMANDOS RÁPIDOS (CHEAT SHEET)
+| Recurso | Conteúdo |
+|---------|----------|
+| [`ps4_hardware_memory.db`](ps4_hardware_memory.db) | **SQLite oficial** — registradores, BARs, testes ao vivo, funções decompiladas |
+| [`decompiled/INDEX.md`](decompiled/INDEX.md) | Catálogo das funções do kernel Orbis decompiladas |
+| [`decompiled/`](decompiled/) | Saídas textuais do Ghidra (`*.txt`) |
+| [`tools/`](tools/) | Scripts de extração Ghidra e utilitários de RE |
+| [`update_dangerous_registers.py`](update_dangerous_registers.py) · [`init_database.py`](init_database.py) | Manutenção do banco |
 
 ```bash
-# Build completo (do zero ao PS4)
-sudo ./00-build-kernel.sh && \
-sudo ./01-build-image.sh && \
-sudo ./02-burn-image.sh /dev/sda
+# Antes de qualquer varredura nova ao vivo (cada uma custa um power cycle):
+sqlite3 consolidado/ps4_hardware_memory.db ".tables"
+sqlite3 consolidado/ps4_hardware_memory.db \
+  "SELECT addr_hex, role, status FROM decompiled_functions WHERE status='pendente' ORDER BY addr_hex;"
+```
 
-# Build kernel apenas
-sudo ./00-build-kernel.sh
+---
 
-# SSH
-ssh root@192.168.6.128    # senha: ps4
+## 5. Planos e relatórios (`docs/`)
 
-# UART (headless)
-screen /dev/ttyUSB0 115200
+**`docs/planos/`** — frentes de investigação/implementação:
 
-# Netconsole (PC host)
-nc -u -l -p 6666
+| Arquivo | Tema |
+|---------|------|
+| `PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md` | GBE/`eth0` (plano ativo consolidado) |
+| `PLANO_INVESTIGACAO_CHAVE_PFS_SDA_2026-07-30.md` | Decriptação do HD interno (chave EAP, tweak XTS) |
+| `PLANO_MONTAGEM_NATIVA_HD_INTERNO_SDA.md` | Montagem nativa das partições PFS do HD interno |
+| `PLANO_MONTAGEM_NATIVA_NEMO_NAUTILUS_FUSE.md` | Driver FUSE `ps4_pfs_fuse` |
+| `PLANO_RTC_FINALIZACAO_2026-08-01.md` | RTC via ICC (Fase 4) |
+| `PLANO_KVM_PS4_VIABILIDADE_2026-07-24.md` | Viabilidade do KVM-AMD |
+| `PLANO_KEXEC_WARM_REBOOT_2026-07-27.md` | `kexec` a partir do Linux nativo |
+| `DESCOBERTA_SATA_MSI_MASKING_2026-07-29.md` | Descoberta (não plano): mascaramento MSI do AHCI |
 
-# EDID raw
-cat /sys/bus/i2c/devices/3-0050/eeprom | xxd
+**`docs/relatorios/`** — resultados de testes ao vivo (PHY, Clause 22, RX OWN, tail pointer,
+subnet `eth0`). São registros datados; o estado consolidado fica no SQLite e no `BACKLOG.md`.
 
-# Status vídeo
-cat /sys/class/drm/card0-HDMI-A-1/{status,enabled,modes}
+---
 
-# Boot args atuais
+## 6. Diretórios do `consolidado/`
+
+| Diretório | Conteúdo | Versionado? |
+|-----------|----------|-------------|
+| `decompiled/` | Saídas do Ghidra + `INDEX.md` | Sim (texto) |
+| `tools/` | Scripts Ghidra (`ghidra_scripts/`), brute-force XTS | Sim |
+| `obsoleto/` | Documentos superados (planos refutados, README do Arch Base v2, `CABO_UART.md`, `BAIKAL_STATUS.md`, entre outros). Mantidos só como histórico | Sim |
+| `dumps_orbis/` | `kmem_dump_1252.bin` e afins | **Não** (gitignored, ~32 MB) |
+| `firmware_gladius_real/` | Blobs de firmware da GPU | **Não** (gitignored) |
+| `dmesg_ps4/`, `pictures/`, `payload_output/` | Capturas de dmesg, fotos do console, saídas de payload | Local |
+| `__pycache__/`, `rootfs.img` | Artefatos de execução | Ignorados |
+
+---
+
+## 7. Cheat sheet
+
+```bash
+# --- Acesso ao console ---
+sshpass -p ps4 ssh root@192.168.6.128      # WiFi (administração)
+ping 192.168.0.2                           # eth0 do PS4 (rede sob teste, host 192.168.0.1)
+
+# --- Build / deploy (SEMPRE pelos scripts oficiais) ---
+cd distros/arch_minimal_v2
+sudo ./00-build-kernel-7.0.sh <TAG>        # kernel (ThinLTO, Baikal)
+sudo ./01-build-image-7.0.sh               # rootfs Arch + initramfs
+sudo ./02-burn-image-7.0.sh /dev/sdX       # particiona + grava (label psxitarch!)
+sudo ./deploy-boot-7.0.sh <TAG>            # só o boot, mantém rootfs
+../../scripts/promote-release.sh <TAG>     # promove tag testada para RELEASE/
+
+# --- Driver mts.ko ---
+sudo scripts/build_mts_module.sh
+scripts/deploy_mts.sh push && scripts/deploy_mts.sh test
+
+# --- UART TTL ---
+scripts/uart_start.sh 900 <nome> && tail -f tests/uart_logs/<nome>_*.log
+scripts/uart_stop.sh
+
+# --- Console (dentro do PS4) ---
 cat /proc/cmdline
-
-# VRAM info
-cat /sys/kernel/debug/dri/0/amdgpu_vram_mm 2>/dev/null
+cat /sys/class/drm/card0-HDMI-A-1/{status,enabled,modes}
+dmesg | grep -Ei 'ata1|ahci|mts|rtc'
 ```
 
 ---
 
-## 🚀 ROADMAP DE LEITURA RECOMENDADO
+## 8. Manutenção deste índice
 
-### Nível 1: Iniciante (30 min)
-- [ ] README.md
-- [ ] MASTER_CONSOLIDADO.md seções 1-3
-
-### Nível 2: Intermediário (2-3 horas)
-- [ ] INSTRUCOES.md
-- [ ] MASTER_CONSOLIDADO.md completo
-- [ ] BOOTARGS.md
-- [ ] LICOES_APRENDIDAS.md
-
-### Nível 3: Avançado (6+ horas)
-- [ ] Tudo acima +
-- [ ] PS4_HARDWARE_DOCS.md
-- [ ] ROTEIRO_KERNEL.md
-- [ ] MONITOR_INFO.md (se ajustando vídeo)
-- [ ] DUMP_FIRMWARE_ORBIS.md (se reverse engineering)
-
-### Nível 4: Expert (especialização)
-- [ ] Código-fonte nos repositórios GitHub
-- [ ] Kernel source: `arch/x86/boot/`, `drivers/gpu/drm/amd/`
-- [ ] Payloads: `ps4-linux-payloads/linux/main-aio.c`
-
----
-
-## 📝 NOTAS IMPORTANTES
-
-### ✅ O QUE DEVE ESTAR AQUI (atualizado 2026-07-25 — bloco anterior descrevia a era kernel 5.4, obsoleto)
-- ✅ Boot completo (kernel 7.0 Baikal, `7.0.8-Strawberry-ThinLTO-Baikal-+`, baseline `v7.0-20260722-clean-video-ok`)
-- ✅ WiFi + SSH funcional (192.168.6.128)
-- ✅ Vídeo HDMI 1080p60 + EDID firmware
-- ✅ Áudio HDMI (snd_hda_intel)
-- ✅ RTC via time= no payload
-- ✅ SATA, USB 3.0, SD/MMC
-- ✅ GPU Gladius (amdgpu, 32 CUs, OpenGL 4.5 @ 55 FPS)
-- ✅ Kernel Dump 12.52 via TCP (`scene-kmem-dumper` porta 9020) — concluído 2026-07-20
-
-### ❌ O QUE NÃO FUNCIONA AINDA
-- ❌ UART + vídeo simultaneamente (conflito Baikal)
-- ❌ Dumper USB para kernel 12.52 (`jailbreak()` corrompe `rootvnode` — irrelevante agora, substituído pelo dumper TCP)
-- ❌ Ethernet GBE — RX (bloqueador atual: PHY nunca sai de power-down, MDIO Clause 45/22 sempre zero/timeout)
-
-### 🔄 EM PROGRESSO
-- 🔄 Ethernet GBE — driver próprio `mts.ko` (não é `sky2`; MAC ligado via ICC, TX por software ~95%, PHY mudo é o bloqueador). Ver `../PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md`.
-- 🔄 WiFi/BT: dados de manufatura/regdomain (baixa prioridade)
-- 🔄 Mesa/Vulkan RADV otimizado
-
----
-
-## 🔗 CONSOLIDAÇÃO DE DUPLICATAS
-
-| Duplicata Original | Consolidado em | Status |
-|-------------------|-----------------|--------|
-| `distros/arch_minimal_v2/LICOES_APRENDIDAS.md` | `consolidado/LICOES_APRENDIDAS.md` | ✅ Mantido (consolidado) |
-| `distros/arch_minimal_v2/README.md` | Integrado em `MASTER_CONSOLIDADO.md` + quick start em `README.md` | ✅ Consolidado |
-| `distros/arch_minimal_v2/PS4_HARDWARE_DOCS.md` | `consolidado/PS4_HARDWARE_DOCS.md` | ✅ Copiado |
-| `monitor_edid/MONITOR_INFO.md` | `consolidado/MONITOR_INFO.md` | ✅ Copiado |
-
-**Recomendação**: Manter versão em consolidado como canonical; subpastas podem referenciar com symlink ou README.
-
----
-
-## 📞 SUPORTE & TROUBLESHOOTING
-
-Se algo não funcionar:
-
-1. **Vídeo preto**: Consulte **MONITOR_INFO.md** + **BOOTARGS.md**
-2. **Boot falha**: Consulte **LICOES_APRENDIDAS.md** + **CABO_UART.md** (debug)
-3. **Rede não funciona**: Consulte **COMUNICACAO_PS4.md** + **BAIKAL_HARDWARE_DISCOVERIES.md**
-4. **Kernel falha**: Consulte **KERNELS.md** + **ROTEIRO_KERNEL.md**
-5. **Dúvida geral**: Consulte **MASTER_CONSOLIDADO.md** seção 11 (problemas conhecidos)
-
----
-
-> **Última revisão**: 2026-07-16  
-> **Consolidação**: Documentação de 21 arquivos consolidada em um índice único com referências cruzadas.  
-> **Manutenção**: Atualizar este arquivo ao adicionar/remover documentação.
+- Arquivo novo em `consolidado/` → adicionar na seção correspondente **na mesma alteração**.
+- Arquivo superado → mover para `consolidado/obsoleto/` e ajustar aqui (não apagar histórico).
+- Pendência → só no `BACKLOG.md`. Regra → só no `AGENTS.md`. Narrativa → `ESTADO_E_HISTORICO.md`.
+- Depois de mexer em qualquer `.md`, conferir os links relativos (todo destino de link deve
+  resolver a partir da pasta do próprio arquivo) e a existência de cada arquivo citado. Usar
+  caminho relativo, nunca `file://` nem caminho absoluto de máquina.

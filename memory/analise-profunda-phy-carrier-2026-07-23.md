@@ -187,9 +187,9 @@ E chamar de `mts_mac_enable()` ou de `mts_open()` após ligar o MAC.
 
 ## 7. Referências
 
-- [MTS_INIT_SEQUENCE_dc5a31f0.md](file:///mnt/t/downloads/PS4/linux_in_ps4/consolidado/MTS_INIT_SEQUENCE_dc5a31f0.md) — Sequência de init MAC
+- [MTS_INIT_SEQUENCE_dc5a31f0.md](../consolidado/MTS_INIT_SEQUENCE_dc5a31f0.md) — Sequência de init MAC
 - `consolidado/decompiled_dc5a0ba0_gbe_phy_calib.txt` — Decompilação completa da PHY calibration
-- [mts.c:379-424](file:///mnt/t/downloads/PS4/linux_in_ps4/drivers_mts/mts.c#L379-424) — `mts_link_check()` atual (só lê, não inicializa)
+- [mts.c:379-424](../drivers_mts/mts.c#L379-424) — `mts_link_check()` atual (só lê, não inicializa)
 
 ---
 
