@@ -6,8 +6,26 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# Frente 2 (distro) — usada no fallback de config versionada (RELEASE/v1.0.0)
+# e nos caminhos das instruções finais. Não é validada de propósito: o build
+# do kernel em si não depende dela.
+DISTRO_DIR="$SCRIPT_DIR/../distro"
 KERNEL_SRC_DIR="/mnt/hdauxiliar/temp/kernel_build_7.0"
-REPO_URL="https://github.com/rmuxnet/linux.git"
+# ── Origem do código do kernel ─────────────────────────────────────────────
+# A ÁRVORE LOCAL em $KERNEL_SRC_DIR é a FONTE DA VERDADE do código desde
+# 2026-11-11. Motivo (investigado ao vivo nesta data):
+#   github.com/rmuxnet/linux  → HTTP 404, repositório apagado;
+#   gitlab.com/rmuxnet/linux  → vivo (projeto "PS4 Strawberry Kernel"), mas
+#     publica SÓ o branch `ps4/7.3.3` (kernel 7.3.3). O nosso
+#     `baikal/7.0.8-Stable` não é mais publicado lá, embora o commit base
+#     d8cbb8e91 continue existindo no histórico do GitLab.
+# Além disso nós divergimos do upstream de propósito (patches em patches/ e
+# drivers_mts/), então build reprodutível = esta árvore + os patches, sem
+# depender de rede. As URLs abaixo ficam apenas como REGISTRO HISTÓRICO de
+# onde o código veio; NÃO são usadas para obter código. Se a árvore sumir,
+# restaure do snapshot (ver kernel/README.md).
+UPSTREAM_URL_HISTORICO="https://gitlab.com/rmuxnet/linux.git"  # vivo, sem o nosso branch
+UPSTREAM_URL_ANTIGO="https://github.com/rmuxnet/linux.git"     # 404 desde 2026-11
 BRANCH="baikal/7.0.8-Stable"
 
 # TAG identifica esta variante de build (ex: "sky2builtin", "baseline").
@@ -55,67 +73,67 @@ cleanup_build_dir() {
 trap cleanup_build_dir EXIT INT TERM
 
 # 🔴 REGRA CRÍTICA (AGENTS.md "Idempotência de Alterações no Kernel"):
-# git reset --hard / git clean -fdx descartam SILENCIOSAMENTE qualquer mudança
-# não commitada em arquivos rastreados. Isso já causou perda real de trabalho
-# (SATA polling de 2026-07-30, nunca extraído para patches/, perdido no build
-# de 2026-08-01). Chamar esta função IMEDIATAMENTE ANTES de cada reset/clean
-# real força a extração ANTES da perda. NÃO chamar antes disso — no caminho
-# incremental (LOCAL==REMOTE, nenhum reset acontece), os patches já aplicados
-# em rodadas anteriores deixam drivers/ata/etc "sujos" de propósito (git apply
-# sem commit, por design), e isso é esperado/seguro ali, não motivo de abortar.
-abort_if_kernel_tree_dirty() {
-  local dirty
-  dirty=$(git status --porcelain --untracked-files=no -- drivers/ arch/ include/ 2>/dev/null)
-  if [ -n "$dirty" ]; then
-    echo ""
-    echo "❌ ERRO: mudanças NÃO commitadas detectadas em arquivos rastreados do kernel:"
-    echo "$dirty"
-    echo ""
-    echo "Este comando vai rodar 'git reset --hard'/'git clean -fdx', que APAGA"
-    echo "essas mudanças sem aviso. Antes de continuar:"
-    echo "  1. Gere um patch real (não escrito à mão):"
-    echo "       git diff HEAD -- <arquivos> > $SCRIPT_DIR/patches/<nome>.patch"
-    echo "  2. Valide que compila isoladamente:"
-    echo "       make CC=\"ccache clang\" LLVM=1 ARCH=x86_64 <arquivo>.o"
-    echo "  3. Adicione a aplicação do patch a este script (ver bloco RTC/SATA"
-    echo "     como exemplo), para que sobreviva ao próximo reset."
-    echo "  4. Só então rode este script de novo."
-    echo ""
-    echo "Abortando para não repetir a perda de 2026-08-01 (memory/regressao-sata-2026-08-01-diagnostico-e-solucao.md)."
-    exit 1
-  fi
+# git reset --hard / git clean -fdx descartam qualquer mudança não commitada em
+# arquivos rastreados. Isso já causou perda real de trabalho (SATA polling de
+# 2026-07-30, nunca extraído para patches/, perdido no build de 2026-08-01).
+#
+# Antes de resetar, esta função SALVA o estado (diff + untracked) num diretório
+# com timestamp e imprime o caminho — nada é apagado em silêncio. Ela não aborta
+# mais: agora que a árvore local é a fonte da verdade, os patches aplicados de
+# rodadas anteriores deixam drivers/ata/etc "sujos" de propósito (git apply sem
+# commit, por design) — abortar tornaria o build impossível a partir do segundo
+# run. O que a regra exige é "extrair ANTES da perda", não "abortar".
+KERNEL_BACKUP_DIR="/mnt/hdauxiliar/temp/kernel_tree_backups"
+save_dirty_state() {
+  local ts dir
+  ts="$(date +%Y%m%d-%H%M%S)"
+  dir="$KERNEL_BACKUP_DIR/pre-reset-$ts"
+  mkdir -p "$dir"
+  git diff HEAD > "$dir/HEAD.patch" || true
+  git status --porcelain > "$dir/git-status.txt" || true
+  git ls-files --others --exclude-standard -z \
+    | tar -czf "$dir/untracked.tar.gz" --null -T - 2>/dev/null || true
+  echo "  ⚠ estado não commitado salvo em: $dir"
+  echo "    (HEAD.patch, git-status.txt, untracked.tar.gz)"
 }
 
 echo "=== Configurando diretório de build ==="
 cleanup_build_dir
-if [ -d "$KERNEL_SRC_DIR" ]; then
-  cd "$KERNEL_SRC_DIR"
 
-  CURRENT_BRANCH=$(git branch --show-current 2>/dev/null || echo "")
-  if [ "$CURRENT_BRANCH" = "$BRANCH" ] && [ -f ".config" ] && [ -f "vmlinux" ]; then
-    echo "Build anterior encontrado no branch $BRANCH, aproveitando cache..."
-    git fetch origin
-    LOCAL=$(git rev-parse HEAD)
-    REMOTE=$(git rev-parse "origin/$BRANCH")
-    if [ "$LOCAL" = "$REMOTE" ]; then
-      echo "Código já atualizado, build incremental será usado."
-    else
-      echo "Atualizando para origin/$BRANCH..."
-      git merge --ff-only "origin/$BRANCH" || { abort_if_kernel_tree_dirty; git reset --hard "origin/$BRANCH"; }
-    fi
-  else
-    echo "Limpando build anterior (branch ou config diferente)..."
-    git fetch origin
-    git checkout "$BRANCH"
-    abort_if_kernel_tree_dirty
-    git reset --hard "origin/$BRANCH"
-    git clean -fdx
-  fi
-else
-  echo "Clonando o repositório do kernel..."
-  git clone "$REPO_URL" "$KERNEL_SRC_DIR" --depth 1 -b "$BRANCH"
-  cd "$KERNEL_SRC_DIR"
+if [ ! -d "$KERNEL_SRC_DIR/.git" ]; then
+  echo "❌ ERRO: árvore do kernel ausente em $KERNEL_SRC_DIR"
+  echo ""
+  echo "A árvore local é a fonte da verdade do código: o upstream não publica"
+  echo "mais o branch $BRANCH (ver comentário no topo deste script)."
+  echo "Restaure do snapshot mais recente:"
+  echo "  ls -1t /mnt/hdauxiliar/kernel_source_snapshots/kernel-src-*.tar.zst | head -1"
+  echo "  sudo tar -I zstd -xf <snapshot> -C $(dirname "$KERNEL_SRC_DIR")"
+  echo "Ver kernel/README.md, seção 'Restaurar a árvore a partir de um snapshot'."
+  exit 1
 fi
+
+cd "$KERNEL_SRC_DIR"
+
+CURRENT_BRANCH="$(git branch --show-current 2>/dev/null || echo "")"
+if [ "$CURRENT_BRANCH" != "$BRANCH" ]; then
+  echo "Branch local '$CURRENT_BRANCH' != '$BRANCH' — trocando para $BRANCH (local)."
+  git checkout "$BRANCH"
+fi
+
+echo "Fonte: árvore local $KERNEL_SRC_DIR @ $(git rev-parse --short HEAD) (branch $BRANCH)"
+if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+  echo "Mudanças não commitadas na árvore (patches de rodada anterior) — salvando antes do reset."
+  save_dirty_state
+fi
+
+echo "Resetando para o HEAD local e limpando artefatos (árvore prístina)..."
+git reset --hard HEAD
+# -e .config        : config do baseline (não rastreado pelo git)
+# -e extra_firmware : firmwares embutidos (sd8897/sd8797/mt7668). O
+#   sd8797_uapsta.bin (Orbis/WiFi) NÃO existe em nenhum outro lugar — um
+#   'git clean -fdx' sem este -e apagaria a única cópia que temos (verificado
+#   2026-11-11; backup em /mnt/hdauxiliar/temp/backup_kernel_tree_20261111/).
+git clean -fdx -e .config -e extra_firmware
 
 # RTC via ICC (drivers/rtc/rtc-ps4-icc.c + Kconfig/Makefile + wrapper
 # ps4_icc_rtc_cmd() em drivers/ps4/) é aplicado inteiramente pelo patch
@@ -160,8 +178,15 @@ mkdir -p extra_firmware/{mrvl,mediatek,amdgpu}
 # Firmware Marvell (Aeolia/Belize WiFi) - necessário mesmo no Baikal (CONFIG_EXTRA_FIRMWARE)
 if [ ! -f "extra_firmware/mrvl/sd8897_uapsta.bin" ]; then
   echo "Baixando sd8897_uapsta.bin..."
-  curl -L -o extra_firmware/mrvl/sd8897_uapsta.bin \
-    "https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git/plain/mrvl/sd8897_uapsta.bin"
+  # --fail: sem ele, um HTTP 404/500 grava o corpo do erro e retorna 0 — o
+  # teste -f da próxima rodada passaria e o firmware quebrado iria pro build.
+  curl --fail -L -o extra_firmware/mrvl/sd8897_uapsta.bin \
+    "https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git/plain/mrvl/sd8897_uapsta.bin" \
+    && [ -s extra_firmware/mrvl/sd8897_uapsta.bin ] || {
+      echo "❌ ERRO FATAL: download de sd8897_uapsta.bin falhou ou gerou arquivo vazio."
+      rm -f extra_firmware/mrvl/sd8897_uapsta.bin
+      exit 1
+    }
 fi
 
 if [ ! -f "extra_firmware/mrvl/sd8797_uapsta.bin" ]; then
@@ -197,8 +222,13 @@ fi
 # Firmware MediaTek MT7668 (Baikal WiFi/BT)
 if [ ! -f "extra_firmware/mediatek/mt7668pr2h.bin" ]; then
   echo "Baixando mt7668pr2h.bin..."
-  curl -L -o extra_firmware/mediatek/mt7668pr2h.bin \
-    "https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git/plain/mediatek/mt7668pr2h.bin"
+  curl --fail -L -o extra_firmware/mediatek/mt7668pr2h.bin \
+    "https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git/plain/mediatek/mt7668pr2h.bin" \
+    && [ -s extra_firmware/mediatek/mt7668pr2h.bin ] || {
+      echo "❌ ERRO FATAL: download de mt7668pr2h.bin falhou ou gerou arquivo vazio."
+      rm -f extra_firmware/mediatek/mt7668pr2h.bin
+      exit 1
+    }
 fi
 
 # Firmware AMD GPU gladius: NÃO embutir no kernel (CONFIG_EXTRA_FIRMWARE).
@@ -214,10 +244,19 @@ fi
 echo "=== Configurando build para Baikal ==="
 cd "$KERNEL_SRC_DIR"
 
-# Mover config base (usando a referência sky2len-fix se disponível)
+# Mover config base, em ordem de preferência:
+#  1. Referência histórica 20260720-sky2len-fix em boot_referencia/ — PERDIDA
+#     em 2026-11-11 junto com o resto de boot_referencia/ (ver nota "ESTADO DOS
+#     ARTEFATOS" no AGENTS.md); mantida aqui caso ressurja de algum backup.
+#  2. Config versionada distro/RELEASE/v1.0.0/ (origem 20260801-kvm-rtc-sata-final)
+#     — única garantida de existir num clone novo, por estar no git.
+#  3. 'config' na raiz da árvore, ou '.config' existente (build incremental).
 if [ -f "$SCRIPT_DIR/boot_referencia/config-7.0-20260720-sky2len-fix" ]; then
   echo "Usando config de referência 20260720-sky2len-fix..."
   cp -f "$SCRIPT_DIR/boot_referencia/config-7.0-20260720-sky2len-fix" .config
+elif [ -f "$DISTRO_DIR/RELEASE/v1.0.0/config-7.0-v1.0.0" ]; then
+  echo "Usando config versionada distro/RELEASE/v1.0.0 (fallback — baselines 202607* perdidas)..."
+  cp -f "$DISTRO_DIR/RELEASE/v1.0.0/config-7.0-v1.0.0" .config
 elif [ -f "config" ]; then
   mv -f config .config
 elif [ -f ".config" ]; then
@@ -411,6 +450,26 @@ scripts/config --set-str CONFIG_EXTRA_FIRMWARE_DIR "extra_firmware"
 #    pelo kexec.
 #  - Marvell WiFi (Aeolia/Belize) + MediaTek MT7668 completo (Baikal) — replicando o que o 5.4 neocine embutia p/ WiFi funcionar
 scripts/config --set-str CONFIG_EXTRA_FIRMWARE "mrvl/sd8897_uapsta.bin mrvl/sd8797_uapsta.bin mediatek/mt7668pr2h.bin EEPROM_MT7668.bin EEPROM_MT7668_e1.bin mt7668_patch_e1_hdr.bin mt7668_patch_e2_hdr.bin TxPwrLimit_MT76x8.dat wifi.cfg WIFI_RAM_CODE2_SDIO_MT7668.bin WIFI_RAM_CODE2_USB_MT7668.bin WIFI_RAM_CODE_MT7668.bin"
+
+# Verificar CEDO que TODOS os firmwares embutidos existem — o script garante
+# só sd8897/sd8797/mt7668pr2h; os demais (EEPROM_*, mt7668_patch_*,
+# WIFI_RAM_*, wifi.cfg...) só existem porque o 'git clean -e extra_firmware'
+# preserva o diretório na árvore. Sem esta checagem, a falha só aparece no
+# meio do make com erro críptico do kbuild. A lista é lida do .config (fonte
+# única — sem duplicar a literal acima).
+echo "=== Verificando firmwares de CONFIG_EXTRA_FIRMWARE ==="
+EXTRA_FW_LIST="$(sed -n 's/^CONFIG_EXTRA_FIRMWARE="\(.*\)"/\1/p' .config)"
+FW_MISSING=""
+for fw in $EXTRA_FW_LIST; do
+  [ -s "extra_firmware/$fw" ] || FW_MISSING="$FW_MISSING $fw"
+done
+if [ -n "$FW_MISSING" ]; then
+  echo "❌ ERRO FATAL: firmwares ausentes/vazios em extra_firmware/:"
+  for fw in $FW_MISSING; do echo "   - $fw"; done
+  echo "  Restaure-os na árvore (snapshot/backup) ou remova-os de CONFIG_EXTRA_FIRMWARE."
+  exit 1
+fi
+echo "✓ Todos os firmwares de CONFIG_EXTRA_FIRMWARE presentes"
 
 # --- Perfil General + ThinLTO + Baikal, incorporado do build.sh upstream em
 # 2026-07-22 (ver comentário do `rm -f build.sh` acima). Fixo — este projeto
@@ -673,6 +732,13 @@ if [ -f "$BZIMAGE" ]; then
   
   # Tamanho
   ls -lh "$OUTPUT_BZIMAGE"
+
+  # Lição #23 (consolidado/LICOES_APRENDIDAS.md): alguns loaders de kexec do
+  # PS4 rejeitam bzImage acima de ~10 MB. Avisar aqui, não no boot.
+  BZSIZE="$(stat -c%s "$OUTPUT_BZIMAGE")"
+  if [ "$BZSIZE" -gt 10485760 ]; then
+    echo "⚠⚠ AVISO: bzImage com $((BZSIZE / 1024 / 1024)) MiB — ACIMA do limite de ~10 MB de alguns loaders kexec do PS4!"
+  fi
 else
   echo "ERRO: bzImage não encontrado em $BZIMAGE"
   exit 1
@@ -715,6 +781,6 @@ echo "  $OUTPUT_CONFIG"
 echo ""
 echo "Próximos passos:"
 echo "  1. Crie/ajuste boot_referencia/bootargs-7.0-$TAG.txt"
-echo "  2. sudo ./deploy-boot-7.0.sh $TAG   (só troca o boot no HD já particionado, mantém rootfs)"
+echo "  2. sudo $DISTRO_DIR/deploy-boot-7.0.sh $TAG   (só troca o boot no HD já particionado, mantém rootfs)"
 echo "     — ou, para gravação completa (particiona e recria rootfs):"
-echo "     sudo ./01-build-image-7.0.sh && sudo ./02-burn-image-7.0.sh /dev/sda"
+echo "     sudo $DISTRO_DIR/01-build-image-7.0.sh && sudo $DISTRO_DIR/02-burn-image-7.0.sh /dev/sda"
