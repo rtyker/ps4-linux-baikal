@@ -1,9 +1,9 @@
 # Kernel 7.0 — Baikal (frente 1)
 
 Build do kernel Linux **7.0.8-Strawberry-ThinLTO-Baikal-+** para o PS4 Slim/Pro
-Baikal (CUH-2xxx), mais tudo o que existe para descobrir e validar o hardware
-dele: patches, driver `mts.ko`, engenharia reversa do kernel Orbis, banco de
-registradores e diagnósticos.
+Baikal (CUH-2xxx). Na raiz desta frente fica só o que participa do build e dos
+patches; todo o resto (RE, dumps, docs, diagnósticos, memória de sessão) foi
+separado em [`outros/`](outros/) para revisão/reorganização.
 
 > A distro que roda **em cima** deste kernel é a frente 2, em [`../distro/`](../distro/).
 
@@ -13,6 +13,10 @@ registradores e diagnósticos.
 cd kernel
 sudo ./00-build-kernel-7.0.sh [TAG]   # sem TAG usa <data>-sky2builtin
 ```
+
+Antes de tocar na árvore, um **preflight** somente-leitura valida ferramentas
+(`clang`, `ld.lld`, `ccache`, `zstd`, `pahole`, `flex`...), espaço livre
+(≥ 10 GiB), patches, `config` e os 12 firmwares — falha cedo com mensagem clara.
 
 O script:
 1. Reseta a árvore **local** do kernel em `kernel/kernels/kernel_build_7.0`
@@ -79,12 +83,7 @@ make -j2 LLVM=1 CC="ccache clang" ARCH=x86_64 prepare                       # ~2
 | `drivers_mts/` | Driver Ethernet GBE do Baikal (`mts.ko`), escrito do zero |
 | `boot_referencia/` | Artefatos de boot por tag (gitignored, gerado pelo build) |
 | `kernels/` | Árvore fonte do kernel + backups pré-reset + ccache (gitignored — criado localmente, não vem no clone) |
-| `scripts/` | Diagnóstico e validação: `build_mts_module.sh`, `deploy_mts.sh`, UART (`uart_start/stop/capture`), netconsole, telnet, Ghidra |
-| `consolidado/` | Documentação consolidada, **SQLite de RE** (`ps4_hardware_memory.db`), decompilado, `obsoleto/` |
-| `memory/` | Registro cronológico por sessão (índice em `memory/MEMORY.md`) |
-| `docs/` | `planos/` (frentes ativas) e `relatorios/` (resultados de teste) + docs legados (`MIGRACAO_7.0.md`, `TENTATIVAS_7.0.md`) |
-| `tools/` | Harnesses de varredura de registradores e `ps4_hdd_tools` (PFS/EAP) |
-| `tests/` | Capturas UART e ciclos de teste |
+| `outros/` | **Fora do build** (separado para revisão): `scripts/` de diagnóstico, `consolidado/` (RE, SQLite, decompilado, dumps Orbis, payloads), `memory/`, `docs/`, `tools/` (harnesses, `ps4_hdd_tools`) e `tests/` |
 
 ## Regras que valem para esta frente
 
@@ -93,5 +92,5 @@ make -j2 LLVM=1 CC="ccache clang" ARCH=x86_64 prepare                       # ~2
   revalidar `git apply --check` de árvore limpa, e só então rodar o build.
 - **Proibido** heredoc/`sed` inline no script de build para injetar código.
 - Antes de qualquer varredura de registradores ao vivo, consultar o SQLite
-  (`consolidado/ps4_hardware_memory.db`) — cada teste custa um power cycle.
+  (`outros/consolidado/ps4_hardware_memory.db`) — cada teste custa um power cycle.
 - Regras completas e procedimentos: [`../AGENTS.md`](../AGENTS.md).

@@ -45,9 +45,9 @@ def fetch_firmware():
     b64_str = "".join(b64_lines)
     raw_tar = base64.b64decode(b64_str)
     
-    # Saída na frente 1 (dados de RE): distro/scripts/ -> kernel/consolidado/
+    # Saída na frente 1 (dados de RE): distro/scripts/ -> kernel/outros/consolidado/
     out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                           "..", "..", "kernel", "consolidado", "firmware_gladius_real")
+                           "..", "..", "kernel", "outros", "consolidado", "firmware_gladius_real")
     os.makedirs(out_dir, exist_ok=True)
     
     with tarfile.open(fileobj=io.BytesIO(raw_tar), mode="r:gz") as tar:

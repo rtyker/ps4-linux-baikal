@@ -1,0 +1,21 @@
+
+int fcn.ffffffffdc7c8a70(int64_t arg1,int64_t arg2,int64_t arg3)
+
+{
+    int iVar1;
+    int64_t iVar2;
+    
+    iVar2 = fcn.ffffffffdc359520(0xfe0,0xffffffffdddcd240,0x102);
+    *arg3 = 0;
+    *(iVar2 + 1) = 5;
+    *(iVar2 + 2) = arg1;
+    *(iVar2 + 8) = 0x20;
+    *(iVar2 + 0xc) = arg2;
+    iVar1 = fcn.ffffffffdc797090(iVar2,iVar2 + 0x7f0);
+    if (iVar1 != 0) {
+        *arg3 = *(iVar2 + 0x7fc);
+    }
+    fcn.ffffffffdc3596e0(iVar2,0xffffffffdddcd240);
+    return iVar1;
+}
+

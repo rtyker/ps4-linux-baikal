@@ -40,7 +40,7 @@ conhece rootfs. `PS4_BOOT_REF` permite apontar a distro para outro conjunto de a
 | **Ethernet cabeada (`eth0`)** | ⚠️ parcial | Driver próprio `mts.ko` liga MAC e DMA, mas o PHY nunca sai de power-down (bloqueador de firmware, investigação encerrada) |
 | **Desligamento total (S5)** | ⚠️ parcial | `poweroff` encerra o SO; a luz azul não apaga sozinha |
 
-Detalhamento, causa raiz e o que já foi descartado: [`kernel/consolidado/BACKLOG.md`](kernel/consolidado/BACKLOG.md).
+Detalhamento, causa raiz e o que já foi descartado: [`kernel/outros/consolidado/BACKLOG.md`](kernel/outros/consolidado/BACKLOG.md).
 
 ## Release
 

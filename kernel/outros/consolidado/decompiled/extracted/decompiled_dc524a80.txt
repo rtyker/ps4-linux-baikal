@@ -1,0 +1,22 @@
+// Extraido por Ghidra headless (ExtractMtsNamespaceNoAnalysis.java)
+// addr: 0xffffffffdc524a80  name: FUN_ffffffffdc524a80  size: 22
+// escopo: lacuna MTS/GBE/ICC/glue identificada em testes ao vivo
+// chamadores (0):
+// chamadas (0):
+
+
+int FUN_ffffffffdc524a80(void)
+
+{
+  int iVar1;
+  
+  iVar1 = func_0xffffffffdc3c8450();
+  if (iVar1 == 0) {
+    iVar1 = 0;
+  }
+  else {
+    func_0xffffffffdc734150();
+  }
+  return iVar1;
+}
+

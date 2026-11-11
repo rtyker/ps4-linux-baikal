@@ -1,0 +1,82 @@
+
+uint64_t fcn.ffffffffdc6df850(void)
+
+{
+    uint32_t *puVar1;
+    uint32_t uVar2;
+    uint64_t uVar3;
+    
+    uVar3 = fcn.ffffffffdc526e40();
+    if (uVar3 != 0x30000) {
+        return uVar3;
+    }
+    fcn.ffffffffdc6dfb60(0x4000);
+    fcn.ffffffffdc718710(0x24,1);
+    fcn.ffffffffdc718710(100,1);
+    uVar2 = fcn.ffffffffdc7187d0(0x4020);
+    fcn.ffffffffdc718800(0x4020,uVar2 & 0xfffffffe);
+    uVar2 = fcn.ffffffffdc7187d0(0x4020);
+    fcn.ffffffffdc718800(0x4020,uVar2 & 0xffffffef);
+    fcn.ffffffffdc6dfb60(0x4400);
+    fcn.ffffffffdc718710(0x28,1);
+    fcn.ffffffffdc718710(0x68,1);
+    uVar2 = fcn.ffffffffdc7187d0(0x4420);
+    fcn.ffffffffdc718800(0x4420,uVar2 & 0xfffffffe);
+    uVar2 = fcn.ffffffffdc7187d0(0x4420);
+    fcn.ffffffffdc718800(0x4420,uVar2 & 0xffffffef);
+    fcn.ffffffffdc6dfb60(0x3800);
+    fcn.ffffffffdc718710(0x2c,1);
+    fcn.ffffffffdc718710(0x6c,1);
+    uVar2 = fcn.ffffffffdc7187d0(0x3820);
+    fcn.ffffffffdc718800(0x3820,uVar2 & 0xfffffffe);
+    uVar2 = fcn.ffffffffdc7187d0(0x3820);
+    fcn.ffffffffdc718800(0x3820,uVar2 & 0xffffffef);
+    fcn.ffffffffdc6dfb60(0x4800);
+    fcn.ffffffffdc718710(0x30,1);
+    fcn.ffffffffdc718710(0x70,1);
+    uVar2 = fcn.ffffffffdc7187d0(0x4820);
+    fcn.ffffffffdc718800(0x4820,uVar2 & 0xfffffffe);
+    uVar2 = fcn.ffffffffdc7187d0(0x4820);
+    fcn.ffffffffdc718800(0x4820,uVar2 & 0xffffffef);
+    fcn.ffffffffdc59fe10();
+    fcn.ffffffffdc6dfb60(0x2000);
+    fcn.ffffffffdc718710(0x20,1);
+    fcn.ffffffffdc718710(0x74,1);
+    uVar2 = fcn.ffffffffdc7187d0(0x2020);
+    fcn.ffffffffdc718800(0x2020,uVar2 & 0xfffffffe);
+    uVar2 = fcn.ffffffffdc7187d0(0x2020);
+    fcn.ffffffffdc718800(0x2020,uVar2 & 0xffffffef);
+    fcn.ffffffffdc6dfb60(0x3c00);
+    fcn.ffffffffdc718710(0x34,1);
+    uVar2 = fcn.ffffffffdc7187d0(0x3c20);
+    fcn.ffffffffdc718800(0x3c20,uVar2 & 0xfffffffe);
+    uVar2 = fcn.ffffffffdc7187d0(0x3c20);
+    fcn.ffffffffdc718800(0x3c20,uVar2 & 0xffffffef);
+    fcn.ffffffffdc6dfb60(0xc00);
+    fcn.ffffffffdc718710(0x14,1);
+    uVar2 = fcn.ffffffffdc7187d0(0xc20);
+    fcn.ffffffffdc718800(0xc20,uVar2 & 0xfffffffe);
+    uVar2 = fcn.ffffffffdc7187d0(0xc20);
+    fcn.ffffffffdc718800(0xc20,uVar2 & 0xffffffef);
+    fcn.ffffffffdc6dfb60(0x1000);
+    fcn.ffffffffdc718710(0x18,1);
+    uVar2 = fcn.ffffffffdc7187d0(0x1020);
+    fcn.ffffffffdc718800(0x1020,uVar2 & 0xfffffffe);
+    uVar2 = fcn.ffffffffdc7187d0(0x1020);
+    fcn.ffffffffdc718800(0x1020,uVar2 & 0xffffffef);
+    fcn.ffffffffdc6dfb60(0x1400);
+    fcn.ffffffffdc718710(0x1c,1);
+    uVar2 = fcn.ffffffffdc7187d0(0x1420);
+    fcn.ffffffffdc718800(0x1420,uVar2 & 0xfffffffe);
+    uVar2 = fcn.ffffffffdc7187d0(0x1420);
+    uVar2 = uVar2 & 0xffffffef;
+    uVar3 = *(*0xffffffffde614e78 + 8);
+    puVar1 = *(uVar3 + 0x10) + 0x141420;
+    if (*(uVar3 + 8) != 0) {
+        *puVar1 = uVar2;
+        return uVar3;
+    }
+    out(puVar1,uVar2);
+    return uVar2;
+}
+

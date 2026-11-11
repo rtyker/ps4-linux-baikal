@@ -1,0 +1,5 @@
+[Thu Jul 23 14:43:53 2026] ACPI: PM: (supports S0 S5)
+[Thu Jul 23 14:43:53 2026] baikal_pcie 0000:00:14.4: icc: SATA power-on OK (reply 20 bytes)
+[Thu Jul 23 14:43:55 2026] [wlan][97]wlanQueryNicCapability:(INIT WARN) wlanQueryNicCapability: skip unexpected event ID[0x27]
+[Thu Jul 23 14:44:00 2026] mts 0000:00:14.1: ICC cmd 4 0x38 (GBE power-on): ret=20 reply=01 tries=1
+[Thu Jul 23 14:44:00 2026] mts 0000:00:14.1: ICC cmd 4 0x38: GBE power-on CONFIRMADO (reply=0x01)

@@ -1,0 +1,38 @@
+// Extraido por Ghidra headless (ExtractMtsNamespaceNoAnalysis.java)
+// addr: 0xffffffffdc460780  name: FUN_ffffffffdc460780  size: 116
+// escopo: lacuna MTS/GBE/ICC/glue identificada em testes ao vivo
+// chamadores (0):
+// chamadas (0):
+
+
+void FUN_ffffffffdc460780
+               (undefined8 param_1,undefined8 param_2,undefined8 param_3,undefined8 param_4,
+               undefined8 param_5,undefined8 param_6)
+
+{
+  code *pcVar1;
+  undefined1 auStack_68 [16];
+  undefined8 uStack_58;
+  undefined8 uStack_50;
+  undefined8 uStack_48;
+  undefined8 uStack_40;
+  undefined8 uStack_38;
+  undefined1 *puStack_30;
+  undefined1 *puStack_28;
+  
+  uStack_58 = param_3;
+  uStack_50 = param_4;
+  uStack_48 = param_5;
+  uStack_40 = param_6;
+  func_0xffffffffdc6b4870();
+  puStack_28 = auStack_68;
+  puStack_30 = &stack0x00000008;
+  uStack_38 = 0x3000000010;
+  func_0xffffffffdc6307c0(0xffffffffde4f1540,0x100,param_2,&uStack_38);
+  func_0xffffffffdc6b4890();
+  func_0xffffffffdc6f2510(&UNK_ffffffffdcae4063,0xffffffffde4f1540);
+                    /* WARNING: Does not return */
+  pcVar1 = (code *)invalidInstructionException();
+  (*pcVar1)();
+}
+

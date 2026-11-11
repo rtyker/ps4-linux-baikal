@@ -28,11 +28,11 @@ dummy_mem.bin
 fake_mem
 
 # --- Dumps de firmware proprietário (kernel Orbis/Ghidra) ---
-kernel/consolidado/dumps_orbis/
-kernel/consolidado/memoriateste.bin
+kernel/outros/consolidado/dumps_orbis/
+kernel/outros/consolidado/memoriateste.bin
 
 # --- Logs de hardware/capturas UART (grandes e efêmeros) ---
-kernel/tests/uart_logs/
+kernel/outros/tests/uart_logs/
 dmesg_output/
 netconsole_ps4_captures/
 
@@ -78,7 +78,7 @@ distro/winesapos/
 kernel/boot_referencia/
 kernel/extra_firmware/
 kernel/drivers_mts/build/
-kernel/consolidado/tools/ghidra_project/
+kernel/outros/consolidado/tools/ghidra_project/
 
 # --- Frente 2: distro/ ---
 distro/arch_minimal_v2-7.0.tar

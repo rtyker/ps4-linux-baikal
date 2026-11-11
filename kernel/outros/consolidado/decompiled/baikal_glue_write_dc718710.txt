@@ -1,0 +1,17 @@
+
+uint64_t fcn.ffffffffdc718710(int64_t arg1,int64_t arg2)
+
+{
+    uint *puVar1;
+    uint64_t uVar2;
+    
+    uVar2 = *(*0xffffffffde614e78 + 8);
+    puVar1 = arg1 + 0x180000 + *(uVar2 + 0x10);
+    if (*(uVar2 + 8) != 0) {
+        *puVar1 = arg2;
+        return uVar2;
+    }
+    out(puVar1,arg2);
+    return arg2 & 0xffffffff;
+}
+

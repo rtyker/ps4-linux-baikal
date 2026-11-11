@@ -1,0 +1,99 @@
+
+int fcn.ffffffffdc5a34f0(int64_t arg1)
+
+{
+    code *pcVar1;
+    int iVar2;
+    ulong *puVar3;
+    ulong uVar4;
+    int64_t iVar5;
+    int64_t *piVar6;
+    int iVar7;
+    int64_t var_40h;
+    int64_t var_38h;
+    int64_t var_30h;
+    
+    var_30h = *0xffffffffdeaacea0;
+    if (arg1 == 0) {
+        iVar7 = 0x16;
+    }
+    else {
+        puVar3 = func_0xffffffffdc5b6b00();
+        uVar4 = func_0xffffffffdc5b7a20(arg1);
+        iVar5 = func_0xffffffffdc5b6b00(uVar4);
+        puVar3[1] = arg1;
+        puVar3[2] = iVar5;
+        *(iVar5 + 0x30a0) = puVar3;
+        iVar2 = func_0xffffffffdc3c9cd0(*(iVar5 + 0x18),&var_38h,0xd,iVar5 + 0x3298);
+        if (iVar2 == 0) {
+            var_40h = 0;
+            *(iVar5 + 0x32a0) = var_38h;
+            iVar2 = func_0xffffffffdc3ca120
+                              (*(iVar5 + 0x18),*(iVar5 + 0x3298),var_38h,0xa0000,0xffffffffdc5a24b0,&var_40h,0x101
+                              );
+            if (iVar2 == 0) {
+                *(iVar5 + 0x32a8) = var_40h;
+                *(iVar5 + 0x32b0) = 0xa000000000000;
+                iVar2 = func_0xffffffffdc3c9cd0(*(iVar5 + 0x20),&var_38h,0xd,iVar5 + 0x32b8);
+                if (iVar2 == 0) {
+                    var_40h = 0;
+                    *(iVar5 + 0x32c0) = var_38h;
+                    iVar2 = func_0xffffffffdc3ca120
+                                      (*(iVar5 + 0x20),*(iVar5 + 0x32b8),var_38h,0x60000,0xffffffffdc5a24b0,
+                                       &var_40h,0x801);
+                    if (iVar2 == 0) {
+                        *(iVar5 + 13000) = var_40h;
+                        piVar6 = func_0xffffffffdc4ddb20(6);
+                        *puVar3 = piVar6;
+                        if (piVar6 == NULL) {
+                            func_0xffffffffdc5b7b80(puVar3[1],0xffffffffdcb0df44);
+                            iVar2 = 0x1c;
+                        }
+                        else {
+                            *piVar6 = puVar3;
+                            piVar6[0x15] = 0x5dc;
+                            piVar6[0x10] = 0x60030300008802;
+                            *(piVar6 + 0x26) = *(piVar6 + 0x26) | 0x6027;
+                            piVar6[0x30] = -0x23a5c7f0;
+                            piVar6[0x2f] = -0x23a5c210;
+                            piVar6[0x31] = -0x23a5be90;
+                            *(piVar6 + 0x1e4) = 0xff;
+                            *(piVar6 + 0x224) = 0xff;
+                            *(piVar6 + 0x22c) = *(piVar6 + 0x22c) | 1;
+                            if (*(iVar5 + 0x30dc) == 0) {
+                                uVar4 = 0xffffffffdcb0df5c;
+                            }
+                            else {
+                                uVar4 = 0xffffffffdcb0df58;
+                                *(piVar6 + 0x84) = 0x164039b;
+                            }
+                            iVar7 = 0;
+                            func_0xffffffffdc4e2d70(piVar6,uVar4,0);
+                            func_0xffffffffdc771e20(piVar6,iVar5 + 0x30d0);
+                            func_0xffffffffdc6c8300(puVar3[2] + 0x30b0,0,0xffffffffdcb0dc47,0x1365);
+                            *(piVar6 + 0x11) = *(piVar6 + 0x84);
+                            *(piVar6 + 0xa3) = 0x12;
+                            func_0xffffffffdc6c85b0(puVar3[2] + 0x30b0,0,0xffffffffdcb0dc47,0x136d);
+                            iVar2 = func_0xffffffffdc5238b0(0xffffffffdc5a41d0,iVar5,0,0,0,0xffffffffdcb0df60);
+                            if (*(iVar5 + 0x30e0) == 0) {
+                                iVar2 = func_0xffffffffdc5238b0(0xffffffffdc5a44c0,iVar5,0,0,0,0xffffffffdcb0df6e);
+                            }
+                            if (iVar2 == 0) goto code_r0xffffffffdc5a3632;
+                        }
+                    }
+                }
+            }
+        }
+        *(iVar5 + 0x30a0) = 0;
+        iVar7 = iVar2;
+    }
+code_r0xffffffffdc5a3632:
+    if (*0xffffffffdeaacea0 != var_30h) {
+        func_0xffffffffdca17ba0();
+    //WARNING: Does not return
+        pcVar1 = invalidInstructionException();
+        (*pcVar1)();
+    }
+    return iVar7;
+}
+

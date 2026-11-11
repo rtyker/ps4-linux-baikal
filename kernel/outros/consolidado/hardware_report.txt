@@ -1,0 +1,377 @@
+
+================================================================================
+HARDWARE - RELATÓRIO TÉCNICO COMPLETO
+================================================================================
+
+PLATAFORMA
+================================================================================
+Fabricante:       Sony Interactive Entertainment Inc.
+Dispositivo:      PlayStation 4 (console)
+SoC:              AMD Liverpool (Family 22h, Model 67h, Step 0)
+Microcode:        0x7043001
+BIOS/FW:          unde, 22/09/2021 (custom Linux bootloader)
+Kernel:           5.4.247-neocine-1.1-g7f796666a956-dirty
+Compilador:       GCC 16.1.1 (20260625)
+Data build:       Mon Jul 13 16:48:28 -03 2026
+
+================================================================================
+CPU
+================================================================================
+Arquitetura:      x86_64 (AMD64)
+Modelo:           AMD DG1501SML87LB (Jaguar)
+Nucleos/Threads:  8 cores / 8 threads (1 thread por core, sem SMT)
+Soquete:          1 (monosocket)
+Frequencia:       ~1594 MHz (base)
+Topologia:        Package 0, cores 0-7, sem hyperthreading
+Fisico/Virtual:   40 bits fisico / 48 bits virtual
+BogoMIPS:         3188.00 por core
+Virtualizacao:    AMD-V (SVM)
+Modo operacao:    32-bit, 64-bit
+TSC:              constant_tsc, nonstop_tsc
+Timer:            TSC como clocksource
+
+Cache
+--------------------------------------------------------------------------------
+L1d:              32 KiB por core (8 instancias = 256 KiB total)
+L1i:              32 KiB por core (8 instancias = 256 KiB total)
+L2:               2 MiB por 4 cores (2 instancias = 4 MiB total, shared entre pares)
+L3:               Ausente
+CLFLUSH size:     64 bytes
+
+Flags CPU (relevantes para dev de kernel/driver)
+--------------------------------------------------------------------------------
+fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush
+mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc
+rep_good nopl nonstop_tsc cpuid extd_apicid aperfmperf pni pclmulqdq monitor
+ssse3 cx16 sse4_1 sse4_2 movbe popcnt aes xsave avx f16c lahf_lm cmp_legacy
+svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt
+nodeid_msr topoext perfctr_nb bpext perfctr_llc hw_pstate proc_feedback ssbd
+vmmcall bmi1 xsaveopt arat npt lbrv svm_lock nrip_save tsc_scale flushbyasid
+decodeassists pausefilter pfthreshold overflow_recov
+
+Bugs notificados
+--------------------------------------------------------------------------------
+fxsave_leak sysret_ss_attrs null_seg spectre_v1 spectre_v2 spec_store_bypass retbleed
+
+TLB
+--------------------------------------------------------------------------------
+TLB size:         1024 paginas de 4K
+
+================================================================================
+MEMORIA
+================================================================================
+Total:            7160208 KiB (~6.83 GiB)
+Livre:            ~5576 MiB
+Disponivel:       ~5846 MiB
+Buffers:          12 MiB
+Cached:           478 MiB
+Slab:             100 MiB (42 reclaimable, 58 unreclaimable)
+KernelStack:      3072 KiB
+PageTables:       6100 KiB
+HugePages:        2 MiB page size (nao alocados)
+DirectMap4k:      72608 KiB
+DirectMap2M:      3055616 KiB
+DirectMap1G:      4194304 KiB
+VmallocTotal:     34359738367 KiB (~32 TiB)
+VmallocUsed:      3512 KiB
+NUMA:             1 no (No 0, todos os 8 CPUs)
+Swap:             Desabilitado (0 total)
+zswap:            Habilitado (via cmdline)
+zram:             Presente (sem swap configurado)
+
+DMA Zones
+--------------------------------------------------------------------------------
+DMA:              0-16 MiB
+DMA32:            16 MiB - 4 GiB
+Normal:           4 GiB+
+
+Buddyinfo (fragmentacao)
+--------------------------------------------------------------------------------
+DMA:              2 blocos de 4MiB
+DMA32:            496 blocos de 4MiB
+Normal:           794 blocos de 4MiB
+
+================================================================================
+SoC / HOST BRIDGE
+================================================================================
+00:00.0  Host Bridge:     AMD Liverpool Processor Root Complex
+00:00.2  IOMMU:           AMD Liverpool I/O Memory Management Unit
+                         MSI 64-bit habilitado
+                         HyperTransport MSI Mapping habilitado
+                         Secure device capability
+00:02.0  Host Bridge:     AMD Liverpool UMI PCIe Dummy Host Bridge
+00:18.0  Host Bridge:     AMD Liverpool Processor HT configuration
+00:18.1  Host Bridge:     AMD Liverpool Processor Address Maps
+00:18.2  Host Bridge:     AMD Liverpool Processor DRAM configuration
+00:18.3  Host Bridge:     AMD Liverpool Processor Misc configuration
+                         Driver: k10temp
+00:18.4  Host Bridge:     AMD Liverpool Processor PM configuration
+                         Driver: fam15h_power
+00:18.5  Host Bridge:     AMD Liverpool Processor NB Performance Monitor
+00:18.6  Host Bridge:     AMD Liverpool Processor SPLL Configuration
+
+================================================================================
+GPU / DISPLAY
+================================================================================
+Dispositivo PCI:  00:01.0
+Classe:           VGA compatible controller
+Device:           AMD/ATI Gladius (RDNA custom PS4)
+  PCI ID:           vendor 0x1002, device 0x9924
+  Driver:           amdgpu
+  Framebuffer:      amdgpudrmfb
+  Conector:         HDMI-A-1
+  Resolucao:        1920x1080@60 (via cmdline)
+  EDID custom:      ps4_tv_edid.bin
+  DRM debug:        0x06
+  Audio HDMI:       Habilitado (amdgpu.audio=1)
+  GPU recovery:     Habilitado
+  DPM:              Desabilitado (amdgpu.dpm=0, radeon.dpm=0)
+  MMIO:
+    Regiao 0:       e0000000 (64-bit, prefetchable, 64M) - VRAM
+    Regiao 2:       e4000000 (64-bit, prefetchable, 8M) - MMIO
+    Regiao 4:       I/O 6000 (256 bytes)
+    Regiao 5:       e4800000 (32-bit, non-prefetchable, 256K)
+  MSI:              64-bit, EndPoint, MaxPayload 256 bytes
+  Capacidades:      Express v2 Root Complex Integrated Endpoint
+
+Audio HDMI/DP
+--------------------------------------------------------------------------------
+Dispositivo PCI:  00:01.1
+Device:           AMD/ATI Liverpool HDMI/DP Audio Controller
+Driver:           snd_hda_intel
+MMIO:             e4840000 (64-bit, 16K)
+MSI:              64-bit, IRQ 43
+
+================================================================================
+SUBSISTEMA "BAIKAL" (Chip customizado Sony/AMD)
+================================================================================
+Todos conectados via PCIe Gen2 x4 (5GT/s, MaxPayload 128 bytes, MSI 64-bit maskable):
+
++----------+----------+----------------------------------------------+-------------+-----------------------------+
+| PCI      | Funcao   | Descricao                                    | Driver      | MMIO                        |
++----------+----------+----------------------------------------------+-------------+-----------------------------+
+| 00:14.0  | ACPI     | Sony Baikal ACPI                             | -           | fdf8000000 (32M), I/O 1000  |
+| 00:14.1  | Ethernet | Sony Baikal Ethernet Controller               | -           | c2000000 (4K)               |
+| 00:14.2  | SATA     | Sony Baikal SATA AHCI Controller              | -           | c4000000 (32K)              |
+| 00:14.3  | SD/MMC   | Sony Baikal SD/MMC Host Controller            | sdhci-pci   | c6000000 (4K)               |
+| 00:14.4  | PCIe Glue| Sony Baikal PCI Express Glue                  | baikal_pcie | c8000000 (8K), c8800000 (2M)|
+| 00:14.5  | DMA      | Sony Baikal DMA Controller                    | -           | ca000000 (4K), ca800000(4K) |
+| 00:14.6  | Memoria  | Sony Baikal DDR3/SPM                          | -           | cc000000 (4K), 80000000(1G) |
+| 00:14.7  | USB 3.0  | Sony Baikal USB 3.0 xHCI Host Controller      | xhci_aeolia | ce000000 (4M), cf000000(8M) |
++----------+----------+----------------------------------------------+-------------+-----------------------------+
+
+IOMMU Group 0: Todos os dispositivos Baikal (00:14.0 - 00:14.7)
+
+================================================================================
+USB
+================================================================================
+Controlador:      Baikal USB 3.0 xHCI (AMD Aeolia)
+Driver:           xhci_aeolia
+IRQs:             34-41 (MSI, 8 linhas)
+
+Dispositivos conectados:
+  Logitech USB Keyboard (VID:046d, PID:c31c, v1.10)
+    USB 1-2.2 (via hub)
+    Interface 0: Teclado padrao (event3)
+    Interface 2: Teclado multimidia + trackball (event4)
+
+================================================================================
+ARMazenamento
+================================================================================
+
+sda - TOSHIBA MQ04ABF1 (HDD)
+--------------------------------------------------------------------------------
+Tipo:              SATA, Rotacional (HDD)
+Tamanho:           976762584 blocos (~465 GiB)
+Logical block:     512 bytes
+Physical block:    4096 bytes
+Max HW sectors:    32767 (16 MiB)
+Max sectors:       1280 (640 KiB)
+Max segments:      168
+Scheduler:         mq-deadline (opcoes: kyber, none)
+Sector size HW:    512
+Particoes:         15 particoes (formato GPT PS4)
+  sda13:           12G (maior particao de dados)
+  sda27:           ~941G (principal)
+
+sdb - KINGSTON SV300S37A120G (SSD)
+--------------------------------------------------------------------------------
+Tipo:              SATA, Rotacional reportado (mas e SSD Kingston)
+Tamanho:           117220824 blocos (~55.9 GiB)
+Logical block:     512 bytes
+Physical block:    512 bytes
+Max HW sectors:    120 (60 KiB)
+Max sectors:       120 (60 KiB)
+Scheduler:         mq-deadline
+Particoes:
+  sdb1:            vfat32 (BOOT, 50 MiB)
+  sdb2:            ext4 (psxitarch, ~55.8 GiB, 1% usado) <- Root filesystem
+
+================================================================================
+KERNEL
+================================================================================
+Versao:           5.4.247-neocine-1.1-g7f796666a956-dirty
+Compilador:       GCC 16.1.1 (20260625)
+Data build:       Mon Jul 13 16:48:28 -03 2026
+Configuracao:     Custom (dirty = modificacoes locais)
+Modulos:          Nenhum (monolitico ou todos built-in)
+
+Kernel cmdline
+--------------------------------------------------------------------------------
+panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0
+drm.debug=0x06 console=ttyS0,115200n8 console=tty0 video=HDMI-A-1:1920x1080@60
+drm.edid_firmware=edid/ps4_tv_edid.bin quiet amdgpu.audio=1 usbcore.autosuspend=-1
+amdgpu.gpu_recovery=1 mitigations=off zswap.enabled=1
+systemd.unified_cgroup_hierarchy=0 systemd.legacy_systemd_cgroup_controller=yes
+audit=0 netconsole=6665@192.168.0.2/eth0,6666@192.168.0.1/b4:45:06:6c:f6:4f
+
+Parametros relevantes
+--------------------------------------------------------------------------------
+mitigations=off          Mitigacoes de seguranca desabilitadas
+clocksource=tsc          TSC como clocksource
+amdgpu.dpm=0             Power management GPU desabilitado
+usbcore.autosuspend=-1   USB sem autosuspend
+netconsole               Console de rede habilitado (UDP 6665/6666)
+console=ttyS0            Console serial (115200 baud)
+
+================================================================================
+MEMORY MAP (IO/MEM)
+================================================================================
+
+Mapeamento de Kernel
+--------------------------------------------------------------------------------
+Kernel code:      0x06000000 - 0x07200e06
+Kernel data:      0x07200e07 - 0x07CBD9FF
+Kernel BSS:       0x0815C000 - 0x083FFFFF
+Kernel virtual:   0xffffffff81000000
+
+Mapeamento MMIO Critico
+--------------------------------------------------------------------------------
+Endereco                Tamanho    Descricao
+0x80000000-0xBFFFFFFF   1G         Baikal Memory (SPM/DDR3)
+0xC2000000              4K         Baikal Ethernet
+0xC4000000              32K        Baikal SATA AHCI
+0xC6000000              4K         Baikal SD/MMC (mmc0)
+0xC8000000-0xC9FFFFFF   4M         Baikal PCIe Glue (bpcie.glue, bpcie.chipid)
+0xCA000000-0xCAFFFFFF   8K         Baikal DMA
+0xCC000000-0xCD43FFFF   ~6.25M     Baikal Memory controller (spm.icc em cd42c000)
+0xCE000000-0xCF7FFFFF   24M        USB xHCI
+0xE0000000-0xE4FFFFFF   ~80M       GPU VRAM + MMIO
+0xF8000000-0xFBFFFFFF   64M        PCI MMCONFIG (ECAM)
+0xFDF8000000            32M        Baikal ACPI
+0xFEE00000              4K         Local APIC
+
+================================================================================
+I/O PORTS
+================================================================================
+Range             Descricao
+0x0000-0x001F     DMA Channel 1
+0x0020-0x0021     PIC1 (8259A)
+0x0040-0x0043     Timer 0 (PIT)
+0x0050-0x0053     Timer 1 (PIT)
+0x0060            Teclado (8042)
+0x0064            Teclado (8042)
+0x0070-0x0071     RTC CMOS
+0x0080-0x008F     DMA Page Registers
+0x00A0-0x00A1     PIC2
+0x00C0-0x00DF     DMA Channel 2
+0x00F0-0x00FF     FPU
+0x0CF8-0x0CFF     PCI Configuration (CONFIG_MECH)
+0x1000-0x13FF     Baikal ACPI (PM1a_EVT, PM1a_CNT, PM_TMR, GPE0)
+0x6000-0x60FF     GPU VGA I/O
+
+================================================================================
+INTERRUPTS
+================================================================================
+IRQ   Linha           Dispositivo
+1     CPU0            PCI-MSI - AMD-Vi (IOMMU)
+5     CPU1            IR-Baikal-MSI - ICC (Inter-Chip Communication)
+34    CPU2-3          IR-Baikal-MSI - xhci-hcd:usb1
+35    CPU2-3          IR-Baikal-MSI - xhci_aeolia
+36    CPU4            IR-Baikal-MSI - xhci-hcd:usb3
+42    CPU5            IR-Baikal-MSI - mmc0 (SD card)
+43    CPU6            PCI-MSI - snd_hda_intel:card0 (HDMI Audio)
+44    CPU7            PCI-MSI - amdgpu (GPU)
+
+Nota: IRQ 34 e 35 compartilham CPU2/CPU3. IRQ 42 e a mais ativa (mmc0 com 231K interrupcoes).
+
+================================================================================
+SOFTIRQS
+================================================================================
+Mais ativos: TIMER, NET_RX (CPU2 dominante), RCU, SCHED
+
+================================================================================
+ACPI
+================================================================================
+Tabelas presentes:  DSDT (binario disponivel em /proc/acpi/dsdt)
+PM Timer:           AC presente via PM1a_EVT_BLK em 0x1000
+GPE Block:          0x1014
+Clock source PM:    ACPI PM_TMR em 0x1008
+
+================================================================================
+INPUT DEVICES
+================================================================================
+Dispositivo                              Bus               Handler
+Power Button                             LNXPWRBN/button   kbd, event0
+HD-Audio HDMI/DP pcm=3                   ALSA              event1
+HD-Audio HDMI/DP pcm=7                   ALSA              event2
+Logitech USB Keyboard (teclado)          USB 0003          kbd, leds, event3
+Logitech USB Keyboard (multimidia)       USB 0003          kbd, rel, abs, event4
+
+================================================================================
+SISTEMAS DE ARQUIVO SUPORTADOS
+================================================================================
+Reais:    ext2, ext3, ext4, squashfs, vfat, iso9660, hfsplus, ntfs, ufs,
+          fuseblk, exfat, udf
+Virtuais: sysfs, tmpfs, proc, devtmpfs, configfs, debugfs, bpf, ramfs,
+          hugetlbfs, fuse, overlay, mqueue, bdev, cgroup, cgroup2,
+          sockfs, pipefs, rpc_pipefs, devpts, fusectl, autofs
+
+================================================================================
+NETCONSOLE CONFIG
+================================================================================
+Origem:    192.168.0.2:6665 via eth0
+Destino:   192.168.0.1:6666 (MAC: b4:45:06:6c:f6:4f)
+Ethernet:  Baikal Aeolia Ethernet (00:14.1)
+
+================================================================================
+VULNERABILIDADES CPU
+================================================================================
+Vulnerabilidade             Status
+Itlb multihit               Not affected
+L1tf                        Not affected
+Mds                         Not affected
+Meltdown                    Not affected
+Mmio stale data             Not affected
+Retbleed                    VULNERABLE
+Spec store bypass           VULNERABLE
+Spectre v1                  VULNERABLE (user pointer sanitization only)
+Spectre v2                  VULNERABLE (STIBP disabled, PBRSB-eIBRS not affected)
+Srbds                       Not affected
+Tsx async abort             Not affected
+
+Nota: mitigations=off no cmdline desabilita todas as mitigacoes.
+
+================================================================================
+RESUMO PARA DESENVOLVIMENTO DE KERNEL/DRIVERS
+================================================================================
+
+Alvos principais para drivers customizados:
+1. AMD Gladius GPU (0x1002:0x9924) - Driver amdgpu funcional, mas com patches custom
+2. Sony Baikal chip - Multiplos perifericos (Ethernet, SATA, USB, DMA, SD/MMC, Memoria, ACPI)
+3. xhci_aeolia - USB 3.0 custom
+4. baikal_pcie - PCIe glue custom
+5. sdhci-pci - SD/MMC host
+6. Aeolia Ethernet - Rede custom
+7. Aeolia SATA - Armazenamento
+8. Aeolia ACPI - Power management
+
+Pontos de atencao:
+- IOMMU unico para todos os dispositivos Baikal (group 0)
+- IRQ routing via IR-Baikal-MSI (nao PCI-MSI padrao)
+- TSC como unico clocksource estavel
+- Sem cpufreq scaling (freq fixa ou firmware-controlled)
+- Console serial ativo (ttyS0 115200n8)
+- netconsole para debug remoto
+
+================================================================================

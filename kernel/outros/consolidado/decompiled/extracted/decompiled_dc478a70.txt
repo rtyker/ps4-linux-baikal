@@ -1,0 +1,44 @@
+// Extraido por Ghidra PyGhidra headless
+// addr: 0xffffffffdc478a70  name: FUN_ffffffffdc478a70  size: 20
+// escopo: lacuna MTS/GBE/ICC/glue
+// chamadores (0):
+// chamadas (0):
+
+
+/* WARNING: Control flow encountered bad instruction data */
+
+undefined4
+FUN_ffffffffdc478a70(undefined8 param_1,undefined8 param_2,undefined8 param_3,long param_4)
+
+{
+  char *pcVar1;
+  char cVar2;
+  code *pcVar3;
+  uint uVar4;
+  int *in_RAX;
+  undefined4 unaff_EBX;
+  long unaff_RBP;
+  undefined4 unaff_R13D;
+  long *unaff_R14;
+  
+  uVar4 = (int)in_RAX + *in_RAX;
+  pcVar1 = (char *)((ulong)uVar4 - 0x75);
+  cVar2 = *pcVar1;
+  *pcVar1 = *pcVar1 + (char)param_4;
+  if (SCARRY1(cVar2,(char)param_4) == *pcVar1 < '\0') {
+    *(char *)(param_4 + -10) = *(char *)(param_4 + -10) + (char)uVar4;
+                    /* WARNING: Bad instruction - Truncating control flow here */
+    halt_baddata();
+  }
+  func_0xffffffffdc47a030(param_1,unaff_R13D);
+  func_0xffffffffdc47b7f0();
+  func_0xffffffffdc3596e0();
+  if (*unaff_R14 == *(long *)(unaff_RBP + -0x30)) {
+    return unaff_EBX;
+  }
+  func_0xffffffffdca17ba0();
+                    /* WARNING: Does not return */
+  pcVar3 = (code *)invalidInstructionException();
+  (*pcVar3)();
+}
+

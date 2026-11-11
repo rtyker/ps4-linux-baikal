@@ -1,0 +1,84 @@
+
+ulong fcn.ffffffffdc718eb0(int64_t arg1)
+
+{
+    code *pcVar1;
+    int iVar2;
+    uint uVar3;
+    int64_t *piVar4;
+    int64_t iVar5;
+    uint *puVar6;
+    ulong uVar7;
+    uint var_2ch;
+    int64_t var_28h;
+    
+    var_28h = *0xffffffffdeaacea0;
+    piVar4 = func_0xffffffffdc5b6b00();
+    var_2ch = 0x18;
+    *0xffffffffde614e78 = piVar4;
+    iVar5 = func_0xffffffffdc5ba8d0(arg1,3,&var_2ch,0,0xffffffffffffffff,1,6);
+    if (iVar5 == 0) {
+        uVar7 = 0xffffffffdcb3fc8f;
+    }
+    else {
+        piVar4[1] = iVar5;
+        *(piVar4 + 10) = 2;
+        piVar4[0xb] = -0x234c0356;
+        iVar2 = func_0xffffffffdc496d00(piVar4 + 3,iVar5);
+        if (iVar2 != 0) {
+            func_0xffffffffdc5b7b80(arg1,0xffffffffdcb3fcbe,iVar2);
+        }
+        var_2ch = 0x10;
+        iVar5 = func_0xffffffffdc5ba8d0(arg1,3,&var_2ch,0,0xffffffffffffffff,1,6);
+        if (iVar5 == 0) {
+            uVar7 = 0xffffffffdcb3fcf7;
+        }
+        else {
+            *piVar4 = iVar5;
+            var_2ch = 0x20;
+            iVar5 = func_0xffffffffdc5ba8d0(arg1,3,&var_2ch,0,0xffffffffffffffff,1,6);
+            if (iVar5 != 0) {
+                piVar4[2] = iVar5;
+                puVar6 = *(iVar5 + 0x10) + 0x4084;
+                if (*(iVar5 + 8) == 0) {
+                    uVar3 = in(puVar6);
+                }
+                else {
+                    uVar3 = *puVar6;
+                }
+                func_0xffffffffdc5b7b80(arg1,0xffffffffdcb3fd44,uVar3);
+                puVar6 = *(iVar5 + 0x10) + 0xc020;
+                if (*(iVar5 + 8) == 0) {
+                    uVar3 = in(puVar6);
+                }
+                else {
+                    uVar3 = *puVar6;
+                }
+                func_0xffffffffdc5b7b80(arg1,0xffffffffdcb3fd59,uVar3);
+                puVar6 = *(iVar5 + 0x10) + 0xc024;
+                if (*(iVar5 + 8) == 0) {
+                    uVar3 = in(puVar6);
+                }
+                else {
+                    uVar3 = *puVar6;
+                }
+                uVar7 = 0;
+                func_0xffffffffdc5b7b80(arg1,0xffffffffdcb3fd69,uVar3);
+                func_0xffffffffdc7190d0();
+                goto code_r0xffffffffdc71906c;
+            }
+            uVar7 = 0xffffffffdcb3fd1a;
+        }
+    }
+    func_0xffffffffdc5b7b80(arg1,uVar7);
+    uVar7 = 6;
+code_r0xffffffffdc71906c:
+    if (*0xffffffffdeaacea0 == var_28h) {
+        return uVar7;
+    }
+    func_0xffffffffdca17ba0();
+    //WARNING: Does not return
+    pcVar1 = invalidInstructionException();
+    (*pcVar1)();
+}
+
