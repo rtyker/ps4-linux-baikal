@@ -698,7 +698,7 @@ SNAPSHOT_FILE="$SNAPSHOT_DIR/kernel-src-${SNAPSHOT_DATE}-${TAG}.tar.zst"
 if tar -I 'zstd -T0 -9' -cf "$SNAPSHOT_FILE" \
     --exclude='*.o' --exclude='*.cmd' --exclude='*.ko' --exclude='*.a' \
     --exclude='*.mod' --exclude='*.mod.c' --exclude='*.symvers' \
-    --exclude='vmlinux*' --exclude='System.map' --exclude='.tmp_*' \
+    --exclude="$(basename "$KERNEL_SRC_DIR")/vmlinux*" --exclude='System.map' --exclude='.tmp_*' \
     --exclude='include/generated' --exclude='include/config' \
     -C "$(dirname "$KERNEL_SRC_DIR")" "$(basename "$KERNEL_SRC_DIR")" 2>/tmp/snapshot_err.log; then
   echo "✓ Snapshot salvo em $SNAPSHOT_FILE ($(du -h "$SNAPSHOT_FILE" | cut -f1))"

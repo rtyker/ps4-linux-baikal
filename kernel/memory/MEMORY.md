@@ -231,3 +231,10 @@ Documentos de suporte:
 ## 🔴 RTC via ICC — patch quebrado (idempotência), corrigido 2026-08-01; driver é decorativo (hora não persiste)
 - `patches/ps4-icc-rtc-wrapper.patch` tinha perdido o hunk que cria `drivers/rtc/rtc-ps4-icc.c` num commit anterior (`7d59131`) — só funcionava porque o arquivo sobrou untracked na árvore efêmera. Reconstruído via `git diff` real, revalidado do zero (`git apply --check` + compilação isolada) a partir de árvore pristina, e removida uma duplicata (`ps4-icc-debug.o`) que causaria conflito em build frio. Achado extra: o driver hoje é um contador de software que reinicia em epoch 0 todo boot — o "load context" via ICC nunca usa o valor retornado. Ver [rtc-patch-idempotencia-quebrada-e-corrigida-2026-08-01](rtc-patch-idempotencia-quebrada-e-corrigida-2026-08-01.md).
 
+
+## ⚠️ SNAPSHOT DO KERNEL: 2 armadilhas na restauração + teste de compilação (2026-11-11)
+- **`boot_referencia/` estava vazio** (nenhuma tag em disco); o kernel só existe no snapshot `kernel-src-20260801-20260801-kvm-rtc-sata-final.tar.zst` (com `.config`, `.git` e `bzImage`).
+- **Armadilha 1 (corrigida no script):** `--exclude='vmlinux*'` casava por basename e derrubava **52 fontes** (`arch/*/kernel/vmlinux.lds.S` etc.) → snapshot antigo compila objeto mas **não linka**. Agora o exclude é ancorado no topo: `--exclude="$(basename "$KERNEL_SRC_DIR")/vmlinux*"`.
+- **Armadilha 2:** as alterações dos patches estão **não commitadas** no `.git` do snapshot; `git checkout -- .` reverte todos os patches **sem avisar** (aconteceu nesta sessão — objetos compilaram, mas sem SATA polling/RTC). Restaurar só os `D`, nunca checkout amplo.
+- **Teste de compilação (`-j2` + `nice`):** prepare 21 s; `ahci.o`/`libahci.o`/`xhci-aeolia.o`/`ps4-bpcie-icc.o` exit 0 em 6 s; `rtc-ps4-icc.ko` (270 KB) e `mts.ko` (816 KB) linkam com `KBUILD_MODPOST_WARN=1` (falta `Module.symvers` do `vmlinux`, esperado em teste parcial). Sem link de kernel e sem deploy.
+- **Detalhes:** [snapshot-restore-armadilhas-e-teste-build-2026-11-11](snapshot-restore-armadilhas-e-teste-build-2026-11-11.md) · procedimento em `kernel/README.md` § "Restaurar a árvore a partir de um snapshot".
