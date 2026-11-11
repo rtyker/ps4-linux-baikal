@@ -1,6 +1,6 @@
 # ============================================================
 # PS4 Linux Baikal — .gitignore
-# Focado em: kernel Baikal + driver MTS + Mesa PS4 patchado
+# Duas frentes: kernel/ (kernel 7.0 + RE) e distro/ (Arch Linux)
 # ============================================================
 
 # --- Temporários ---
@@ -16,6 +16,7 @@ dmesg.log
 *.env
 .env.keys
 keys/
+kernel/keys/
 
 # --- Dumps/binários brutos ---
 *.tar
@@ -27,11 +28,11 @@ dummy_mem.bin
 fake_mem
 
 # --- Dumps de firmware proprietário (kernel Orbis/Ghidra) ---
-consolidado/dumps_orbis/
-consolidado/memoriateste.bin
+kernel/consolidado/dumps_orbis/
+kernel/consolidado/memoriateste.bin
 
 # --- Logs de hardware/capturas UART (grandes e efêmeros) ---
-tests/uart_logs/
+kernel/tests/uart_logs/
 dmesg_output/
 netconsole_ps4_captures/
 
@@ -62,39 +63,38 @@ scene-kernel-dumper/
 scene-kmem-dumper/
 initramfs/
 kernel-framework-local/
-kernels/
-drivers/
-distros/Steam4PS/
-distros/winesapos/
+kernel/kernels/
+distro/Steam4PS/
+distro/winesapos/
 
 # ============================================================
 # BUILD ARTIFACTS (recuperáveis via build)
 # ============================================================
 
-# Kernel build outputs
-distros/arch_minimal_v2/boot_referencia/
-distros/arch_minimal_v2/arch_minimal_v2-7.0.tar
-distros/arch_minimal_v2/systemd_cache/
-distros/arch_minimal_v2/logs/
-distros/arch_minimal_v2/extra_firmware/
+# --- Frente 1: kernel/ ---
+# Artefatos de boot por tag (bzImage, config, bootargs, initramfs): a distro os
+# consome via distro/*.sh, mas eles NÃO são versionados (binários por build).
+kernel/boot_referencia/
+kernel/extra_firmware/
+kernel/drivers_mts/build/
+kernel/consolidado/tools/ghidra_project/
 
-# RELEASE — artefatos compilados
+# --- Frente 2: distro/ ---
+distro/arch_minimal_v2-7.0.tar
+distro/systemd_cache/
+distro/logs/
+
+# RELEASE — artefatos compilados.
 # v1.0.0 (versão de distribuição) é versionada; demais tags são build output local.
-RELEASE/*
-!RELEASE/README.md
-!RELEASE/v1.0.0/
+distro/RELEASE/*
+!distro/RELEASE/README.md
+!distro/RELEASE/v1.0.0/
 
-# MTS module build
-drivers_mts/build/
-
-# Mesa build
+# Mesa (build)
+distro/mesa/build_artifacts/
+distro/mesa/*.tar.xz
+distro/mesa/*.tar.gz
+distro/mesa/*.tar.zst
+distro/mesa/*.zip
 mesa-26.1.5/
 mesa-26.1.5.tar.xz
-mesa/build_artifacts/
-mesa/*.tar.xz
-mesa/*.tar.gz
-mesa/*.tar.zst
-mesa/*.zip
-
-# Ghidra project
-consolidado/tools/ghidra_project/

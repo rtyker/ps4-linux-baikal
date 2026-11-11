@@ -2,18 +2,40 @@
 
 > **Fonte única de regras e procedimentos deste projeto.** O `CLAUDE.md` na raiz é apenas um stub que importa este arquivo (`@AGENTS.md`), porque o Claude Code carrega `CLAUDE.md` automaticamente e não lê `AGENTS.md`. Edite SEMPRE aqui, nunca no stub.
 
+## 🔀 Estrutura em duas frentes (2026-11-11)
+
+O repositório é dividido em duas frentes independentes, com **uma única dependência**: a distro
+consome os artefatos de boot que o kernel produz.
+
+| Frente | Pasta | Conteúdo | README |
+|---|---|---|---|
+| 1 — Kernel 7.0 Baikal | `kernel/` | `00-build-kernel-7.0.sh`, `patches/`, `drivers_mts/`, árvore fonte (`kernel/kernels/`), **toda a RE** (`consolidado/`, `memory/`, `docs/`, `tools/`, `tests/`) e `scripts/` de diagnóstico (mts, UART, netconsole) | `kernel/README.md` |
+| 2 — Distro Linux Baikal | `distro/` | `01/02-build`, `deploy-boot`, `rebuild-initramfs`, PFS mount, SSH startup, `firmware_*`, `mesa/`, `monitor_edid/`, `RELEASE/` e `scripts/` (promote-release, crypt_mount) | `distro/README.md` |
+
+**Fronteira técnica:** `kernel/boot_referencia/` é o único lugar onde vivem os artefatos por tag
+(`bzImage`, `config`, `bootargs`, `initramfs`). Os scripts da distro leem de lá via
+`BOOT_DIR="${PS4_BOOT_REF:-$SCRIPT_DIR/../kernel/boot_referencia}"`. A distro **nunca** compila
+kernel; o kernel **nunca** conhece rootfs.
+
+⚠️ **Documentação histórica (`kernel/memory/`, `kernel/consolidado/`)** escrita antes de
+2026-11-11 cita os caminhos antigos (`distros/arch_minimal_v2/`, `consolidado/` na raiz,
+`scripts/` na raiz). O mapa é: `distros/arch_minimal_v2/00-build-kernel-7.0.sh` →
+`kernel/00-build-kernel-7.0.sh`; `distros/arch_minimal_v2/{patches,boot_referencia}` →
+`kernel/{patches,boot_referencia}`; `distros/arch_minimal_v2/<demais>` → `distro/<demais>`;
+`consolidado|memory|docs|tools|tests/` → `kernel/<mesmo nome>/`.
+
 ## Regras de Conduta
 1. **Atualização Contínua de Documentação:** A cada nova descoberta técnica, acerto ou falha em testes, os arquivos de documentação (como `CLAUDE.md` e artefatos de progresso) DEVEM ser atualizados IMEDIATAMENTE. Isso garante que não correremos o risco de repetir testes falhos ou testar hipóteses já descartadas.
 2. **Sincronia:** Sempre garanta que o contexto da sessão (o que tentamos, o que falhou, o que causou Kernel Panic) esteja fielmente refletido na documentação antes de encerrar o turno ou mudar de estratégia.
-3. **Kernel Linux 7.0 Baikal: a tag `v7.0-20260722-clean-video-ok` (e a baseline pré-compilada `20260720-sky2len-fix`) são as BASELINES OFICIAIS confirmadas (vídeo OK, boot completo, telnet OK)**. Artefatos em `distros/arch_minimal_v2/boot_referencia/*-7.0-20260722-clean-video-ok*` e `config-7.0-20260720-sky2len-fix` **NUNCA podem ser sobrescritos/descartados**.
+3. **Kernel Linux 7.0 Baikal: a tag `v7.0-20260722-clean-video-ok` (e a baseline pré-compilada `20260720-sky2len-fix`) são as BASELINES OFICIAIS confirmadas (vídeo OK, boot completo, telnet OK)**. Artefatos em `kernel/boot_referencia/*-7.0-20260722-clean-video-ok*` e `config-7.0-20260720-sky2len-fix` **NUNCA podem ser sobrescritos/descartados**.
    - **Descoberta do Gap de Rebuild (2026-07-22):** O patch `sky2-baikal-gbe.patch` forçava o driver `sky2` (built-in) a fazer probe na GBE Baikal (`104d:90d8`), que NÃO é Marvell Yukon. Isso congelava o barramento PCIe e o vídeo no boot.
-   - **Solução Validada no PS4:** Removido o `sky2-baikal-gbe.patch` do script `00-build-kernel-7.0.sh` e garantidas as opções `CONFIG_MFD_SYSCON=y` e `CONFIG_REGMAP_MMIO=y`. Reconstrução limpa do zero testada e aprovada ao vivo com vídeo OK e telnet OK. O repositório do kernel em `/mnt/hdauxiliar/temp/kernel_build_7.0` foi commitado (commit `811184c1f`) e etiquetado com a git tag `v7.0-20260722-clean-video-ok`. Ver `memory/baseline-oficial-sky2len-fix.md`.
+   - **Solução Validada no PS4:** Removido o `sky2-baikal-gbe.patch` do script `00-build-kernel-7.0.sh` e garantidas as opções `CONFIG_MFD_SYSCON=y` e `CONFIG_REGMAP_MMIO=y`. Reconstrução limpa do zero testada e aprovada ao vivo com vídeo OK e telnet OK. O repositório do kernel em `/mnt/hdauxiliar/temp/kernel_build_7.0` foi commitado (commit `811184c1f`) e etiquetado com a git tag `v7.0-20260722-clean-video-ok`. Ver `kernel/memory/baseline-oficial-sky2len-fix.md`.
    - **MARCO HISTÓRICO GBE ETHERNET (2026-07-22):** Carregamento do driver `mts.ko stage=4` via Telnet registrou com SUCESSO ABSOLUTO a interface **`eth0`** com o endereço MAC real lido da SPM (`2c:cc:44:3f:69:5f`), anéis DMA programados (TX `0x010dd000`, RX `0x010de000`) e 0 erros ou travamentos!
-   - **NETCONSOLE PRONTO PARA OS PRÓXIMOS BUILDS:** Configurado `bootargs` com `netconsole=@192.168.0.2/eth0,6666@192.168.0.1/ff:ff:ff:ff:ff:ff` (IP PS4 `192.168.0.2` -> Host PC `192.168.0.1:6666/UDP`). Script de recepção ao vivo disponível em `scripts/netconsole_listener.py`.
+   - **NETCONSOLE PRONTO PARA OS PRÓXIMOS BUILDS:** Configurado `bootargs` com `netconsole=@192.168.0.2/eth0,6666@192.168.0.1/ff:ff:ff:ff:ff:ff` (IP PS4 `192.168.0.2` -> Host PC `192.168.0.1:6666/UDP`). Script de recepção ao vivo disponível em `kernel/scripts/netconsole_listener.py`.
    - **BUILD AUTOMÁTICO ETH0 + NETCONSOLE (2026-07-23):** Criada e implantada no HD a tag `20260723-mts-autoeth0`. O driver `mts.ko` agora possui o padrão `stage=4` e auto-carregamento no boot, subindo a interface `eth0` automaticamente sem necessidade de intervenção via Telnet. Netconsole ativado por padrão no boot.
    - **DESLIGAMENTO REMOTO VIA TELNET (2026-07-22):** O comando `sync && poweroff -f` (ou `echo o > /proc/sysrq-trigger`) encerra o sistema operacional e a rede limpos (ping cai 100%), porém o console permanece em **luz azul (luz azul acesa/pulsando)** pois o desligamento de energia total da fonte (S5) exige comando ICC dedicado ou desligamento manual no botão.
-   - **🏆 NOVO BASELINE OFICIAL (2026-07-30), tag `20260730-sata-reverted` — MELHOR VERSÃO ATÉ AGORA, PONTO DE ROLLBACK:** kernel `7.0.8-Strawberry-ThinLTO-Baikal-+ #23` com o fix de polaridade MDIO Clause 22 (`mts.c`) ativo e as mudanças de SATA polling-timer da noite de 2026-07-29 revertidas (só instrumentação não validada). Boot completo confirmado ao vivo: `kexec` → shutdown normal da Orbis → `Run /init as init process` → `systemd[1]` sem erros, vídeo HDMI OK, **SSH via WiFi confirmado**, `eth0` sobe com MAC real (PHY ainda sem link, bug conhecido, não é regressão). Artefatos em `distros/arch_minimal_v2/boot_referencia/*-7.0-20260730-sata-reverted*` **NUNCA podem ser sobrescritos/descartados** — em caso de regressão futura, restaurar com `sudo ./deploy-boot-7.0.sh 20260730-sata-reverted` (boot-only, mantém rootfs). Ver `memory/baseline-oficial-20260730-sata-reverted.md` (checksums MD5 e detalhes completos).
-   - **🏆🏆 NOVO BASELINE OFICIAL, MAIS RECENTE (2026-07-30), tag `20260730-sata-polling-fase-ab` — SUPERA O ANTERIOR, SATA INTERNO FUNCIONAL PELA PRIMEIRA VEZ:** mesmo kernel do baseline acima + Fase A/B do plano de correção do SATA polling (documento original hoje em `consolidado/obsoleto/PLANO_SATA_POLLING_CORRECAO_2026-07-29.md`; o código vivo é `patches/ahci-baikal-polling-fallback.patch`) reaplicada e validada ao vivo. `ata1.00: configured for UDMA/100` sem nenhuma exceção, `dd`/`fdisk` confirmam leitura real do HD interno (931.51 GiB), zero `disable device` em todo o dmesg. **Este é o baseline mais completo/recomendado a partir de agora** — GBE (com PHY ainda mudo, bug conhecido) + SATA interno funcional juntos. Artefatos em `distros/arch_minimal_v2/boot_referencia/*-7.0-20260730-sata-polling-fase-ab*` **NUNCA podem ser sobrescritos/descartados**. Rollback: `sudo ./deploy-boot-7.0.sh 20260730-sata-polling-fase-ab` (boot-only). Ver `memory/marco-sata-interno-funcional-2026-07-30.md`.
+   - **🏆 NOVO BASELINE OFICIAL (2026-07-30), tag `20260730-sata-reverted` — MELHOR VERSÃO ATÉ AGORA, PONTO DE ROLLBACK:** kernel `7.0.8-Strawberry-ThinLTO-Baikal-+ #23` com o fix de polaridade MDIO Clause 22 (`mts.c`) ativo e as mudanças de SATA polling-timer da noite de 2026-07-29 revertidas (só instrumentação não validada). Boot completo confirmado ao vivo: `kexec` → shutdown normal da Orbis → `Run /init as init process` → `systemd[1]` sem erros, vídeo HDMI OK, **SSH via WiFi confirmado**, `eth0` sobe com MAC real (PHY ainda sem link, bug conhecido, não é regressão). Artefatos em `kernel/boot_referencia/*-7.0-20260730-sata-reverted*` **NUNCA podem ser sobrescritos/descartados** — em caso de regressão futura, restaurar com `sudo ./deploy-boot-7.0.sh 20260730-sata-reverted` (boot-only, mantém rootfs). Ver `kernel/memory/baseline-oficial-20260730-sata-reverted.md` (checksums MD5 e detalhes completos).
+   - **🏆🏆 NOVO BASELINE OFICIAL, MAIS RECENTE (2026-07-30), tag `20260730-sata-polling-fase-ab` — SUPERA O ANTERIOR, SATA INTERNO FUNCIONAL PELA PRIMEIRA VEZ:** mesmo kernel do baseline acima + Fase A/B do plano de correção do SATA polling (documento original hoje em `kernel/consolidado/obsoleto/PLANO_SATA_POLLING_CORRECAO_2026-07-29.md`; o código vivo é `patches/ahci-baikal-polling-fallback.patch`) reaplicada e validada ao vivo. `ata1.00: configured for UDMA/100` sem nenhuma exceção, `dd`/`fdisk` confirmam leitura real do HD interno (931.51 GiB), zero `disable device` em todo o dmesg. **Este é o baseline mais completo/recomendado a partir de agora** — GBE (com PHY ainda mudo, bug conhecido) + SATA interno funcional juntos. Artefatos em `kernel/boot_referencia/*-7.0-20260730-sata-polling-fase-ab*` **NUNCA podem ser sobrescritos/descartados**. Rollback: `sudo ./deploy-boot-7.0.sh 20260730-sata-polling-fase-ab` (boot-only). Ver `kernel/memory/marco-sata-interno-funcional-2026-07-30.md`.
 
 ---
 
@@ -25,23 +47,23 @@
 
 ## 🔴 REGRA CRÍTICA — Build & deploy passam SEMPRE pelos scripts oficiais
 
-**NUNCA rodar `make bzImage` direto. NUNCA usar `deploy-boot-7.0.sh` sem antes ter rodado `00-build-kernel-7.0.sh`.** Toda compilação e todo deploy do kernel 7.0 devem passar pela sequência oficial em `distros/arch_minimal_v2/`:
+**NUNCA rodar `make bzImage` direto. NUNCA usar `deploy-boot-7.0.sh` sem antes ter rodado `00-build-kernel-7.0.sh`.** Toda compilação passa por `kernel/` e todo deploy por `distro/` — esta é a sequência oficial:
 
 | Script | Função |
 |--------|--------|
-| `00-build-kernel-7.0.sh [TAG]` | Compila kernel (ThinLTO, profile General, Baikal). Gera `boot_referencia/bzImage-7.0-<TAG>` + `config-7.0-<TAG>`. Aplica `scripts/config` do projeto (zstd, zswap, RTC_CLASS, etc). Faz `make modules`. |
-| `01-build-image-7.0.sh` | Cria rootfs Arch + initramfs. Gera `boot_referencia/initramfs-7.0-<TAG>.cpio.gz`. |
-| `02-burn-image-7.0.sh /dev/sda` | Particiona + grava rootfs (label **`psxitarch`** obrigatório) + boot. Use quando refazer rootfs do zero. |
-| `deploy-boot-7.0.sh <TAG> [MNT]` | Apenas reescreve boot no HD já particionado, mantém rootfs intacto. Mais leve. Exige tag completa: bzImage, config, bootargs.txt, initramfs (reaproveitável de outra tag via cp explícito). |
-| `rebuild-initramfs-7.0.sh` | Reconstrói initramfs em rootfs já montado em `/mnt/ps4_rootfs_7.0` após mudar hooks. |
+| `kernel/00-build-kernel-7.0.sh [TAG]` | Compila kernel (ThinLTO, profile General, Baikal). Gera `kernel/boot_referencia/bzImage-7.0-<TAG>` + `config-7.0-<TAG>`. Aplica `scripts/config` do projeto (zstd, zswap, RTC_CLASS, etc). Faz `make modules`. |
+| `distro/01-build-image-7.0.sh` | Cria rootfs Arch + initramfs. Gera `kernel/boot_referencia/initramfs-7.0-<TAG>.cpio.gz`. |
+| `distro/02-burn-image-7.0.sh /dev/sda` | Particiona + grava rootfs (label **`psxitarch`** obrigatório) + boot. Use quando refazer rootfs do zero. |
+| `distro/deploy-boot-7.0.sh <TAG> [MNT]` | Apenas reescreve boot no HD já particionado, mantém rootfs intacto. Mais leve. Exige tag completa: bzImage, config, bootargs.txt, initramfs (reaproveitável de outra tag via cp explícito). |
+| `distro/rebuild-initramfs-7.0.sh` | Reconstrói initramfs em rootfs já montado em `/mnt/ps4_rootfs_7.0` após mudar hooks. |
 
 **Por que isso é regra:**
 
-1. **Label `psxitarch` é hardcoded no initramfs.** O script `init` do busybox no initramfs faz `mount LABEL=psxitarch /newroot` literalmente — se a partição root não tiver exatamente esse label (e não `arch_base_v2`, `arch_minimal_v2`, etc), o mount falha e o boot cai no rescue shell com "The 'root' variable is empty". Só `02-burn-image-7.0.sh` garante `mkfs.ext4 -L psxitarch` na partição correta. Ver lição #7 do `consolidado/LICOES_APRENDIDAS.md`.
+1. **Label `psxitarch` é hardcoded no initramfs.** O script `init` do busybox no initramfs faz `mount LABEL=psxitarch /newroot` literalmente — se a partição root não tiver exatamente esse label (e não `arch_base_v2`, `arch_minimal_v2`, etc), o mount falha e o boot cai no rescue shell com "The 'root' variable is empty". Só `distro/02-burn-image-7.0.sh` garante `mkfs.ext4 -L psxitarch` na partição correta. Ver lição #7 do `kernel/consolidado/LICOES_APRENDIDAS.md`.
 
 2. **A primeira lição (#7) já documenta exatamente esse incidente.** Ele aconteceu de novo em 2026-07-25 por eu ter rodado `make bzImage` direto e depois reaproveitado `initramfs-7.0-20260725-full-build.cpio.gz` (que estava OK, mas sem o `01-build-image` rodando não houve auditoria de integridade entre `bootargs.txt` / `initramfs` / novo kernel).
 
-3. **Bootargs e initramfs são parte do artefato.** Não basta mexer no kernel. Toda tag em `boot_referencia/` precisa de 4 arquivos: `bzImage-7.0-<TAG>`, `config-7.0-<TAG>`, `bootargs-7.0-<TAG>.txt`, `initramfs-7.0-<TAG>.cpio.gz`. `deploy-boot-7.0.sh` falha alto se algum faltar — sem fallback silencioso (lição: "fallback silencioso em ferramenta de debug é armadilha").
+3. **Bootargs e initramfs são parte do artefato.** Não basta mexer no kernel. Toda tag em `kernel/boot_referencia/` precisa de 4 arquivos: `bzImage-7.0-<TAG>`, `config-7.0-<TAG>`, `bootargs-7.0-<TAG>.txt`, `initramfs-7.0-<TAG>.cpio.gz`. `deploy-boot-7.0.sh` falha alto se algum faltar — sem fallback silencioso (lição: "fallback silencioso em ferramenta de debug é armadilha").
 
 4. **Limite de ~10 MB do bzImage em alguns loaders de kexec do PS4 (lição #23).** A build padrão do projeto mantém o kernel abaixo desse limite. Um `make` fora dos parâmetros pode inflar sem perceber — o `00-build-kernel` tem as opções certas já validadas.
 
@@ -71,7 +93,7 @@
 5. Adicionar/atualizar a lógica no `00-build-kernel-7.0.sh` para aplicar o patch após o reset, seguindo o padrão `git apply --check` + `exit 1` em caso de falha — **nunca** `|| echo AVISO` ou qualquer forma de engolir erro silenciosamente (isso já causou uma falha real: o patch RTC `ps4-icc-rtc-wrapper.patch` ficou meses aplicando silenciosamente errado).
 6. Só commitar no git do projeto principal depois que os passos 2-4 passarem sem erro.
 
-**Consequência da quebra desta regra:** Baseline fica não-reproduzível, próximo build sem a mudança reintroduzida sofre regressão silenciosa (exemplo: 2026-08-01, tag `20260801-kvm-rtc-ok` perdeu SATA polling — ver `memory/regressao-sata-2026-08-01-diagnostico-e-solucao.md`).
+**Consequência da quebra desta regra:** Baseline fica não-reproduzível, próximo build sem a mudança reintroduzida sofre regressão silenciosa (exemplo: 2026-08-01, tag `20260801-kvm-rtc-ok` perdeu SATA polling — ver `kernel/memory/regressao-sata-2026-08-01-diagnostico-e-solucao.md`).
 
 ### 🔴 REGRA CRÍTICA — Snapshot de Segurança Obrigatório Pós-Build
 
@@ -79,7 +101,7 @@ Todo build bem-sucedido executado por `00-build-kernel-7.0.sh` DEVE obrigatoriam
 
 ### 🔴 REGRA CRÍTICA — Gatilhos de linguagem que exigem commit real no git
 
-Quando o usuário disser **"alteração aprovada"**, **"grave na memória e commite"**, ou **"registre e atualize os documentos"**, isso significa **COMMITAR NO GIT** — não apenas escrever/editar arquivos. Documentar em prosa sem nunca commitar já causou perda real de trabalho (o patch de SATA polling de 2026-07-30 foi descrito em detalhe em `memory/marco-sata-interno-funcional-2026-07-30.md`, mas o código-fonte em si nunca virou patch nem commit — foi apagado num `git reset --hard` de build posterior em 2026-08-01, exigindo reconstrução do zero). Git é a rede de segurança; memória em prosa não é.
+Quando o usuário disser **"alteração aprovada"**, **"grave na memória e commite"**, ou **"registre e atualize os documentos"**, isso significa **COMMITAR NO GIT** — não apenas escrever/editar arquivos. Documentar em prosa sem nunca commitar já causou perda real de trabalho (o patch de SATA polling de 2026-07-30 foi descrito em detalhe em `kernel/memory/marco-sata-interno-funcional-2026-07-30.md`, mas o código-fonte em si nunca virou patch nem commit — foi apagado num `git reset --hard` de build posterior em 2026-08-01, exigindo reconstrução do zero). Git é a rede de segurança; memória em prosa não é.
 
 ### 🔴 REGRA CRÍTICA — Menos velocidade, mais responsabilidade em mudanças de kernel
 
@@ -88,47 +110,64 @@ Para mudanças de kernel/módulos (e por extensão, qualquer mudança técnica d
 ### Sequência típica de modificação de kernel
 
 ```bash
-cd "$(git rev-parse --show-toplevel)/distros/arch_minimal_v2"   # caminho relativo ao repo, que hoje vive em ext4 (/mnt/hdauxiliar/ps4-linux-baikal) — NÃO em /mnt/t (NTFS)
+ROOT="$(git rev-parse --show-toplevel)"   # repo vive em ext4 (/mnt/hdauxiliar/ps4-linux-baikal) — NÃO em /mnt/t (NTFS)
 
 # 1. Editou source em /mnt/hdauxiliar/temp/kernel_build_7.0/ (com sudo)
 
-# 2. Compila e gera tag (r(run~20-45 min):
+# 2. FRENTE 1 — compila e gera tag (~20-45 min):
+cd "$ROOT/kernel"
 sudo ./00-build-kernel-7.0.sh 20260725-sata-fix
 
 # 3. Se mudou algo no rootfs/initramfs (hooks mkinitcpio, modules-load):
-#    sudo ./01-build-image-7.0.sh
-#    (se só mudou bzImage/bootargs, pode pular e usar initramfs de outra tag)
+#    cd "$ROOT/distro" && sudo ./01-build-image-7.0.sh
+#    (se só mudou bzImage/bootargs, pule: o initramfs de outra tag pode ser reusado
+#     com cp explícito — nunca por fallback automático)
 
-# 4. HD USB do PS4 plugado neste PC:
+# 4. FRENTE 2 — HD USB do PS4 plugado neste PC:
+cd "$ROOT/distro"
 sudo ./deploy-boot-7.0.sh 20260725-sata-fix
 # (grava só o boot, mantém rootfs psxitarch intacto, confere MD5 origem→destino)
 
 # 5. Plugar HD de volta no PS4, ligar, SSH em 192.168.6.128, smoke test.
 
-# 6. Depois que a tag passou no teste ao vivo, promover para RELEASE/:
-../../scripts/promote-release.sh 20260725-sata-fix
+# 6. Depois que a tag passou no teste ao vivo, promover para distro/RELEASE/:
+./scripts/promote-release.sh 20260725-sata-fix
 ```
 
-**Rollback:** rodar `deploy-boot-7.0.sh <tag-anterior>` restaura em 1 power cycle — todo histórico fica em `boot_referencia/`.
+**Rollback:** rodar `deploy-boot-7.0.sh <tag-anterior>` restaura em 1 power cycle — todo histórico fica em `kernel/boot_referencia/`.
 
-### 📦 RELEASE/ — vitrine dos artefatos compilados (2026-08-05)
+> 🔴 **ESTADO DOS ARTEFATOS (verificado em 2026-11-11 — busca em EXPANSION, hdexterno, `/mnt/hdauxiliar` e `/mnt/t`):**
+> `kernel/boot_referencia/` **não contém nenhuma tag** neste clone (é build output gitignored), e os
+> baselines `20260730-sata-polling-fase-ab` / `20260730-sata-reverted` / `v7.0-20260722-clean-video-ok`
+> **não existem em disco nenhum** — viviam só no `boot_referencia/` do path antigo
+> `/mnt/t/downloads/PS4/linux_in_ps4`, removido. O que **é** recuperável:
+> - `distro/RELEASE/v1.0.0/` — 4 artefatos completos da tag `20260801-kvm-rtc-sata-final` (MD5 conferido),
+>   prontos para recompôr `kernel/boot_referencia/bzImage-7.0-20260801-kvm-rtc-sata-final` etc.;
+> - `/mnt/hdauxiliar/kernel_source_snapshots/*.tar.zst` (3 tarballs de 2026-08-01) — cada um traz
+>   `.config` + `arch/x86/boot/bzImage` da build + `.git` da árvore fonte. O tarball
+>   `...-kvm-rtc-sata-final.tar.zst` bate MD5 **byte a byte** com o `RELEASE/v1.0.0`;
+>   `...-sata-func7-fix.tar.zst` e `...-kvm-rtc-sata.tar.zst` guardam as builds irmãs.
+> Consequência prática: rollback para `20260730-*` é **impossível** hoje; só a família `20260801-*`
+> pode ser reposta. Não tratar nenhuma tag antiga como "preservada" sem conferir o disco antes.
+
+### 📦 distro/RELEASE/ — vitrine dos artefatos compilados (2026-08-05)
 
 O pipeline oficial NÃO muda: `00/01/02/deploy` continuam gravando em
-`distros/arch_minimal_v2/boot_referencia/`. `RELEASE/` é montado por
-`scripts/promote-release.sh <TAG>` (copiar artefatos + symlink do tarball da
+`kernel/boot_referencia/`. `distro/RELEASE/` é montado por
+`distro/scripts/promote-release.sh <TAG>` (copiar artefatos + symlink do tarball da
 distro + `sha256sums.txt`) — demais tags são gitignored; apenas o `README.md`
 e a **versão de distribuição `v1.0.0/`** (4 artefatos de boot + README, origem
 `20260801-kvm-rtc-sata-final`) são versionados no git.
 
 - **Kernel mainline:** NUNCA fica dentro do projeto (é NTFS). Só existe o symlink
-  `kernels/ps4-baikal-7.0.8-kernel -> /mnt/hdauxiliar/temp/kernel_build_7.0`
+  `kernel/kernels/ps4-baikal-7.0.8-kernel -> /mnt/hdauxiliar/temp/kernel_build_7.0`
   (⚠️ **este symlink e o destino não existem num clone novo** — `kernels/` é gitignored e a árvore
   do kernel é efêmera. O primeiro `00-build-kernel-7.0.sh` numa máquina limpa precisa clonar a
   árvore antes; o próprio script faz o reset/clone. Mesma coisa para
-  `distros/arch_minimal_v2/boot_referencia/`: é build output e **não vem no clone**, então
+  `kernel/boot_referencia/`: é build output e **não vem no clone**, então
   `deploy-boot-7.0.sh <TAG>` falha alto (por design) até os artefatos serem gerados/copiados)
-  (ext4). `kernels/patches -> ../distros/arch_minimal_v2/patches` é symlink —
-  fonte única dos patches, que vivem versionados em `distros/arch_minimal_v2/patches/`
+  (ext4). `kernel/kernels/patches -> ../patches` é symlink —
+  fonte única dos patches, que vivem versionados em `kernel/patches/`
   e são referenciados pelo `00-build-kernel-7.0.sh`.
 - Baseline atual promovido: `20260730-sata-polling-fase-ab`.
 
@@ -163,23 +202,23 @@ da partição BOOT) antes de considerar um burn como definitivo.
 Antes de rodar `deploy-boot-7.0.sh <TAG>`:
 
 1. Confirmar que o HD USB `psxitarch` está plugado e a partição `BOOT` montou (`lsblk | grep BOOT`).
-2. Confirmar que a tag existe completa em `boot_referencia/` (4 arquivos: bzImage, config, bootargs, initramfs).
+2. Confirmar que a tag existe completa em `kernel/boot_referencia/` (4 arquivos: bzImage, config, bootargs, initramfs).
 3. Confirmar MD5 dos arquivos da tag (script já faz automaticamente origen→destino, mas vale uma checagem prévia).
 4. Em incidente — caiu no rescue shell: NÃO tentar "remediar" comandos ad-hoc pelo shell do initramfs. Desligar, puxar o HD, plugar neste PC, restaurar tag anterior via `deploy-boot-7.0.sh <tag-velha>`, refazer o build corretamente com os scripts oficiais.
 
 ### Referências
 
-- `consolidado/LICOES_APRENDIDAS.md` — lições #7 (label psxitarch), #17/22/23 (boot/stabilidade), #24 (não compilar em NTFS), "REGRA: no HD (sda1) fica APENAS o bzImage ativo", "INCIDENTE: 'testar' um script de deploy destruiu o boot do HD", "Fallback silencioso em ferramenta de debug é armadilha".
-- `consolidado/FULL_BUILD.md` — procedimento de build completo do Arch Minimal v2.
+- `kernel/consolidado/LICOES_APRENDIDAS.md` — lições #7 (label psxitarch), #17/22/23 (boot/stabilidade), #24 (não compilar em NTFS), "REGRA: no HD (sda1) fica APENAS o bzImage ativo", "INCIDENTE: 'testar' um script de deploy destruiu o boot do HD", "Fallback silencioso em ferramenta de debug é armadilha".
+- `kernel/consolidado/FULL_BUILD.md` — procedimento de build completo do Arch Minimal v2.
 
 ---
 
 ## 🔴 PRIORIDADE ALTA — Banco de Varreduras de Hardware (SEMPRE consultar antes de varrer de novo)
 
-**Antes de fazer qualquer varredura de registradores/MMIO ao vivo (BAR0/BAR2/BAR4, ICC, glue), consultar primeiro `consolidado/ps4_hardware_memory.db` (SQLite)** — é a fonte única de leituras já feitas em hardware real, para não repetir teste (cada teste ao vivo custa um power cycle inteiro).
+**Antes de fazer qualquer varredura de registradores/MMIO ao vivo (BAR0/BAR2/BAR4, ICC, glue), consultar primeiro `kernel/consolidado/ps4_hardware_memory.db` (SQLite)** — é a fonte única de leituras já feitas em hardware real, para não repetir teste (cada teste ao vivo custa um power cycle inteiro).
 
 ```bash
-sqlite3 consolidado/ps4_hardware_memory.db ".tables"
+sqlite3 kernel/consolidado/ps4_hardware_memory.db ".tables"
 ```
 
 Tabelas principais:
@@ -189,11 +228,11 @@ Tabelas principais:
 - `write_sweep_results` — resultados de testes de escrita (valor antes/depois, se ping/telnet sobreviveram).
 - `decompiled_functions` — catálogo de funções decompiladas do kernel Orbis (`kmem_dump_1252.bin`) no escopo MTS/GBE/ICC/glue. Cada linha: addr_hex, short_name (ex `dc5a0070`), category, role, file_path do .txt, status (`revisado`/`bruto`/`pendente`/`refutado`), validated_by_test_id (FK → test_history.id). View `v_decompiled_summary` agrega contagens. Para verificar o que já foi decompilado antes de pedir RE nova:
   ```bash
-  sqlite3 consolidado/ps4_hardware_memory.db "SELECT addr_hex, role, file_path, status, validated_by_test_id FROM decompiled_functions WHERE status='pendente' ORDER BY addr_hex;"
+  sqlite3 kernel/consolidado/ps4_hardware_memory.db "SELECT addr_hex, role, file_path, status, validated_by_test_id FROM decompiled_functions WHERE status='pendente' ORDER BY addr_hex;"
   ```
 - `test_history` — histórico cronológico de testes ao vivo (inclui os testes de RMU/loopback da GBE de 2026-07-25).
 
-Os dumps brutos/análise textual de varreduras grandes (ex: a janela Glue BAR2) também ficam em `consolidado/glue_140000_180000_raw.txt`/`_analise.txt`, mas o SQLite é sempre a referência estruturada e consultável.
+Os dumps brutos/análise textual de varreduras grandes (ex: a janela Glue BAR2) também ficam em `kernel/consolidado/glue_140000_180000_raw.txt`/`_analise.txt`, mas o SQLite é sempre a referência estruturada e consultável.
 
 ## 🔴 PRIORIDADE ALTA — Topologia de Rede (NUNCA confundir)
 
@@ -229,14 +268,14 @@ sshpass -p ps4 ssh root@192.168.6.128 "<cmd>"
 
 | Script | Função |
 |--------|--------|
-| `scripts/uart_start.sh [duracao_s] [nome]` | Inicia UMA captura em background, grava em `tests/uart_logs/<nome>_<timestamp>.{bin,log}`. Recusa iniciar se já houver captura rodando (evita duas capturas disputando a porta — isso corrompe/trava a leitura). |
-| `scripts/uart_stop.sh` | Encerra toda captura em andamento (via pid file + varredura de processos órfãos `dd`/`xxd`/`uart_capture.sh`). Sempre rodar antes de iniciar uma nova se não tiver certeza do estado. |
-| `scripts/uart_capture.sh` | Motor interno (chamado pelos dois acima) — não rodar direto, usar `uart_start.sh`. |
+| `kernel/scripts/uart_start.sh [duracao_s] [nome]` | Inicia UMA captura em background, grava em `tests/uart_logs/<nome>_<timestamp>.{bin,log}`. Recusa iniciar se já houver captura rodando (evita duas capturas disputando a porta — isso corrompe/trava a leitura). |
+| `kernel/scripts/uart_stop.sh` | Encerra toda captura em andamento (via pid file + varredura de processos órfãos `dd`/`xxd`/`uart_capture.sh`). Sempre rodar antes de iniciar uma nova se não tiver certeza do estado. |
+| `kernel/scripts/uart_capture.sh` | Motor interno (chamado pelos dois acima) — não rodar direto, usar `uart_start.sh`. |
 
 ```bash
-scripts/uart_start.sh 900 s5-shutdown-test   # captura de 15 min
+kernel/scripts/uart_start.sh 900 s5-shutdown-test   # captura de 15 min
 tail -f tests/uart_logs/s5-shutdown-test_*.log   # acompanhar ao vivo
-scripts/uart_stop.sh                          # encerrar quando terminar
+kernel/scripts/uart_stop.sh                          # encerrar quando terminar
 ```
 
 ### Bootargs necessário
@@ -245,13 +284,13 @@ scripts/uart_stop.sh                          # encerrar quando terminar
 ```
 earlycon=uart8250,mmio32,0xC890E000 console=uart8250,mmio32,0xC890E000 console=tty0
 ```
-(console real apontando para o mesmo MMIO do earlycon, não para `ttyS0`). Teste ao vivo desse fix em andamento — ver `memory/console-ttys0-bootargs-causa-tela-preta-2026-07-27.md` e `memory/uart-ttl-pinagem-corrigida-2026-07-27.md`.
+(console real apontando para o mesmo MMIO do earlycon, não para `ttyS0`). Teste ao vivo desse fix em andamento — ver `kernel/memory/console-ttys0-bootargs-causa-tela-preta-2026-07-27.md` e `kernel/memory/uart-ttl-pinagem-corrigida-2026-07-27.md`.
 
 **Consoles CEX/retail (firmware oficial, antes do kexec) censuram a UART com bytes `0x20` (espaço) puros** — isso é esperado e não indica falha de captura.
 
 ## Compilação de Módulos
 
-Use `sudo scripts/build_mts_module.sh` (já validado) para compilar o driver `mts.ko`.
+Use `sudo kernel/scripts/build_mts_module.sh` (já validado) para compilar o driver `mts.ko`.
 
 Não criar `Makefile` ad-hoc nem comandos `gcc` diretos — o script já encapsula opções de cross-compile e flags corretas.
 
@@ -259,15 +298,15 @@ Não criar `Makefile` ad-hoc nem comandos `gcc` diretos — o script já encapsu
 
 ## Deploy do mts.ko
 
-Script: `./scripts/deploy_mts.sh [push|test]` (usa sshpass)
+Script: `./kernel/scripts/deploy_mts.sh [push|test]` (usa sshpass)
 
 - **push**: Compila (se necessário), copia mts.ko via SCP, insmod stage=4
 - **test**: Configura eth0 (192.168.0.2), ping -I eth0 192.168.0.1, captura dmesg + mts_regs
 
 Uso:
 ```bash
-./scripts/deploy_mts.sh push
-./scripts/deploy_mts.sh test
+./kernel/scripts/deploy_mts.sh push
+./kernel/scripts/deploy_mts.sh test
 ```
 
 Para passar module params:
@@ -308,7 +347,7 @@ Requer: sshpass, scp no host. PS4 precisa ter SSH rodando.
 
 ### Hold Registers são WRITE-ONLY (2026-07-24)
 - Hold registers sempre leem 0 após escrita — padrão Baikal confirmado: write-only por design.
-- ⚠️ **CORREÇÃO 2026-07-25 (a linha abaixo estava com os offsets trocados):** a label "GBE hold=0x180034" **estava errada** — veio de inferência por padrão (hold = pulse - 0x40) nunca cruzada com a descompilação real. A descompilação de `fcn.ffffffffdc6df850` (`consolidado/decompiled/baikal_glue_block_reset_dc6df.txt`) mostra `fcn.dc59fe10()` (rotina de STOP do MAC da GBE, já confirmada por RE) chamada **imediatamente antes** de `dc6dfb60(0x2000)` + `dc718710(0x20,1)` + `dc718710(0x74,1)` — ou seja, **GBE hold = `0x180020`, pulse = `0x180074`** (bloco `0x2000`, confirmado). `0x180034` pertence a um bloco DIFERENTE e não identificado (`0x3c00`), que sequer tem par hold/pulse (só uma chamada `dc718710`). SATA é `0x18002c`/`0x18006c` (nunca foi `0x180020`). `drivers_mts/mts.c` corrigido para usar `0x180020`; testado ao vivo 2026-07-25 sem incidente (console permaneceu estável), mas o PHY continuou mudo mesmo com o offset correto — toggling hold/pulse sozinho não é suficiente. Ver `test_history` no `ps4_hardware_memory.db`.
+- ⚠️ **CORREÇÃO 2026-07-25 (a linha abaixo estava com os offsets trocados):** a label "GBE hold=0x180034" **estava errada** — veio de inferência por padrão (hold = pulse - 0x40) nunca cruzada com a descompilação real. A descompilação de `fcn.ffffffffdc6df850` (`kernel/consolidado/decompiled/baikal_glue_block_reset_dc6df.txt`) mostra `fcn.dc59fe10()` (rotina de STOP do MAC da GBE, já confirmada por RE) chamada **imediatamente antes** de `dc6dfb60(0x2000)` + `dc718710(0x20,1)` + `dc718710(0x74,1)` — ou seja, **GBE hold = `0x180020`, pulse = `0x180074`** (bloco `0x2000`, confirmado). `0x180034` pertence a um bloco DIFERENTE e não identificado (`0x3c00`), que sequer tem par hold/pulse (só uma chamada `dc718710`). SATA é `0x18002c`/`0x18006c` (nunca foi `0x180020`). `drivers_mts/mts.c` corrigido para usar `0x180020`; testado ao vivo 2026-07-25 sem incidente (console permaneceu estável), mas o PHY continuou mudo mesmo com o offset correto — toggling hold/pulse sozinho não é suficiente. Ver `test_history` no `ps4_hardware_memory.db`.
 
 ### BAR0+0x004 Link Status (2026-07-24)
 - STABLE_ZERO antes do ICC power-on; muda para 0x00000b19 após ICC+clock+calibração
@@ -318,39 +357,39 @@ Requer: sshpass, scp no host. PS4 precisa ter SSH rodando.
 ## 🔴 PRIORIDADE ALTA — Funções Decompiladas do Kernel Orbis (panorama MTS/GBE/ICC/glue)
 
 **Antes de pedir nova descompilação ao vivo ou tentar inferir comportamento de uma função do kernel Orbis**, consultar:
-- `consolidado/decompiled/INDEX.md` — catálogo canônico (~50 funções indexadas por papel/status).
+- `kernel/consolidado/decompiled/INDEX.md` — catálogo canônico (~50 funções indexadas por papel/status).
 - `ps4_hardware_memory.db` → tabela `decompiled_functions` — mesmo catálogo, consultável: `addr_hex`, `category`, `role`, `status` (`revisado`/`bruto`/`pendente`/`refutado`), `validated_by_test_id` (FK → test_history.id), `file_path` do `.txt` decompilado.
 
 Processo para nova RE:
 ```bash
 # 1. Lista o que já existe no escopo MTS:
-sqlite3 consolidado/ps4_hardware_memory.db "SELECT addr_hex, role, status FROM decompiled_functions WHERE category LIKE 'MTS%' ORDER BY addr_hex;"
+sqlite3 kernel/consolidado/ps4_hardware_memory.db "SELECT addr_hex, role, status FROM decompiled_functions WHERE category LIKE 'MTS%' ORDER BY addr_hex;"
 
 # 2. Lista as lacunas pendentes (ainda não decompiladas):
-sqlite3 consolidado/ps4_hardware_memory.db "SELECT addr_hex, role FROM decompiled_functions WHERE status='pendente' ORDER BY addr_hex;"
+sqlite3 kernel/consolidado/ps4_hardware_memory.db "SELECT addr_hex, role FROM decompiled_functions WHERE status='pendente' ORDER BY addr_hex;"
 
 # 3. Antes de pedir RE de uma função, ver se já foi validada/refutada em testes ao vivo:
-sqlite3 consolidado/ps4_hardware_memory.db "SELECT t.id, t.phase, t.status FROM decompiled_functions d JOIN test_history t ON d.validated_by_test_id = t.id WHERE d.addr_hex = 'dc5a44c0';"
+sqlite3 kernel/consolidado/ps4_hardware_memory.db "SELECT t.id, t.phase, t.status FROM decompiled_functions d JOIN test_history t ON d.validated_by_test_id = t.id WHERE d.addr_hex = 'dc5a44c0';"
 ```
 
-Os dumps brutos/análise textual de varreduras grandes (ex: a janela Glue BAR2) também ficam em `consolidado/glue_140000_180000_raw.txt`/`_analise.txt`, mas o SQLite e o `INDEX.md` são sempre a referência estruturada e consultável.
+Os dumps brutos/análise textual de varreduras grandes (ex: a janela Glue BAR2) também ficam em `kernel/consolidado/glue_140000_180000_raw.txt`/`_analise.txt`, mas o SQLite e o `INDEX.md` são sempre a referência estruturada e consultável.
 
-Ghidra headless está instalado em `/mnt/hdauxiliar/ghidra_12.1.2` e os scripts de extração em `consolidado/tools/ghidra_scripts/`. Para extrair novas funções:
+Ghidra headless está instalado em `/mnt/hdauxiliar/ghidra_12.1.2` e os scripts de extração em `kernel/consolidado/tools/ghidra_scripts/`. Para extrair novas funções:
 ```bash
-/mnt/hdauxiliar/ghidra_12.1.2/support/analyzeHeadless consolidado/tools/ghidra_project orbis_mts \
+/mnt/hdauxiliar/ghidra_12.1.2/support/analyzeHeadless kernel/consolidado/tools/ghidra_project orbis_mts \
   -process kmem_dump_1252.bin \
-  -postScript consolidado/tools/ghidra_scripts/ExtractMtsNamespaceNoAnalysis.py \
-  -scriptPath consolidado/tools/ghidra_scripts \
+  -postScript kernel/consolidado/tools/ghidra_scripts/ExtractMtsNamespaceNoAnalysis.py \
+  -scriptPath kernel/consolidado/tools/ghidra_scripts \
   -readOnly
 ```
-Adicionar novo endereço em `TARGET_ADDRS` do `ExtractMtsNamespaceNoAnalysis.py` antes de rodar. Saídas em `consolidado/decompiled/extracted/`.
+Adicionar novo endereço em `TARGET_ADDRS` do `ExtractMtsNamespaceNoAnalysis.py` antes de rodar. Saídas em `kernel/consolidado/decompiled/extracted/`.
 
 ---
 
 ## Localização da Documentação
-- **Fonte única de documentação do projeto a partir de 2026-07-19: `consolidado/`.** Ignorar qualquer coisa em `old_project/` para fins de documentação (inclusive `old_project/distros/arch_minimal_v2/LICOES_APRENDIDAS.md`, que tinha lições extras #24-27, mas foi descontinuado por decisão do usuário).
-- O arquivo de lições imperativas (REGRA #0, ler antes de qualquer ação) é `consolidado/LICOES_APRENDIDAS.md`.
-- **Memórias do assistente movidas para o projeto (2026-07-20):** os arquivos de memória foram relocados de `/home/anderson/.claude/projects/-mnt-t-downloads-PS4-linux-in-ps4/memory/` para `./memory/` (pasta na raiz do projeto) para que múltiplos agentes/sessões possam acessá-los. O índice está em `memory/MEMORY.md`.
+- **Fonte única de documentação do projeto a partir de 2026-07-19: `kernel/consolidado/`.** Ignorar qualquer coisa em `old_project/` para fins de documentação (inclusive `old_project/kernel/consolidado/LICOES_APRENDIDAS.md`, que tinha lições extras #24-27, mas foi descontinuado por decisão do usuário).
+- O arquivo de lições imperativas (REGRA #0, ler antes de qualquer ação) é `kernel/consolidado/LICOES_APRENDIDAS.md`.
+- **Memórias do assistente movidas para o projeto (2026-07-20):** os arquivos de memória foram relocados de `/home/anderson/.claude/projects/-mnt-t-downloads-PS4-linux-in-ps4/kernel/memory/` para `./kernel/memory/` (pasta na raiz do projeto) para que múltiplos agentes/sessões possam acessá-los. O índice está em `kernel/memory/MEMORY.md`.
 
 ### Mapa de arquivos (reorganizado em 2026-08-05 — fonte única)
 
@@ -360,13 +399,14 @@ Antes desta data havia planos e scripts espalhados na raiz, o que poluía o repo
 |-----------------|-------|-----------------|
 | `AGENTS.md` | **Fonte única de regras e procedimentos.** Escreva aqui. | Sim, via import do stub |
 | `CLAUDE.md` | Stub de uma linha (`@AGENTS.md`). **Não escrever regras aqui.** | Sim (o Claude Code só lê este nome) |
-| `docs/planos/` | Planos de investigação, descobertas e arquitetura (`PLANO_*.md`, `DESCOBERTA_*.md`) | Não |
-| `docs/relatorios/` | Relatórios de testes, sessões de debug e resultados (`TESTE_*.md`, `PHY_DEBUG_*.md`, etc.) | Não |
-| `consolidado/` | Documentação técnica consolidada, banco de RE (SQLite), scripts Ghidra, `BACKLOG.md` e `LICOES_APRENDIDAS.md` | Não |
-| `memory/` | Registro cronológico de descobertas e memórias de sessão (`MEMORY.md`) | Não |
-| `tools/harness/` | Scripts Python de diagnóstico, varredura de registradores e testes de hardware | Não |
-| `tools/ps4_hdd_tools/` | Ferramentas de manipulação de disco e utilitários PS4 HDD | Não |
-| `RELEASE/` | Releases de boot/kernel compiladas e consolidadas para distribuição (`v1.0.0/`) | Não |
+| `kernel/README.md` · `distro/README.md` | Porta de entrada de cada frente (build, conteúdo, regras próprias) | Não |
+| `kernel/docs/planos/` | Planos de investigação, descobertas e arquitetura (`PLANO_*.md`, `DESCOBERTA_*.md`) | Não |
+| `kernel/docs/relatorios/` | Relatórios de testes, sessões de debug e resultados (`TESTE_*.md`, `PHY_DEBUG_*.md`, etc.) | Não |
+| `kernel/consolidado/` | Documentação técnica consolidada, banco de RE (SQLite), scripts Ghidra, `BACKLOG.md` e `LICOES_APRENDIDAS.md` | Não |
+| `kernel/memory/` | Registro cronológico de descobertas e memórias de sessão (`MEMORY.md`) | Não |
+| `kernel/tools/harness/` | Scripts Python de diagnóstico, varredura de registradores e testes de hardware | Não |
+| `kernel/tools/ps4_hdd_tools/` | Ferramentas de manipulação de disco e utilitários PS4 HDD | Não |
+| `distro/RELEASE/` | Releases de boot/kernel compiladas e consolidadas para distribuição (`v1.0.0/`) | Não |
 
 **Por que o stub existe:** a documentação oficial do Claude Code diz textualmente *"Claude Code
 reads `CLAUDE.md`, not `AGENTS.md`"* e recomenda exatamente este padrão — um `CLAUDE.md` que
