@@ -11,20 +11,26 @@ registradores e diagnósticos.
 
 ```bash
 cd kernel
-sudo ./00-build-kernel-7.0.sh <TAG>
+sudo ./00-build-kernel-7.0.sh [TAG]   # sem TAG usa <data>-sky2builtin
 ```
 
 O script:
-1. Reseta/clona a árvore do kernel em `/mnt/hdauxiliar/temp/kernel_build_7.0`
-   (ext4, **nunca** em NTFS) no branch `baikal/7.0.8-Stable`;
+1. Reseta a árvore **local** do kernel em `/mnt/hdauxiliar/temp/kernel_build_7.0`
+   (ext4, **nunca** em NTFS) no branch `baikal/7.0.8-Stable`; se a árvore não
+   existe, **aborta** e instrui a restaurar do snapshot (o upstream não publica
+   mais esse branch — ver seção abaixo);
 2. aplica os patches em uso — `ahci-baikal-polling-fallback`, `ps4-icc-rtc-wrapper`,
    `mts-baikal-gbe-driver` e `ps4-icc-proc-debug` — com `git apply --check` +
    aborto em caso de falha (sem fallback silencioso). Os demais arquivos em
    `patches/` são **legado não aplicado** (ver abaixo);
 3. copia `drivers_mts/{mts.c,mts.h}` para `drivers/net/ethernet/sony/`;
-4. compila com ThinLTO (`LLVM=1`, `JOBS=2`) e faz `make modules`;
-5. grava `boot_referencia/bzImage-7.0-<TAG>` e `boot_referencia/config-7.0-<TAG>`;
-6. gera snapshot de segurança da árvore fonte em
+4. confere que **todos** os firmwares de `CONFIG_EXTRA_FIRMWARE` existem em
+   `extra_firmware/` — falha cedo, antes do `make`, listando o que falta;
+5. compila com ThinLTO (`LLVM=1`, `JOBS=2`) e faz `make modules`;
+6. grava `boot_referencia/bzImage-7.0-<TAG>` e `boot_referencia/config-7.0-<TAG>`
+   (com aviso se o bzImage passar de ~10 MB — limite de alguns loaders kexec,
+   lição #23);
+7. gera snapshot de segurança da árvore fonte em
    `/mnt/hdauxiliar/kernel_source_snapshots/kernel-src-<DATA>-<TAG>.tar.zst`.
 
 `boot_referencia/` é o **único** lugar onde os artefatos de boot por tag vivem —
@@ -71,7 +77,7 @@ make -j2 LLVM=1 CC="ccache clang" ARCH=x86_64 prepare                       # ~2
 | `patches/` | Fonte única dos patches. **Aplicados pelo build:** `ahci-baikal-polling-fallback` (SATA polling), `ps4-icc-rtc-wrapper` (RTC via ICC), `mts-baikal-gbe-driver` + `ps4-icc-proc-debug` (driver GBE e `/proc/ps4_icc`, só quando `mts.c` ainda não está na árvore). **Legado, NÃO aplicado:** `sky2-baikal-gbe` (congelava o PCIe/vídeo — ver AGENTS.md), `stmmac-baikal-fixedlink` e `sky2-fake-chipid` (sem referência no script; só histórico da época em que o driver errado era tentado) |
 | `drivers_mts/` | Driver Ethernet GBE do Baikal (`mts.ko`), escrito do zero |
 | `boot_referencia/` | Artefatos de boot por tag (gitignored, gerado pelo build) |
-| `kernels/` | Symlink para a árvore fonte (gitignored, local) |
+| `kernels/` | Symlink para a árvore fonte (gitignored, criado localmente — não vem no clone) |
 | `scripts/` | Diagnóstico e validação: `build_mts_module.sh`, `deploy_mts.sh`, UART (`uart_start/stop/capture`), netconsole, telnet, Ghidra |
 | `consolidado/` | Documentação consolidada, **SQLite de RE** (`ps4_hardware_memory.db`), decompilado, `obsoleto/` |
 | `memory/` | Registro cronológico por sessão (índice em `memory/MEMORY.md`) |

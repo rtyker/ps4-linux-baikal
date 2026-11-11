@@ -303,11 +303,22 @@ if [ ! -f "drivers/net/ethernet/sony/mts.c" ]; then
   for P in ps4-icc-proc-debug.patch mts-baikal-gbe-driver.patch; do
     PATCH="$SCRIPT_DIR/patches/$P"
     if [ ! -f "$PATCH" ]; then
-      echo "ERRO: $PATCH não encontrado."
+      echo "❌ ERRO FATAL: $PATCH não encontrado."
       exit 1
     fi
     echo "Aplicando patch $P..."
+    # Mesmo padrão rigoroso dos patches AHCI/RTC: --check antes, exit 1 com
+    # diagnóstico se falhar (nunca falha silenciosa, ver AGENTS.md).
+    if ! git apply --check "$PATCH" 2>/tmp/mts_patch_check.log; then
+      echo "❌ ERRO FATAL: patch $P não aplica contra o kernel atual:"
+      cat /tmp/mts_patch_check.log
+      echo ""
+      echo "  Regenere o patch a partir de uma árvore limpa (ver AGENTS.md,"
+      echo "  seção 'Idempotência de Alterações no Kernel') e substitua $PATCH."
+      exit 1
+    fi
     git apply "$PATCH"
+    echo "✓ Patch $P aplicado com sucesso (git apply, validado com --check)"
   done
 fi
 
