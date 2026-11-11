@@ -83,6 +83,23 @@ grep RTC_DRV_PS4_ICC drivers/rtc/Makefile                    # espera 1 linha
 git status --porcelain | grep -c '^ M'                        # espera 10
 ```
 
+## Armadilha 3 — objeto compilado à mão fica "up to date" com flags divergentes
+
+O teste de compilação foi feito com `make ... <arquivo>.o` **sem** `KCFLAGS`, mas o
+`00-build-kernel-7.0.sh` exporta `KCFLAGS`/`KAFLAGS="-march=btver2 -mtune=btver2 -Os"`
+(linhas 29-30). Os objetos gerados no teste ficam com flags diferentes das oficiais, e
+`make` **não rastreia mudança de flag** — um build oficial na mesma árvore pularia esses
+arquivos com `INSTALL`/`CC` ausente e linkaria objetos inconsistentes. Antes de qualquer
+build oficial, a árvore precisa voltar ao estado pristino (é o que o `git reset --hard`
+do próprio script faz, então na prática já está coberto — mas não reaproveite objetos de
+teste manual).
+
+Medição do ccache (2026-11-11, `CCACHE_DIR=/mnt/hdauxiliar/ccache`, mesmo do script):
+recompilar `drivers/ata/libahci.o` com as flags oficiais deu **direct_cache_hit**
+(205687 → 205699 hits, `cache_miss` parado em 118274), 1,10 s contra ~6 s de compilação
+real. Hit histórico acumulado: 67,4%. O cache **está** sendo aproveitado — inclusive para
+o conjunto sem `KCFLAGS`, porque essa combinação já existia na cache.
+
 ## Conclusão
 
 O snapshot é uma rede de segurança **utilizável** para recompilar (patches
