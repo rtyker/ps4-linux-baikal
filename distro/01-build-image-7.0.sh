@@ -36,7 +36,7 @@ trap cleanup EXIT INT TERM
 
 # Determinar versão do kernel 7.0 (UTS_RELEASE real)
 # O UTS_RELEASE é a string exata usada por modules_install e mkinitcpio
-KERNEL_BUILD_DIR="/mnt/hdauxiliar/temp/kernel_build_7.0"
+KERNEL_BUILD_DIR="$SCRIPT_DIR/../kernel/kernels/kernel_build_7.0"
 UTS_RELEASE_FILE="$KERNEL_BUILD_DIR/include/generated/utsrelease.h"
 if [ -f "$UTS_RELEASE_FILE" ]; then
   KVER_FULL=$(grep -oP '"\K[^"]+' "$UTS_RELEASE_FILE")

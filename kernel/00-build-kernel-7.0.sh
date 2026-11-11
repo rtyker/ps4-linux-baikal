@@ -6,11 +6,20 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# Toda a parafernália de build mora DENTRO do projeto, em kernel/kernels/
+# (gitignored): árvore fonte, backups pré-reset, ccache e snapshots em
+# kernel/snapshots/. Motivo (2026-11-11): antes o build dependia de
+# /mnt/hdauxiliar/temp/, o que exigia mover/copiar estado entre diretórios a
+# cada sessão. O repo vive em ext4 (NUNCA em NTFS — ver AGENTS.md), então não
+# há mais razão para o build sair da estrutura do projeto.
+KERNEL_BUILD_ROOT="$SCRIPT_DIR/kernels"
+KERNEL_SRC_DIR="$KERNEL_BUILD_ROOT/kernel_build_7.0"
+KERNEL_BACKUP_DIR="$KERNEL_BUILD_ROOT/tree_backups"
+SNAPSHOT_DIR="$SCRIPT_DIR/snapshots"
 # Frente 2 (distro) — usada no fallback de config versionada (RELEASE/v1.0.0)
 # e nos caminhos das instruções finais. Não é validada de propósito: o build
 # do kernel em si não depende dela.
 DISTRO_DIR="$SCRIPT_DIR/../distro"
-KERNEL_SRC_DIR="/mnt/hdauxiliar/temp/kernel_build_7.0"
 # ── Origem do código do kernel ─────────────────────────────────────────────
 # A ÁRVORE LOCAL em $KERNEL_SRC_DIR é a FONTE DA VERDADE do código desde
 # 2026-11-11. Motivo (investigado ao vivo nesta data):
@@ -54,7 +63,7 @@ export HOSTCFLAGS="-Wno-error=incompatible-pointer-types-discards-qualifiers"
 # atribuição simples no makefile, uma atribuição na linha de comando tem
 # precedência. Isso mantém o build rápido e o pahole contido, sem precisar
 # desabilitar o BTF (o que quebrou o boot — ver comentário na seção DEBUG_INFO).
-export CCACHE_DIR="/mnt/hdauxiliar/ccache"
+export CCACHE_DIR="${PS4_CCACHE_DIR:-$KERNEL_BUILD_ROOT/.ccache}"
 MAKE_OPTS=(-j"$(nproc)" JOBS=2 LLVM=1 CC="ccache clang" ARCH=x86_64 HOSTCFLAGS="${HOSTCFLAGS}")
 
 echo "=== Build tag: $TAG ==="
@@ -83,7 +92,6 @@ trap cleanup_build_dir EXIT INT TERM
 # rodadas anteriores deixam drivers/ata/etc "sujos" de propósito (git apply sem
 # commit, por design) — abortar tornaria o build impossível a partir do segundo
 # run. O que a regra exige é "extrair ANTES da perda", não "abortar".
-KERNEL_BACKUP_DIR="/mnt/hdauxiliar/temp/kernel_tree_backups"
 save_dirty_state() {
   local ts dir
   ts="$(date +%Y%m%d-%H%M%S)"
@@ -106,8 +114,8 @@ if [ ! -d "$KERNEL_SRC_DIR/.git" ]; then
   echo "A árvore local é a fonte da verdade do código: o upstream não publica"
   echo "mais o branch $BRANCH (ver comentário no topo deste script)."
   echo "Restaure do snapshot mais recente:"
-  echo "  ls -1t /mnt/hdauxiliar/kernel_source_snapshots/kernel-src-*.tar.zst | head -1"
-  echo "  sudo tar -I zstd -xf <snapshot> -C $(dirname "$KERNEL_SRC_DIR")"
+  echo "  ls -1t $SNAPSHOT_DIR/kernel-src-*.tar.zst | head -1"
+  echo "  sudo tar -I zstd -xf <snapshot> -C $KERNEL_BUILD_ROOT"
   echo "Ver kernel/README.md, seção 'Restaurar a árvore a partir de um snapshot'."
   exit 1
 fi
@@ -132,7 +140,7 @@ git reset --hard HEAD
 # -e extra_firmware : firmwares embutidos (sd8897/sd8797/mt7668). O
 #   sd8797_uapsta.bin (Orbis/WiFi) NÃO existe em nenhum outro lugar — um
 #   'git clean -fdx' sem este -e apagaria a única cópia que temos (verificado
-#   2026-11-11; backup em /mnt/hdauxiliar/temp/backup_kernel_tree_20261111/).
+#   2026-11-11; backup em kernel/kernels/backup_kernel_tree_20261111/).
 git clean -fdx -e .config -e extra_firmware
 
 # RTC via ICC (drivers/rtc/rtc-ps4-icc.c + Kconfig/Makefile + wrapper
@@ -768,7 +776,6 @@ echo "=== Gerando snapshot de segurança da árvore fonte (pós-build) ==="
 # (2026-08-01): xz -T0 -6 levou 5m48s para 444M, zstd -T0 -9 levou 23s para
 # 479M (~8% maior, ~15x mais rápido) — melhor trade-off para rodar em TODO
 # build sem virar gargalo perceptível.
-SNAPSHOT_DIR="/mnt/hdauxiliar/kernel_source_snapshots"
 mkdir -p "$SNAPSHOT_DIR"
 SNAPSHOT_DATE="$(date +%Y%m%d)"
 SNAPSHOT_FILE="$SNAPSHOT_DIR/kernel-src-${SNAPSHOT_DATE}-${TAG}.tar.zst"

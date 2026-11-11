@@ -6,7 +6,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$SCRIPT_DIR/.."
-KERNEL_BUILD_DIR="/mnt/hdauxiliar/temp/kernel_build_7.0"
+KERNEL_BUILD_DIR="$PROJECT_ROOT/kernels/kernel_build_7.0"
 MTS_SRC_DIR="$PROJECT_ROOT/drivers_mts"
 MTS_BUILD_DIR="$MTS_SRC_DIR/build"
 

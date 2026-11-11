@@ -5,7 +5,7 @@ Primeira versão de distribuição consolidada do projeto (vivendo em `distro/RE
 > **Status de preservação (2026-11-11):** estes 4 arquivos são hoje a **única cópia íntegra** dessa
 > tag — o `kernel/boot_referencia/` original não existe mais. Eles batem MD5 byte a byte com o
 > `bzImage`/`.config` guardados no snapshot
-> `/mnt/hdauxiliar/kernel_source_snapshots/kernel-src-20260801-20260801-kvm-rtc-sata-final.tar.zst`.
+> `kernel/snapshots/kernel-src-20260801-20260801-kvm-rtc-sata-final.tar.zst`.
 
 ## Origem
 

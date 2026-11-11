@@ -64,6 +64,7 @@ scene-kmem-dumper/
 initramfs/
 kernel-framework-local/
 kernel/kernels/
+kernel/snapshots/
 distro/Steam4PS/
 distro/winesapos/
 

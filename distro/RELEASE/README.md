@@ -13,7 +13,7 @@ A pasta `v1.0.0/` é a **versão de distribuição** oficial (versionada no git)
 
 > 🟢 **É hoje a única cópia íntegra de uma tag neste clone:** o `kernel/boot_referencia/`
 > original foi perdido. MD5 desta pasta confere byte a byte com o snapshot
-> `/mnt/hdauxiliar/kernel_source_snapshots/kernel-src-20260801-20260801-kvm-rtc-sata-final.tar.zst`.
+> `kernel/snapshots/kernel-src-20260801-20260801-kvm-rtc-sata-final.tar.zst`.
 
 ## Demais tags (build output local, gitignored)
 
@@ -36,8 +36,8 @@ Cada subdiretório `<TAG>/` contém:
 
 > ⚠️ Fronteira das frentes: `bzImage`/`config`/`bootargs`/`initramfs` vivem em
 > `kernel/boot_referencia/`; o **rootfs** e o Mesa patchado são build output de `distro/`.
-> O source do kernel **nunca** entra no repo — fica em ext4
-> (`/mnt/hdauxiliar/temp/kernel_build_7.0`), via symlink `kernel/kernels/ps4-baikal-7.0.8-kernel`.
+> O source do kernel mora em `kernel/kernels/kernel_build_7.0` (dentro do repo,
+> gitignored; exige ext4).
 
 ## Baseline e rollback — estado real (2026-11-11)
 
@@ -49,7 +49,7 @@ Cada subdiretório `<TAG>/` contém:
 | `v7.0-20260722-clean-video-ok` / `20260720-sky2len-fix` | ❌ artefatos perdidos |
 
 Recuperação possível hoje: `v1.0.0/` + os 3 snapshots de 2026-08-01
-(`/mnt/hdauxiliar/kernel_source_snapshots/`). Ver a seção "ESTADO DOS ARTEFATOS" em
+(`kernel/snapshots/`). Ver a seção "ESTADO DOS ARTEFATOS" em
 [`../../AGENTS.md`](../../AGENTS.md).
 
 ## Promovendo uma tag nova
