@@ -83,7 +83,7 @@ git clone https://github.com/feeRnt/ps4-linux-12xx.git . --depth 1 -b v5.4.247__
 ### Passo 2: Copiar e preparar a configuração base
 ```bash
 # Copie o arquivo neocine.config do diretório da distro para a pasta raiz da compilação
-cp /mnt/t/downloads/PS4/linux_in_ps4/distros/arch_minimal_v2/neocine.config .config
+cp outros/rea/neocine.config .config 2>/dev/null || true  # arquivo não existe mais neste repositório
 
 # Atualize a configuração base
 make olddefconfig
@@ -217,5 +217,5 @@ make -j$(nproc)
 ### Passo 5: Copiar o resultado
 Se a compilação finalizar com sucesso, o kernel estará em `arch/x86/boot/bzImage`. Mova-o para a pasta de boot de referência:
 ```bash
-cp arch/x86/boot/bzImage /mnt/t/downloads/PS4/linux_in_ps4/distros/arch_minimal_v2/boot_referencia/bzImage
+cp arch/x86/boot/bzImage ../distro/boot_referencia/bzImage-7.0-<TAG>
 ```

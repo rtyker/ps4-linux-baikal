@@ -57,6 +57,31 @@ montados por bind-mount (`--privileged`, porque o `arch-chroot` precisa montar
 cd distro && ./scripts/build-image-docker.sh <TAG>
 ```
 
+### Modo incremental (`--incremental`)
+
+Como a maior parte do desenvolvimento é de kernel/drivers, o rootfs raramente
+muda. O `--incremental` pula `rm -rf $BUILD_ROOT` + `pacstrap` e reusa o rootfs
+já construído, indo direto para configuração + `mkinitcpio` + tarball:
+
+```bash
+./scripts/build-image-docker.sh <TAG> --incremental   # host sem Arch
+sudo ./01-build-image-7.0.sh <TAG> --incremental      # host Arch
+```
+
+- **Exige** um rootfs válido em `PS4_BUILD_ROOT/rootfs`; se não existir,
+  aborta com erro (sem fallback silencioso).
+- O primeiro build da máquina é sempre completo: `--incremental` sem rootfs falha.
+- Build completo é obrigatório quando muda pacote, `pkglist`, firmware, Mesa,
+  hooks do `mkinitcpio` ou qualquer coisa fora do kernel.
+
+### Sentinela de conclusão
+
+Ao terminar com sucesso, o `01-build-image-7.0.sh` cria
+`boot_referencia/.build-complete-<TAG>` e imprime `=== BUILD COMPLETO: <TAG> ===`.
+O wrapper Docker checa esse arquivo e reporta explicitamente sucesso/falha —
+a existência da sentinela é a prova de que o build terminou (não confunda
+build travado com build terminado).
+
 Os artefatos saem direto no disco do host (owner root), em
 `boot_referencia/`. O cache do pacman fica em
 `/mnt/hdauxiliar/temp/pacman-cache` (compartilhado entre builds).
@@ -94,6 +119,6 @@ Os artefatos saem direto no disco do host (owner root), em
   silencioso para o initramfs genérico.
 - **Nunca montar direto em `/mnt`**: use subdir dedicado
   (`/mnt/ps4_burn_7.0`, `/mnt/ps4_rootfs_7.0`, `/mnt/ps4_internal/...`).
-- `BUILD_ROOT` do build da distro tem de estar em **ext4** (`/mnt/hdauxiliar/...`);
-  o script recusa `/mnt/t` (NTFS).
+- `BUILD_ROOT` do build da distro pode ser qualquer ponto de montagem que suporte
+  chroot/mount (ex: `/mnt/hdauxiliar/...`).
 - Regras completas: [`../AGENTS.md`](../AGENTS.md).

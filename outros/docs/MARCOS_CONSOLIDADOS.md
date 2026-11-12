@@ -80,7 +80,7 @@ distro/RELEASE/v1.0.0/  # Únicos artefatos de release versionados (tag 20260801
 
 - Todo build/pass deploy passa pelos scripts oficiais (`00-build-kernel-7.0.sh`, `01/02-build-image`, `deploy-boot`).
 - Toda mudança de kernel/módulo vai via `.patch` com `git apply --check` + `exit 1` se falhar.
-- Nunca montar diretamente em `/mnt`; builds em ext4 (nunca NTFS).
+- Nunca montar diretamente em `/mnt`.
 - Label do rootfs é obrigatória: `psxitarch`.
 - Bootargs: UART `uart8250,mmio32,0xC890E000` + `rootwait` (nunca `console=ttyS0` nem `rootdelay=N`).
 - `eth0` testado em `192.168.0.0/24` (WiFi `192.168.6.0/24` só para SSH).

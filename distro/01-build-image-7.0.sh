@@ -1,8 +1,35 @@
 #!/bin/bash
 # 01-build-image-7.0.sh — Cria rootfs Arch + initramfs para kernel 7.0 Strawberry Baikal
+#
+# Uso:
+#   sudo ./01-build-image-7.0.sh <TAG>                  # build limpo (rm -rf do BUILD_ROOT)
+#   sudo ./01-build-image-7.0.sh <TAG> --incremental    # reutiliza o rootfs já construído
+#
+# --incremental existe porque a maioria do desenvolvimento é de kernel/drivers:
+# quando só o bzImage muda, o rootfs não precisa ser recriado do zero (pula
+# rm -rf + pacstrap e vai direto para configuração + mkinitcpio + tarball).
+# Exige um rootfs válido em $ROOTFS_DIR (falha alta se não existir).
 set -euo pipefail
 
 [ "$EUID" -eq 0 ] || { echo "Execute com sudo"; exit 1; }
+
+# GUARD: este script depende de pacstrap/pacman/arch-chroot (ferramentas Arch).
+# Em hosts sem Arch (Debian, Ubuntu, etc.) o pacman não existe e o build morre
+# depois de baixar centenas de MB. Use o wrapper Docker:
+#   ./scripts/build-image-docker.sh <TAG>
+command -v pacman >/dev/null 2>&1 || {
+  echo "❌ ERRO FATAL: 'pacman' não encontrado no host."
+  echo ""
+  echo "  Este script requer um host Arch Linux (pacstrap, pacman, arch-chroot)."
+  echo "  Em hosts sem Arch (Debian, Ubuntu, etc.) use o wrapper Docker:"
+  echo ""
+  echo "      cd distro && ./scripts/build-image-docker.sh <TAG>"
+  echo ""
+  echo "  Ou instale Arch e rode diretamente:"
+  echo "      sudo $0 <TAG>"
+  echo ""
+  exit 1
+}
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BUILD_ROOT="${PS4_BUILD_ROOT:-/mnt/hdauxiliar/temp/arch_build_7.0}"
@@ -20,6 +47,7 @@ ROOTFS_DIR="$BUILD_ROOT/rootfs"
 # initramfs-7.0-<TAG>.cpio.gz). Sem TAG, autodetecta apenas se houver
 # exatamente uma tag disponível — nunca escolhe no escuro.
 TAG="${1:-}"
+INCREMENTAL="${2:-}"
 if [ -z "$TAG" ]; then
   mapfile -t _TAGS < <(cd "$BOOT_DIR" 2>/dev/null && ls -1 bzImage-7.0-* 2>/dev/null | sed 's/^bzImage-7\.0-//')
   case "${#_TAGS[@]}" in
@@ -33,9 +61,15 @@ if [ -z "$TAG" ]; then
     *)
       echo "ERRO: há ${#_TAGS[@]} tags em $BOOT_DIR — diga qual usar:"
       printf '  %s\n' "${_TAGS[@]}"
-      echo "Uso: sudo $0 <TAG>"
+      echo "Uso: sudo $0 <TAG> [--incremental]"
       exit 1 ;;
   esac
+fi
+
+if [ "$INCREMENTAL" = "--incremental" ]; then
+  INCREMENTAL=1
+else
+  INCREMENTAL=0
 fi
 
 BZIMAGE="$BOOT_DIR/bzImage-7.0-$TAG"
@@ -46,12 +80,11 @@ INITRAMFS_OUT="$BOOT_DIR/initramfs-7.0-$TAG.cpio.gz"
 [ -f "$BZIMAGE" ] || { echo "ERRO: $BZIMAGE não encontrado"; exit 1; }
 [ -f "$CONFIG" ]  || { echo "ERRO: $CONFIG não encontrado"; exit 1; }
 
-# O build precisa de disco local (ext4). /mnt/t é NTFS: build/montagem lá quebra
-# (regra do AGENTS.md).
+# Verifique se o BUILD_ROOT suporta chroot/mount (regra do AGENTS.md).
 case "$BUILD_ROOT" in
   /mnt/t|/mnt/t/*)
-    echo "ERRO: BUILD_ROOT em NTFS ($BUILD_ROOT) — use disco ext4 (ex: /mnt/hdauxiliar)."
-    exit 1 ;;
+    echo "AVISO: BUILD_ROOT em $BUILD_ROOT — verifique se suporta chroot/mount."
+    ;;
 esac
 
 # Robust cleanup function - handles "device or resource busy" by unmounting first
@@ -96,11 +129,24 @@ OUTPUT_TAR="$SCRIPT_DIR/arch_minimal_v2-7.0.tar"
 
 echo "=== Preparando diretórios ==="
 cleanup
-rm -rf "$BUILD_ROOT"
-mkdir -p "$ROOTFS_DIR" "$BOOT_DIR"
+if [ "$INCREMENTAL" = "1" ]; then
+  echo "=== Modo incremental: reutilizando rootfs existente em $ROOTFS_DIR ==="
+  # Falha alta: incremental sem rootfs válido não pode "seguir como se nada"
+  # (fallback silencioso em ferramenta de build é armadilha).
+  if [ ! -x "$ROOTFS_DIR/usr/bin/pacman" ]; then
+    echo "ERRO: modo incremental exige um rootfs já construído em $ROOTFS_DIR"
+    echo "      (não encontrei $ROOTFS_DIR/usr/bin/pacman)."
+    echo "      Rode uma vez SEM --incremental para criar o rootfs do zero."
+    exit 1
+  fi
+  mkdir -p "$ROOTFS_DIR" "$BOOT_DIR"
+else
+  rm -rf "$BUILD_ROOT"
+  mkdir -p "$ROOTFS_DIR" "$BOOT_DIR"
 
-echo "=== Bootstrap Arch Linux base ==="
-pacstrap -c "$ROOTFS_DIR" base linux-api-headers
+  echo "=== Bootstrap Arch Linux base ==="
+  pacstrap -c "$ROOTFS_DIR" base linux-api-headers --noconfirm
+fi
 
 # Montar cache do pacman no chroot
 mkdir -p "$ROOTFS_DIR/var/cache/pacman/pkg"
@@ -631,3 +677,9 @@ echo ""
 echo "Próximos passos:"
 echo "  sudo ./02-burn-image-7.0.sh /dev/sdX $TAG    (grava tudo, refaz o HD)"
 echo "  sudo ./deploy-boot-7.0.sh $TAG               (só o boot, mantém o rootfs)"
+
+# Sentinela de conclusão — evita ambiguidade sobre status do build
+COMPLETE_MARKER="$BOOT_DIR/.build-complete-$TAG"
+touch "$COMPLETE_MARKER"
+echo "=== BUILD COMPLETO: $TAG ==="
+echo "Sentinela criada: $COMPLETE_MARKER"

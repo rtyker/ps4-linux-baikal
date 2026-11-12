@@ -86,6 +86,10 @@ outros/tools/ps4_hdd_tools/pkg_pfs_tool/build/
 distro/arch_minimal_v2-7.0.tar
 distro/systemd_cache/
 distro/logs/
+# Áreas de trabalho do build de distro (rootfs + cache pacman), criadas pelo
+# 01-build-image/build-image-docker.sh na raiz do repo.
+arch_build_7.0/
+pacman-cache/
 
 # RELEASE — artefatos compilados.
 # v1.0.0 (versão de distribuição) é versionada; demais tags são build output local.

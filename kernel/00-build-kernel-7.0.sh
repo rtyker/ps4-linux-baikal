@@ -10,8 +10,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # (gitignored): kernel_build_7.0/, .ccache/, snapshots/
 # Motivo (2026-11-11): antes o build dependia de /mnt/hdauxiliar/temp/,
 # o que exigia mover/copiar estado entre diretórios a cada sessão.
-# O repo vive em ext4 (NUNCA em NTFS — ver AGENTS.md), então não
-# há mais razão para o build sair da estrutura do projeto.
+# então não há mais razão para o build sair da estrutura do projeto.
 KERNEL_BUILD_ROOT="$SCRIPT_DIR"
 KERNEL_SRC_DIR="$KERNEL_BUILD_ROOT/kernel_build_7.0"
 # KERNEL_BACKUP_DIR removido (tree_backups/ apagado 2026-11-11)

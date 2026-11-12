@@ -178,7 +178,7 @@ Usar `pacman -U --nodeps` para forçar o downgrade.
 ### 9. Permissões quebradas ao extrair em NTFS
 **Erro:** Extrair o tar diretamente em partição NTFS.
 **Causa:** NTFS não suporta permissões Unix (755, 600, setuid, etc.). Todos os arquivos perdem metadados.
-**Correção:** Sempre extrair em ext4 (nativo Linux). Se precisar manipular o rootfs antes de gravar, fazer em `/mnt/hdauxiliar/temp` (ext4, 119G livre), nunca em `/tmp` (tmpfs 7.7G cheio) nem em NTFS.
+**Correção:** Sempre extrair em ext4 (nativo Linux). Se precisar manipular o rootfs antes de gravar, fazer em `/mnt/hdauxiliar/temp` (ext4), nunca em `/tmp` (tmpfs limitado).
 
 ### 10. mount --bind antes de arch-chroot
 **Erro:** Entrar no chroot sem `mount --bind`.
@@ -295,10 +295,10 @@ netconsole=6665@192.168.0.2/eth0,6666@192.168.0.1/...
 **Causa:** Muitos loaders de Linux (kexec) no PS4 têm limites rígidos de buffer para o arquivo `bzImage` (normalmente de ~10 MB). Kernels maiores causam estouro de memória, resultando em desligamento imediato ou congelamento do console.
 **Correção:** Compilar o kernel com compressão mais eficiente (como `XZ` em vez de `ZSTD`) e evitar embutir firmwares desnecessários (como drivers de GPU) diretamente no binário do kernel para mantê-lo abaixo de 9.5 MB.
 
-### 24. Erro de Permissão ao Compilar Kernel (NTFS/fuseblk)
+### 24. Erro de Permissão ao Compilar Kernel (sistemas de arquivos sem suporte Unix)
 **Erro:** O processo de compilação (`build.sh` ou `make`) falha repentinamente com mensagens de `Operação não permitida` (Operation not permitted) ao tentar dar chown/chmod ou instalar módulos e headers.
-**Causa:** O código fonte do kernel estava em uma partição montada via FUSE (NTFS ou exFAT, como `/mnt/t`). O processo de compilação exige manipulação estrita de permissões Linux que esses sistemas de arquivos não suportam nativamente sem configurações de montagem muito específicas.
-**Correção:** Sempre compilar o Kernel dentro de uma partição nativa do Linux (ext4, btrfs), como `/mnt/hdauxiliar/temp/`. O script automatizado já foi ajustado para clonar e compilar obrigatoriamente neste diretório seguro.
+**Causa:** O código fonte do kernel estava em uma partição montada via FUSE (NTFS, exFAT ou outro FS sem suporte Unix, como `/mnt/t`). O processo de compilação exige manipulação estrita de permissões Linux que esses sistemas de arquivos não suportam.
+**Correção:** Sempre compilar o Kernel dentro de uma partição nativa do Linux (ext4, btrfs, xfs) como `/mnt/hdauxiliar/temp/` ou dentro do próprio repositório em `/mnt/hdauxiliar/ps4-linux-baikal`. O script automatizado já foi ajustado para clonar e compilar dentro do projeto.
 
 ### 25. `printf '\xHH'` não é confiável pra escrever bytes em `/dev/mem` via telnet encadeado
 **Erro (2026-07-20):** Tentativa de escrever 4 bytes específicos em um registrador MMIO via `printf '\xd9\x16\x00\x00' | dd of=/dev/mem bs=4 seek=N conv=notrunc`, executado através de uma cadeia bash local → `ncat --telnet` → TCP → shell remoto (`busybox ash`) no PS4.

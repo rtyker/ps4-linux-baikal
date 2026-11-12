@@ -133,7 +133,7 @@ fonte do driver MTS (patch × `drivers_mts/`). Detalhes em [`BACKLOG.md`](BACKLO
 ### PRÓXIMO PASSO EXATO (retomar daqui)
 1. Recompilar dentro do Docker oficial (toolchain correto), não com o `gcc` do host:
    ```bash
-   cd /mnt/t/downloads/PS4/linux_in_ps4
+   cd /mnt/hdauxiliar/ps4-linux-baikal
    docker run --rm -v "$PWD/scene-kmem-dumper":/app -w /app ps4sdk make clean
    docker run --rm -v "$PWD/scene-kmem-dumper":/app -w /app ps4sdk sh -c 'PS4SDK=/lib/ps4-payload-sdk make'
    ```

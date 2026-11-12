@@ -20,7 +20,7 @@ Antes de tocar na árvore, um **preflight** somente-leitura valida ferramentas
 
 O script:
 1. Reseta a árvore **local** do kernel em `kernel_build_7.0/`
-   (dentro de `kernel/`, gitignored — o repo precisa estar em ext4, **nunca** NTFS)
+   (dentro de `kernel/`, gitignored)
    no branch `baikal/7.0.8-Stable`; se a árvore não existe, **aborta** e instrui
    a restaurar do snapshot (o upstream não publica mais esse branch — ver seção
    abaixo);

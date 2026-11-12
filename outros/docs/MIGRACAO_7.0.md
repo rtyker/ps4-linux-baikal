@@ -153,7 +153,7 @@ dmesg | grep -i 'ata1\|disable'
 3. **Todo `.sh` deve ser executável** (`chmod +x`, modo `100755` no git).
 4. **Todo patch do kernel deve ser `git apply --check` antes de aplicar** — nunca fallback silencioso.
 5. **Label do rootfs é obrigatória:** `psxitarch` (hardcoded no initramfs).
-6. **Build em ext4** — nunca em `/mnt/t` (NTFS).
+6. **Build em qualquer ponto de montagem que suporte chroot/mount.**
 7. **Bootargs com UART MMIO + `rootwait`** — nunca `console=ttyS0` nem `rootdelay=N`.
 
 ---

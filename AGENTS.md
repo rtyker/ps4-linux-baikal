@@ -29,7 +29,7 @@ kernel; o kernel **nunca** conhece rootfs.
 2. **Sincronia:** Sempre garanta que o contexto da sessão (o que tentamos, o que falhou, o que causou Kernel Panic) esteja fielmente refletido na documentação antes de encerrar o turno ou mudar de estratégia.
 3. **Kernel Linux 7.0 Baikal: a tag `v7.0-20260722-clean-video-ok` (e a baseline pré-compilada `20260720-sky2len-fix`) são as BASELINES OFICIAIS confirmadas (vídeo OK, boot completo, telnet OK)**. Artefatos em `distro/boot_referencia/*-7.0-20260722-clean-video-ok*` e `config-7.0-20260720-sky2len-fix` **NUNCA podem ser sobrescritos/descartados**.
    - **Descoberta do Gap de Rebuild (2026-07-22):** O patch `sky2-baikal-gbe.patch` forçava o driver `sky2` (built-in) a fazer probe na GBE Baikal (`104d:90d8`), que NÃO é Marvell Yukon. Isso congelava o barramento PCIe e o vídeo no boot.
-   - **Solução Validada no PS4:** Removido o `sky2-baikal-gbe.patch` do script `00-build-kernel-7.0.sh` e garantidas as opções `CONFIG_MFD_SYSCON=y` e `CONFIG_REGMAP_MMIO=y`. Reconstrução limpa do zero testada e aprovada ao vivo com vídeo OK e telnet OK. O repositório do kernel (hoje em `kernel/kernels/kernel_build_7.0`) foi commitado (commit `811184c1f`) e etiquetado com a git tag `v7.0-20260722-clean-video-ok`. (A memória de sessão que detalhava isto foi removida em 2026-11-11 — recuperável no histórico do git.)
+   - **Solução Validada no PS4:** Removido o `sky2-baikal-gbe.patch` do script `00-build-kernel-7.0.sh` e garantidas as opções `CONFIG_MFD_SYSCON=y` e `CONFIG_REGMAP_MMIO=y`. Reconstrução limpa do zero testada e aprovada ao vivo com vídeo OK e telnet OK. O repositório do kernel (hoje em `kernel/kernel_build_7.0`) foi commitado (commit `811184c1f`) e etiquetado com a git tag `v7.0-20260722-clean-video-ok`. (A memória de sessão que detalhava isto foi removida em 2026-11-11 — recuperável no histórico do git.)
    - **MARCO HISTÓRICO GBE ETHERNET (2026-07-22):** Carregamento do driver `mts.ko stage=4` via Telnet registrou com SUCESSO ABSOLUTO a interface **`eth0`** com o endereço MAC real lido da SPM (`2c:cc:44:3f:69:5f`), anéis DMA programados (TX `0x010dd000`, RX `0x010de000`) e 0 erros ou travamentos!
    - **NETCONSOLE PRONTO PARA OS PRÓXIMOS BUILDS:** Configurado `bootargs` com `netconsole=@192.168.0.2/eth0,6666@192.168.0.1/ff:ff:ff:ff:ff:ff` (IP PS4 `192.168.0.2` -> Host PC `192.168.0.1:6666/UDP`). Script de recepção ao vivo disponível em `outros/scripts/netconsole_listener.py`.
    - **BUILD AUTOMÁTICO ETH0 + NETCONSOLE (2026-07-23):** Criada e implantada no HD a tag `20260723-mts-autoeth0`. O driver `mts.ko` agora possui o padrão `stage=4` e auto-carregamento no boot, subindo a interface `eth0` automaticamente sem necessidade de intervenção via Telnet. Netconsole ativado por padrão no boot.
@@ -52,7 +52,7 @@ kernel; o kernel **nunca** conhece rootfs.
 | Script | Função |
 |--------|--------|
 | `kernel/00-build-kernel-7.0.sh [TAG]` | Compila kernel (ThinLTO, profile General, Baikal). Gera `distro/boot_referencia/bzImage-7.0-<TAG>` + `config-7.0-<TAG>`. Aplica `scripts/config` do projeto (zstd, zswap, RTC_CLASS, etc). Faz `make modules`. |
-| `distro/01-build-image-7.0.sh <TAG>` | Cria rootfs Arch + initramfs. Gera `distro/boot_referencia/initramfs-7.0-<TAG>.cpio.gz` e `bootargs-7.0-<TAG>.txt`. |
+| `distro/01-build-image-7.0.sh <TAG> [--incremental]` | Cria rootfs Arch + initramfs. Gera `distro/boot_referencia/initramfs-7.0-<TAG>.cpio.gz` + `bootargs-7.0-<TAG>.txt` e a sentinela `.build-complete-<TAG>`. `--incremental` reusa o rootfs já construído (pula `rm -rf` + `pacstrap`) — exige rootfs válido, senão aborta. |
 | `distro/02-burn-image-7.0.sh /dev/sda "" <TAG>` | Particiona + grava rootfs (label **`psxitarch`** obrigatório) + boot. Monta em `/mnt/ps4_burn_7.0` (nunca em `/mnt`). Use quando refazer rootfs do zero. |
 | `distro/deploy-boot-7.0.sh <TAG> [MNT]` | Apenas reescreve boot no HD já particionado, mantém rootfs intacto. Mais leve. Exige tag completa: bzImage, config, bootargs.txt, initramfs (reaproveitável de outra tag via cp explícito). |
 | `distro/rebuild-initramfs-7.0.sh <TAG>` | Reconstrói initramfs (detecta a versão do kernel **dentro** do rootfs montado em `/mnt/ps4_rootfs_7.0`) e grava `initramfs-7.0-<TAG>.cpio.gz`. |
@@ -80,6 +80,13 @@ kernel; o kernel **nunca** conhece rootfs.
 
 Nunca "adivinhar" o ambiente: se `pacman` não existir no host, o build da distro **não roda nativamente** — use o wrapper Docker (validado em 2026-11-11, Debian 13 + Docker 26.1.5).
 
+### 🔴 Build da distro — incremental e sentinela de conclusão
+
+- **`--incremental`** (ambos os scripts): pula `rm -rf $BUILD_ROOT` + `pacstrap` e reusa o rootfs já construído. Existe porque a maior parte do desenvolvimento é de kernel/drivers e o rootfs quase nunca muda. **Falha alta** se não houver rootfs válido (`$BUILD_ROOT/rootfs/usr/bin/pacman`) — nunca cai em build "meio feito" silencioso.
+- **Build completo é obrigatório** quando mudar pacote, `pkglist`, firmware, Mesa, hooks do mkinitcpio ou qualquer coisa fora do kernel.
+- **Sentinela `.build-complete-<TAG>`**: criada em `distro/boot_referencia/` no fim de um build bem-sucedido, junto da linha `=== BUILD COMPLETO: <TAG> ===`. O wrapper Docker confere o arquivo e reporta sucesso/falha explicitamente. **Antes de dizer que um build "está travado" ou "terminou", checar a sentinela e os 4 artefatos** — logs podem estar no meio da instalação de pacotes sem que nada esteja travado.
+- `pacstrap` e `pacman` rodam com `--noconfirm`: não há prompt interativo no meio do build (inclusive para pacotes em `IgnorePkg`, como mesa/vulkan-radeon).
+
 ### 🔴 REGRA CRÍTICA — Idempotência de Alterações no Kernel
 
 **TODA alteração no kernel ou módulos DEVE ser idempotente e reproduzível através de patches. O script de build kernel naturalmente reseta `--hard`, e isso é normal/desejado.**
@@ -99,7 +106,7 @@ Nunca "adivinhar" o ambiente: se `pacman` não existir no host, o build da distr
   - Exemplo: `patches/ahci-baikal-polling-fallback.patch` (SATA polling) é aplicado via `git apply --check` + `exit 1` em caso de falha (falha alta é obrigatória).
 
 **Implementação (procedimento obrigatório, nesta ordem — não pular etapas):**
-1. Editar source em `kernel/kernels/kernel_build_7.0/`, a partir de uma árvore recém resetada (`git reset --hard HEAD`) para garantir base limpa.
+1. Editar source em `kernel/kernel_build_7.0/`, a partir de uma árvore recém resetada (`git reset --hard HEAD`) para garantir base limpa.
 2. Compilar ISOLADAMENTE só o(s) arquivo(s) tocado(s) (`make CC="ccache clang" LLVM=1 ARCH=x86_64 <arquivo>.o`) — nunca considerar uma mudança "pronta" sem essa validação. Um patch escrito à mão sem essa etapa quase certamente tem bugs de contexto/compilação que só aparecem no build oficial completo, horas depois.
 3. Gerar o patch **real** via `git diff HEAD -- <arquivos> > patches/<nome>.patch` — nunca escrever o `.patch` à mão.
 4. Resetar a árvore de novo (`git reset --hard origin/$BRANCH`) e validar `git apply --check patches/<nome>.patch` a partir do estado pristino.
@@ -123,7 +130,7 @@ Para mudanças de kernel/módulos (e por extensão, qualquer mudança técnica d
 ### Sequência típica de modificação de kernel
 
 ```bash
-ROOT="$(git rev-parse --show-toplevel)"   # repo vive em ext4 (/mnt/hdauxiliar/ps4-linux-baikal) — NÃO em /mnt/t (NTFS)
+ROOT="$(git rev-parse --show-toplevel)"   # repo em /mnt/hdauxiliar/ps4-linux-baikal
 
 # 1. Editou source em kernel/kernel_build_7.0/ (com sudo)
 
@@ -174,9 +181,7 @@ e a **versão de distribuição `v1.0.0/`** (4 artefatos de boot + README, orige
 `20260801-kvm-rtc-sata-final`) são versionados no git.
 
 - **Kernel mainline:** a árvore fonte mora **dentro** do projeto, em
-  `kernel/kernels/kernel_build_7.0` (gitignored — não vem no clone). Isso é
-  possível porque o repo vive em ext4; o motivo histórico de manter fora
-  (projeto em NTFS) não existe mais (decisão de 2026-11-11). Num clone novo a
+  `kernel/kernel_build_7.0` (gitignored — não vem no clone). Num clone novo a
   árvore não existe: `00-build-kernel-7.0.sh` **aborta** e instrui restaurar do
   snapshot em `kernel/snapshots/`. Mesma coisa para `distro/boot_referencia/`:
   é build output e **não vem no clone**, então `deploy-boot-7.0.sh <TAG>` falha

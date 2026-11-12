@@ -14,7 +14,11 @@
 # rootfs) continua sendo a do script oficial.
 #
 # Uso:
-#   sudo ./scripts/build-image-docker.sh <TAG>
+#   sudo ./scripts/build-image-docker.sh <TAG>                  # build limpo
+#   sudo ./scripts/build-image-docker.sh <TAG> --incremental    # reutiliza rootfs
+#
+# O --incremental é repassado ao script oficial: pula rm -rf + pacstrap e usa o
+# rootfs já existente em PS4_BUILD_ROOT (útil quando só o kernel/bzImage mudou).
 #
 # Env:
 #   PS4_BUILD_IMAGE   imagem base (default: archlinux:latest)
@@ -26,16 +30,17 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 DISTRO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 PROJECT_ROOT="$(cd "$DISTRO_DIR/.." && pwd)"
 
-TAG="${1:?Uso: $0 <TAG>}"
+TAG="${1:?Uso: $0 <TAG> [--incremental]}"
+INCREMENTAL="${2:-}"
 IMAGE="${PS4_BUILD_IMAGE:-archlinux:latest}"
-BUILD_ROOT="${PS4_BUILD_ROOT:-/mnt/hdauxiliar/temp/arch_build_7.0}"
-CACHE_DIR="${PS4_BUILD_CACHE:-/mnt/hdauxiliar/temp/pacman-cache}"
+BUILD_ROOT="${PS4_BUILD_ROOT:-$PROJECT_ROOT/arch_build_7.0}"
+CACHE_DIR="${PS4_BUILD_CACHE:-$PROJECT_ROOT/pacman-cache}"
 
-# O build precisa de disco ext4: /mnt/t é NTFS e quebra mount/chroot.
+# O build pode rodar em qualquer disco com suporte a montagem/chroot.
 case "$BUILD_ROOT" in
   /mnt/t|/mnt/t/*)
-    echo "ERRO: BUILD_ROOT em NTFS ($BUILD_ROOT) — use disco ext4 (ex: /mnt/hdauxiliar)."
-    exit 1 ;;
+    echo "AVISO: BUILD_ROOT em $BUILD_ROOT — verifique se suporta chroot/mount."
+    ;;
 esac
 
 command -v docker >/dev/null || { echo "ERRO: docker nao encontrado no host."; exit 1; }
@@ -57,18 +62,28 @@ echo ""
 
 # --privileged: o arch-chroot precisa montar /proc, /sys, /dev e /run dentro do
 # rootfs durante locale-gen/ssh-keygen/systemctl/mkinitcpio.
+INCREMENTAL_FLAG=""
+[ -n "$INCREMENTAL" ] && INCREMENTAL_FLAG="--incremental"
+
 docker run --rm --privileged \
   -v "$PROJECT_ROOT:/repo" \
   -v "$BUILD_PARENT:$BUILD_PARENT" \
   -v "$CACHE_DIR:/var/cache/pacman/pkg" \
+  -e PS4_BUILD_ROOT="$BUILD_ROOT" \
   "$IMAGE" bash -c '
 set -euo pipefail
 pacman -Sy --noconfirm --needed arch-install-scripts make binutils >/dev/null
 cd /repo/distro
-PS4_BUILD_ROOT="'"$BUILD_ROOT"'" ./01-build-image-7.0.sh "'"$TAG"'"
-'
+exec ./01-build-image-7.0.sh "$@"
+' _ "$TAG" "$INCREMENTAL_FLAG"
 
 echo ""
 echo "=== Build concluido ==="
+COMPLETE_MARKER="$DISTRO_DIR/boot_referencia/.build-complete-$TAG"
+if [ -f "$COMPLETE_MARKER" ]; then
+  echo "✅ Build concluído com sucesso (sentinela encontrada: $COMPLETE_MARKER)"
+else
+  echo "⚠️  Build terminou mas sentinela não encontrada — verificar manualmente"
+fi
 echo "Artefatos por tag em distro/boot_referencia/:"
 ls -la "$DISTRO_DIR/boot_referencia/" | grep -- "$TAG" || true

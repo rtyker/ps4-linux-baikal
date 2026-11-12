@@ -43,4 +43,4 @@ Fonte única da documentação técnica do projeto PS4 Linux Baikal (kernel 7.0.
 2. Pendência nova → `BACKLOG.md`.
 3. Descoberta datada → resumir em `ESTADO_E_HISTORICO.md` (a pasta `memory/` foi apagada em 2026-11-11).
 4. Arquivo criado/movido/removido aqui → atualizar `INDEX_DOCUMENTACAO.md` na mesma alteração.
-5. Nada de links absolutos de máquina (`/mnt/t/downloads/...`, `file:///...`): usar caminho relativo.
+5. Nada de links absolutos de máquina (`file:///...`): usar caminho relativo.
