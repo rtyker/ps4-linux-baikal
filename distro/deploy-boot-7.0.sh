@@ -10,7 +10,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-BOOT_REF="${PS4_BOOT_REF:-$SCRIPT_DIR/../kernel/boot_referencia}"
+BOOT_REF="${PS4_BOOT_REF:-$SCRIPT_DIR/boot_referencia}"
 TAG="${1:?Uso: $0 <TAG> [ponto_de_montagem_boot]}"
 BOOT_MNT="${2:-}"
 
@@ -29,6 +29,7 @@ BOOTARGS="$BOOT_REF/bootargs-7.0-$TAG.txt"
 INITRAMFS="$BOOT_REF/initramfs-7.0-$TAG.cpio.gz"
 
 [ -f "$BZIMAGE" ]  || { echo "ERRO: $BZIMAGE não encontrado"; exit 1; }
+[ -f "$CONFIG" ]   || { echo "ERRO: $CONFIG não encontrado"; exit 1; }
 [ -f "$BOOTARGS" ] || { echo "ERRO: $BOOTARGS não encontrado"; exit 1; }
 if [ ! -f "$INITRAMFS" ]; then
   echo "ERRO: $INITRAMFS não encontrado."

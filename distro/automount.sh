@@ -21,13 +21,38 @@ echo "========================================================"
 echo "⚡ Montando Partições Principais do HD Interno do PS4 ⚡"
 echo "========================================================"
 
-echo ""
-echo "--> 1. Montando Partição de Sistema Orbis (/dev/sda13 - 12 GB)"
-"$MONTA_CMD" /dev/sda13
+# Descobre o device do HD INTERNO sem assumir /dev/sda:
+# com o HD USB plugged, o USB costuma ser sda (BOOT=sda1, rootfs=sda2) e o
+# interno é sdb. Nos testes antigos o interno era sda (USB em sdb) — por isso
+# testamos os dois, em ordem, e toleramos a ausência.
+INTERNAL_DEV=""
+for cand in sdb sda; do
+  if [ -b "/dev/${cand}13" ] || [ -b "/dev/${cand}27" ]; then
+    INTERNAL_DEV="$cand"
+    break
+  fi
+done
 
-echo ""
-echo "--> 2. Montando Partição de Dados e Jogos (/dev/sda27 - 897.6 GB)"
-"$MONTA_CMD" /dev/sda27
+if [ -z "$INTERNAL_DEV" ]; then
+  echo "Aviso: HD interno não encontrado (procurado /dev/sdb13, /dev/sda13)."
+  echo "       Nada a montar — o serviço termina sem erro."
+  exit 0
+fi
+
+echo "HD interno detectado em /dev/$INTERNAL_DEV"
+
+for part in 13 27; do
+  dev="/dev/${INTERNAL_DEV}${part}"
+  if [ ! -b "$dev" ]; then
+    echo "Aviso: $dev não existe — partição pulada."
+    continue
+  fi
+  case "$part" in
+    13) echo "--> Partição de Sistema Orbis ($dev)" ;;
+    27) echo "--> Partição de Dados e Jogos ($dev)" ;;
+  esac
+  "$MONTA_CMD" "$dev" || echo "Aviso: falha ao montar $dev (continuando)."
+done
 
 echo ""
 echo "========================================================"

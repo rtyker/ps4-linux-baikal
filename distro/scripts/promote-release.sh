@@ -16,7 +16,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-BOOT_REF="${PS4_BOOT_REF:-$PROJECT_ROOT/kernel/boot_referencia}"
+BOOT_REF="${PS4_BOOT_REF:-$PROJECT_ROOT/distro/boot_referencia}"
 TAR_SRC="$PROJECT_ROOT/distro/arch_minimal_v2-7.0.tar"
 
 TAG="${1:?Uso: $0 <TAG> [--no-tar]}"

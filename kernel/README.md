@@ -19,7 +19,7 @@ Antes de tocar na árvore, um **preflight** somente-leitura valida ferramentas
 (≥ 10 GiB), patches, `config` e os 12 firmwares — falha cedo com mensagem clara.
 
 O script:
-1. Reseta a árvore **local** do kernel em `kernel/kernels/kernel_build_7.0`
+1. Reseta a árvore **local** do kernel em `kernel/kernel_build_7.0`
    (dentro do repo, gitignored — o repo precisa estar em ext4, **nunca** NTFS)
    no branch `baikal/7.0.8-Stable`; se a árvore não existe, **aborta** e instrui
    a restaurar do snapshot (o upstream não publica mais esse branch — ver seção
@@ -32,24 +32,26 @@ O script:
 4. confere que **todos** os firmwares de `CONFIG_EXTRA_FIRMWARE` existem em
    `extra_firmware/` — falha cedo, antes do `make`, listando o que falta;
 5. compila com ThinLTO (`LLVM=1`, `JOBS=2`) e faz `make modules`;
-6. grava `boot_referencia/bzImage-7.0-<TAG>` e `boot_referencia/config-7.0-<TAG>`
+6. grava `../distro/boot_referencia/bzImage-7.0-<TAG>` e `config-7.0-<TAG>`
    (com aviso se o bzImage passar de ~10 MB — limite de alguns loaders kexec,
    lição #23);
 7. gera snapshot de segurança da árvore fonte em
    `kernel/snapshots/kernel-src-<DATA>-<TAG>.tar.zst`.
 
-`boot_referencia/` é o **único** lugar onde os artefatos de boot por tag vivem —
-a frente 2 lê de lá (`PS4_BOOT_REF` sobrescreve o caminho). É build output: não
-vem no clone.
+`../distro/boot_referencia/` é o **único** lugar onde os artefatos de boot por tag
+vivem — o build grava lá e a frente 2 lê de lá (`PS4_BOOT_REF` sobrescreve o
+caminho). É build output: não vem no clone.
 
 ## Restaurar a árvore a partir de um snapshot
 
-O snapshot é a rede de segurança do build (o `boot_referencia/` é build output e
-não vem no clone). Para voltar a compilar a partir dele:
+O snapshot é a rede de segurança do build (o `../distro/boot_referencia/` é build output e
+não vem no clone). Os 3 snapshots de 2026-08-01 foram apagados em 2026-11-11 — hoje não há
+nenhum em disco, então a árvore viva em `kernel/kernel_build_7.0` é a única cópia
+(recriável por clone + `patches/`). Para voltar a compilar a partir de um snapshot novo:
 
 ```bash
-cd kernel/kernels
-tar -I 'zstd -d' -xf ../snapshots/kernel-src-<DATA>-<TAG>.tar.zst   # ~6 s, 2,1 GB
+cd kernel
+tar -I 'zstd -d' -xf snapshots/kernel-src-<DATA>-<TAG>.tar.zst   # ~6 s, 2,1 GB
 cd kernel_build_7.0
 # o tar exclui os produtos de link do topo (vmlinux*, por padrão ancorado no topo);
 # nada a restaurar se o snapshot for >= 2026-11-11, senão ver nota abaixo
@@ -80,10 +82,12 @@ make -j2 LLVM=1 CC="ccache clang" ARCH=x86_64 prepare                       # ~2
 |---|---|
 | `00-build-kernel-7.0.sh` | Único script de build do kernel (nunca rodar `make` direto) |
 | `patches/` | Fonte única dos patches. **Aplicados pelo build:** `ahci-baikal-polling-fallback` (SATA polling), `ps4-icc-rtc-wrapper` (RTC via ICC), `mts-baikal-gbe-driver` + `ps4-icc-proc-debug` (driver GBE e `/proc/ps4_icc`, só quando `mts.c` ainda não está na árvore). **Legado, NÃO aplicado:** `sky2-baikal-gbe` (congelava o PCIe/vídeo — ver AGENTS.md), `stmmac-baikal-fixedlink` e `sky2-fake-chipid` (sem referência no script; só histórico da época em que o driver errado era tentado) |
-| `drivers_mts/` | Driver Ethernet GBE do Baikal (`mts.ko`), escrito do zero |
-| `boot_referencia/` | Artefatos de boot por tag (gitignored, gerado pelo build) |
-| `kernels/` | Árvore fonte do kernel + backups pré-reset + ccache (gitignored — criado localmente, não vem no clone) |
-| `outros/` | **Fora do build** (separado para revisão): `scripts/` de diagnóstico, `consolidado/` (RE, SQLite, decompilado, dumps Orbis, payloads), `memory/`, `docs/`, `tools/` (harnesses, `ps4_hdd_tools`) e `tests/` |
+| `drivers_mts/` | Driver Ethernet GBE do Baikal (`mts.ko`), escrito do zero — e **toda a documentação do MTS** (`README.md`, RE, testes) |
+| `../distro/boot_referencia/` | Artefatos de boot por tag (gitignored, gerado por este build) |
+| `kernel_build_7.0/` | Árvore fonte do kernel + ccache (gitignored — criado localmente, não vem no clone) |
+| `.ccache/` | Cache do compilador (gitignored) |
+| `snapshots/` | Snapshots de segurança da árvore fonte (gitignored) |
+| `outros/` | **Fora do build** (separado para revisão): `rea/` (acervo de RE: dumps Orbis, decompilado, scans, scripts Ghidra, SQLite), `consolidado/` (documentação técnica), `docs/` (planos), `tools/` (harnesses ao vivo, `ps4_hdd_tools`), `scripts/` (diagnóstico) e `tests/` |
 
 ## Regras que valem para esta frente
 
@@ -92,5 +96,5 @@ make -j2 LLVM=1 CC="ccache clang" ARCH=x86_64 prepare                       # ~2
   revalidar `git apply --check` de árvore limpa, e só então rodar o build.
 - **Proibido** heredoc/`sed` inline no script de build para injetar código.
 - Antes de qualquer varredura de registradores ao vivo, consultar o SQLite
-  (`outros/consolidado/ps4_hardware_memory.db`) — cada teste custa um power cycle.
+  (`outros/rea/ps4_hardware_memory.db`) — cada teste custa um power cycle.
 - Regras completas e procedimentos: [`../AGENTS.md`](../AGENTS.md).

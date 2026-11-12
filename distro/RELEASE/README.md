@@ -1,7 +1,7 @@
 # RELEASE — Artefatos Compilados
 
-Pasta da **frente 2** (`distro/`). Recebe as tags promovidas a partir dos artefatos que a
-**frente 1** (`kernel/boot_referencia/`) produz.
+Pasta da **frente 2** (`distro/`). Recebe as tags promovidas a partir dos artefatos que o
+build da **frente 1** grava em `distro/boot_referencia/`.
 
 ## 📦 Versão de distribuição: `v1.0.0`
 
@@ -11,14 +11,14 @@ A pasta `v1.0.0/` é a **versão de distribuição** oficial (versionada no git)
 `20260801-kvm-rtc-sata-final` (KVM-AMD + RTC via ICC + SATA interno). Ver
 [`v1.0.0/README.md`](v1.0.0/README.md).
 
-> 🟢 **É hoje a única cópia íntegra de uma tag neste clone:** o `kernel/boot_referencia/`
-> original foi perdido. MD5 desta pasta confere byte a byte com o snapshot
-> `kernel/snapshots/kernel-src-20260801-20260801-kvm-rtc-sata-final.tar.zst`.
+> 🟢 **É hoje a única cópia íntegra de uma tag neste clone:** o `distro/boot_referencia/`
+> original foi perdido. O snapshot de 2026-08-01 que servia de conferência (MD5 byte a byte)
+> foi apagado em 2026-11-11 — esta pasta passou a ser a única fonte dessa tag.
 
 ## Demais tags (build output local, gitignored)
 
-O pipeline continua gravando em `kernel/boot_referencia/` (frente 1) — as tags aqui são montadas
-pela frente 2:
+O pipeline continua gravando em `distro/boot_referencia/` (o build da frente 1 escreve lá) — as
+tags aqui são montadas pela frente 2:
 
 ```bash
 distro/scripts/promote-release.sh <TAG> [--no-tar]
@@ -35,8 +35,8 @@ Cada subdiretório `<TAG>/` contém:
 - `sha256sums.txt` — checksums dos 4 artefatos + tar (conteúdo real)
 
 > ⚠️ Fronteira das frentes: `bzImage`/`config`/`bootargs`/`initramfs` vivem em
-> `kernel/boot_referencia/`; o **rootfs** e o Mesa patchado são build output de `distro/`.
-> O source do kernel mora em `kernel/kernels/kernel_build_7.0` (dentro do repo,
+> `distro/boot_referencia/`; o **rootfs** e o Mesa patchado são build output de `distro/`.
+> O source do kernel mora em `kernel/kernel_build_7.0` (dentro do repo,
 > gitignored; exige ext4).
 
 ## Baseline e rollback — estado real (2026-11-11)
@@ -48,8 +48,8 @@ Cada subdiretório `<TAG>/` contém:
 | `20260730-sata-reverted` | ❌ artefatos perdidos |
 | `v7.0-20260722-clean-video-ok` / `20260720-sky2len-fix` | ❌ artefatos perdidos |
 
-Recuperação possível hoje: `v1.0.0/` + os 3 snapshots de 2026-08-01
-(`kernel/snapshots/`). Ver a seção "ESTADO DOS ARTEFATOS" em
+Recuperação possível hoje: apenas `v1.0.0/` (os 3 snapshots de 2026-08-01 foram apagados em
+2026-11-11). Ver a seção "ESTADO DOS ARTEFATOS" em
 [`../../AGENTS.md`](../../AGENTS.md).
 
 ## Promovendo uma tag nova

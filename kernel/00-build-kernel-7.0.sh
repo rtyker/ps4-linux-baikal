@@ -6,16 +6,19 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-# Toda a parafernália de build mora DENTRO do projeto, em kernel/kernels/
-# (gitignored): árvore fonte, backups pré-reset, ccache e snapshots em
-# kernel/snapshots/. Motivo (2026-11-11): antes o build dependia de
-# /mnt/hdauxiliar/temp/, o que exigia mover/copiar estado entre diretórios a
-# cada sessão. O repo vive em ext4 (NUNCA em NTFS — ver AGENTS.md), então não
+# Toda a parafernália de build mora DENTRO do projeto, em kernel/
+# (gitignored): kernel_build_7.0/, .ccache/, snapshots/
+# Motivo (2026-11-11): antes o build dependia de /mnt/hdauxiliar/temp/,
+# o que exigia mover/copiar estado entre diretórios a cada sessão.
+# O repo vive em ext4 (NUNCA em NTFS — ver AGENTS.md), então não
 # há mais razão para o build sair da estrutura do projeto.
-KERNEL_BUILD_ROOT="$SCRIPT_DIR/kernels"
+KERNEL_BUILD_ROOT="$SCRIPT_DIR"
 KERNEL_SRC_DIR="$KERNEL_BUILD_ROOT/kernel_build_7.0"
-KERNEL_BACKUP_DIR="$KERNEL_BUILD_ROOT/tree_backups"
+# KERNEL_BACKUP_DIR removido (tree_backups/ apagado 2026-11-11)
 SNAPSHOT_DIR="$SCRIPT_DIR/snapshots"
+# Lista de firmwares embutidos no kernel (CONFIG_EXTRA_FIRMWARE). Fonte única:
+# usada tanto no scripts/config quanto no preflight (checagem de existência).
+EXTRA_FIRMWARE_LIST="mrvl/sd8897_uapsta.bin mrvl/sd8797_uapsta.bin mediatek/mt7668pr2h.bin EEPROM_MT7668.bin EEPROM_MT7668_e1.bin mt7668_patch_e1_hdr.bin mt7668_patch_e2_hdr.bin TxPwrLimit_MT76x8.dat wifi.cfg WIFI_RAM_CODE2_SDIO_MT7668.bin WIFI_RAM_CODE2_USB_MT7668.bin WIFI_RAM_CODE_MT7668.bin"
 # Frente 2 (distro) — usada no fallback de config versionada (RELEASE/v1.0.0)
 # e nos caminhos das instruções finais. Não é validada de propósito: o build
 # do kernel em si não depende dela.
@@ -46,11 +49,15 @@ BRANCH="baikal/7.0.8-Stable"
 # o build.sh do upstream rmuxnet/linux foi incorporado aqui e removido do
 # fluxo, pra ter só um script pra manter/entender).
 TAG="${1:-$(date +%Y%m%d)-sky2builtin}"
-OUTPUT_BZIMAGE="$SCRIPT_DIR/boot_referencia/bzImage-7.0-$TAG"
-OUTPUT_CONFIG="$SCRIPT_DIR/boot_referencia/config-7.0-$TAG"
+# Artefatos de boot pertencem à FRENTE 2 (distro/): pasta única, consumida por
+# deploy-boot/01-build-image/02-burn-image/promote-release. Decisão de 2026-11-11
+# (antes vivia em kernel/boot_referencia/).
+BOOT_DIR="$DISTRO_DIR/boot_referencia"
+OUTPUT_BZIMAGE="$BOOT_DIR/bzImage-7.0-$TAG"
+OUTPUT_CONFIG="$BOOT_DIR/config-7.0-$TAG"
 # boot_referencia/ é build output (gitignored) e pode não existir num clone novo.
 # Sem isso o cp do bzImage falha no primeiro build de uma máquina limpa.
-mkdir -p "$SCRIPT_DIR/boot_referencia"
+mkdir -p "$BOOT_DIR"
 
 # Flags de compilação PS4 Jaguar (idênticas às que o build.sh upstream usava)
 export KCFLAGS="-march=btver2 -mtune=btver2 -Os"
@@ -95,7 +102,7 @@ trap cleanup_build_dir EXIT INT TERM
 save_dirty_state() {
   local ts dir
   ts="$(date +%Y%m%d-%H%M%S)"
-  dir="$KERNEL_BACKUP_DIR/pre-reset-$ts"
+  dir="/tmp/kernel-pre-reset-$ts"
   mkdir -p "$dir"
   git diff HEAD > "$dir/HEAD.patch" || true
   git status --porcelain > "$dir/git-status.txt" || true
@@ -103,6 +110,61 @@ save_dirty_state() {
     | tar -czf "$dir/untracked.tar.gz" --null -T - 2>/dev/null || true
   echo "  ⚠ estado não commitado salvo em: $dir"
   echo "    (HEAD.patch, git-status.txt, untracked.tar.gz)"
+}
+
+# ── Preflight ──────────────────────────────────────────────────────────────
+# Falha CEDO, antes de qualquer reset/clean, se o ambiente não estiver pronto:
+# ferramentas, espaço em disco, patches, config e os firmwares embutidos. Um
+# erro no meio do build custa 20-45 min e pode deixar a árvore em estado
+# parcial; a checagem de firmware evita o erro críptico do kbuild no meio do
+# `make`. Todas as verificações são somente-leitura (nada é alterado aqui).
+die() { echo "❌ ERRO FATAL: $*" >&2; exit 1; }
+
+preflight() {
+  local missing=() c avail_kb p fw fw_missing=""
+  for c in git make clang ld.lld llvm-ar ccache zstd curl tar findmnt \
+           mountpoint nproc stat awk sed grep pahole flex bison bc perl; do
+    command -v "$c" >/dev/null 2>&1 || missing+=("$c")
+  done
+  if [ "${#missing[@]}" -gt 0 ]; then
+    die "ferramentas ausentes no PATH: ${missing[*]}"
+  fi
+
+  mkdir -p "$KERNEL_BUILD_ROOT" "$SNAPSHOT_DIR" "$BOOT_DIR" \
+    || die "não foi possível criar os diretórios de build"
+  [ -w "$KERNEL_BUILD_ROOT" ] || die "sem permissão de escrita em $KERNEL_BUILD_ROOT (rode com sudo)"
+  [ -w "$SNAPSHOT_DIR" ]      || die "sem permissão de escrita em $SNAPSHOT_DIR (rode com sudo)"
+
+  if [ "$(id -u)" -ne 0 ]; then
+    echo "❌ ERRO FATAL: este script DEVE ser executado com sudo (root)." >&2
+    echo "   Rode: sudo ./00-build-kernel-7.0.sh $TAG" >&2
+    exit 1
+  fi
+
+  avail_kb=$(df -Pk "$SCRIPT_DIR" | awk 'NR==2{print $4}')
+  if [ "${avail_kb:-0}" -lt $((10 * 1024 * 1024)) ]; then
+    die "espaço livre insuficiente em $SCRIPT_DIR: ${avail_kb} KB (mínimo 10 GiB)"
+  fi
+
+  # Patches que o build aplica (os 'git apply --check' reais rodam pós-reset).
+  for p in ahci-baikal-polling-fallback.patch ps4-icc-rtc-wrapper.patch \
+           ps4-icc-proc-debug.patch mts-baikal-gbe-driver.patch; do
+    [ -f "$SCRIPT_DIR/patches/$p" ] || die "patch ausente: $SCRIPT_DIR/patches/$p"
+  done
+
+  # Config base: o 'config' rastreado na árvore é a garantia final (o reset
+  # restaura; os candidatos em distro/boot_referencia/ e distro/RELEASE são extras).
+  git cat-file -e "HEAD:config" 2>/dev/null \
+    || die "árvore sem 'config' rastreado — estado inconsistente, restaure do snapshot"
+
+  # Firmwares embutidos: todos precisam existir. O git clean preserva
+  # extra_firmware/ (-e), então checar antes do reset é válido.
+  for fw in $EXTRA_FIRMWARE_LIST; do
+    [ -s "$KERNEL_SRC_DIR/extra_firmware/$fw" ] || fw_missing="$fw_missing $fw"
+  done
+  [ -z "$fw_missing" ] || die "firmwares ausentes em extra_firmware/:$fw_missing"
+
+  echo "✓ Preflight OK (dependências, espaço, patches, config e firmwares)"
 }
 
 echo "=== Configurando diretório de build ==="
@@ -125,8 +187,12 @@ cd "$KERNEL_SRC_DIR"
 CURRENT_BRANCH="$(git branch --show-current 2>/dev/null || echo "")"
 if [ "$CURRENT_BRANCH" != "$BRANCH" ]; then
   echo "Branch local '$CURRENT_BRANCH' != '$BRANCH' — trocando para $BRANCH (local)."
+  git rev-parse --verify --quiet "refs/heads/$BRANCH" >/dev/null \
+    || die "branch local '$BRANCH' não existe — restaure a árvore do snapshot (ver README)"
   git checkout "$BRANCH"
 fi
+
+preflight
 
 echo "Fonte: árvore local $KERNEL_SRC_DIR @ $(git rev-parse --short HEAD) (branch $BRANCH)"
 if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
@@ -140,7 +206,7 @@ git reset --hard HEAD
 # -e extra_firmware : firmwares embutidos (sd8897/sd8797/mt7668). O
 #   sd8797_uapsta.bin (Orbis/WiFi) NÃO existe em nenhum outro lugar — um
 #   'git clean -fdx' sem este -e apagaria a única cópia que temos (verificado
-#   2026-11-11; backup em kernel/kernels/backup_kernel_tree_20261111/).
+#   2026-11-11; backup em kernel/kernels/backup_kernel_tree_20261111/ — pasta removida).
 git clean -fdx -e .config -e extra_firmware
 
 # RTC via ICC (drivers/rtc/rtc-ps4-icc.c + Kconfig/Makefile + wrapper
@@ -253,15 +319,15 @@ echo "=== Configurando build para Baikal ==="
 cd "$KERNEL_SRC_DIR"
 
 # Mover config base, em ordem de preferência:
-#  1. Referência histórica 20260720-sky2len-fix em boot_referencia/ — PERDIDA
-#     em 2026-11-11 junto com o resto de boot_referencia/ (ver nota "ESTADO DOS
+#  1. Referência histórica 20260720-sky2len-fix em distro/boot_referencia/ — PERDIDA
+#     em 2026-11-11 (ver nota "ESTADO DOS
 #     ARTEFATOS" no AGENTS.md); mantida aqui caso ressurja de algum backup.
 #  2. Config versionada distro/RELEASE/v1.0.0/ (origem 20260801-kvm-rtc-sata-final)
 #     — única garantida de existir num clone novo, por estar no git.
 #  3. 'config' na raiz da árvore, ou '.config' existente (build incremental).
-if [ -f "$SCRIPT_DIR/boot_referencia/config-7.0-20260720-sky2len-fix" ]; then
+if [ -f "$BOOT_DIR/config-7.0-20260720-sky2len-fix" ]; then
   echo "Usando config de referência 20260720-sky2len-fix..."
-  cp -f "$SCRIPT_DIR/boot_referencia/config-7.0-20260720-sky2len-fix" .config
+  cp -f "$BOOT_DIR/config-7.0-20260720-sky2len-fix" .config
 elif [ -f "$DISTRO_DIR/RELEASE/v1.0.0/config-7.0-v1.0.0" ]; then
   echo "Usando config versionada distro/RELEASE/v1.0.0 (fallback — baselines 202607* perdidas)..."
   cp -f "$DISTRO_DIR/RELEASE/v1.0.0/config-7.0-v1.0.0" .config
@@ -306,7 +372,7 @@ scripts/config --disable CONFIG_DWMAC_GENERIC
 #   para o Baikal — silício diferente, por isso o sky2 nunca ia funcionar aqui.
 #   Bring-up em estágios via `mts.stage=N` (default 1 = só dump, não escreve).
 #   Ver memory/GBE-VIVA-driver-errado-mts-nao-sky2.md e
-#   consolidado/MTS_INIT_SEQUENCE_dc5a31f0.md
+#   drivers_mts/MTS_INIT_SEQUENCE_dc5a31f0.md
 if [ ! -f "drivers/net/ethernet/sony/mts.c" ]; then
   for P in ps4-icc-proc-debug.patch mts-baikal-gbe-driver.patch; do
     PATCH="$SCRIPT_DIR/patches/$P"
@@ -328,6 +394,31 @@ if [ ! -f "drivers/net/ethernet/sony/mts.c" ]; then
     git apply "$PATCH"
     echo "✓ Patch $P aplicado com sucesso (git apply, validado com --check)"
   done
+
+  # --- Consistência patch ↔ drivers_mts/ (fonte única, sem divergência) ---
+  # O patch é a implementação AUTORITATIVA (fonte única p/ o build, conforme
+  # AGENTS.md); drivers_mts/ é a superfície de EDIÇÃO. Os dois precisam ser
+  # idênticos: se alguém editar drivers_mts/mts.c e esquecer de regerar o
+  # patch, a cópia do passo seguinte sobrescreveria o driver silenciosamente —
+  # o build passaria, mas o patch (e o git history) ficariam mentirosos.
+  # Aqui a divergência vira FALHA ALTA, no início do build.
+  for F in mts.c mts.h; do
+    if ! cmp -s "drivers/net/ethernet/sony/$F" "$SCRIPT_DIR/drivers_mts/$F"; then
+      echo "❌ ERRO FATAL: patches/mts-baikal-gbe-driver.patch e drivers_mts/$F divergem."
+      echo ""
+      echo "  O patch traz a implementação autoritativa do driver; drivers_mts/ é"
+      echo "  onde se edita. Regenere o patch a partir da árvore limpa:"
+      echo ""
+      echo "    cd $KERNEL_SRC_DIR"
+      echo "    git add -N drivers/net/ethernet/sony/mts.c drivers/net/ethernet/sony/mts.h"
+      echo "    git diff HEAD -- drivers/net/ethernet/sony/ drivers/net/ethernet/Kconfig drivers/net/ethernet/Makefile \\"
+      echo "      > $SCRIPT_DIR/patches/mts-baikal-gbe-driver.patch"
+      echo ""
+      echo "  (ver AGENTS.md, seção 'Idempotência de Alterações no Kernel')"
+      exit 1
+    fi
+  done
+  echo "✓ drivers_mts/ e o patch estão idênticos (mts.c, mts.h)"
 fi
 
 echo "Copiando mts.c e mts.h atualizados para o diretório de build do kernel..."
@@ -468,27 +559,9 @@ scripts/config --set-str CONFIG_EXTRA_FIRMWARE_DIR "extra_firmware"
 #    via filesystem, que acha o gladius real dentro do initramfs injetado
 #    pelo kexec.
 #  - Marvell WiFi (Aeolia/Belize) + MediaTek MT7668 completo (Baikal) — replicando o que o 5.4 neocine embutia p/ WiFi funcionar
-scripts/config --set-str CONFIG_EXTRA_FIRMWARE "mrvl/sd8897_uapsta.bin mrvl/sd8797_uapsta.bin mediatek/mt7668pr2h.bin EEPROM_MT7668.bin EEPROM_MT7668_e1.bin mt7668_patch_e1_hdr.bin mt7668_patch_e2_hdr.bin TxPwrLimit_MT76x8.dat wifi.cfg WIFI_RAM_CODE2_SDIO_MT7668.bin WIFI_RAM_CODE2_USB_MT7668.bin WIFI_RAM_CODE_MT7668.bin"
-
-# Verificar CEDO que TODOS os firmwares embutidos existem — o script garante
-# só sd8897/sd8797/mt7668pr2h; os demais (EEPROM_*, mt7668_patch_*,
-# WIFI_RAM_*, wifi.cfg...) só existem porque o 'git clean -e extra_firmware'
-# preserva o diretório na árvore. Sem esta checagem, a falha só aparece no
-# meio do make com erro críptico do kbuild. A lista é lida do .config (fonte
-# única — sem duplicar a literal acima).
-echo "=== Verificando firmwares de CONFIG_EXTRA_FIRMWARE ==="
-EXTRA_FW_LIST="$(sed -n 's/^CONFIG_EXTRA_FIRMWARE="\(.*\)"/\1/p' .config)"
-FW_MISSING=""
-for fw in $EXTRA_FW_LIST; do
-  [ -s "extra_firmware/$fw" ] || FW_MISSING="$FW_MISSING $fw"
-done
-if [ -n "$FW_MISSING" ]; then
-  echo "❌ ERRO FATAL: firmwares ausentes/vazios em extra_firmware/:"
-  for fw in $FW_MISSING; do echo "   - $fw"; done
-  echo "  Restaure-os na árvore (snapshot/backup) ou remova-os de CONFIG_EXTRA_FIRMWARE."
-  exit 1
-fi
-echo "✓ Todos os firmwares de CONFIG_EXTRA_FIRMWARE presentes"
+scripts/config --set-str CONFIG_EXTRA_FIRMWARE "$EXTRA_FIRMWARE_LIST"
+# A existência de todos esses arquivos já foi validada no preflight (antes do
+# reset) — o `git clean -e extra_firmware` preserva o diretório.
 
 # --- Perfil General + ThinLTO + Baikal, incorporado do build.sh upstream em
 # 2026-07-22 (ver comentário do `rm -f build.sh` acima). Fixo — este projeto
@@ -798,7 +871,7 @@ echo "  $OUTPUT_BZIMAGE"
 echo "  $OUTPUT_CONFIG"
 echo ""
 echo "Próximos passos:"
-echo "  1. Crie/ajuste boot_referencia/bootargs-7.0-$TAG.txt"
+echo "  1. Crie/ajuste /bootargs-7.0-.txt"
 echo "  2. sudo $DISTRO_DIR/deploy-boot-7.0.sh $TAG   (só troca o boot no HD já particionado, mantém rootfs)"
 echo "     — ou, para gravação completa (particiona e recria rootfs):"
 echo "     sudo $DISTRO_DIR/01-build-image-7.0.sh && sudo $DISTRO_DIR/02-burn-image-7.0.sh /dev/sda"

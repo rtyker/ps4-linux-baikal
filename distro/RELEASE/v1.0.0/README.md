@@ -3,9 +3,9 @@
 Primeira versão de distribuição consolidada do projeto (vivendo em `distro/RELEASE/v1.0.0/`).
 
 > **Status de preservação (2026-11-11):** estes 4 arquivos são hoje a **única cópia íntegra** dessa
-> tag — o `kernel/boot_referencia/` original não existe mais. Eles batem MD5 byte a byte com o
-> `bzImage`/`.config` guardados no snapshot
-> `kernel/snapshots/kernel-src-20260801-20260801-kvm-rtc-sata-final.tar.zst`.
+> tag — o `distro/boot_referencia/` original não existe mais. O snapshot de 2026-08-01 que servia
+> de conferência (MD5 byte a byte) foi apagado em 2026-11-11, então esta pasta é hoje a única
+> fonte dessa tag.
 
 ## Origem
 
@@ -34,7 +34,7 @@ Primeira versão de distribuição consolidada do projeto (vivendo em `distro/RE
 | SSH via WiFi (`192.168.6.128`) | ✅ |
 | Ethernet `eth0` (`mts.ko`) | ⚠️ MAC/DMA OK, PHY sem link (bug conhecido, não é regressão) |
 | **SATA interno (`ata1`, HD real)** | ⚠️ mecanismo de polling 1 ms na função PCI correta (`.7`/xhci-aeolia) validado ao vivo na tag `20260730-sata-polling-fase-ab`; **nesta build o patch foi reconstruído e compilado, mas não há boot de validação registrado** (`test_history` não tem entrada para esta tag) — confirmar em `dmesg` antes de tratar como comprovado |
-| **RTC via ICC** | ⚠️ funcional **manualmente** (`date -s` + `hwclock -w` funcionam, relógio avança certo em tempo real) — **não persiste sozinho entre boots**, reinicia em epoch 0 a cada boot. Fix real (MMIO físico) pausado: endereços caem em `System RAM` ativa, risco não assumido. Ver `../../kernel/outros/memory/rtc-mmio-pausado-risco-system-ram-2026-08-01.md` |
+| **RTC via ICC** | ⚠️ funcional **manualmente** (`date -s` + `hwclock -w` funcionam, relógio avança certo em tempo real) — **não persiste sozinho entre boots**, reinicia em epoch 0 a cada boot. Fix real (MMIO físico) pausado: endereços caem em `System RAM` ativa, risco não assumido. Ver `../../outros/consolidado/BACKLOG.md` (item RTC) |
 | **KVM-AMD** | ✅ `/dev/kvm` acessível, `ioctl(KVM_GET_API_VERSION)=12`, nested virt/paging confirmados via `dmesg`, `qemu-system-x86_64` presente no rootfs |
 
 ## Deploy
@@ -42,10 +42,10 @@ Primeira versão de distribuição consolidada do projeto (vivendo em `distro/RE
 O nome dos arquivos aqui **não segue** o padrão `<TAG>` que `deploy-boot-7.0.sh` espera
 automaticamente. Duas opções:
 
-1. **Copiar de volta para `kernel/boot_referencia/` com o nome de tag original** e rodar o script oficial:
+1. **Copiar de volta para `distro/boot_referencia/` com o nome de tag original** e rodar o script oficial:
    ```bash
    T=20260801-kvm-rtc-sata-final
-   BR=../kernel/boot_referencia && mkdir -p $BR
+   BR=../distro/boot_referencia && mkdir -p $BR
    cp v1.0.0/bzImage-7.0-v1.0.0            $BR/bzImage-7.0-$T
    cp v1.0.0/config-7.0-v1.0.0             $BR/config-7.0-$T
    cp v1.0.0/bootargs-7.0-v1.0.0.txt       $BR/bootargs-7.0-$T.txt

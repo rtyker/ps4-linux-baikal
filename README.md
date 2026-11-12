@@ -18,7 +18,7 @@ a distro consome os artefatos de boot que o kernel produz.
 | **2 — Distro Linux Baikal** | [`distro/`](distro/) | Gera o rootfs Arch mínimo + initramfs, grava no HD, faz deploy do boot, firmware/Mesa patchado, montagem das partições PFS e releases | [`distro/README.md`](distro/README.md) |
 
 ```
-kernel/boot_referencia/  ──(bzImage, config, bootargs, initramfs por tag)──►  distro/deploy-boot-7.0.sh
+kernel/00-build-kernel-7.0.sh  ──(bzImage, config por tag)──►  distro/boot_referencia/  ──►  distro/deploy-boot-7.0.sh
 ```
 
 Nenhuma outra dependência cruza as frentes: a distro nunca compila kernel e o kernel não
@@ -40,7 +40,7 @@ conhece rootfs. `PS4_BOOT_REF` permite apontar a distro para outro conjunto de a
 | **Ethernet cabeada (`eth0`)** | ⚠️ parcial | Driver próprio `mts.ko` liga MAC e DMA, mas o PHY nunca sai de power-down (bloqueador de firmware, investigação encerrada) |
 | **Desligamento total (S5)** | ⚠️ parcial | `poweroff` encerra o SO; a luz azul não apaga sozinha |
 
-Detalhamento, causa raiz e o que já foi descartado: [`kernel/outros/consolidado/BACKLOG.md`](kernel/outros/consolidado/BACKLOG.md).
+Detalhamento, causa raiz e o que já foi descartado: [`outros/consolidado/BACKLOG.md`](outros/consolidado/BACKLOG.md).
 
 ## Release
 

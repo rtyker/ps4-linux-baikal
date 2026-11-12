@@ -28,11 +28,11 @@ dummy_mem.bin
 fake_mem
 
 # --- Dumps de firmware proprietário (kernel Orbis/Ghidra) ---
-kernel/outros/consolidado/dumps_orbis/
-kernel/outros/consolidado/memoriateste.bin
+outros/rea/dumps/
+outros/consolidado/memoriateste.bin
 
 # --- Logs de hardware/capturas UART (grandes e efêmeros) ---
-kernel/outros/tests/uart_logs/
+outros/tests/uart_logs/
 dmesg_output/
 netconsole_ps4_captures/
 
@@ -63,7 +63,8 @@ scene-kernel-dumper/
 scene-kmem-dumper/
 initramfs/
 kernel-framework-local/
-kernel/kernels/
+kernel/kernel_build_7.0/
+kernel/.ccache/
 kernel/snapshots/
 distro/Steam4PS/
 distro/winesapos/
@@ -75,10 +76,10 @@ distro/winesapos/
 # --- Frente 1: kernel/ ---
 # Artefatos de boot por tag (bzImage, config, bootargs, initramfs): a distro os
 # consome via distro/*.sh, mas eles NÃO são versionados (binários por build).
-kernel/boot_referencia/
+distro/boot_referencia/
 kernel/extra_firmware/
 kernel/drivers_mts/build/
-kernel/outros/consolidado/tools/ghidra_project/
+outros/rea/tools/ghidra_project/
 
 # --- Frente 2: distro/ ---
 distro/arch_minimal_v2-7.0.tar

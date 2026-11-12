@@ -5,14 +5,54 @@ set -euo pipefail
 [ "$EUID" -eq 0 ] || { echo "Execute com sudo"; exit 1; }
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-BUILD_ROOT="/mnt/hdauxiliar/temp/arch_build_7.0"
-# Artefatos de boot (bzImage/config/bootargs/initramfs) são produzidos pela FRENTE 1
-# (kernel/) e consumidos aqui — pasta única, nunca duplicada. Sobrescreva com
-# PS4_BOOT_REF=... se quiser apontar para outro conjunto de artefatos.
-BOOT_DIR="${PS4_BOOT_REF:-$SCRIPT_DIR/../kernel/boot_referencia}"
-KERNEL_VERSION_FILE="$BOOT_DIR/artifact_name-7.0.txt"
+BUILD_ROOT="${PS4_BUILD_ROOT:-/mnt/hdauxiliar/temp/arch_build_7.0}"
+# Artefatos de boot (bzImage/config/bootargs/initramfs) são produzidos pelo build da
+# FRENTE 1 (kernel/00-build-kernel-7.0.sh) mas gravados AQUI, em distro/boot_referencia/
+# — pasta única, nunca duplicada. Sobrescreva com PS4_BOOT_REF=... para apontar
+# para outro conjunto de artefatos.
+BOOT_DIR="${PS4_BOOT_REF:-$SCRIPT_DIR/boot_referencia}"
 
 ROOTFS_DIR="$BUILD_ROOT/rootfs"
+
+# TAG: a mesma tag do build do kernel. Todo artefato é lido/gravado POR TAG
+# (contrato que deploy-boot-7.0.sh e promote-release.sh exigem: 4 arquivos
+# bzImage-7.0-<TAG>, config-7.0-<TAG>, bootargs-7.0-<TAG>.txt,
+# initramfs-7.0-<TAG>.cpio.gz). Sem TAG, autodetecta apenas se houver
+# exatamente uma tag disponível — nunca escolhe no escuro.
+TAG="${1:-}"
+if [ -z "$TAG" ]; then
+  mapfile -t _TAGS < <(cd "$BOOT_DIR" 2>/dev/null && ls -1 bzImage-7.0-* 2>/dev/null | sed 's/^bzImage-7\.0-//')
+  case "${#_TAGS[@]}" in
+    0)
+      echo "ERRO: nenhuma tag em $BOOT_DIR (nenhum bzImage-7.0-*) e nenhum TAG informado."
+      echo "      Rode antes: sudo ../kernel/00-build-kernel-7.0.sh <TAG>"
+      exit 1 ;;
+    1)
+      TAG="${_TAGS[0]}"
+      echo "=== TAG autodetectada: $TAG ===" ;;
+    *)
+      echo "ERRO: há ${#_TAGS[@]} tags em $BOOT_DIR — diga qual usar:"
+      printf '  %s\n' "${_TAGS[@]}"
+      echo "Uso: sudo $0 <TAG>"
+      exit 1 ;;
+  esac
+fi
+
+BZIMAGE="$BOOT_DIR/bzImage-7.0-$TAG"
+CONFIG="$BOOT_DIR/config-7.0-$TAG"
+BOOTARGS_OUT="$BOOT_DIR/bootargs-7.0-$TAG.txt"
+INITRAMFS_OUT="$BOOT_DIR/initramfs-7.0-$TAG.cpio.gz"
+
+[ -f "$BZIMAGE" ] || { echo "ERRO: $BZIMAGE não encontrado"; exit 1; }
+[ -f "$CONFIG" ]  || { echo "ERRO: $CONFIG não encontrado"; exit 1; }
+
+# O build precisa de disco local (ext4). /mnt/t é NTFS: build/montagem lá quebra
+# (regra do AGENTS.md).
+case "$BUILD_ROOT" in
+  /mnt/t|/mnt/t/*)
+    echo "ERRO: BUILD_ROOT em NTFS ($BUILD_ROOT) — use disco ext4 (ex: /mnt/hdauxiliar)."
+    exit 1 ;;
+esac
 
 # Robust cleanup function - handles "device or resource busy" by unmounting first
 cleanup() {
@@ -36,13 +76,13 @@ trap cleanup EXIT INT TERM
 
 # Determinar versão do kernel 7.0 (UTS_RELEASE real)
 # O UTS_RELEASE é a string exata usada por modules_install e mkinitcpio
-KERNEL_BUILD_DIR="$SCRIPT_DIR/../kernel/kernels/kernel_build_7.0"
+KERNEL_BUILD_DIR="$SCRIPT_DIR/../kernel/kernel_build_7.0"
 UTS_RELEASE_FILE="$KERNEL_BUILD_DIR/include/generated/utsrelease.h"
 if [ -f "$UTS_RELEASE_FILE" ]; then
   KVER_FULL=$(grep -oP '"\K[^"]+' "$UTS_RELEASE_FILE")
-elif [ -f "$BOOT_DIR/config-7.0" ]; then
-  KVER=$(grep "^KERNEL_VERSION" "$BOOT_DIR/config-7.0" | cut -d= -f2 2>/dev/null || echo "7.0.8")
-  LOCALVERSION=$(grep "^CONFIG_LOCALVERSION=" "$BOOT_DIR/config-7.0" | sed 's/^CONFIG_LOCALVERSION="//' | sed 's/"$//' 2>/dev/null)
+elif [ -f "$CONFIG" ]; then
+  KVER=$(grep "^KERNEL_VERSION" "$CONFIG" | cut -d= -f2 2>/dev/null || echo "7.0.8")
+  LOCALVERSION=$(grep "^CONFIG_LOCALVERSION=" "$CONFIG" | sed 's/^CONFIG_LOCALVERSION="//' | sed 's/"$//' 2>/dev/null)
   KVER_FULL="${KVER}${LOCALVERSION}"
 else
   echo "ERRO: Não foi possível determinar versão do kernel 7.0"
@@ -238,15 +278,15 @@ echo "=== Configurando boot padrão para multi-user.target (TTY console) ==="
 arch-chroot "$ROOTFS_DIR" systemctl set-default multi-user.target
 echo "Boot padrão definido para multi-user.target (console text mode TTY)"
 
-# SSH automático — script que monta rootfs e inicia sshd via chroot
-echo "=== Instalando SSH automático ==="
-mkdir -p "$ROOTFS_DIR/usr/local/bin"
-cp "$SCRIPT_DIR/ssh-startup.sh" "$ROOTFS_DIR/usr/local/bin/ssh-startup.sh"
-chmod 755 "$ROOTFS_DIR/usr/local/bin/ssh-startup.sh"
-mkdir -p "$ROOTFS_DIR/etc/systemd/system"
-cp "$SCRIPT_DIR/ssh-auto-startup.service" "$ROOTFS_DIR/etc/systemd/system/ssh-auto-startup.service"
-ln -sf /etc/systemd/system/ssh-auto-startup.service \
-  "$ROOTFS_DIR/etc/systemd/system/multi-user.target.wants/ssh-auto-startup.service"
+# SSH automático: nesta arquitetura o rootfs JÁ É o sistema rodando
+# (root=LABEL=psxitarch no bootargs), então basta habilitar o sshd normal
+# (feito acima, com sshd.service em multi-user.target.wants).
+#
+# NÃO copiamos mais o "ssh-startup.sh" + ssh-auto-startup.service: eles eram
+# da arquitetura antiga (rootfs em /dev/sdb2, montado RO e chroot para rodar
+# o sshd). Hoje esse /dev/sdb2 não existe (USB = sda, HD interno = sdb) e o
+# serviço só produzia uma falha no journal e um chroot inútil.
+echo "=== SSH: sshd.service habilitado (sem o chroot legado) ==="
 
 # NOTA: NÃO precisa de serviço de netconsole aqui. CONFIG_NETCONSOLE=y é
 # builtin no kernel 7.0 (não módulo) e se ativa sozinho lendo o parâmetro
@@ -370,14 +410,17 @@ fi
 # Verificar módulos essenciais para Baikal
 # Formato: "nome_modulo:config_option"
 # O script verifica se existe como .ko OU se está built-in (=y) no .config
-# NOTA: Ethernet Baikal é sky2 (built-in), NÃO stmmac/dwmac - já confirmado
-# via dmesg real do console. stmmac não existe neste kernel/config.
+# NOTA: a Ethernet do Baikal é o driver MTS (CONFIG_MTS_GBE), NÃO sky2 — o
+# sky2 é do Marvell Yukon (Aeolia/Belize) e forçá-lo a sondar a GBE Baikal
+# já congelou o PCIe e o vídeo (patch sky2-baikal-gbe.patch, banido em
+# 2026-07-22). Aqui o sky2 aparece só como built-in inofensivo: o ID do
+# dispositivo Baikal (104d:90d8) não casa com a tabela do sky2.
 REQUIRED_MODULES=(
   "mt76-sdio:CONFIG_MT76_SDIO"
   "btmtksdio:CONFIG_BT_MTKSDIO"
   "amdgpu:CONFIG_DRM_AMDGPU"
   "snd-hda-intel:CONFIG_SND_HDA_INTEL"
-  "sky2:CONFIG_SKY2"
+  "mts:CONFIG_MTS_GBE"
 )
 # Drivers built-in (=y) no kernel 7.0 - não precisam de .ko no initramfs
 BUILTIN_DRIVERS=(
@@ -418,7 +461,7 @@ done
 echo "=== Criando initramfs (mkinitcpio) ==="
 # Configurar mkinitcpio para kernel 7.0 (sem autodetect para evitar remover módulos no chroot)
 cat > "$ROOTFS_DIR/etc/mkinitcpio.conf" << 'MKEOF'
-MODULES=(ext4 ahci sd_mod btmtksdio amdgpu snd-hda-intel sky2 usbhid uas usb_storage)
+MODULES=(ext4 ahci sd_mod btmtksdio amdgpu snd-hda-intel mts usbhid uas usb_storage)
 BINARIES=()
 FILES=(/lib/firmware/edid/ps4_tv_edid.bin)
 HOOKS=(base udev modconf block filesystems keyboard fsck)
@@ -455,14 +498,19 @@ if [ -f "$SCRIPT_DIR/monta_particao.sh" ]; then
   cp -v "$SCRIPT_DIR/automount.sh" "$ROOTFS_DIR/usr/local/bin/automount.sh"
   chmod +x "$ROOTFS_DIR/usr/local/bin/monta_particao.sh" "$ROOTFS_DIR/usr/local/bin/desmonta_particao.sh" "$ROOTFS_DIR/usr/local/bin/automount.sh"
 fi
-if [ -f "/mnt/t/downloads/PS4/utilities/pkg_pfs_tool/build/pkg_pfs_tool" ]; then
-  cp -v "/mnt/t/downloads/PS4/utilities/pkg_pfs_tool/build/pkg_pfs_tool" "$ROOTFS_DIR/usr/local/bin/pkg_pfs_tool"
-  cp -v "/mnt/t/downloads/PS4/utilities/pkg_pfs_tool/config.ini" "$ROOTFS_DIR/usr/local/bin/config.ini"
+if [ -f "$SCRIPT_DIR/../outros/tools/ps4_hdd_tools/pkg_pfs_tool/build/pkg_pfs_tool" ]; then
+  cp -v "$SCRIPT_DIR/../outros/tools/ps4_hdd_tools/pkg_pfs_tool/build/pkg_pfs_tool" "$ROOTFS_DIR/usr/local/bin/pkg_pfs_tool"
+  cp -v "$SCRIPT_DIR/../outros/tools/ps4_hdd_tools/pkg_pfs_tool/config.ini" "$ROOTFS_DIR/usr/local/bin/config.ini"
   chmod +x "$ROOTFS_DIR/usr/local/bin/pkg_pfs_tool"
+else
+  echo "AVISO: pkg_pfs_tool não encontrado em outros/tools/ps4_hdd_tools/pkg_pfs_tool/build/"
+  echo "       (o PFS do HD interno não será acessível via FUSE nesta imagem)."
 fi
-if [ -f "/mnt/t/downloads/PS4/utilities/pkg_pfs_tool/build/ps4_pfs_fuse" ]; then
-  cp -v "/mnt/t/downloads/PS4/utilities/pkg_pfs_tool/build/ps4_pfs_fuse" "$ROOTFS_DIR/usr/local/bin/ps4_pfs_fuse"
+if [ -f "$SCRIPT_DIR/../outros/tools/ps4_hdd_tools/pkg_pfs_tool/build/ps4_pfs_fuse" ]; then
+  cp -v "$SCRIPT_DIR/../outros/tools/ps4_hdd_tools/pkg_pfs_tool/build/ps4_pfs_fuse" "$ROOTFS_DIR/usr/local/bin/ps4_pfs_fuse"
   chmod +x "$ROOTFS_DIR/usr/local/bin/ps4_pfs_fuse"
+else
+  echo "AVISO: ps4_pfs_fuse não encontrado — montagem FUSE do PFS indisponível nesta imagem."
 fi
 
 # Configurar permissões full NOPASSWD e diretórios de montagem para usuário ps4
@@ -536,13 +584,17 @@ chmod +x "$ROOTFS_DIR/etc/initcpio/hooks/set-time-from-cmdline"
 sed -i 's/HOOKS=(base /HOOKS=(base set-time-from-cmdline /' "$ROOTFS_DIR/etc/mkinitcpio.conf"
 
 # Gerar initramfs
-cp "$BOOT_DIR/bzImage-7.0" "$ROOTFS_DIR/boot/vmlinuz-$KVER_FULL"
+cp "$BZIMAGE" "$ROOTFS_DIR/boot/vmlinuz-$KVER_FULL"
 arch-chroot "$ROOTFS_DIR" mkinitcpio -k "$KVER_FULL" -g "/boot/initramfs-$KVER_FULL.img"
 
 echo "=== Usando initramfs recem-gerado (mkinitcpio, reflete o rootfs desta build) ==="
-cp "$ROOTFS_DIR/boot/initramfs-$KVER_FULL.img" "$BOOT_DIR/initramfs-7.0.cpio.gz"
+cp "$ROOTFS_DIR/boot/initramfs-$KVER_FULL.img" "$INITRAMFS_OUT"
+# O mkinitcpio cria a imagem com umask 077 (modo 600). Os outros artefatos da
+# tag ficam 644 — deixar o initramfs 600 quebra promote-release.sh e qualquer
+# conferência manual feita por usuário normal (sem sudo).
+chmod 644 "$INITRAMFS_OUT"
 
-echo "=== Criando bootargs-7.0.txt ==="
+echo "=== Criando bootargs-7.0-$TAG.txt ==="
 # UART (earlycon+console=uart8250,mmio32,0xC890E000 + console=tty0) e rootwait
 # (nao rootdelay) sao obrigatorios aqui -- ver AGENTS.md secao "Convencoes de
 # bootargs (validadas ao vivo)". Sem UART o log de boot fica cego; rootdelay=N
@@ -550,7 +602,7 @@ echo "=== Criando bootargs-7.0.txt ==="
 # mais rapido, validado 2026-07-28). Incidente 2026-07-30: este heredoc ainda
 # tinha console=tty0 sem UART e rootdelay=10 -- 02-burn-image-7.0.sh grava
 # esse bootargs.txt direto, sem passar pela tag validada em boot_referencia/.
-cat > "$BOOT_DIR/bootargs-7.0.txt" << 'CMDLINEEOF'
+cat > "$BOOTARGS_OUT" << 'CMDLINEEOF'
 panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0 drm.debug=0x06 earlycon=uart8250,mmio32,0xC890E000 console=uart8250,mmio32,0xC890E000 console=tty0 keep_bootcon earlyprintk=efi,keep loglevel=8 root=LABEL=psxitarch rw rootwait systemd.unified_cgroup_hierarchy=0 systemd.legacy_systemd_cgroup_controller=yes audit=0 amdgpu.audio=1 usbcore.autosuspend=-1 video=HDMI-A-1:1920x1080@60 mitigations=off zswap.enabled=1 log_buf_len=4M libata.force=1.00:3.0Gbps,noncq ahci.mobile_lpm_policy=1 netconsole=@192.168.0.2/eth0,6666@192.168.0.1/ff:ff:ff:ff:ff:ff
 CMDLINEEOF
 
@@ -563,16 +615,19 @@ echo "=== Criando tarball do rootfs ==="
 tar -C "$ROOTFS_DIR" -cf "$OUTPUT_TAR" .
 
 echo "=== Resumo ==="
+echo "TAG: $TAG"
 echo "Kernel version: $KVER_FULL"
 echo "Rootfs tarball: $OUTPUT_TAR"
-echo "Initramfs: $BOOT_DIR/initramfs-7.0.cpio.gz"
-echo "Bootargs: $BOOT_DIR/bootargs-7.0.txt"
-echo "Config: $BOOT_DIR/config-7.0"
-echo "bzImage: $BOOT_DIR/bzImage-7.0"
+echo "Initramfs: $INITRAMFS_OUT"
+echo "Bootargs: $BOOTARGS_OUT"
+echo "Config: $CONFIG"
+echo "bzImage: $BZIMAGE"
 if [ -f "$MESA_PATCHED_TAR" ]; then
   echo "Mesa patchado (Gladius/Liverpool): INCLUIDO em /opt/mesa-ps4-patched + /etc/environment"
 else
   echo "Mesa patchado (Gladius/Liverpool): NAO incluido (rode mesa/01-build-mesa.sh antes)"
 fi
 echo ""
-echo "Próximo passo: sudo ./02-burn-image.sh /dev/sda"
+echo "Próximos passos:"
+echo "  sudo ./02-burn-image-7.0.sh /dev/sdX $TAG    (grava tudo, refaz o HD)"
+echo "  sudo ./deploy-boot-7.0.sh $TAG               (só o boot, mantém o rootfs)"
