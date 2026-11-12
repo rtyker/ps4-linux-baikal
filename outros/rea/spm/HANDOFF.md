@@ -4,200 +4,216 @@
 **Dispositivo PCI:** 00:14.6, Vendor 0x104d, Device 0x90dd  
 **Hardware:** PS4 Slim (CUH-2xxx, Baikal B1), 256 MB SPM DDR3  
 **Kernel alvo:** 7.0.8-Strawberry-ThinLTO-Baikal-+ (x86_64)  
-**Status:** Fase 1 em andamento — mapeamento concluído, desenvolvimento do driver iniciando
+**Status:** Fases 1 e 2 CONCLUÍDAS (2026-11-12) — driver carrega via udev e a leitura por `/dev/baikal-memory` já retorna os dados reais da SPM (MAC do BAR5+0x2f000, região `spm.icc`), de forma estável. Próximo passo: Fase 3 (sysfs de registradores conhecidos).  
+**Acesso ao PS4:** SSH WiFi `root@192.168.6.128`, senha `ps4`. Porta `eth0` (cabeada) não tem link (PHY mudo, bug conhecido).
 
 ---
 
-## 1. O que foi descoberto (Fases 1 e 2 concluídas)
+## 1. O que foi descoberto (BARs confirmados ao vivo)
 
-### BARs confirmados ao vivo no PS4:
+### BARs no hardware real (este console, boot de 2026-11-12):
 
-| BAR | Endereço Físico | Tamanho | Conteúdo | Status |
-|-----|-----------------|---------|----------|--------|
-| BAR0 | 0xcc000000–0xcc000fff | 4 KiB | Todo 0xFF | Não mapeado/inicializado |
-| BAR2 | 0x80000000–0xbfffffff | 1 GiB | Zeros até 256 MB, depois 0xFF | 256 MB DDR3 real |
+| BAR | Endereço Físico | Tamanho | Conteúdo ao vivo | Status |
+|-----|-----------------|---------|------------------|--------|
+| BAR0 | 0xcc000000–0xcc000fff | 4 KiB | **Todos zeros** (era 0xFF em boot anterior) | MMIO controle — mudou entre boots |
+| BAR2 | 0x80000000–0xbfffffff | 1 GiB | Zeros até 256 MB, depois 0xFF | DDR3 real (limpo neste boot) |
 | BAR4 | 0xcd000000–0xcd0fffff | 1 MiB | Todo 0x00 | Vazio |
-| BAR5 | 0xcd400000–0xcd43ffff | 256 KiB | Tabela estruturada (não zero) | Dados ativos |
+| BAR5 | 0xcd400000–0xcd43ffff | 256 KiB | Offset 0 = zeros; dados em offsets altos (0x20000+) | Tabela estruturada |
 
-### Strings encontradas no kernel Orbis (FreeBSD-based):
+### Janelas-chave no BAR5 (leitura direta via /dev/mem, 2026-11-12):
 
-- `Baikal Scratch Pad Memory` — nome oficial da SPM
-- `spm_pci` / `pci/spm` — driver PCI da SPM no Orbis
-- `SceDdr3Swap` — módulo de swap DDR3 criptografado (Orbis-specific)
-- `Baikal DDR3 memory` — referência à memória DDR3
-- `baikal_dmac_pci` — driver DMA do Baikal
-- `bootparam_get_ddr3_capacity()` — função para obter capacidade DDR3
-- `icc_query`, `icc_device_power`, `icc_power_shutdown`, `icc_nvs` — protocolo ICC
+| Offset | Conteúdo | Significado |
+|--------|----------|-------------|
+| BAR5+0x2f000 (0xcd42f000) | `2c cc 44 3f 69 5f ...` = **MAC `2c:cc:44:3f:69:5f`** | Bootparams/MAC (confirmado por `00-build-kernel-7.0.sh` linha 354) |
+| BAR5+0x2c000 (0xcd42c000) | Dados ativos (ex: `42 04 38 00 00 00 0c 00 ...`) | Região `spm.icc` — já reservada pelo driver `ps4-bpcie-icc` |
+| BAR5+0x00000 | Todos zeros | **Não há dados aqui neste boot** |
+| BAR5+0x20000–0x40000 | 0xFF nesta leitura; dados no dump salvo | Conteúdo varia entre boots/consoles |
 
-**⚠️ Importante:** O kernel Orbis é FreeBSD-based. O driver Linux deve ser desenvolvido do zero, adaptando interfaces FreeBSD para APIs Linux (devm_*, ioremap, misc_register, etc.).
+### ⚠️ Descoberta crítica — o dump salvo não corresponde ao hardware atual
 
-### Arquivos salvos:
+O arquivo `outros/rea/spm/dumps/baikal_bar5.bin` (commit `29aa02f`, 2026-11-12 16:33) **não bate** com a leitura ao vivo deste console:
+- Salvos tem dados em `0x00000`; atual é zero lá
+- Salvos tem dados em `0x20000–0x40000`; atual é 0xFF lá
+- Salvos NÃO tem o MAC em `0x2f000`; atual tem `2c:cc:44:3f:69:5f`
+- Conclusão: o dump foi capturado em outro estado/outro console. **Não confiar no dump salvo como fonte da verdade.**
 
-| Arquivo | Conteúdo | Local |
-|---------|----------|-------|
-| `baikal_bar5.bin` | BAR5 completo (256 KiB) | `outros/rea/spm/dumps/` |
-| `baikal_bar0.bin` | BAR0 completo (4 KiB) | `outros/rea/spm/dumps/` |
-| `baikal_mem_fase1_bar_map.md` | Mapeamento de BARs | `outros/rea/spm/decompiled/` |
-| `baikal_mem_fase2_orbis_strings.md` | Strings do kernel Orbis | `outros/rea/spm/decompiled/` |
-| `baikal_mem_plano_driver.md` | Plano de implementação 6 fases | `outros/rea/spm/decompiled/` |
+### Registro ICC ocupado pelo driver Linux
 
-### Banco SQLite (`outros/rea/ps4_hardware_memory.db`):
-
-| BAR | Endereço | Tamanho | Status |
-|-----|----------|---------|--------|
-| BAR0 | 0xcc000000 | 4 KiB | MAPPED_READ_0xFF |
-| BAR2 | 0x80000000 | 1 GiB | MAPPED_ZEROS_THEN_0xFF |
-| BAR4 | 0xcd000000 | 1 MiB | MAPPED_ALL_ZERO |
-| BAR5 | 0xcd400000 | 256 KiB | MAPPED_STRUCTURED_DATA |
+`/proc/iomem` mostra `cd42c000-cd42cfff : spm.icc` — o driver `ps4-bpcie-icc` (built-in) já reserva e mapeia `BAR5+0x2c000` (tamanho `BPCIE_SPM_ICC_SIZE`, definido em `drivers/ps4/baikal.h` linha 123 como `0x2c000`). Não há conflito com nosso driver porque nosso `devm_request_mem_region` para BAR5 falhou com EBUSY e caiu na tentativa 2 (`devm_ioremap` direto), que funcionou.
 
 ---
 
-## 2. Plano de Implementação (6 Fases)
+## 2. Estado do driver (Fase 1 — CONCLUÍDA)
 
-### Fase 1 — Estrutura do Módulo e Probe PCI ⬅️ ATUAL
+### Arquivos no kernel (commit `9c260fc53`):
 
-**Objetivo:** Criar o esqueleto do driver que faz probe do dispositivo 00:14.6 e mapeia os BARs.
+| Arquivo | Local | Conteúdo |
+|---------|-------|----------|
+| `baikal-memory.c` | `kernel/kernel_build_7.0/drivers/misc/` | Fonte do driver (150 linhas modificadas vs commit original) |
+| `Kconfig` | `kernel/kernel_build_7.0/drivers/misc/` | `config BAALAK_MEMORY` (linha 664) — depends PCI |
+| `Makefile` | `kernel/kernel_build_7.0/drivers/misc/` | `obj-$(CONFIG_BAALAK_MEMORY) += baikal-memory.o` (linha 78) |
+| `.ko` compilado | `outros/rea/spm/dumps/baikal-memory.ko` | 304 KB, com debug_info, não stripped |
 
-**Tarefas:**
-- [ ] Criar `drivers/misc/baikal-memory.c` no kernel 7.0
-- [ ] Adicionar entrada em `drivers/misc/Kconfig` (`CONFIG_BAIKAL_MEMORY`)
-- [ ] Adicionar entrada em `drivers/misc/Makefile`
-- [ ] Implementar `baikal_memory_probe()`: detectar vendor 0x104d, device 0x90dd
-- [ ] Implementar `baikal_memory_remove()`: cleanup adequado
-- [ ] `ioremap` BAR0 (4 KiB), BAR2 (256 MB window), BAR4 (1 MiB), BAR5 (256 KiB)
-- [ ] Registrar dispositivo de caractere `/dev/baikal-memory` (major dinâmico)
-- [ ] Compilar e testar `modprobe baikal-memory` sem panic
+### Nota sobre o símbolo Kconfig
+O símbolo é `BAALAK_MEMORY` (com typo "BAALAK" em vez de "BAIKAL"), consistente entre Kconfig e Makefile. Não corrigir sem avaliar impacto no build.
 
-**Critério de aceite:** Módulo carrega/descarrega sem panic; `/dev/baikal-memory` existe.
+### Como o driver sobe no PS4
+Carrega automaticamente via udev (não precisa de `insmod` manual). No boot de teste, apareceu no dmesg aos ~12,9 s:
 
----
+```
+baikal_memory: loading out-of-tree module taints kernel.
+baikal-memory 0000:00:14.6: [BAIKAL] Vendor: 0x104d, Device: 0x90dd
+baikal-memory 0000:00:14.6: [BAIKAL] BAR0 OK / BAR2 OK / BAR4 OK / BAR5 OK (tentativa 2)
+baikal-memory 0000:00:14.6: [BAIKAL] misc device OK: /dev/baikal-memory
+baikal-memory 0000:00:14.6: [BAIKAL] sysfs group OK
+baikal-memory 0000:00:14.6: [BAIKAL] === PROBE CONCLUIDO COM SUCESSO ===
+```
 
-### Fase 2 — Leitura Segura da SPM
-
-**Objetivo:** Permitir leitura da memória SPM via `/dev/baikal-memory` com `mmap` ou `read()`.
-
-**Tarefas:**
-- [ ] Implementar `baikal_memory_read()`: leitura de offsets específicos da SPM
-- [ ] Implementar `baikal_memory_mmap()`: mapeamento direto da SPM para userspace
-- [ ] Adicionar validação de offset/tamanho (não permitir leitura fora dos limites)
-- [ ] Adicionar spinlock para proteção de acesso concorrente
-- [ ] Testar leitura de offsets conhecidos (ex: 0x0000–0x0100 do BAR5)
-- [ ] Verificar que leituras são estáveis (mesmo valor em leituras repetidas)
-
-**Critério de aceite:** `dd if=/dev/baikal-memory bs=1 count=256` retorna dados consistentes e não-zero.
+### Device e sysfs criados
+- `/dev/baikal-memory` → `cr--r--r-- 1 root root 10, 261` (somente leitura, modo 0444)
+- `/sys/devices/pci0000:00/0000:00:14.6/bar5_0x00` … `bar5_0x1c` → retornam `0x00000000` (offset 0 está zerado neste boot)
+- Não existe `/sys/class/baikal-memory/` (o driver cria sysfs no `kobj` do device PCI, não na classe misc)
 
 ---
 
-### Fase 3 — Sysfs e Registradores Conhecidos
+## 3. Fase 2 — Leitura Segura da SPM (CONCLUÍDA em 2026-11-12)
 
-**Objetivo:** Expor registradores de interesse via sysfs para fácil leitura/monitoramento.
+### Problema original
+O driver lia apenas **BAR5 offset 0**, que está **zerado** neste boot; o critério de aceite (`dd ... count=256` não-zero) não era atingível.
 
-**Tarefas:**
-- [ ] Criar `/sys/class/baikal-memory/` com atributos só-leitura
-- [ ] Mapear offsets conhecidos do BAR5 (tabela de descritores ICC/comandos)
-- [ ] Exibir valores em formato hexadecimal via sysfs
-- [ ] Documentar cada offset conhecido em `Documentation/abi/sysfs-class-baal-memory`
-- [ ] Testar leitura via `cat /sys/class/baikal-memory/...`
+### Implementação entregue
+`baikal_memory_read()` foi reescrito em torno de `baikal_mem_resolve()`, que traduz offset do dispositivo → BAR + deslocamento, copy via `memcpy_fromio()` para um bounce de 64 bytes e `copy_to_user()`:
 
-**Critério de aceite:** Sysfs acessível e retorna valores corretos para offsets conhecidos.
+| Faixa de `/dev/baikal-memory` | Origem |
+|-------------------------------|--------|
+| `0x000000–0x000fff` | BAR0 (4 KiB, MMIO de controle) |
+| `0x001000–0x003fff` | BAR2 (primeiros 4 MiB da SPM DDR3) |
+| `0x500000–0x53ffff` | BAR5 (256 KiB, tabela estruturada) |
 
----
+`llseek`/`SEEK_END` passaram a usar `BAILAK_DEV_SIZE` (`0x540000`); leitura além do fim retorna 0 bytes (EOF), não lixo. BAR4 segue fora (todo zero ao vivo, sem dados úteis). O sysfs `bar5_0x00…0x1c` foi mantido.
 
-### Fase 4 — Integração com RTC e ICC
+### Evidências ao vivo (PS4, kernel 7.0.8-Strawberry-ThinLTO-Baikal-+)
 
-**Objetivo:** Integrar com o driver RTC `rtc-ps4-icc` (já existente no kernel 7.0) e expor interface ICC via memória Baikal.
+```
+# dd if=/dev/baikal-memory bs=1 skip=$((0x52f000)) count=16 | od -An -tx1
+ 2c cc 44 3f 69 5f 0d c5 a5 04 d8 55 2d 30 82 42     <- MAC real + bootparams
+# dd if=/dev/baikal-memory bs=1 skip=$((0x52c000)) count=16 | od -An -tx1
+ 42 04 38 00 00 00 0c 00 20 00 ab 00 01 00 00 00     <- região spm.icc (BAR5+0x2c000)
+```
 
-**Tarefas:**
-- [ ] Revisar `drivers/rtc/rtc-ps4-icc.c` para entender como usa MMIO/ICC
-- [ ] Adicionar suporte a leitura de contexto ICC via memória Baikal
-- [ ] Implementar interface para `icc_query` via memória compartilhada (se aplicável)
-- [ ] Testar `modprobe rtc-ps4-icc` com `baikal-memory` carregado
-- [ ] Validar `/dev/rtc0` aparece e `hwclock -r` funciona
+- MAC idêntico em 3 leituras consecutivas (estável).
+- Offset 0 (BAR0) e janela BAR2 (`0x1000`) retornam zeros **neste boot** — é o estado do hardware, não do driver.
+- `dd skip=$((0x540000))` retorna `0 bytes copied` (EOF correto).
+- `.ko` instalado em `/usr/lib/modules/7.0.8-Strawberry-ThinLTO-Baikal-+/kernel/drivers/misc/baikal-memory.ko` + `depmod` (sobe via udev).
 
-**Critério de aceite:** RTC via ICC funciona com o driver de memória carregado.
+> Consequência prática: o "critério de aceite não-zero no offset 0" **não vale** para este console (BAR0/BAR2 zerados). A verificação correta é a leitura do MAC em `0x52f000` descrita acima.
 
----
+### Regras do projeto para modificar o driver
+- O build kernel (`00-build-kernel-7.0.sh`) faz `git reset --hard HEAD` → **qualquer edição direta no driver será apagada no próximo build**
+- Fluxo obrigatório:
+  1. Editar `drivers/misc/baikal-memory.c` na árvore `kernel/kernel_build_7.0/`
+  2. Compilar isolado: `make CC="ccache clang" LLVM=1 ARCH=x86_64 drivers/misc/baikal-memory.o`
+  3. Gerar patch: `git diff HEAD -- drivers/misc/baikal-memory.c > patches/baikal-memory-fase2.patch`
+  4. Resetar árvore: `git reset --hard HEAD`
+  5. Validar: `git apply --check patches/baikal-memory-fase2.patch`
+  6. Adicionar aplicação do patch ao `00-build-kernel-7.0.sh` (padrão `git apply --check` + `exit 1` em falha)
+  7. Build completo → novo `.ko` → instalar no PS4
 
-### Fase 5 — Escrita Controlada (Opcional)
-
-**Objetivo:** Permitir escrita em registros específicos da SPM (APENAS após validação extensa de leitura).
-
-**Tarefas:**
-- [ ] Identificar quais registros são seguros para escrita (via RE do kernel Orbis)
-- [ ] Implementar `baikal_memory_write()` com validação rígida
-- [ ] Adicionar parâmetro de módulo `allow_write=0` (desligado por padrão)
-- [ ] Testar escrita em registros não críticos primeiro
-- [ ] Documentar riscos de escrita na SPM
-
-**Critério de aceite:** Escrita funciona apenas em registros identificados como seguros; não causa panic.
-
----
-
-### Fase 6 — Validação e Documentação
-
-**Objetivo:** Validar o driver em cenários reais e documentar completamente.
-
-**Tarefas:**
-- [ ] Teste de stress: leituras repetidas por 30+ minutos sem degradação
-- [ ] Teste de reboot: módulo carrega/descarrega em múltiplos boots
-- [ ] Testar com CIFS montado (para garantir não há conflito de memória)
-- [ ] Escrever `Documentation/driver-api/baikal-memory.rst`
-- [ ] Atualizar `outros/docs/STATUS_DRIVERS_PS4_BAIKAL.md`
-- [ ] Adicionar entradas ao banco `ps4_hardware_memory.db`
-- [ ] Commit no repositório com mensagem detalhada
-
-**Critério de aceite:** Driver estável, documentado, e integrado ao repositório.
+### Nunca usar
+- Heredocs (`cat << 'EOF'`), `sed` ou `echo >>` inline no script de build para injetar código
+- `|| echo AVISO` ou engolir erro de `git apply`
 
 ---
 
-## 3. Riscos e Mitigações
+## 4. Como testar no PS4 (via SSH)
+
+```bash
+# Carregar módulo (sobe via udev automaticamente; insmod só se precisar forçar recarga)
+sshpass -p ps4 scp outros/rea/spm/dumps/baikal-memory.ko root@192.168.6.128:/tmp/
+sshpass -p ps4 ssh root@192.168.6.128 "insmod /tmp/baikal-memory.ko 2>/dev/null; true"
+
+# Verificar device e sysfs
+sshpass -p ps4 ssh root@192.168.6.128 "ls -l /dev/baikal-memory; ls /sys/devices/pci0000:00/0000:00:14.6/bar5_*"
+
+# Critério de aceite Fase 2 (vai retornar zeros com o driver atual — esperar correção)
+sshpass -p ps4 ssh root@192.168.6.128 "dd if=/dev/baikal-memory bs=1 count=256 | xxd"
+
+# Leitura direta de hardware para comparar (via /dev/mem)
+sshpass -p ps4 ssh root@192.168.6.128 "dd if=/dev/mem bs=1 count=16 skip=\$((0xcd400000+0x2f000)) 2>/dev/null | od -An -tx1"  # deve mostrar 2c cc 44 3f 69 5f
+
+# dmesg do driver
+sshpass -p ps4 ssh root@192.168.6.128 "dmesg -T | grep -i baikal | tail -20"
+
+# Descarga (se necessário)
+sshpass -p ps4 ssh root@192.168.6.128 "rmmod baikal-memory"
+```
+
+---
+
+## 5. UART (captura de console serial)
+
+Scripts em `outros/scripts/uart_{start,stop,capture}.sh`. Porta `/dev/ttyUSB0` no host, 115200 baud, raw.
+
+```bash
+# Iniciar captura (duracao em segundos, nome opcional)
+./outros/scripts/uart_start.sh 600 baikal-memory-fase2
+
+# Acompanhar ao vivo
+tail -f outros/tests/uart_logs/baikal-memory-fase2_*.log
+
+# Parar
+./outros/scripts/uart_stop.sh
+```
+
+**Nota:** O log UART pode parar de receber mensagens do kernel após o initramfs montar o rootfs (as mensagens vão para tty0/HDMI). Isso é normal.
+
+---
+
+## 6. Riscos e Mitigações
 
 | Risco | Severidade | Mitigação |
 |-------|------------|-----------|
 | Escrita na SPM corrompe estado do Syscon | Crítica | **Somente leitura nas Fases 1-4. Escrita apenas na Fase 5 com `allow_write=0` padrão.** |
 | Ler offsets críticos travar o console | Alta | Começar com leituras pequenas (64 bytes) e aumentar gradualmente |
-| 1 GiB não cabe no ioremap de kernel | Média | Mapear em janelas menores (ex: 4 MiB por vez) ou mapear apenas BAR0/BAR4 inicialmente |
-| Conflito com `ps4-bpcie-icc` | Média | Coordenar acessos via spinlock; driver de memória é somente-leitura inicialmente |
-| BAR0 todo 0xFF (não inicializado) | Baixa | Documentar como comportamento esperado; focar em BAR5 e BAR2 inicialmente |
+| Conflito com `ps4-bpcie-icc` (reserva BAR5+0x2c000) | Média | Driver memória não escreve; leitura via `devm_ioremap` direto funciona (tentativa 2) |
+| Dados do BAR5 variam entre boots/consoles | Média | Não confiar em dump salvo; validar sempre via `/dev/mem` ao vivo |
+| `CONFIG_DETECT_HUNG_TASK` desligado | Baixa | Sem aviso de task bloqueada em I/O travado |
+| Sem `/dev/rtc` (CONFIG_RTC_CLASS=n) | Média | Fase 4 (RTC via ICC) bloqueada até habilitar RTC_CLASS |
 
 ---
 
-## 4. Próximo Passo Imediato
+## 7. Próximo Passo Imediato
 
-**Iniciar a Fase 1:** Criar o esqueleto do driver em `drivers/misc/baikal-memory.c`, adicionar ao Kconfig/Makefile, e testar `modprobe baikal-memory` no PS4 sem panic.
+**Fase 3 (sysfs de registradores conhecidos):** expor em `/sys/class/baikal-memory/` (ou no `kobj` do device PCI, como hoje) os registradores que têm dados reais — no mínimo `bar5_0x2c000` (região `spm.icc`) e `bar5_0x2f000`/MAC — mantendo tudo só-leitura. Antes disso, o patch da Fase 2 (`kernel/patches/baikal-memory-fase2.patch`, já plugado no `00-build-kernel-7.0.sh`) precisa sobreviver a um build oficial completo: rodar `sudo ./kernel/00-build-kernel-7.0.sh <TAG>` e confirmar que o `git apply --check` do patch passa pós-reset.
+
+### Estado do patch (obrigatório para idempotência)
+
+| Item | Valor |
+|------|-------|
+| Patch | `kernel/patches/baikal-memory-fase2.patch` (14.565 bytes) |
+| Aplicação | `00-build-kernel-7.0.sh` — preflight + bloco próprio com `git apply --check` e `exit 1` |
+| Validação | `git apply --cached --check` contra o índice pristino: OK |
+| Compilação isolada | `make ... drivers/misc/baikal-memory.o` e `.ko`: OK, vermagic `7.0.8-Strawberry-ThinLTO-Baikal-+` |
+| Binário testado | `outros/rea/spm/dumps/baikal-memory-fase2.ko` (303.752 bytes) |
+
+> Kconfig/Makefile e `config` (`CONFIG_BAALAK_MEMORY=m`) já estão commitados na árvore — o patch cobre apenas `drivers/misc/baikal-memory.c`.
 
 ---
 
-## 5. Referências no Repositório
+## 8. Referências no Repositório
 
 | Documento | Local |
 |-----------|-------|
 | Levantamento de hardware completo | `outros/docs/LEVANTAMENTO_HARDWARE_PS4_BAIKAL.md` |
 | Status de drivers | `outros/docs/STATUS_DRIVERS_PS4_BAIKAL.md` |
 | BACKLOG (item Baikal Memory) | `outros/docs/BACKLOG.md` (item [~]) |
-| Plano de driver | `outros/rea/spm/decompiled/baikal_mem_plano_driver.md` |
-| Banco SQLite | `outros/rea/ps4_hardware_memory.db` |
+| Plano de driver (6 fases) | `outros/rea/spm/decompiled/baikal_mem_plano_driver.md` |
+| Achados Fase 1 (BARs) | `outros/docs/ACHADOS_MEMORIA_BAIKAL_FASE1.md` |
+| Achados Fase 2 (strings Orbis) | `outros/docs/ACHADOS_MEMORIA_BAIKAL_FASE2.md` |
+| Banco SQLite | `outros/rea/ps4_hardware_memory.db` (tabela `bar_regions` id 9-12) |
 | Ghidra 12.1.2 | `/opt/ghidra/ghidra_12.1.2_PUBLIC` |
-| Venv PyGhidra | `/opt/ghidra/venv` |
-| Kernel dump Orbis | `outros/rea/spm/dumps/` (kmem_dump_1252.bin está em rea/dumps/) |
-
----
-
-## 6. Como Testar no PS4
-
-```bash
-# Compilar o módulo (no host adsv2, cross-compilado)
-# Copiar para o PS4
-scp baikal-memory.ko anderson@ps4:/tmp/
-
-# No PS4
-sudo insmod /tmp/baikal-memory.ko
-ls -l /dev/baikal-memory
-sudo dmesg | tail -20
-
-# Testar leitura
-sudo dd if=/dev/baikal-memory bs=1 count=256 | xxd
-
-# Descarregar
-sudo rmmod baikal-memory
-```
+| Kernel dump Orbis | `outros/rea/dumps/kmem_dump_1252.bin` |
+| Build script kernel | `kernel/00-build-kernel-7.0.sh` |
+| Patch do driver (Fases 1+2) | `kernel/patches/baikal-memory-fase2.patch` |
+| `.ko` testado | `outros/rea/spm/dumps/baikal-memory-fase2.ko` |
+| Patches | `kernel/patches/` |

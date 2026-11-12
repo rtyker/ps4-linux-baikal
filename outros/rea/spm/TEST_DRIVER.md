@@ -3,7 +3,7 @@
 **Dispositivo:** Sony Baikal Memory (SPM/DDR3), PCI 00:14.6  
 **Módulo:** baikal-memory.ko  
 **Data:** 2026-11-12  
-**Status:** Compilado e pronto para teste
+**Status:** Fase 2 validada ao vivo em 2026-11-12 — leitura via driver retorna o MAC real (BAR5+0x2f000) e a região `spm.icc`, estáveis
 
 ---
 
@@ -12,6 +12,8 @@
 | Arquivo | Local | Descrição |
 |---------|-------|-----------|
 | `baikal-memory.ko` | `outros/rea/spm/dumps/` | Módulo do kernel compilado |
+| `baikal-memory-fase2.ko` | `outros/rea/spm/dumps/` | Módulo testado ao vivo (Fase 2, 303.752 bytes) |
+| `baikal-memory-fase2.patch` | `kernel/patches/` | Patch do driver (aplicado pelo `00-build-kernel-7.0.sh`) |
 | `baikal-memory.c` | `kernel/kernel_build_7.0/drivers/misc/` | Fonte do driver |
 | `HANDOFF.md` | `outros/rea/spm/` | Documentação de handoff |
 
@@ -43,17 +45,35 @@ Driver Baikal Memory carregado. Dispositivo /dev/baikal-memory disponível.
 
 ## 3. Como Testar Leitura da SPM
 
+### Layout de `/dev/baikal-memory` (Fase 2)
+
+| Faixa | Origem |
+|-------|--------|
+| `0x000000–0x000fff` | BAR0 (4 KiB) |
+| `0x001000–0x003fff` | BAR2 (primeiros 4 MiB da SPM DDR3) |
+| `0x500000–0x53ffff` | BAR5 (256 KiB) |
+
 ### Teste 1: Leitura via dispositivo de caractere
 
 ```bash
-# Ler primeiros 256 bytes do BAR5
-sudo dd if=/dev/baikal-memory bs=1 count=256 | xxd
+# MAC real da SPM (BAR5+0x2f000 -> offset 0x52f000 no device)
+dd if=/dev/baikal-memory bs=1 skip=$((0x52f000)) count=6 | od -An -tx1
+# => 2c cc 44 3f 69 5f
 
-# Ler primeiros 4 KiB do BAR0
-sudo dd if=/dev/baikal-memory bs=4096 count=1 skip=0 | xxd
+# Região spm.icc (BAR5+0x2c000)
+dd if=/dev/baikal-memory bs=1 skip=$((0x52c000)) count=16 | od -An -tx1
+# => 42 04 38 00 00 00 0c 00 20 00 ab 00 01 00 00 00
+
+# BAR0 (zerado neste boot) e janela BAR2
+dd if=/dev/baikal-memory bs=16 count=1 2>/dev/null | od -An -tx1
+dd if=/dev/baikal-memory bs=1 skip=$((0x1000)) count=16 2>/dev/null | od -An -tx1
+
+# EOF correto além de 0x540000
+dd if=/dev/baikal-memory bs=1 skip=$((0x540000)) count=4
+# => 0 bytes copied
 ```
 
-**Resultado esperado:** Dados não-zero no BAR5 (tabela estruturada), 0xFF no BAR0.
+**Resultado obtido (2026-11-12):** MAC estável em 3 leituras consecutivas; ICC com dados; BAR0/BAR2 zerados (estado do hardware, não do driver).
 
 ### Teste 2: Leitura via sysfs
 
@@ -87,7 +107,7 @@ sudo rmmod baikal-memory
 |----------|---------|
 | `insmod: ERROR: could not insert module` | Verificar se o kernel versão corresponde (7.0.8-Strawberry-ThinLTO-Baikal-+) |
 | `/dev/baikal-memory` não aparece | Verificar dmesg para erros de probe PCI |
-| Leitura retorna zeros | Verificar se BAR5 foi mapeado corretamente (verificar dmesg) |
+| Leitura retorna zeros no offset 0 | Esperado neste console (BAR0/BAR2 zerados); testar `skip=$((0x52f000))` para ler o MAC |
 | SSH não conecta | Verificar se o serviço SSH está rodando no PS4 |
 
 ---

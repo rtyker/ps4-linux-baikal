@@ -147,7 +147,8 @@ preflight() {
 
   # Patches que o build aplica (os 'git apply --check' reais rodam pós-reset).
   for p in ahci-baikal-polling-fallback.patch ps4-icc-rtc-wrapper.patch \
-           ps4-icc-proc-debug.patch mts-baikal-gbe-driver.patch; do
+           ps4-icc-proc-debug.patch mts-baikal-gbe-driver.patch \
+           baikal-memory-fase2.patch; do
     [ -f "$SCRIPT_DIR/patches/$p" ] || die "patch ausente: $SCRIPT_DIR/patches/$p"
   done
 
@@ -452,6 +453,30 @@ fi
 
 git apply "$PATCH_RTC"
 echo "✓ Patch RTC wrapper aplicado com sucesso (git apply, validado com --check)"
+
+# Memória Baikal (SPM/DDR3, 00:14.6): driver inteiro (probe com logging de
+# diagnóstico da Fase 1 + layout de leitura da Fase 2 em /dev/baikal-memory).
+# Kconfig/Makefile/`config` (CONFIG_BAALAK_MEMORY=m) já estão commitados na
+# árvore; só o .c precisa de patch. Mesmo padrão rigoroso: `--check` antes,
+# `exit 1` se falhar — nunca `|| echo AVISO`.
+PATCH_BAIKAL_MEM="$SCRIPT_DIR/patches/baikal-memory-fase2.patch"
+if [ ! -f "$PATCH_BAIKAL_MEM" ]; then
+  echo "❌ ERRO FATAL: $PATCH_BAIKAL_MEM não encontrado"
+  echo "  Sem ele o build perde as correções do driver baikal-memory."
+  exit 1
+fi
+
+if ! git apply --check "$PATCH_BAIKAL_MEM" 2>/tmp/baikal_mem_patch_check.log; then
+  echo "❌ ERRO FATAL: patch baikal-memory não aplica contra o kernel atual:"
+  cat /tmp/baikal_mem_patch_check.log
+  echo ""
+  echo "  Regenere o patch a partir de uma árvore limpa (ver AGENTS.md,"
+  echo "  seção 'Idempotência de Alterações no Kernel') e substitua $PATCH_BAIKAL_MEM."
+  exit 1
+fi
+
+git apply "$PATCH_BAIKAL_MEM"
+echo "✓ Patch baikal-memory aplicado com sucesso (git apply, validado com --check)"
 
 # build.sh (upstream rmuxnet/linux) NÃO é mais usado — em 2026-07-22 seu perfil
 # "General/ThinLTO/Baikal" (--option 3 use=General lto=ThinLTO southbridge=Baikal)

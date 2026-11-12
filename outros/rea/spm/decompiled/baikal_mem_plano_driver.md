@@ -76,14 +76,14 @@ O dispositivo 00:14.6 do SoC Baikal expõe memória dedicada (SPM/DDR3) usada pe
 **Objetivo:** Permitir leitura da memória SPM via `/dev/baikal-memory` com `mmap` ou `read()`.
 
 **Tarefas:**
-- [ ] Implementar `baikal_memory_read()`: leitura de offsets específicos da SPM
-- [ ] Implementar `baikal_memory_mmap()`: mapeamento direto da SPM para userspace
-- [ ] Adicionar validação de offset/tamanho (não permitir leitura fora dos limites)
-- [ ] Adicionar spinlock para proteção de acesso concorrente
-- [ ] Testar leitura de offsets conhecidos (ex: 0x0000–0x0100 do BAR5)
-- [ ] Verificar que leituras são estáveis (mesmo valor em leituras repetidas)
+- [x] Implementar `baikal_memory_read()`: leitura de offsets específicos da SPM
+- [x] Implementar `baikal_memory_mmap()`: mapeamento direto da SPM para userspace
+- [x] Adicionar validação de offset/tamanho (não permitir leitura fora dos limites)
+- [x] Adicionar mutex para proteção de acesso concorrente (não spinlock: `copy_to_user`/`memcpy_fromio` podem dormir)
+- [x] Testar leitura de offsets conhecidos (MAC em BAR5+0x2f000, região ICC em BAR5+0x2c000)
+- [x] Verificar que leituras são estáveis (mesmo valor em leituras repetidas)
 
-**Critério de aceite:** `dd if=/dev/baikal-memory bs=1 count=256` retorna dados consistentes e não-zero.
+**Critério de aceite (revisado em 2026-11-12):** o offset 0 (BAR0/BAR2) está **zerado neste console**, então "não-zero no offset 0" não é um critério válido. O critério real passou a ser: `dd if=/dev/baikal-memory bs=1 skip=$((0x52f000)) count=6` retorna `2c cc 44 3f 69 5f` (MAC real) de forma repetível, e `skip=$((0x52c000))` retorna os dados da região `spm.icc`. Implementação validada ao vivo; patch em `kernel/patches/baikal-memory-fase2.patch`.
 
 ---
 

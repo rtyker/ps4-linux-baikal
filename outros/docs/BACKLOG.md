@@ -822,7 +822,7 @@ Itens abaixo são exclusivamente de hardware/driver. Para cada componente sem dr
 
 ---
 
-### [~] 💾 Baikal Memory (00:14.6) — investigação em andamento (Fases 1 e 2 concluídas)
+### [~] 💾 Baikal Memory (00:14.6) — driver implementado e leitura validada ao vivo (Fases 1-2 OK; Fase 3 pendente)
 
 **Estado:** dispositivo presente (`104d:90dd`), BARs confirmados ao vivo:
 - BAR0 0xcc000000 (4 KiB): todo 0xFF (não mapeado)
@@ -843,9 +843,13 @@ Dados salvos em:
 - `outros/docs/ACHADOS_MEMORIA_BAIKAL_FASE2.md` (Fase 2 — strings do kernel Orbis)
 - Arquivos binários em `/tmp/baikal_bar5.bin` e `/tmp/baikal_bar0_correto.bin`
 
+**Driver (2026-11-12):** `baikal-memory.ko` compila no kernel 7.0.8 e sobe via udev (`CONFIG_BAALAK_MEMORY=m`). `/dev/baikal-memory` (0444) expõe BAR0 em `0x0`, primeiros 4 MiB do BAR2 em `0x1000` e BAR5 em `0x500000`; leitura além de `0x540000` retorna EOF. Validado ao vivo: `skip=$((0x52f000))` devolve o MAC real (`2c cc 44 3f 69 5f`) estável em leituras repetidas, e `skip=$((0x52c000))` devolve a região `spm.icc`. Fonte: `kernel/patches/baikal-memory-fase2.patch`, plugado no `00-build-kernel-7.0.sh` (falha alta se não aplicar). Binário testado: `outros/rea/spm/dumps/baikal-memory-fase2.ko`.
+
+**Pendente:** Fase 3 (sysfs dos registradores com dados reais — ICC/MAC), Fase 4 (RTC/ICC), Fase 5 (escrita, `allow_write=0`), e um build oficial completo para confirmar o patch pós-`git reset`.
+
 **Tarefa:** desenvolver driver `baikal-memory` para exposição da memória SPM/DDR3 do Baikal, possivelmente como memregion ou dispositivo de memória gerenciável.
 
-**Documentos:** `outros/docs/ACHADOS_MEMORIA_BAIKAL_FASE1.md`, `outros/docs/ACHADOS_MEMORIA_BAIKAL_FASE2.md`, `outros/docs/PLANO_DRIVER_MEMORIA_BAIKAL.md`, `outros/rea/decompiled/baikal_pcie_attach.txt`, `outros/rea/scans/kernel_hardware_info.txt`
+**Documentos:** `outros/rea/spm/HANDOFF.md`, `outros/docs/ACHADOS_MEMORIA_BAIKAL_FASE1.md`, `outros/docs/ACHADOS_MEMORIA_BAIKAL_FASE2.md`, `outros/docs/PLANO_DRIVER_MEMORIA_BAIKAL.md`, `outros/rea/decompiled/baikal_pcie_attach.txt`, `outros/rea/scans/kernel_hardware_info.txt`
 
 ---
 
