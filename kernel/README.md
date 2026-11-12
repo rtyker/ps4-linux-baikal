@@ -19,8 +19,8 @@ Antes de tocar na árvore, um **preflight** somente-leitura valida ferramentas
 (≥ 10 GiB), patches, `config` e os 12 firmwares — falha cedo com mensagem clara.
 
 O script:
-1. Reseta a árvore **local** do kernel em `kernel/kernel_build_7.0`
-   (dentro do repo, gitignored — o repo precisa estar em ext4, **nunca** NTFS)
+1. Reseta a árvore **local** do kernel em `kernel_build_7.0/`
+   (dentro de `kernel/`, gitignored — o repo precisa estar em ext4, **nunca** NTFS)
    no branch `baikal/7.0.8-Stable`; se a árvore não existe, **aborta** e instrui
    a restaurar do snapshot (o upstream não publica mais esse branch — ver seção
    abaixo);
@@ -33,8 +33,6 @@ O script:
    `extra_firmware/` — falha cedo, antes do `make`, listando o que falta;
 5. compila com ThinLTO (`LLVM=1`, `JOBS=2`) e faz `make modules`;
 6. grava `../distro/boot_referencia/bzImage-7.0-<TAG>` e `config-7.0-<TAG>`
-   (com aviso se o bzImage passar de ~10 MB — limite de alguns loaders kexec,
-   lição #23);
 7. gera snapshot de segurança da árvore fonte em
    `kernel/snapshots/kernel-src-<DATA>-<TAG>.tar.zst`.
 
@@ -50,7 +48,6 @@ nenhum em disco, então a árvore viva em `kernel/kernel_build_7.0` é a única 
 (recriável por clone + `patches/`). Para voltar a compilar a partir de um snapshot novo:
 
 ```bash
-cd kernel
 tar -I 'zstd -d' -xf snapshots/kernel-src-<DATA>-<TAG>.tar.zst   # ~6 s, 2,1 GB
 cd kernel_build_7.0
 # o tar exclui os produtos de link do topo (vmlinux*, por padrão ancorado no topo);
@@ -87,7 +84,7 @@ make -j2 LLVM=1 CC="ccache clang" ARCH=x86_64 prepare                       # ~2
 | `kernel_build_7.0/` | Árvore fonte do kernel + ccache (gitignored — criado localmente, não vem no clone) |
 | `.ccache/` | Cache do compilador (gitignored) |
 | `snapshots/` | Snapshots de segurança da árvore fonte (gitignored) |
-| `outros/` | **Fora do build** (separado para revisão): `rea/` (acervo de RE: dumps Orbis, decompilado, scans, scripts Ghidra, SQLite), `consolidado/` (documentação técnica), `docs/` (planos), `tools/` (harnesses ao vivo, `ps4_hdd_tools`), `scripts/` (diagnóstico) e `tests/` |
+| `../outros/` | **Fora do build** (separado para revisão): `rea/` (acervo de RE: dumps Orbis, decompilado, scans, scripts Ghidra, SQLite), `consolidado/` (documentação técnica), `docs/` (planos), `tools/` (harnesses ao vivo, `ps4_hdd_tools`), `scripts/` (diagnóstico) e `tests/` |
 
 ## Regras que valem para esta frente
 
