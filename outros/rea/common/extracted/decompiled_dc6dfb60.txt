@@ -1,0 +1,37 @@
+// Extraido por Ghidra PyGhidra (consolidate_decompiled_lacunas.py)
+// addr: 0xffffffffdc6dfb60  name: FUN_ffffffffdc6dfb60  size: 151
+// escopo: lacuna MTS/GBE/ICC/glue identificada em testes ao vivo
+// chamadores (1):
+//   FUN_ffffffffdc6df850 @ 0x-0000000239207b0
+// chamadas (4):
+//   FUN_ffffffffdc4afb10 @ 0x-000000023b504f0
+//   FUN_ffffffffdc718800 @ 0x-0000000238e7800
+//   FUN_ffffffffdc630420 @ 0x-0000000239cfbe0
+//   FUN_ffffffffdc7187d0 @ 0x-0000000238e7830
+
+
+void FUN_ffffffffdc6dfb60(int param_1)
+
+{
+  uint uVar1;
+  long lVar2;
+  int iVar3;
+  
+  iVar3 = param_1 + 0x20;
+  uVar1 = FUN_ffffffffdc7187d0(iVar3);
+  FUN_ffffffffdc718800(iVar3,uVar1 | 0x10);
+  lVar2 = 1000000;
+  do {
+    uVar1 = FUN_ffffffffdc7187d0(param_1 + 0x28);
+    if ((uVar1 & 0x70) == 0) {
+      uVar1 = FUN_ffffffffdc7187d0(iVar3);
+      FUN_ffffffffdc718800(iVar3,uVar1 | 1);
+      return;
+    }
+    FUN_ffffffffdc4afb10(10);
+    lVar2 = lVar2 + -1;
+  } while (lVar2 != 0);
+                    /* WARNING: Subroutine does not return */
+  FUN_ffffffffdc630420("IA reset timeout 0x%X, reg 0x%X\n",param_1,uVar1);
+}
+

@@ -1,0 +1,55 @@
+#
+addr: 0xffffffffdc4cdfc0
+name: fcn.ffffffffdc4cdfc0
+size: 156
+is-pure: false
+realsz: 156
+stackframe: 152
+callconv: amd64
+cyclic-cost: 57
+cyclomatic-complexity: 3
+bits: 64
+type: fcn [NEW]
+num-bbs: 3
+num-instrs: 42
+edges: 2
+minaddr: 0xffffffffdc4cdfc0
+maxaddr: 0xffffffffdc4ce05c
+is-lineal: true
+end-bbs: 2
+maxbbins: 33
+midbbins: 14.00
+ratbbins: 2.36
+noreturn: false
+recursive: false
+in-degree: 0
+out-degree: 6
+locals: 2
+args: 1
+
+
+//WARNING: Variable defined which should be unmapped: var_90h
+
+ulong fcn.ffffffffdc4cdfc0(int64_t arg1)
+
+{
+    code *pcVar1;
+    ulong uVar2;
+    int64_t var_90h;
+    int64_t var_20h;
+    
+    var_20h = *0xffffffffdeaacea0;
+    uVar2 = fcn.ffffffffdc5b7a20();
+    fcn.ffffffffdc5b6b00(uVar2);
+    fcn.ffffffffdc526e40();
+    fcn.ffffffffdc630720(var_90h);
+    fcn.ffffffffdc5b7c80(arg1,&var_90h);
+    if (*0xffffffffdeaacea0 == var_20h) {
+        return 0xffffffec;
+    }
+    fcn.ffffffffdca17ba0();
+    //WARNING: Does not return
+    pcVar1 = invalidInstructionException();
+    (*pcVar1)();
+}
+

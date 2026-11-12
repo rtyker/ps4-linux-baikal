@@ -1,0 +1,38 @@
+// Extraido por Ghidra PyGhidra (consolidate_decompiled_lacunas.py)
+// addr: 0xffffffffdc52a4f0  name: FUN_ffffffffdc52a4f0  size: 124
+// escopo: lacuna MTS/GBE/ICC/glue identificada em testes ao vivo
+// chamadores (5):
+//   FUN_ffffffffdc7190d0 @ 0x-0000000238e6f30
+//   FUN_ffffffffdc5297a0 @ 0x-000000023ad6860
+//   FUN_ffffffffdc9a4da0 @ 0x-00000002365b260
+//   FUN_ffffffffdc566c30 @ 0x-000000023a993d0
+//   FUN_ffffffffdc9a56f0 @ 0x-00000002365a910
+// chamadas (3):
+//   FUN_ffffffffdca17ba0 @ 0x-0000000235e8460
+//   FUN_ffffffffdc60d400 @ 0x-0000000239f2c00
+//   FUN_ffffffffdc60d4c0 @ 0x-0000000239f2b40
+
+
+ushort FUN_ffffffffdc52a4f0(void)
+
+{
+  ushort uVar1;
+  undefined1 local_30 [4];
+  ushort local_2c;
+  ushort local_2a;
+  long local_20;
+  
+  local_20 = DAT_ffffffffdeaacea0;
+  FUN_ffffffffdc60d400(local_30,0x10);
+  FUN_ffffffffdc60d4c0(local_30,&DAT_ffffffffde51c608,0x10);
+  uVar1 = 0;
+  if ((local_2c & 0xc0ff) == 0x8001) {
+    uVar1 = local_2a >> 1 & 1;
+  }
+  if (DAT_ffffffffdeaacea0 == local_20) {
+    return uVar1;
+  }
+                    /* WARNING: Subroutine does not return */
+  FUN_ffffffffdca17ba0();
+}
+

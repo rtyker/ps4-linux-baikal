@@ -1,0 +1,50 @@
+// Extraido por Ghidra headless (ExtractMtsNamespaceNoAnalysis.java)
+// addr: 0xffffffffdcabbe70  name: FUN_ffffffffdcabbe70  size: 81
+// escopo: lacuna MTS/GBE/ICC/glue identificada em testes ao vivo
+// chamadores (0):
+// chamadas (0):
+
+
+/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+
+void FUN_ffffffffdcabbe70(undefined8 param_1)
+
+{
+  code *pcVar1;
+  long lVar2;
+  long *in_GS_OFFSET;
+  bool bVar3;
+  
+  LOCK();
+  bVar3 = _DAT_ffffffffdeade4d8 != 0;
+  lVar2 = *in_GS_OFFSET;
+  if (bVar3) {
+    lVar2 = _DAT_ffffffffdeade4d8;
+  }
+  _DAT_ffffffffdeade4d8 = lVar2;
+  UNLOCK();
+  if (bVar3) {
+    if (_DAT_ffffffffdeade4d8 != *in_GS_OFFSET) {
+      if (_DAT_ffffffffdeade4d8 != -1) {
+        func_0xffffffffdc630420(&UNK_ffffffffdce86d8c);
+        do {
+                    /* WARNING: Do nothing block with infinite loop */
+        } while( true );
+      }
+      func_0xffffffffdcaba740();
+                    /* WARNING: Does not return */
+      pcVar1 = (code *)invalidInstructionException();
+      (*pcVar1)();
+    }
+    if (_DAT_ffffffffdeaddd30 != 0) {
+      return;
+    }
+  }
+  else {
+    _DAT_ffffffffdeadddf0 = rdmsr(0x1dd);
+    _DAT_ffffffffdeadddf8 = rdmsr(0x1de);
+  }
+  _DAT_ffffffffdeaddd30 = param_1;
+  return;
+}
+

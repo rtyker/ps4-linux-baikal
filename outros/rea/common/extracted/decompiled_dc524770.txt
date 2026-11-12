@@ -1,0 +1,61 @@
+// Extraido por Ghidra headless (ExtractMtsNamespaceNoAnalysis.java)
+// addr: 0xffffffffdc524770  name: FUN_ffffffffdc524770  size: 191
+// escopo: lacuna MTS/GBE/ICC/glue identificada em testes ao vivo
+// chamadores (1):
+//   FUN_ffffffffdc5a44c0 @ 0xffffffffdc5a44c0
+// chamadas (0):
+
+
+void FUN_ffffffffdc524770(long param_1,ushort param_2,uint param_3)
+
+{
+  undefined8 *puVar1;
+  code *pcVar2;
+  long *in_GS_OFFSET;
+  bool bVar3;
+  ulong uStack_40;
+  long lStack_38;
+  
+  puVar1 = (undefined8 *)*in_GS_OFFSET;
+  lStack_38 = lRamffffffffdeaacea0;
+  if (param_1 != 0) {
+    func_0xffffffffdc6c8a20(puVar1,0,&UNK_ffffffffdcaff706,0x21b);
+    func_0xffffffffdc78eda0((long)puVar1 + 0x284,param_1,0x20);
+    func_0xffffffffdc6c88b0(*puVar1,0,&UNK_ffffffffdcaff706,0x21d);
+  }
+  bVar3 = (*(uint *)((long)puVar1 + 0xdc) & 0x100) != 0;
+  if (bVar3) {
+    *(uint *)((long)puVar1 + 0xdc) = *(uint *)((long)puVar1 + 0xdc) & 0xfffffeff;
+  }
+  switch(param_3 << 0x18 | param_3 >> 8) {
+  case 0:
+    break;
+  case 1:
+    func_0xffffffffdc3cee10(puVar1,param_2);
+    break;
+  case 2:
+  case 4:
+    func_0xffffffffdc3cef90(puVar1,param_3,-(uint)(param_2 == 0) | (uint)param_2);
+    goto joined_r0xffffffffdc5248a9;
+  default:
+    uStack_40 = (ulong)param_3;
+    func_0xffffffffdc540c50
+              (*(undefined4 *)(puVar1 + 0x11),&uStack_40,-(uint)(param_2 == 0) | (uint)param_2);
+joined_r0xffffffffdc5248a9:
+    if (!bVar3) goto code_r0xffffffffdc524867;
+    goto code_r0xffffffffdc52485e;
+  }
+  if (bVar3) {
+code_r0xffffffffdc52485e:
+    *(byte *)((long)puVar1 + 0xdd) = *(byte *)((long)puVar1 + 0xdd) | 1;
+  }
+code_r0xffffffffdc524867:
+  if (lRamffffffffdeaacea0 == lStack_38) {
+    return;
+  }
+  func_0xffffffffdca17ba0();
+                    /* WARNING: Does not return */
+  pcVar2 = (code *)invalidInstructionException();
+  (*pcVar2)();
+}
+

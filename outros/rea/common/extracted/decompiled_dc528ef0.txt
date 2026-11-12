@@ -1,0 +1,52 @@
+// Extraido por Ghidra PyGhidra (consolidate_decompiled_lacunas.py)
+// addr: 0xffffffffdc528ef0  name: FUN_ffffffffdc528ef0  size: 228
+// escopo: lacuna MTS/GBE/ICC/glue identificada em testes ao vivo
+// chamadores (0):
+// chamadas (4):
+//   FUN_ffffffffdc6c8300 @ 0x-000000023937d00
+//   FUN_ffffffffdc5746d0 @ 0x-000000023a8b930
+//   FUN_ffffffffdc6c85b0 @ 0x-000000023937a50
+//   FUN_ffffffffdc574770 @ 0x-000000023a8b890
+
+
+void FUN_ffffffffdc528ef0(undefined8 param_1,undefined4 *param_2)
+
+{
+  undefined4 uVar1;
+  int iVar2;
+  long lVar3;
+  long *plVar4;
+  
+  uVar1 = *param_2;
+  lVar3 = FUN_ffffffffdc5746d0("system_power_state_change");
+  if (lVar3 != 0) {
+    iVar2 = *(int *)(lVar3 + 0xc) + 1;
+    *(int *)(lVar3 + 0xc) = iVar2;
+    plVar4 = *(long **)(lVar3 + 0x40);
+    if (plVar4 != (long *)0x0) {
+      do {
+        if ((int)plVar4[2] != -1) {
+          FUN_ffffffffdc6c85b0
+                    (lVar3 + 0x10,0,
+                     "W:\\Build\\J02690760\\sys\\freebsd\\sys\\dev\\scesb\\icc\\icc_power.c",0x127);
+          (*(code *)plVar4[5])(plVar4[3],*(ushort *)(param_2 + 1) & 0x3f,uVar1);
+          FUN_ffffffffdc6c8300
+                    (lVar3 + 0x10,0,
+                     "W:\\Build\\J02690760\\sys\\freebsd\\sys\\dev\\scesb\\icc\\icc_power.c",0x127);
+        }
+        plVar4 = (long *)*plVar4;
+      } while (plVar4 != (long *)0x0);
+      iVar2 = *(int *)(lVar3 + 0xc);
+    }
+    *(int *)(lVar3 + 0xc) = iVar2 + -1;
+    if (iVar2 + -1 == 0) {
+      FUN_ffffffffdc574770(lVar3);
+    }
+    FUN_ffffffffdc6c85b0
+              (lVar3 + 0x10,0,
+               "W:\\Build\\J02690760\\sys\\freebsd\\sys\\dev\\scesb\\icc\\icc_power.c",0x127);
+    return;
+  }
+  return;
+}
+
