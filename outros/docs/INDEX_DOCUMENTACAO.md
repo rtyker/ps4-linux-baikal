@@ -1,7 +1,7 @@
 # Índice da Documentação — PS4 Linux Baikal
 
 > **Revisão:** 2026-11-11 (reescrito após limpeza). Este índice lista apenas os arquivos que
-> existem atualmente em `outros/consolidado/` e `kernel/drivers_mts/`.
+> existem atualmente em `outros/docs/` e `kernel/drivers_mts/`.
 
 > **Projeto:** PS4 Slim/Pro **Baikal** (CUH-2xxx) rodando Linux **7.0.8-Strawberry-ThinLTO-Baikal-+**
 > carregado por `kexec` a partir de payload de jailbreak. Distribuição: Arch Linux mínima.
@@ -37,8 +37,8 @@ Planejamento ativo e marcos validados ficam em [`../docs/MARCOS_CONSOLIDADOS.md`
 
 O acervo de coleta de hardware bruto (dmesg, lspci, pinouts, fotos) está em:
 - [`../rea/`](../rea/) — banco SQLite `ps4_hardware_memory.db`, dumps do Orbis, saídas Ghidra
-- [`dmesg_ps4/`](dmesg_ps4/) — `PS4_DMESG_ate_20260721.tar.gz`
 - [`pictures/`](pictures/) — fotos do console, UART, pinouts, placa NVG
+- Capturas de dmesg do console estão em [`../../kernel/dmesg_ps4/`](../../kernel/dmesg_ps4/)
 
 ---
 
@@ -74,14 +74,14 @@ investigação de RE **encerrada** em 2026-07-30 (bloqueador é firmware Sony, n
 
 | Arquivo | Conteúdo |
 |---------|----------|
-| [`MARCO_HISTORICO_GPU_GLADIUS_REAL.md`](MARCO_HISTORICO_GPU_GLADIUS_REAL.md) | Marco: firmware Gladius real + amdgpu |
 | [`MESA_GLADIUS_LIVERPOOL_FIX.md`](MESA_GLADIUS_LIVERPOOL_FIX.md) | Patch do Mesa para reconhecer `CHIP_GLADIUS`/`CHIP_LIVERPOOL` |
+| Marco: firmware Gladius real + amdgpu → movido para [`../../kernel/MARCO_HISTORICO_GPU_GLADIUS_REAL.md`](../../kernel/MARCO_HISTORICO_GPU_GLADIUS_REAL.md) |
 
 ### Kernel, build e boot
 
 | Arquivo | Conteúdo |
 |---------|----------|
-| [`ROTEIRO_KERNEL.md`](ROTEIRO_KERNEL.md) | Guia de compilação manual (⚠️ **HISTÓRICO**: kernel 5.4 + sky2 banido; o oficial é `../../00-build-kernel-7.0.sh`) |
+| Guia de compilação manual → movido para [`../../kernel/ROTEIRO_KERNEL.md`](../../kernel/ROTEIRO_KERNEL.md) (⚠️ **HISTÓRICO**: kernel 5.4 + sky2 banido; o oficial é `../../00-build-kernel-7.0.sh`) |
 
 ### RE e banco de hardware
 
@@ -120,7 +120,8 @@ sqlite3 outros/rea/ps4_hardware_memory.db \
 | Diretório | Conteúdo | Versionado? |
 |-----------|----------|-------------|
 | (movido) | Blobs de firmware da GPU extraídos do console → `../rea/firmware_gladius_real/` | Sim (8 blobs, 124 KB) |
-| `dmesg_ps4/`, `pictures/` | Capturas de dmesg, fotos do console, pinouts | Local |
+| `pictures/` | Fotos do console, UART, pinouts, placa NVG | Local |
+| Capturas de dmesg → `../../kernel/dmesg_ps4/` | Capturas de dmesg do PS4 | Local |
 | `__pycache__/`, `rootfs.img` | Artefatos de execução | Ignorados |
 
 ---

@@ -82,7 +82,7 @@ visual conhecida continua valendo até rodar `distro/mesa/01-build-mesa.sh` e re
 `CHIP_GLADIUS`/`CHIP_LIVERPOOL` → corrupção visual em qualquer coisa renderizada).
 **Próximo passo exato:** `cd distro/mesa && ./01-build-mesa.sh` (produz o tar), depois refazer
 `./scripts/build-image-docker.sh <TAG>` e só então promote-release. A chave do patch está em
-`distro/mesa/`; ver `outros/consolidado/MESA_GLADIUS_LIVERPOOL_FIX.md`.
+`distro/mesa/`; ver `outros/docs/MESA_GLADIUS_LIVERPOOL_FIX.md`.
 
 ### [ ] 🔵 Decidir a estrutura da fonte do driver MTS (`drivers_mts/mts.c` × patch)
 

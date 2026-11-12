@@ -163,4 +163,4 @@ dmesg | grep -i 'ata1\|disable'
 - [`../../AGENTS.md`](../../AGENTS.md) — fonte única de regras e procedimentos
 - [`../../kernel/00-build-kernel-7.0.sh`](../../kernel/00-build-kernel-7.0.sh) — script oficial de build
 - [`../../distro/README.md`](../../distro/README.md) — frente 2 (distro Arch)
-- [`../../outros/consolidado/LICOES_APRENDIDAS.md`](../../outros/consolidado/LICOES_APRENDIDAS.md) — lições aprendidas
+- [`../../outros/docs/LICOES_APRENDIDAS.md`](../../outros/docs/LICOES_APRENDIDAS.md) — lições aprendidas

@@ -73,7 +73,7 @@ Fluxo da pipeline de criptografia do HD interno (GEOM):
 | Onde | O quê |
 |---|---|
 | `kernel/drivers_mts/` | documentação do **driver** MTS (`README.md`, RE do driver, testes, plano) — a RE do GBE Baikal é tão específica do driver que fica com ele |
-| `outros/consolidado/` | documentação técnica geral (SATA, GPU, RTC, build, lições, backlog) |
+| `outros/docs/` | documentação técnica geral (SATA, GPU, RTC, build, lições, backlog) |
 | `outros/tools/harness/` | harnesses de teste **ao vivo** via SSH/telnet (sondagem MMIO no console) — são ferramentas de operação, não acervo de RE estático |
 | `outros/tools/ps4_hdd_tools/` | utilitários de HD (PFS/EAP) que **usam** os resultados da RE |
 

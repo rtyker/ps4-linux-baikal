@@ -4,7 +4,7 @@
 > Em 2026-07-22 o patch `sky2-baikal-gbe.patch` foi **banido** — forçava o driver Marvell Yukon
 > a sondar a GBE Baikal (`104d:90d8`), congelando o barramento PCIe e o vídeo.
 > A solução válida (kernel 7.0 Baikal) usa o driver **`mts`** nativo (`CONFIG_MTS_GBE=m`);
-> ver [`../../kernel/drivers_mts/README.md`](../../kernel/drivers_mts/README.md) e o `AGENTS.md`.
+> ver [`drivers_mts/README.md`](drivers_mts/README.md) e o `AGENTS.md`.
 
 Este documento descreve o processo de compilação do kernel **Neocine 5.4.247-neocine-1.1**, os arquivos envolvidos e como resolver dependências de firmware de forma limpa e independente de máquina host.
 
@@ -26,9 +26,9 @@ A compilação do kernel envolve:
 ## 2. Arquivos Envolvidos e Estrutura
 
 ### No Repositório do Projeto (Este Diretório — CAMINHOS ATUALIZADOS PÓS-REORG 2026-11-11)
-*   **[00-build-kernel-7.0.sh](../../kernel/00-build-kernel-7.0.sh)**: Script automatizado para configurar o ambiente e executar os downloads (versão 7.0; o script 5.4 não existe mais).
+*   **[00-build-kernel-7.0.sh](00-build-kernel-7.0.sh)**: Script automatizado para configurar o ambiente e executar os downloads (versão 7.0; o script 5.4 não existe mais).
 *   **[neocine.config](https://github.com/feeRnt/ps4-linux-12xx/blob/v5.4.247__neocine-1.1/.config)**: Arquivo contendo a configuração original (extraída via `extract-ikconfig` do `bzImage` funcional) — link para o upstream, pois o arquivo não existe mais neste repositório.
-*   **[distro/boot_referencia/bzImage-7.0-<TAG>](../../distro/boot_referencia/bzImage-7.0-20261111-preflight-test)**: Local final para onde o kernel compilado (`bzImage`) é copiado (agora em `distro/boot_referencia/`, **por TAG** — o genérico `bzImage` só existe dentro do HD particionado).
+*   **[distro/boot_referencia/bzImage-7.0-<TAG>](../distro/boot_referencia/bzImage-7.0-20261111-preflight-test)**: Local final para onde o kernel compilado (`bzImage`) é copiado (agora em `distro/boot_referencia/`, **por TAG** — o genérico `bzImage` só existe dentro do HD particionado).
 
 ### No Diretório de Compilação (`/mnt/hdauxiliar/temp/kernel_build`)
 *   **`.config`**: Arquivo de configuração ativo do kernel.

@@ -17,7 +17,7 @@ consome os artefatos de boot que o kernel produz.
 leem de lá via `BOOT_DIR="${PS4_BOOT_REF:-$SCRIPT_DIR/boot_referencia}"`. A distro **nunca** compila
 kernel; o kernel **nunca** conhece rootfs.
 
-⚠️ **Documentação histórica (`outros/consolidado/`)** escrita antes de
+⚠️ **Documentação histórica (`outros/docs/`)** escrita antes de
 2026-11-11 cita os caminhos antigos (`distros/arch_minimal_v2/`, `consolidado/` na raiz,
 `scripts/` na raiz). O mapa é: `distros/arch_minimal_v2/00-build-kernel-7.0.sh` →
 `kernel/00-build-kernel-7.0.sh`; `distros/arch_minimal_v2/{patches,boot_referencia}` →
@@ -35,7 +35,7 @@ kernel; o kernel **nunca** conhece rootfs.
    - **BUILD AUTOMÁTICO ETH0 + NETCONSOLE (2026-07-23):** Criada e implantada no HD a tag `20260723-mts-autoeth0`. O driver `mts.ko` agora possui o padrão `stage=4` e auto-carregamento no boot, subindo a interface `eth0` automaticamente sem necessidade de intervenção via Telnet. Netconsole ativado por padrão no boot.
    - **DESLIGAMENTO REMOTO VIA TELNET (2026-07-22):** O comando `sync && poweroff -f` (ou `echo o > /proc/sysrq-trigger`) encerra o sistema operacional e a rede limpos (ping cai 100%), porém o console permanece em **luz azul (luz azul acesa/pulsando)** pois o desligamento de energia total da fonte (S5) exige comando ICC dedicado ou desligamento manual no botão.
    - **🏆 NOVO BASELINE OFICIAL (2026-07-30), tag `20260730-sata-reverted` — MELHOR VERSÃO ATÉ AGORA, PONTO DE ROLLBACK:** kernel `7.0.8-Strawberry-ThinLTO-Baikal-+ #23` com o fix de polaridade MDIO Clause 22 (`mts.c`) ativo e as mudanças de SATA polling-timer da noite de 2026-07-29 revertidas (só instrumentação não validada). Boot completo confirmado ao vivo: `kexec` → shutdown normal da Orbis → `Run /init as init process` → `systemd[1]` sem erros, vídeo HDMI OK, **SSH via WiFi confirmado**, `eth0` sobe com MAC real (PHY ainda sem link, bug conhecido, não é regressão). Artefatos em `distro/boot_referencia/*-7.0-20260730-sata-reverted*` **NUNCA podem ser sobrescritos/descartados** — em caso de regressão futura, restaurar com `sudo ./deploy-boot-7.0.sh 20260730-sata-reverted` (boot-only, mantém rootfs). (A memória de sessão com os checksums MD5 foi removida em 2026-11-11 — recuperável no histórico do git.)
-   - **🏆🏆 NOVO BASELINE OFICIAL, MAIS RECENTE (2026-07-30), tag `20260730-sata-polling-fase-ab` — SUPERA O ANTERIOR, SATA INTERNO FUNCIONAL PELA PRIMEIRA VEZ:** mesmo kernel do baseline acima + Fase A/B do plano de correção do SATA polling (o plano original foi apagado em 2026-11-11 junto com a pasta `outros/consolidado/obsoleto/`; o código vivo é `patches/ahci-baikal-polling-fallback.patch`) reaplicada e validada ao vivo. `ata1.00: configured for UDMA/100` sem nenhuma exceção, `dd`/`fdisk` confirmam leitura real do HD interno (931.51 GiB), zero `disable device` em todo o dmesg. **Este é o baseline mais completo/recomendado a partir de agora** — GBE (com PHY ainda mudo, bug conhecido) + SATA interno funcional juntos. Artefatos em `distro/boot_referencia/*-7.0-20260730-sata-polling-fase-ab*` **NUNCA podem ser sobrescritos/descartados**. Rollback: `sudo ./deploy-boot-7.0.sh 20260730-sata-polling-fase-ab` (boot-only). (Detalhes completos estavam na memória de sessão, removida em 2026-11-11 — recuperável no histórico do git.)
+   - **🏆🏆 NOVO BASELINE OFICIAL, MAIS RECENTE (2026-07-30), tag `20260730-sata-polling-fase-ab` — SUPERA O ANTERIOR, SATA INTERNO FUNCIONAL PELA PRIMEIRA VEZ:** mesmo kernel do baseline acima + Fase A/B do plano de correção do SATA polling (o plano original foi apagado em 2026-11-11 junto com a pasta `outros/docs/obsoleto/`; o código vivo é `patches/ahci-baikal-polling-fallback.patch`) reaplicada e validada ao vivo. `ata1.00: configured for UDMA/100` sem nenhuma exceção, `dd`/`fdisk` confirmam leitura real do HD interno (931.51 GiB), zero `disable device` em todo o dmesg. **Este é o baseline mais completo/recomendado a partir de agora** — GBE (com PHY ainda mudo, bug conhecido) + SATA interno funcional juntos. Artefatos em `distro/boot_referencia/*-7.0-20260730-sata-polling-fase-ab*` **NUNCA podem ser sobrescritos/descartados**. Rollback: `sudo ./deploy-boot-7.0.sh 20260730-sata-polling-fase-ab` (boot-only). (Detalhes completos estavam na memória de sessão, removida em 2026-11-11 — recuperável no histórico do git.)
 
 ---
 
@@ -59,7 +59,7 @@ kernel; o kernel **nunca** conhece rootfs.
 
 **Por que isso é regra:**
 
-1. **Label `psxitarch` é hardcoded no initramfs.** O initramfs é gerado pelo **mkinitcpio** (HOOKS: `base udev modconf block filesystems keyboard fsck`): o `init` dele lê `root=LABEL=psxitarch` do cmdline e resolve o device via `blkid`/udev (`resolve_device` → `poll_device`), montando em `/sysroot` — se a partição root não tiver exatamente esse label (e não `arch_base_v2`, `arch_minimal_v2`, etc), a resolução falha e o boot cai no shell de emergência ("Failed to mount the real root device"). Só `distro/02-burn-image-7.0.sh` garante `mkfs.ext4 -L psxitarch` na partição correta. Ver lição #7 do `outros/consolidado/LICOES_APRENDIDAS.md`.
+1. **Label `psxitarch` é hardcoded no initramfs.** O initramfs é gerado pelo **mkinitcpio** (HOOKS: `base udev modconf block filesystems keyboard fsck`): o `init` dele lê `root=LABEL=psxitarch` do cmdline e resolve o device via `blkid`/udev (`resolve_device` → `poll_device`), montando em `/sysroot` — se a partição root não tiver exatamente esse label (e não `arch_base_v2`, `arch_minimal_v2`, etc), a resolução falha e o boot cai no shell de emergência ("Failed to mount the real root device"). Só `distro/02-burn-image-7.0.sh` garante `mkfs.ext4 -L psxitarch` na partição correta. Ver lição #7 do `outros/docs/LICOES_APRENDIDAS.md`.
 
 2. **A primeira lição (#7) já documenta exatamente esse incidente.** Ele aconteceu de novo em 2026-07-25 por eu ter rodado `make bzImage` direto e depois reaproveitado `initramfs-7.0-20260725-full-build.cpio.gz` (que estava OK, mas sem o `01-build-image` rodando não houve auditoria de integridade entre `bootargs.txt` / `initramfs` / novo kernel).
 
@@ -106,7 +106,7 @@ Nunca "adivinhar" o ambiente: se `pacman` não existir no host, o build da distr
 5. Adicionar/atualizar a lógica no `00-build-kernel-7.0.sh` para aplicar o patch após o reset, seguindo o padrão `git apply --check` + `exit 1` em caso de falha — **nunca** `|| echo AVISO` ou qualquer forma de engolir erro silenciosamente (isso já causou uma falha real: o patch RTC `ps4-icc-rtc-wrapper.patch` ficou meses aplicando silenciosamente errado).
 6. Só commitar no git do projeto principal depois que os passos 2-4 passarem sem erro.
 
-**Consequência da quebra desta regra:** Baseline fica não-reproduzível, próximo build sem a mudança reintroduzida sofre regressão silenciosa (exemplo: 2026-08-01, tag `20260801-kvm-rtc-ok` perdeu SATA polling — diagnóstico resumido em `outros/consolidado/ESTADO_E_HISTORICO.md`; o relatório completo foi removido em 2026-11-11, recuperável no git).
+**Consequência da quebra desta regra:** Baseline fica não-reproduzível, próximo build sem a mudança reintroduzida sofre regressão silenciosa (exemplo: 2026-08-01, tag `20260801-kvm-rtc-ok` perdeu SATA polling — diagnóstico resumido em `outros/docs/ESTADO_E_HISTORICO.md`; o relatório completo foi removido em 2026-11-11, recuperável no git).
 
 ### 🔴 REGRA CRÍTICA — Snapshot de Segurança Obrigatório Pós-Build
 
@@ -222,8 +222,8 @@ Antes de rodar `deploy-boot-7.0.sh <TAG>`:
 
 ### Referências
 
-- `outros/consolidado/LICOES_APRENDIDAS.md` — lições #7 (label psxitarch), #17/22/23 (boot/stabilidade), #24 (não compilar em NTFS), "REGRA: no HD (sda1) fica APENAS o bzImage ativo", "INCIDENTE: 'testar' um script de deploy destruiu o boot do HD", "Fallback silencioso em ferramenta de debug é armadilha".
-- `outros/consolidado/FULL_BUILD.md` — procedimento de build completo do Arch Minimal v2.
+- `outros/docs/LICOES_APRENDIDAS.md` — lições #7 (label psxitarch), #17/22/23 (boot/stabilidade), #24 (não compilar em NTFS), "REGRA: no HD (sda1) fica APENAS o bzImage ativo", "INCIDENTE: 'testar' um script de deploy destruiu o boot do HD", "Fallback silencioso em ferramenta de debug é armadilha".
+- `outros/docs/FULL_BUILD.md` — procedimento de build completo do Arch Minimal v2.
 
 ---
 
@@ -298,7 +298,7 @@ outros/scripts/uart_stop.sh                          # encerrar quando terminar
 ```
 earlycon=uart8250,mmio32,0xC890E000 console=uart8250,mmio32,0xC890E000 console=tty0
 ```
-(console real apontando para o mesmo MMIO do earlycon, não para `ttyS0`). Teste ao vivo desse fix em andamento — notas de sessão removidas em 2026-11-11; o resumo técnico está em `outros/consolidado/BOOTARGS.md`.
+(console real apontando para o mesmo MMIO do earlycon, não para `ttyS0`). Teste ao vivo desse fix em andamento — notas de sessão removidas em 2026-11-11; o resumo técnico está em `outros/docs/BOOTARGS.md`.
 
 **Consoles CEX/retail (firmware oficial, antes do kexec) censuram a UART com bytes `0x20` (espaço) puros** — isso é esperado e não indica falha de captura.
 
@@ -401,9 +401,9 @@ Adicionar novo endereço em `TARGET_ADDRS` do `ExtractMtsNamespaceNoAnalysis.py`
 ---
 
 ## Localização da Documentação
-- **Fonte única de documentação do projeto a partir de 2026-07-19: `outros/consolidado/`.** Ignorar qualquer coisa em `old_project/` para fins de documentação (inclusive `old_project/kernel/consolidado/LICOES_APRENDIDAS.md`, que tinha lições extras #24-27, mas foi descontinuado por decisão do usuário).
-- O arquivo de lições imperativas (REGRA #0, ler antes de qualquer ação) é `outros/consolidado/LICOES_APRENDIDAS.md`.
-- **Memórias do assistente (2026-07-20 → 2026-11-11):** os arquivos de memória de sessão viveram em `outros/memory/` (índice `MEMORY.md`) e foram **removidos em 2026-11-11** por decisão do usuário. O que continua valendo foi consolidado em `outros/consolidado/` (`ESTADO_E_HISTORICO.md`, `LICOES_APRENDIDAS.md`, `BACKLOG.md`); o restante é recuperável pelo histórico do git.
+- **Fonte única de documentação do projeto a partir de 2026-07-19: `outros/docs/`.** Ignorar qualquer coisa em `old_project/` para fins de documentação (inclusive `old_project/kernel/consolidado/LICOES_APRENDIDAS.md`, que tinha lições extras #24-27, mas foi descontinuado por decisão do usuário).
+- O arquivo de lições imperativas (REGRA #0, ler antes de qualquer ação) é `outros/docs/LICOES_APRENDIDAS.md`.
+- **Memórias do assistente (2026-07-20 → 2026-11-11):** os arquivos de memória de sessão viveram em `outros/memory/` (índice `MEMORY.md`) e foram **removidos em 2026-11-11** por decisão do usuário. O que continua valendo foi consolidado em `outros/docs/` (`ESTADO_E_HISTORICO.md`, `LICOES_APRENDIDAS.md`, `BACKLOG.md`); o restante é recuperável pelo histórico do git.
 
 ### Mapa de arquivos (reorganizado em 2026-08-05 — fonte única)
 
@@ -423,7 +423,7 @@ Antes desta data havia planos e scripts espalhados na raiz, o que poluía o repo
 | `outros/docs/MIGRACAO_7.0.md` | Procedimento de build/deploy do kernel 7.0 e distro | Não |
 | `kernel/drivers_mts/` | **Documentação do driver MTS/GBE**: `README.md` (fonte única), RE, testes e plano consolidado | Não |
 | `outros/rea/` | **Acervo de engenharia reversa**: dumps do Orbis, código decompilado (`decompiled/`), varreduras (`scans/`), scripts Ghidra (`tools/`) e o banco SQLite `ps4_hardware_memory.db` | Não |
-| `outros/consolidado/` | Documentação técnica consolidada (SATA, GPU, RTC, build), `BACKLOG.md` e `LICOES_APRENDIDAS.md` | Não |
+| `outros/docs/` | Documentação técnica consolidada (SATA, GPU, RTC, build), `BACKLOG.md` e `LICOES_APRENDIDAS.md` | Não |
 | `outros/tools/harness/` | Scripts Python de diagnóstico, varredura de registradores e testes de hardware | Não |
 | `outros/tools/ps4_hdd_tools/` | Ferramentas de manipulação de disco e utilitários PS4 HDD | Não |
 | `outros/` | Contêiner do que **não** é build/patches (em revisão) | Não |
