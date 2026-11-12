@@ -8,7 +8,7 @@ PC_IP="${PC_IP:-192.168.0.1}"
 PS4_IP="${PS4_IP:-192.168.0.2}"
 PC_MAC="${PC_MAC:-b4:45:06:6c:f6:4f}"
 
-BASE="panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0 console=ttyS0,115200n8 console=tty0 quiet amdgpu.audio=1 usbcore.autosuspend=-1 amdgpu.gpu_recovery=1 mitigations=off zswap.enabled=1 systemd.unified_cgroup_hierarchy=0 systemd.legacy_systemd_cgroup_controller=yes"
+BASE="panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0 earlycon=uart8250,mmio32,0xC890E000 console=uart8250,mmio32,0xC890E000 console=tty0 keep_bootcon earlyprintk=efi,keep quiet amdgpu.audio=1 usbcore.autosuspend=-1 amdgpu.gpu_recovery=1 mitigations=off zswap.enabled=1 systemd.unified_cgroup_hierarchy=0 systemd.legacy_systemd_cgroup_controller=yes"
 NETCONSOLE="netconsole=6665@${PS4_IP}/eth0,6666@${PC_IP}/${PC_MAC}"
 DEBUG="drm.debug=0x06 ignore_loglevel"
 
