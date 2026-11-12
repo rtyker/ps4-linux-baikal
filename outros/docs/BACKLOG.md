@@ -847,7 +847,9 @@ Dados salvos em:
 
 **Fase 3 concluída (2026-11-12):** sysfs no `kobj` do device PCI expõe `bar5_0x2c000` (dump de 16 bytes da região `spm.icc`) e `bar5_0x2f000` (MAC via `%pM`), ambos `0444`; validado ao vivo (`2c:cc:44:3f:69:5f`). De quebra, corrigido bug em que `bar5_0x00…0x1c` extraíam o offset do nome com `simple_strtoul` e liam `0xba` em vez do offset real.
 
-**Pendente:** build oficial completo para confirmar o patch pós-`git reset`, Fase 4 (RTC/ICC), Fase 5 (escrita, `allow_write=0`).
+**Build oficial validado (2026-11-12):** tag `20261112-baikal-memory-fase3`, exit 0 — patch aplicado após o `git reset --hard`, `CONFIG_BAIKAL_MEMORY=m` resolvido no `olddefconfig` e `.ko` gerado (502.144 bytes, vermagic `7.0.8-Strawberry-ThinLTO-Baikal-+`), instalado e testado no PS4 (MAC `2c:cc:44:3f:69:5f` no sysfs e no `/dev`).
+
+**Pendente:** Fase 4 (RTC/ICC), Fase 5 (escrita, `allow_write=0`), Fase 6 (stress + documentação final).
 
 **Tarefa:** desenvolver driver `baikal-memory` para exposição da memória SPM/DDR3 do Baikal, possivelmente como memregion ou dispositivo de memória gerenciável.
 

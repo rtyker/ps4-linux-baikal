@@ -4,7 +4,7 @@
 **Dispositivo PCI:** 00:14.6, Vendor 0x104d, Device 0x90dd  
 **Hardware:** PS4 Slim (CUH-2xxx, Baikal B1), 256 MB SPM DDR3  
 **Kernel alvo:** 7.0.8-Strawberry-ThinLTO-Baikal-+ (x86_64)  
-**Status:** Fases 1, 2 e 3 CONCLUÍDAS (2026-11-12) — driver carrega via udev, a leitura por `/dev/baikal-memory` retorna os dados reais da SPM (MAC do BAR5+0x2f000, região `spm.icc`) e o sysfs expõe `bar5_0x2c000` (ICC) e `bar5_0x2f000` (MAC formatado). Próximo passo: build oficial completo para confirmar o patch pós-`git reset`, depois Fase 4 (RTC/ICC).  
+**Status:** Fases 1, 2 e 3 CONCLUÍDAS (2026-11-12) — driver carrega via udev, a leitura por `/dev/baikal-memory` retorna os dados reais da SPM (MAC do BAR5+0x2f000, região `spm.icc`) e o sysfs expõe `bar5_0x2c000` (ICC) e `bar5_0x2f000` (MAC formatado). Build oficial validado (tag `20261112-baikal-memory-fase3`, exit 0). Próximo passo: Fase 4 (RTC/ICC).  
 **Acesso ao PS4:** SSH WiFi `root@192.168.6.128`, senha `ps4`. Porta `eth0` (cabeada) não tem link (PHY mudo, bug conhecido).
 
 ---
@@ -203,7 +203,9 @@ tail -f outros/tests/uart_logs/baikal-memory-fase2_*.log
 
 ## 7. Próximo Passo Imediato
 
-**Rodar um build oficial completo** (`sudo ./kernel/00-build-kernel-7.0.sh <TAG>`) para confirmar que `kernel/patches/baikal-memory-fase2.patch` (Fases 1–3) aplica logo após o `git reset --hard` do script e que o `.ko` resultante continua com o mesmo vermagic. Só depois disso seguir para a **Fase 4 (RTC/ICC)**: revisar `drivers/rtc/rtc-ps4-icc.c` e validar `/dev/rtc0` + `hwclock -r` com o `baikal-memory` carregado.
+**Build oficial validado em 2026-11-12** — `sudo ./kernel/00-build-kernel-7.0.sh 20261112-baikal-memory-fase3` terminou com **exit 0**: o patch aplicou logo após o `git reset --hard` ("✓ Patch baikal-memory aplicado com sucesso"), o `olddefconfig` resolveu `CONFIG_BAIKAL_MEMORY=m`, e o `.ko` saiu em `kernel/kernel_build_7.0/drivers/misc/baikal-memory.ko` (502.144 bytes) com vermagic `7.0.8-Strawberry-ThinLTO-Baikal-+`. Artefatos da tag em `distro/boot_referencia/bzImage-7.0-20261112-baikal-memory-fase3` + `config-7.0-20261112-baikal-memory-fase3` (o `deploy-boot` ainda exige bootargs e initramfs dessa tag). Snapshot pós-build gerado em `kernel/snapshots/`.
+
+**Próximo passo: Fase 4 (RTC/ICC)** — revisar `drivers/rtc/rtc-ps4-icc.c` e validar `/dev/rtc0` + `hwclock -r` com o `baikal-memory` carregado (o `RTC_CLASS` já é habilitado pelo `00-build-kernel-7.0.sh`).
 
 ### Estado do patch (obrigatório para idempotência)
 
@@ -213,7 +215,8 @@ tail -f outros/tests/uart_logs/baikal-memory-fase2_*.log
 | Aplicação | `00-build-kernel-7.0.sh` — preflight + bloco próprio com `git apply --check` e `exit 1` |
 | Validação | `git apply --cached --check` contra o índice pristino: OK |
 | Compilação isolada | `make ... drivers/misc/baikal-memory.o` e `.ko`: OK, vermagic `7.0.8-Strawberry-ThinLTO-Baikal-+` |
-| Binário testado | `outros/rea/spm/dumps/baikal-memory-fase2.ko` (502.488 bytes, com debug_info) |
+| Binário testado | `outros/rea/spm/dumps/baikal-memory-fase2.ko` (build oficial, 502.144 bytes, com debug_info) |
+| Build oficial | tag `20261112-baikal-memory-fase3`, exit 0 (patch aplicado pós-`git reset`) |
 
 > O patch cobre `drivers/misc/baikal-memory.c` **e** `drivers/misc/Kconfig` + `drivers/misc/Makefile` (símbolo `CONFIG_BAIKAL_MEMORY`). O `config` rastreado não tem o símbolo do driver: o build o habilita com `scripts/config --module CONFIG_BAIKAL_MEMORY` antes do `olddefconfig`.
 
