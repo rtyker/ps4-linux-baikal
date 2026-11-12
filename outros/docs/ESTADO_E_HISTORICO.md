@@ -53,6 +53,194 @@ fonte do driver MTS (patch × `drivers_mts/`). Detalhes em [`BACKLOG.md`](BACKLO
 
 ---
 
+## 🆕 Estado 2026-11-12 — Kernel 7.0 chega ao userspace, mas quebra no `ld.so` + rootfs ext4 corrompido → panic (em investigação)
+
+**Tag `20261112-sky2builtin`** — 4 artefatos completos em `distro/boot_referencia/` + sentinela
+`.build-complete-20261112-sky2builtin`. Log UART capturado:
+`outros/tests/uart_logs/uart-afterfree-teste_20261112_090339.bin` (111.581 B, 1291 linhas,
+MD5 `5c9494f895ae7c3026d34240d12ddef7`).
+
+> ⚠️ **Correção de atribuição:** o problema **NÃO é UAF e NÃO é `kqueue`/`knote`**. O log tem
+> **0 ocorrências** de `kqueue`/`knote`/`use-after`. A descrição inicial ("segfault no kqueue")
+> estava errada e foi substituída pelo que o log realmente mostra.
+
+**O que o log realmente mostra (medições literais):**
+
+1. `ld-linux-x86-64.so.2` (glibc **2.44**) do **initramfs** segfaulta em `systemd-tmpfiles` e em
+   5 execuções de `udevadm`, **sempre no mesmo offset `0x16d6d`**:
+   `segfault at 8 ... error 4 in ld-linux-x86-64.so.2[16d6d,...]`.
+   Desmonte do `ld-linux` do initramfs confirma: `mov 0x68(%r13),%rax; mov 0x8(%rax),%r11`
+   → `[r13+0x68]` = `l_info[DT_STRTAB]` de um `link_map` retornou **NULL** → leitura em `0x8`.
+   É o `ld.so` fazendo *version/strtab check* de um objeto ELF carregado — objeto inválido/corrompido.
+2. `EXT4-fs error (device sdb2): ext4_lookup:1785: inode #1974419: comm switch_root: iget: checksum invalid`.
+3. `Kernel panic - not syncing: Attempted to kill init! exitcode=0x00007e00`
+   (`PID 1`, `Comm: switch_root`, `exit_group(126)`; backtrace `do_exit → do_group_exit → __x64_sys_exit_group`).
+
+**Causa direta do panic:** o rootfs (partição **`sdb2`**, `psxitarch`, no pendrive JMicron 120 GB)
+está com **checksum de inode inválido**; o `switch_root` não consegue validar/encontrar
+`/sbin/init` (`/sbin/init → ../lib/systemd/systemd`), sai com 126 e, sendo PID 1, derruba o kernel.
+
+**Causa provável da cascata:** o initramfs **no pendrive** parece corrompido. Evidência:
+`udevadm`/`systemd-tmpfiles` dependem de `libsystemd-shared-262.2-1.so` + `libgcc_s.so.1` e
+crasham; já `busybox` e `switch_root` (só `libc`) rodam. A cópia **do host** está íntegra:
+`ld.so --version` = glibc 2.44 e `udevadm --version` = 262 executam sem erro aqui, e os
+hashes de `ld-linux`, `libc` e `libgcc_s` batem entre initramfs e `arch_build_7.0/rootfs`.
+Ou seja: os arquivos de origem estão bons; a cópia gravada no pendrive é que está ruim
+(sdb1 e sdb2 corrompidos → escrita não sincronizada / cache de escrita do bridge JMicron).
+
+**Fatos de configuração relevantes:**
+- glibc do rootfs/initramfs: **2.44**. `CONFIG_RSEQ is not set` em **todos** os configs do repo
+  (inclusive `RELEASE/v1.0.0`) — não é regressão deste build, mas glibc 2.44 é muito mais novo
+  que o glibc dos baselines de julho/agosto.
+- `udevadm`/`systemd-tmpfiles` são `x86-64-baseline` (OK para o Jaguar); `libc`/`ld.so` têm
+  "ISA used" v2/v3/v4 apenas por dispatch em runtime, `needed: baseline`.
+- `panic=0` no cmdline: um panic não deveria reiniciar por si; o reboot observado é
+  watchdog/PS4 (ou percepção), não o `panic=` do kernel.
+
+**Ações já executadas em 2026-11-12 (host, pendrive `/dev/sda`):**
+
+1. **Initramfs substituído no `sda1` (BOOT).** O arquivo no pendrive tinha o **mesmo tamanho**
+   (14.771.320 B) mas MD5 `e02dff36cb83fa1bbfe56c88c3879b9d`, contra
+   `d88aee483245a5a0dbb1cccbc4782ae2` da cópia íntegra em
+   `distro/boot_referencia/initramfs-7.0-20261112-sky2builtin.cpio.gz`. Substituído por
+   `cp` + `mv` + `sync`; MD5 conferido depois: `d88aee48…`. `bzImage` (`cf1bd196…`) e
+   `bootargs.txt` (`179b66e6…`) já batiam, não foram tocados.
+2. **Rootfs `sda2` recriado do tar** (decisão do usuário). `e2fsck -fn` antes mostrava corrupção
+   estrutural: inodes com checksum inválido, inodes com lixo (1975694–1975696),
+   *multiply-claimed blocks* em ~20 inodes (1968579–1968596) e `e2fsck: aborted`.
+   Procedimento idêntico ao `02-burn-image-7.0.sh`:
+   `mkfs.ext4 -q -F -L psxitarch /dev/sda2` → `tar -xpf distro/arch_minimal_v2-7.0.tar
+   -C /mnt/ps4_rootfs_7.0 --numeric-owner` → `sync`. Extração em 66 s.
+3. **Proveniência do tar verificada antes do uso:** `mtime`/`ctime` = 2026-11-12 08:14:42,
+   casando com o initramfs (08:14:29) e a sentinela `.build-complete-20261112-sky2builtin`
+   (08:14:43). MD5 dos arquivos-chave (**extraídos do tar** vs `arch_build_7.0/rootfs`)
+   idênticos: `libc.so.6` `fa37ef2c…`, `ld-linux-x86-64.so.2` `c10c48e6…`,
+   `systemd` `60ef87ea…`, `systemctl` `47991ffa…`, `mts.ko` `1ed90858…`.
+4. **Verificação pós-gravação:** os mesmos arquivos lidos **do disco** (`/mnt/ps4_rootfs_7.0`)
+   têm os mesmos MD5. 60.960 entradas extraídas; `df` = 3,2 G usados.
+   `e2fsck -fn /dev/sda2` → **rc=0, sem erros** (`59148/7315456 files, 0.1% non-contiguous`).
+5. **`fsck.vfat -n /dev/sda1`** → limpo (7 files, `60347/403229 clusters`).
+6. `umount` das duas partições + `sync`. `eject` falhou ("não foi possível ejetar") mas
+   **nada ficou montado** — remoção é segura.
+
+**✅ RESULTADO DO TESTE AO VIVO (2026-11-12 10:38) — BOOT COMPLETO, CAUSA ERA MÍDIA CORROMPIDA.**
+
+Log: `outros/tests/uart_logs/rootfs-recreado-20261112_20261112_091952.bin`
+(MD5 `33bd2a9b60b904b2b60a34a2e0a370e9`, ~110 KB, 1376 linhas). Boot com o pendrive reparado:
+
+| Sintoma do log antigo (`sdb2` corrompido) | Log novo (rootfs recriado) |
+|---|---|
+| `ld-linux[16d6d]` segfault em `systemd-tmpfiles` + 5× `udevadm` | **zero** ocorrências de `segfault` |
+| `EXT4-fs error (sdb2): ... iget: checksum invalid` | **zero** `EXT4-fs error`/`checksum invalid` |
+| `Kernel panic - not syncing: Attempted to kill init! exitcode=0x00007e00` | **zero** panic; `systemd 262.2-1-arch` subiu até `running` |
+
+Confirmações via SSH (`192.168.6.128`, `wlan0`):
+- `uname -a` → `7.0.8-Strawberry-ThinLTO-Baikal-+ #1 SMP PREEMPT_DYNAMIC Thu Nov 12 07:18:53 -03 2026 x86_64`
+- `systemctl is-system-running` → **`running`**; `systemctl --failed` → **nenhuma unidade falhada**.
+- `findmnt /` → `/dev/sdb2 ext4 rw,relatime` — UUID novo `1edf2469-7901-4984-abfe-2042027e0841`
+  (o antigo `865c040a…` foi substituído pelo `mkfs`), `tune2fs` → `Filesystem state: clean`,
+  `last checked 09:15:41`. `df` = 3,2 G de 110 G.
+- Disco SATA interno `sda` (932 GiB) detectado normalmente.
+- `mts.ko` carregado: `registrado como eth0, MAC 2c:cc:44:3f:69:5f`; `eth0` fica `DOWN`
+  (PHY sem link — bug conhecido, não é regressão).
+- `amdgpu` com `HDMI-A-1`; os `clock recovery failed` são do caminho DisplayPort (PS4 não tem DP),
+  inofensivos.
+- `netconsole: eth0 doesn't exist, aborting` em 7 s — esperado: o `mts.ko` só registra `eth0`
+  aos 44 s, depois do netconsole tentar. Não afeta o console serial.
+
+**Ruído residual observado (não bloqueia):** 2× `I/O error, dev sdb` em 14,4 s e 77,2 s
+(`Sense Key 0xb` = ABORTED COMMAND, `ASC=0x47 ASCQ=0x1` = SCSI parity error, CDB `opcode=0x28`
+READ). São erros de **transporte** do bridge USB (JMicron `152d:0578`), não de mídia: um `dd
+if=/dev/sdb2 bs=1M count=2048 iflag=direct` leu 2 GiB a **263 MB/s com zero novos erros**, e o
+filesystem continuou `clean`. Fica o alerta de cabo/porta USB, mas não é a causa do boot anterior.
+
+**Conclusão:** o panic de 2026-11-12 era **exclusivamente mídia USB corrompida** (initramfs com
+MD5 divergente + rootfs ext4 com checksums inválidos e blocos multiply-claimed). Não há
+evidência de incompatibilidade glibc 2.44 × kernel, nem de UAF/`kqueue`. A hipótese do
+`CONFIG_RSEQ` fica **descartada para este caso**.
+
+**Correção aplicada logo depois (2026-11-12):** o usuário decidiu **desativar o auto-carregamento
+do `mts.ko`** (Ethernet) temporariamente — o probe do PHY é o que consome 33 s de
+`systemd-modules-load`. No PS4, `/etc/modules-load.d/mts.conf` foi renomeado para
+`mts.conf.disabled`; no repositório, `distro/01-build-image-7.0.sh` agora só cria esse arquivo com
+`ENABLE_MTS=1`. O módulo continua instalado e carregável à mão (`modprobe mts`, `stage=4`).
+Ver `BACKLOG.md` → "Auditoria de boot/otimização".
+
+**OpenCode v2 instalado no PS4 (2026-11-12 09:36):** `opencode v2.2.7` (mesma versão do host),
+build **baseline** (o Jaguar não tem AVX2 — o instalador oficial detecta e escolhe
+`@opencode/cli-linux-x64-baseline`). Instalado pelo script oficial
+`curl -fsSL https://opencode.ai/v2/install | bash -s -- --no-modify-path` em
+`/root/.opencode/bin/opencode` (247 MB), com symlink global `/usr/local/bin/opencode` → funciona
+via `PATH` em qualquer shell.
+
+**Bloqueio encontrado e corrigido antes:** o relógio do PS4 estava em **2026-11-05** (uma semana
+atrasado, sem RTC/NTP), então o `curl` recusava o TLS com "certificate is not yet valid". Ajustado
+com `date -u -s @<epoch do host>` e o `systemd-timesyncd` foi **habilitado** (`disabled` → `active`)
+para manter a hora certa. Novo item de correção para a auditoria: RTC não persiste
+(`RTC time: n/a`) e NTP vinha desligado de fábrica no rootfs.
+
+**Acesso SSH do PS4 (2026-11-12 09:40):** criado o usuário `anderson` (uid 1001, `/home/anderson`,
+`/bin/bash`) no PS4. Dois sentidos validados por chave:
+- **host → PS4**: `~/.ssh/id_ed25519.pub` do host instalada em
+  `/home/anderson/.ssh/authorized_keys` → `ssh anderson@192.168.6.128` funciona sem senha.
+- **PS4 → host (`192.168.6.101`)**: par de chaves gerado **no PS4**
+  (`/home/anderson/.ssh/id_ed25519`, comentário `anderson@ps4-baikal`) e a pública autorizada no
+  `~/.ssh/authorized_keys` do host (junto de `anderson@delphi7-mcp`, `anderson@androidserver`).
+  O teste `anderson@192.168.6.101` retorna `adsv2` / uid 1000 — ou seja, o PS4 entra no host sem
+  senha, e a chave privada nunca saiu do PS4.
+- Nota: o rootfs não tem o utilitário `hostname` (`bash: hostname: command not found`); usar
+  `uname -n` ou `ip -br a`.
+
+**Sudo e root sem senha (2026-11-12 09:50):** `anderson` adicionado ao grupo `wheel` (gid 998) e
+criado `/etc/sudoers.d/zz-anderson` com `anderson ALL=(ALL:ALL) NOPASSWD: ALL` (modo `440`,
+`visudo -c` OK). Detalhe não óbvio: **o sudo aplica a última regra que casa**, e
+`/etc/sudoers.d/wheel` (`%wheel ALL=(ALL:ALL) ALL`) ordena depois de `anderson` alfabeticamente —
+por isso o fragmento precisa se chamar `zz-anderson` (antes era `anderson` e o `sudo -n` continuava
+pedindo senha, mesmo com `sudo -l` mostrando o NOPASSWD). Estado validado:
+`sudo -n whoami` → `root`; `sudo -n -l` lista `(ALL : ALL) NOPASSWD: ALL` por último; `sudo` sem
+`-n` também não pede senha. root continua com hash de senha em `/etc/shadow` (`root P`) **e** entra
+por chave SSH (`/root/.ssh/authorized_keys`, chave `rtyker@gmail.com`) — não foi usado
+`passwd -d root` (senha vazia), por decisão do usuário. A senha do `anderson` está bloqueada
+(`anderson L`, `!` em `/etc/shadow`): login só por chave, o que é o desejado.
+
+⚠️ **BUG CORRIGIDO — `PermitEmptyPasswords yes` travava a conta a cada 3 logins (2026-11-12):**
+o `sshd_config` gerado pelo build tinha `PermitEmptyPasswords yes` (e em **duplicidade** — o build
+fazia `mv` + prepend do bloco, então cada rebuild empilhava outra cópia). Com isso o sshd tenta
+autenticar com **senha vazia em toda conexão**, o `pam_unix` falha e o `pam_faillock` conta uma
+falha por conexão. Medido: 1 login por chave = +1 falha para o usuário; após 3 conexões a conta
+trava (`pam_faillock(sshd:auth): User anderson is temporarily locked out`, banner "The account is
+locked due to 3 failed logins"). O login por chave e o `sudo -n` continuavam funcionando (pubkey
+não passa pelo `pam_unix`), mas era um **furo de segurança** e um gerador de ruído.
+Correção aplicada: `PermitEmptyPasswords no` no PS4 (bloco duplicado removido, `sshd -t` OK,
+`sshd` reiniciado) e o `distro/01-build-image-7.0.sh` agora escreve um **drop-in**
+`/etc/ssh/sshd_config.d/00-ps4-baikal.conf` (idempotente, sem duplicar) e remove qualquer bloco
+legado do topo do `sshd_config`. Validado: 5 logins seguidos por chave → **zero** entradas em
+`faillock --user anderson`, sem banner. Contadores antigos zerados com
+`faillock --user <user> --reset`.
+
+**OpenCode no PS4 — instância do `anderson` (2026-11-12 09:56):** a instalação original era só do
+root (`/root/.opencode`, modo 700), então `opencode` não existia para o `anderson` (o symlink
+global `/usr/local/bin/opencode` → `/root/.opencode/bin/opencode` é inacessível para ele). Instalada
+uma cópia própria com o instalador oficial como `anderson`:
+`runuser -l anderson -c "curl -fsSL https://opencode.ai/v2/install | bash -s -- --no-modify-path"`
+→ `/home/anderson/.opencode/bin/opencode` (`v2.2.7`, build `baseline`, dono `anderson`).
+`PATH` adicionado no **topo** de `/home/anderson/.bashrc` (`export PATH="$HOME/.opencode/bin:$PATH"`,
+antes do `[[ $- != *i* ]] && return`) — vale em shell de login; `ssh host 'cmd'` não-interativo do
+Arch não lê `.bashrc`, então nesse caso usar `bash -l -c` ou o caminho completo.
+
+**Medidas preventivas (para não repetir a corrupção):**
+1. Sempre `sync` + `umount` + conferir MD5 **depois de remontar** o pendrive, não só na origem
+   (o bridge reporta `Write cache: enabled` e `Disabling FUA`).
+2. Antes de cada boot, `fsck.vfat -n /dev/sda1` e `e2fsck -fn /dev/sda2` no host — 5 segundos e
+   detecta exatamente este modo de falha.
+3. Se o `ld.so` voltar a quebrar em `0x16d6d`, aí sim investigar `CONFIG_RSEQ=y` / glibc 2.44.
+
+**Bootargs da tag:** `root=LABEL=psxitarch rootwait`, `earlycon=uart8250,mmio32,0xC890E000
+console=uart8250,mmio32,0xC890E000 console=tty0`,
+`netconsole=@192.168.0.2/eth0,6666@192.168.0.1/ff:ff:ff:ff:ff:ff`.
+
+---
+
 ## Estado Atual do Projeto (Resumo Rápido) — ATUALIZADO 2026-07-23 NOITE (causa raiz RX confirmada: PHY não acorda)
 
 **🎯 STATUS:** Módulo `mts.ko` estável (crash eliminado), TX funcional (~95%), RX bloqueado — causa raiz é o PHY nunca sair de power-down (não é mais bug de software/anéis). Próxima pista: reabilitar IRQ real (`IMR` não-zero), já que a única sessão com duplex genuinamente correto (`Full duplex`, `memory/teste-5-...md`) tinha IRQ habilitada.

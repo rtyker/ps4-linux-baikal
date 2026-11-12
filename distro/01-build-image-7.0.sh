@@ -298,23 +298,52 @@ DNS=192.168.0.1
 DNS=8.8.8.8
 NETEOF
 
-# Auto-carregamento do driver Ethernet Baikal (mts.ko) no boot com stage=4
-mkdir -p "$ROOTFS_DIR/etc/modules-load.d"
-echo "mts" > "$ROOTFS_DIR/etc/modules-load.d/mts.conf"
+# Driver Ethernet Baikal (mts.ko) — auto-carregamento DESATIVADO temporariamente (2026-11-12).
+# Motivo: o probe do PHY custa ~33 s de `systemd-modules-load` no boot e a Ethernet ainda
+# não tem link (PHY mudo). O módulo continua instalado no rootfs e pode ser carregado à mão
+# (`modprobe mts` usa stage=4 via /etc/modprobe.d/mts.conf).
+# Reativar: ENABLE_MTS=1 sudo ./01-build-image-7.0.sh <TAG>
+# Ver outros/docs/BACKLOG.md, item "Auditoria de boot/otimização".
 mkdir -p "$ROOTFS_DIR/etc/modprobe.d"
 echo "options mts stage=4" > "$ROOTFS_DIR/etc/modprobe.d/mts.conf"
+if [ "${ENABLE_MTS:-0}" = "1" ]; then
+    mkdir -p "$ROOTFS_DIR/etc/modules-load.d"
+    echo "mts" > "$ROOTFS_DIR/etc/modules-load.d/mts.conf"
+    echo "[info] mts.ko SERA carregado no boot (ENABLE_MTS=1)."
+else
+    rm -f "$ROOTFS_DIR/etc/modules-load.d/mts.conf"
+    echo "[info] mts.ko NAO sera carregado no boot (padrao; use ENABLE_MTS=1 para reativar)."
+fi
 
-# SSH (config permissiva, paridade com o rootfs 5.4 que funciona)
-if [ -f "$ROOTFS_DIR/etc/ssh/sshd_config" ]; then
-  mv "$ROOTFS_DIR/etc/ssh/sshd_config" "$ROOTFS_DIR/etc/ssh/sshd_config.bak"
-  cat > "$ROOTFS_DIR/etc/ssh/sshd_config" << 'SSHEOF'
+# SSH (config permissiva, paridade com o rootfs 5.4 que funciona).
+# Idempotente: usa um drop-in em sshd_config.d/ em vez de reescrever o sshd_config
+# a cada build (o modelo antigo fazia `mv` + prepend, o que DUPLICAVA o bloco a cada
+# execução — em 2026-11-12 o PS4 tinha o bloco duas vezes).
+#
+# ⚠️ PermitEmptyPasswords NUNCA pode ser "yes": o sshd tenta autenticar com senha
+# vazia em TODA conexão; o pam_unix falha e o pam_faillock conta 1 falha por conexão
+# (`pam_faillock(sshd:auth): authentication failure` antes do `Accepted publickey`).
+# Com deny=3 (padrão do Arch) a conta trava depois de 3 logins — foi exatamente o
+# que aconteceu em 2026-11-12 (banner "account is locked due to 3 failed logins").
+SSHD_ETC="$ROOTFS_DIR/etc/ssh"
+if [ -f "$SSHD_ETC/sshd_config" ]; then
+  mkdir -p "$SSHD_ETC/sshd_config.d"
+  cat > "$SSHD_ETC/sshd_config.d/00-ps4-baikal.conf" << 'SSHEOF'
+# Gerado por distro/01-build-image-7.0.sh
 PermitRootLogin yes
 PasswordAuthentication yes
-PermitEmptyPasswords yes
+PermitEmptyPasswords no
 StrictModes no
 SSHEOF
-  cat "$ROOTFS_DIR/etc/ssh/sshd_config.bak" >> "$ROOTFS_DIR/etc/ssh/sshd_config"
-  rm -f "$ROOTFS_DIR/etc/ssh/sshd_config.bak"
+  # Garante que o sshd_config inclua o diretório de drop-ins (Arch já inclui)
+  if ! grep -qE '^[[:space:]]*Include[[:space:]]+/etc/ssh/sshd_config\.d/' "$SSHD_ETC/sshd_config"; then
+    printf '\nInclude /etc/ssh/sshd_config.d/*.conf\n' >> "$SSHD_ETC/sshd_config"
+  fi
+  # Remove resíduo de builds antigos (bloco duplicado com PermitEmptyPasswords yes)
+  if grep -q '^PermitEmptyPasswords' "$SSHD_ETC/sshd_config"; then
+    sed -i '/^PermitRootLogin /d;/^PasswordAuthentication /d;/^PermitEmptyPasswords /d;/^StrictModes /d' "$SSHD_ETC/sshd_config"
+    echo "[info] removido bloco SSH legado do topo do sshd_config (agora via drop-in)."
+  fi
 fi
 arch-chroot "$ROOTFS_DIR" ssh-keygen -A
 ln -sf /usr/lib/systemd/system/sshd.service "$ROOTFS_DIR/etc/systemd/system/multi-user.target.wants/sshd.service"

@@ -1,6 +1,6 @@
 # Backlog do Projeto — Fonte Única de Pendências
 
-**Última atualização:** 2026-08-01 (revisão de documentação em 2026-11-11: links corrigidos para o layout atual do repositório — `docs/planos/`; pasta `consolidado/obsoleto/` apagada; nenhum item de conteúdo foi acrescentado)
+**Última atualização:** 2026-11-12 (CIFS em andamento: config adicionada ao build e kernel compilando com `CONFIG_CIFS=m`; revisão de documentação em 2026-11-11: links corrigidos para o layout atual do repositório — `docs/planos/`; pasta `consolidado/obsoleto/` apagada; nenhum item de conteúdo foi acrescentado)
 
 > ℹ️ **Como ler este arquivo:** itens `[x]` fechados guardam o histórico da solução; itens dentro de
 > `<details>` com o título "Histórico da investigação" são **registro do que foi refutado**, não
@@ -15,6 +15,124 @@ O trabalho **ativo no momento** (investigação detalhada, passo a passo) fica n
 ---
 
 ## Prioridade alta
+
+### [ ] ⚙️ Auditoria de boot/otimização da tag `20261112-sky2builtin` (levantada ao vivo em 2026-11-12)
+
+Medições reais no PS4 (boot completo, `systemd` `running`, 0 unidades falhadas):
+`Startup finished in 9.581s (kernel) + 34.394s (userspace) = 43.975s`.
+
+**P1 — correções de configuração (baixo risco):**
+- [ ] `systemd-modules-load` tenta carregar `crypto_user`, mas `CONFIG_CRYPTO_USER is not set`
+  (origem: `/usr/lib/modules-load.d/bluez.conf`). Habilitar `CONFIG_CRYPTO_USER=y` no
+  `kernel/00-build-kernel-7.0.sh` ou remover o `bluez.conf` do rootfs.
+- [ ] `mitigations=off` no cmdline é inócuo (`CONFIG_CPU_MITIGATIONS` desligado no
+  `00-build-kernel-7.0.sh:511`) — só gera o aviso "Kernel compiled without mitigations". Remover
+  do heredoc de bootargs (`distro/01-build-image-7.0.sh:652`).
+- [ ] `netconsole` nunca ativa: `netpoll: netconsole: eth0 doesn't exist, aborting` — o `eth0` só
+  nasce aos ~44 s (mts). Re-armar via `/sys/kernel/config/netconsole` numa unit `After=` do mts,
+  ou remover do cmdline.
+- [ ] `/etc/dhcpcd.conf` tem `denyinterfaces eth0` **duplicado** (linhas repetidas). A duplicata
+  nasce no build: `distro/01-build-image-7.0.sh:416` faz `echo ... >> dhcpcd.conf` sem `grep -q`
+  — corrigir para append idempotente.
+- [~] Relógio sem NTP: `systemd-timesyncd` vinha `disabled` e o RTC não persiste
+  (`RTC time: n/a`; `hwclock: Cannot access the Hardware Clock`), então o PS4 acordou em
+  2026-11-05 e o TLS recusou certificados ("certificate is not yet valid"). Em 2026-11-12 foi
+  corrigido à mão (`date -u -s @<epoch>` + `systemctl enable --now systemd-timesyncd`), **mas o
+  relógio continua sem sincronizar**: medido em 2026-11-12, `timedatectl timesync-status` fica em
+  `Server: n/a`, `Packet count: 0` (mesmo com `NTP=` explícito). **Causa raiz:** o `wlan0` (única
+  rota, IP 192.168.6.128) é gerenciado pelo `dhcpcd`; para o `systemd-networkd` ele é
+  `ADMIN_STATE=unmanaged`, e o `systemd-timesyncd` só sincroniza em link gerenciado por ele.
+  **Correções:** (a) migrar o `wlan0` para o `systemd-networkd` (`.network` com `DHCP=yes`,
+  removendo o `dhcpcd`) — resolve também o DNS/`resolved`; ou (b) trocar por `chrony`, que não
+  depende do networkd. **Falta no build:** habilitar o time sync no rootfs gerado por
+  `distro/01-build-image-7.0.sh` (serviço + `NTP=`/`FallbackNTP=` explícitos) e, só depois que
+  sincronizar de fato, habilitar `systemd-time-wait-sync.service` (hoje ele esperaria para sempre
+  e travaria o boot).
+- [ ] **Persistir o acesso do usuário `anderson` no build** (hoje é tudo alteração viva no PS4, some
+  num rebuild do rootfs): criar o usuário (uid 1001), `/etc/sudoers.d/zz-anderson`
+  (`NOPASSWD`, nome com `zz-` porque o sudo aplica a última regra que casa e `%wheel` ordena depois),
+  `/home/anderson/.bashrc` com `PATH` do OpenCode e as chaves autorizadas. Decidir se a chave
+  pública do host vai no build (aceitável) e **não** embutir chave privada. O `opencode` em si
+  (247 MB) deve continuar sendo instalado em runtime, não no rootfs.
+- [x] `PermitEmptyPasswords yes` no `sshd_config` (em duplicidade): cada conexão SSH gerava uma
+  falha no `pam_faillock` e travava a conta em 3 logins. Corrigido em 2026-11-12 — `PermitEmptyPasswords no`
+  no PS4 e o build agora usa o drop-in `/etc/ssh/sshd_config.d/00-ps4-baikal.conf` (idempotente)
+  em vez de reescrever o `sshd_config`.
+- [ ] Três gerenciadores de rede ativos ao mesmo tempo: `systemd-networkd` (eth0 estático),
+  `dhcpcd` (wlan0) e `systemd-resolved`. Padronizar em um; `ap0/ap1` do driver WiFi geram
+  `dhcpcd: wlan0: IAID conflicts with one assigned to ap0`. **Medido em 2026-11-12:** o
+  `/etc/resolv.conf` é arquivo comum gerado pelo `dhcpcd` (não é o stub do `resolved`) e o
+  `resolvectl` reporta `resolv.conf mode: foreign` — ou seja, o `resolved` está `enabled` mas
+  **não participa da resolução**; o `networkd` vê `wlan0` como `ADMIN_STATE=unmanaged`. A
+  consolidação em `systemd-networkd` + `systemd-resolved` + `wpa_supplicant` resolve o NTP
+  (item acima) e o DNS de uma vez.
+- [ ] `pam_faillock` × `audit=0`: o cmdline tem `audit=0`, mas o kernel tem `CONFIG_AUDIT=y` e o
+  `pam_faillock.so` está no `system-auth` (preauth/authfail/authsucc); cada login SSH gera
+  `pam_faillock(sshd:auth): Error sending audit message: Protocol not supported`
+  (`auditctl -s` → "Cannot open netlink audit socket"). Remover `audit=0` do bootargs
+  (`distro/01-build-image-7.0.sh:681`) — o `journald` já tem `Audit=no`, então o ruído não volta;
+  alternativa é tirar o `pam_faillock` do stack.
+
+**P2 — otimização de boot (44 s → meta ~15-20 s):**
+- [~] **33 s** de `systemd-modules-load` eram o `mts.ko` (bloqueava `sysinit.target`): 20 s de poll
+  do PHY (`201 × 100 ms`) + ~13 s de calibração. **Auto-carregamento DESATIVADO em 2026-11-12**
+  (decisão do usuário: Ethernet fica para o futuro):
+  `distro/01-build-image-7.0.sh` agora só cria `/etc/modules-load.d/mts.conf` quando
+  `ENABLE_MTS=1`; no PS4 o arquivo foi renomeado para `mts.conf.disabled`. O `mts.ko` continua
+  instalado e pode ser carregado à mão (`modprobe mts`, usa `stage=4` do `modprobe.d`).
+  **Reativar:** `ENABLE_MTS=1 sudo ./01-build-image-7.0.sh <TAG>`, ou no rootfs vivo
+  `mv /etc/modules-load.d/mts.conf{.disabled,}`. Quando retomar o trabalho de Ethernet: mover o
+  carregamento para uma unit própria depois de `multi-user`/`network-pre`, em vez de
+  `modules-load` (para não bloquear o boot).
+- [ ] `drm.debug=0x06` + `loglevel=8`: 257 das 1321 linhas do dmesg são `drm`. Remover em boot de
+  produção (mantém `drm.debug=0`).
+- [ ] `keep_bootcon earlyprintk=efi,keep` — remover em produção.
+- [ ] `ldconfig.service` gasta 1,0 s; com `ld.so.cache` já pronto, pode ser desabilitado.
+- [ ] Console serial UART custa 2,4-7 s no probe do `ata1`; remover `console=uart8250…` do boot de
+  produção (manter só para diagnóstico).
+
+**P3 — runtime:**
+- [ ] `/etc/fstab` está **vazio**; `/` monta `rw,relatime`. Adicionar entrada com `noatime`
+  (menos escrita no USB) e `errors=remount-ro`. **No build:** `distro/01-build-image-7.0.sh`
+  não gera `/etc/fstab` nenhum — criar a entrada
+  `LABEL=psxitarch / ext4 noatime,errors=remount-ro 0 1` (e, quando o CIFS entrar, a linha
+  persistente do share).
+- [ ] Sem `smartd` (instalado, serviço `disabled`) e sem `paccache`: o cache do pacman está em
+  **767 MB / 413 pacotes** num SSD que está falhando. Habilitar `smartd` no build
+  (`/etc/smartd.conf` com `/dev/sdb -d sat -a -m root`; SMART funciona pelo bridge USB) e
+  instalar `pacman-contrib` + habilitar `paccache.timer` (`paccache -r -k 2`).
+- [ ] **`fstrim` não é suportado** por este enclosure: `/sys/block/sdb/queue/discard_max_bytes=0`
+  (`fstrim /` → "the discard operation is not supported"). **Não** habilitar `fstrim.timer`;
+  tratar junto do P0 (cabo/enclosure) — sem TRIM o SSD degrada mais rápido.
+- [ ] `/etc/mkinitcpio.conf.pacnew` pendente (único `.pacnew` do sistema). Revisar/merge no
+  próximo build para não perder os `MODULES`/`HOOKS` específicos do PS4
+  (`/etc/mkinitcpio.conf` atual tem só 239 bytes).
+- [ ] `archlinux-keyring-wkd-sync.service` gastou **2min13s** no boot atual (fora do
+  `critical-chain`, mas faz rede + GPG + escrita no SSD falhando; com relógio errado pode falhar).
+  Depois de corrigir o NTP, reavaliar (ex.: `OnBootSec`/`Persistent=false` no timer) ou deixar.
+- [ ] Sem swap e sem uso de zram: `/dev/zram0` existe, `SwapTotal=0`, mas `zswap.enabled=1` —
+  zswap sem swap não faz nada. Configurar zram-generator (zstd) **no build** (adicionar o pacote
+  `zram-generator` ao `PKGS` + `/etc/systemd/zram-generator.conf`) ou remover `zswap.enabled`.
+- [ ] Sem `cpufreq`: `amd_pstate` falha (`the _CPC object is not present in SBIOS`) e
+  `CONFIG_X86_ACPI_CPUFREQ` não está setado. Habilitar o driver ACPI legado para tentar scaling.
+- [ ] `libata.force=1.00:3.0Gbps` limita o SATA interno (drive é 6 Gbps); testar remoção.
+  Scheduler atual `mq-deadline` em disco SMR; avaliar `bfq`.
+- [ ] `systemd.unified_cgroup_hierarchy=0` + `CONFIG_CGROUP_V2` desligado: legado; reavaliar.
+- [ ] `usb usb3-port1/usb4-port1: over-current condition` com as duas portas vazias — ruído
+  esperado do xhci_aeolia, ignorar.
+
+**P0 (bloqueador, já decidido):** o **SSD Kingston SV300 120 GB** do root (via bridge USB
+**JMicron**, driver `usb-storage`; UAS não suportado pelo xhci do PS4) está corrompendo dados em
+lote — em 2026-11-12, 330 arquivos do `/usr` divergiam (355 MB), com blocos fisicamente zerados,
+enquanto tar e `arch_build_7.0/rootfs` conferem. O `pacman` foi **reparado em 2026-11-12**
+(`libxml2` restaurado, 58 pacotes reinstalados, `-Qkk` = 0 divergências de sistema, `-Dk` limpo),
+mas o disco continua com **27 erros de I/O neste boot** (`Sense Key 0xB / ASC 0x47` = parity
+error), **2 ECC não corrigidos**, **2.027 desligamentos inesperados**, SMART geral `PASSED` e
+**`discard_max_bytes=0` (sem TRIM)**. O usuário vai **trocar o disco**; até lá, evitar operações
+pesadas e manter backup. Ação imediata: trocar cabo/porta e, se possível, enclosure com fonte;
+depois `smartctl -t long` + `badblocks`.
+
+---
 
 ### [ ] 🔍 Investigação de travamento do Xorg / SDDM pós-restart (hipótese: autostart do Steam)
 **Contexto (2026-08-01):** Na primeira reinicialização do SDDM via SSH a interface gráfica subiu perfeitamente (`Session started true`, PID 1716). Na segunda tentativa de reinicialização do SDDM/Xorg, a rede/interface gráfica travou.
@@ -62,6 +180,76 @@ O trabalho **ativo no momento** (investigação detalhada, passo a passo) fica n
 ---
 
 ## Prioridade média
+
+### [~] 🌐 Habilitar o cliente CIFS/SMB no kernel do PS4 para montar o `[dados_aux]` do `adsv2` como se fosse local
+
+**Contexto (2026-11-12):** o fluxo de trabalho do PS4 usa `/mnt/hdauxiliar` do host `192.168.6.101`
+(`adsv2`) como diretório de trabalho. As rotas disponíveis hoje têm limitações:
+- **NFSv3** funciona, mas o servidor **não exporta raiz NFSv4 com `fsid=0`** — `vers=4.0/4.1/4.2`
+  retorna `mount.nfs: Protocol not supported`. O NFSv3 não faz mapeamento de UID: os arquivos
+  aparecem com **UID 1000 (`ps4` local)** e o usuário `anderson` (local, UID **1001**) **não
+  consegue escrever** em subpastas 755 (ex.: `/mnt/hdauxiliar/downloads` → `Permissão negada`).
+- **sshfs** resolve o UID (`uid=1001,gid=1001`), mas é camada FUSE, mais lento em metadados e não
+  preserva tudo (hardlinks, alguns atributos).
+- **CIFS** é a rota mais limpa: o `adsv2` **já compartilha exatamente `path = /mnt/hdauxiliar`**
+  como `[dados_aux]` (`guest ok = Yes`, `force user = anderson`, `read only = No`,
+  `create/directory mask = 0777`), e `mount.cifs` mapeia dono/grupo local nativamente
+  (`uid=1001,gid=1001`), **sem alterar nada no servidor**.
+
+**Bloqueio (histórico — sendo resolvido na tag `20261112-cifs`):** o kernel 7.0 do projeto estava com **`# CONFIG_CIFS is not set`** (confirmado no
+`.config` do build e em `/proc/config.gz`) e **não há módulo `cifs.ko`** para carregar sob demanda —
+por isso a rota CIFS foi descartada na sessão de 2026-11-12 e caiu-se no NFSv3/sshfs.
+
+**Objetivo:** habilitar o cliente CIFS no kernel do projeto e montar o `[dados_aux]` de forma
+persistente, com ownership `1001:1001`, substituindo NFSv3/sshfs no uso diário.
+
+**Em andamento (2026-11-12):**
+1. [x] Config adicionada ao `kernel/00-build-kernel-7.0.sh` (bloco `scripts/config`, logo após
+   "Async I/O"). Decisão: **`CONFIG_CIFS=m` (módulo), não `=y`** — o `bzImage` atual já tem
+   **~16 MiB** (acima do aviso de ~10 MB de alguns loaders kexec do PS4) e o
+   `distro/01-build-image-7.0.sh:~431` já roda `modules_install` no rootfs, então `cifs.ko` vai
+   para `/lib/modules/<kver>/` sem inflar o kernel. Bônus: com `CONFIG_MODVERSIONS` e
+   `CONFIG_MODULE_SIG` desligados (confirmado no `.config`), o mesmo `cifs.ko` carrega no kernel
+   **já em execução** (mesma `UTS_RELEASE` `7.0.8-Strawberry-ThinLTO-Baikal-+`), o que permite
+   validar o mount antes de reiniciar.
+   ```sh
+   scripts/config --module CONFIG_CIFS
+   scripts/config --enable CONFIG_CIFS_XATTR   # xattrs (Samba)
+   scripts/config --enable CONFIG_CIFS_POSIX   # extensões POSIX: modo/ACL
+   ```
+   (`CONFIG_CIFS` é `tristate` e puxa `INET`, `NLS`, `KEYS`, `DNS_RESOLVER`, `NETFS_SUPPORT`.)
+2. [ ] Compilar no `adsv2` (o PS4 não tem toolchain) com TAG `20261112-cifs` e validar o
+   `.config` publicado (`grep CONFIG_CIFS distro/boot_referencia/config-7.0-20261112-cifs` deve
+   mostrar `CONFIG_CIFS=m`) e a existência de `cifs.ko`.
+3. [ ] Testar ao vivo **sem reboot**: copiar `cifs.ko` para
+   `/lib/modules/7.0.8-Strawberry-ThinLTO-Baikal-+/kernel/fs/smb/client/`, `depmod -a`,
+   `modprobe cifs` e montar num ponto separado (`/mnt/cifs-test`) antes de tocar no
+   `/mnt/hdauxiliar` em uso:
+   ```sh
+   sudo mount -t cifs //192.168.6.101/dados_aux /mnt/cifs-test \
+     -o guest,uid=1001,gid=1001,forceuid,forcegid,vers=3.0,iocharset=utf8
+   ```
+4. [ ] Rebuildar o rootfs (`distro/scripts/build-image-docker.sh 20261112-cifs --incremental`,
+   container Arch no `adsv2`) para o `cifs.ko` entrar em `/lib/modules` e o initramfs/bootargs da
+   tag existirem; depois `distro/deploy-boot-7.0.sh 20261112-cifs`.
+5. [ ] Se funcionar, persistir no `/etc/fstab` **e na receita de build**
+   (`distro/01-build-image-7.0.sh` — o sistema é um ambiente em desenvolvimento, então a
+   configuração não pode ficar só na máquina viva):
+   ```
+   //192.168.6.101/dados_aux /mnt/hdauxiliar cifs guest,uid=1001,gid=1001,forceuid,forcegid,vers=3.0,iocharset=utf8,_netdev,nofail,x-systemd.automount,x-systemd.mount-timeout=10s 0 0
+   ```
+6. [ ] Medir a diferença prática de desempenho/metadados contra o NFSv3 e decidir se o NFS sai
+   do `/etc/fstab`/receita.
+
+**Critério de aceite:**
+- `findmnt /mnt/hdauxiliar` mostra `FSTYPE cifs` (não `nfs`/`fuse.sshfs`);
+- `stat -c '%u:%g %U:%G %A %n'` reporta `1001:1001 anderson:anderson` nos arquivos remotos;
+- `anderson` cria e apaga arquivo em `/mnt/hdauxiliar/downloads` (755) **sem `sudo`**;
+- montagem sobrevive a reboot (automount) sem depender de `sshfs`/`bindfs`.
+
+**Fallback documentado até o kernel ter CIFS:** NFSv3
+(`vers=3,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2`) para leitura e `sshfs` com
+`uid=1001,gid=1001` para escrita com UID correto. Nenhum dos dois altera o servidor.
 
 ### [ ] 🔴 Teste ao vivo da tag `20261111-preflight-test` (HD USB do PS4 plugado neste PC)
 

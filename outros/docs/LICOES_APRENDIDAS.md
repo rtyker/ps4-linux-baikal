@@ -461,6 +461,44 @@ Devido à necessidade de frequentes compilações e edições de drivers (ex: `m
 
 ---
 
+## Lição Aprendida #73 (2026-11-12) — Não atribuir crash a um subsistema sem ler o log; e o caminho real dos logs UART
+
+**Erro:** descrever o crash da tag `20261112-sky2builtin` como "use-after-free no `kqueue`".
+O log UART (`outros/tests/uart_logs/uart-afterfree-teste_20261112_090339.bin`) tem **zero**
+ocorrências de `kqueue`/`knote`/`use-after`. O que existe é outra coisa:
+
+- `ld-linux-x86-64.so.2` (glibc 2.44) do initramfs segfaulta em `systemd-tmpfiles` e 5× `udevadm`,
+  sempre no offset `0x16d6d` (`mov 0x8(%rax),%r11` com `rax = [link_map+0x68] = l_info[DT_STRTAB]`
+  = NULL). Ou seja, objeto ELF inválido/corrompido;
+- `EXT4-fs error (sdb2): ext4_lookup: inode #1974419: iget: checksum invalid`;
+- `Kernel panic - not syncing: Attempted to kill init! exitcode=0x00007e00` — PID 1 = `switch_root`
+  morrendo com 126 depois do EIO do ext4.
+
+**Regra:** antes de nomear a causa (UAF, kqueue, driver X), **grep no log bruto** pelas strings do
+próprio sintoma. Se o nome não aparece no log, a atribuição é especulação. O log é a fonte da verdade
+(mesma regra da lição de SATA/2026-07-29).
+
+**Achado colateral (bug de documentação/script):** o `AGENTS.md` manda os logs para
+`tests/uart_logs/`, mas `uart_start.sh` calcula `OUT_DIR="$SCRIPT_DIR/../tests/uart_logs"` e, como o
+script mora em `outros/scripts/`, grava em **`outros/tests/uart_logs/`**. Quem procura no caminho
+documentado conclui (errado) que "não há log". Ou corrigir o script para a raiz `tests/uart_logs/`,
+ou corrigir o `AGENTS.md` — enquanto não decidido, procurar nos dois.
+
+**Achado colateral 2 (mídia USB):** o bridge do pendrive reporta `Write cache: enabled` e
+`Disabling FUA`. Escrita em pendrive USB sem `sync` + eject pode perder dados mesmo após `umount`,
+corrompendo **as duas** partições (initramfs em vfat + rootfs ext4) — exatamente o padrão visto aqui.
+Sempre `sync` e conferir MD5 **depois de remontar**, não só na origem.
+
+**✅ Confirmação (2026-11-12 10:38):** depois de substituir só o `initramfs.cpio.gz` no BOOT e
+recriar o `sda2` do `distro/arch_minimal_v2-7.0.tar` (mesmo tar da build do dia), o boot foi ao
+chão de forma limpa: `systemd 262.2-1-arch running`, `systemctl --failed` vazio, `Filesystem
+state: clean`, zero `segfault`/`EXT4-fs error`/`panic`, SSH OK. Ou seja: **a causa era 100%
+mídia corrompida**; `CONFIG_RSEQ`/glibc 2.44 ficou descartado como suspeito para este caso.
+Ruído residual: 2× `I/O error, dev sdb` com `ASC=0x47 ASCQ=0x1` (SCSI parity error) — erro de
+transporte do bridge JMicron, não de mídia (`dd` direto de 2 GiB a 263 MB/s sem novos erros).
+
+---
+
 ## Lição Aprendida #72 (2026-08-01) — Comando de Reboot/Hard Reset de Hardware via ICC Syscon (`Major 4, Minor 0x01`)
 
 **Contexto:**

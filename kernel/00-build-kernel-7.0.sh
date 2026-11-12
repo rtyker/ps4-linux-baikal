@@ -611,6 +611,17 @@ scripts/config --enable  CONFIG_ZRAM_DEF_COMP_ZSTD
 # Async I/O
 scripts/config --enable  CONFIG_IO_URING
 
+# Arquivos em rede: cliente CIFS/SMB (share [dados_aux] do adsv2)
+# Módulo (=m), NAO built-in: o bzImage ja esta em ~16 MiB (acima do aviso de
+# ~10 MB do loader kexec do PS4) e o distro/01-build-image-7.0.sh faz
+# modules_install no rootfs, entao cifs.ko entra em /lib/modules/<kver>.
+# CONFIG_MODVERSIONS e CONFIG_MODULE_SIG estao desligados nesta config, logo o
+# mesmo cifs.ko tambem carrega no kernel ja em execucao (mesma UTS_RELEASE).
+# Ver outros/docs/BACKLOG.md, item "Habilitar o cliente CIFS/SMB".
+scripts/config --module CONFIG_CIFS
+scripts/config --enable CONFIG_CIFS_XATTR   # xattrs (usado pelo Samba)
+scripts/config --enable CONFIG_CIFS_POSIX   # extensoes POSIX: modo/ACL
+
 # Rede: BBR + fq
 scripts/config --enable  CONFIG_TCP_CONG_BBR
 scripts/config --set-str CONFIG_DEFAULT_TCP_CONG "bbr"
