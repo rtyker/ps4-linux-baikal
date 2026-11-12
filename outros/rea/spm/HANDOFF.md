@@ -50,12 +50,12 @@ O arquivo `outros/rea/spm/dumps/baikal_bar5.bin` (commit `29aa02f`, 2026-11-12 1
 | Arquivo | Local | Conteúdo |
 |---------|-------|----------|
 | `baikal-memory.c` | `kernel/kernel_build_7.0/drivers/misc/` | Fonte do driver (150 linhas modificadas vs commit original) |
-| `Kconfig` | `kernel/kernel_build_7.0/drivers/misc/` | `config BAALAK_MEMORY` (linha 664) — depends PCI |
-| `Makefile` | `kernel/kernel_build_7.0/drivers/misc/` | `obj-$(CONFIG_BAALAK_MEMORY) += baikal-memory.o` (linha 78) |
+| `Kconfig` | `kernel/kernel_build_7.0/drivers/misc/` | `config BAIKAL_MEMORY` (linha 664) — depends PCI |
+| `Makefile` | `kernel/kernel_build_7.0/drivers/misc/` | `obj-$(CONFIG_BAIKAL_MEMORY) += baikal-memory.o` (linha 78) |
 | `.ko` compilado | `outros/rea/spm/dumps/baikal-memory.ko` | 304 KB, com debug_info, não stripped |
 
 ### Nota sobre o símbolo Kconfig
-O símbolo é `BAALAK_MEMORY` (com typo "BAALAK" em vez de "BAIKAL"), consistente entre Kconfig e Makefile. Não corrigir sem avaliar impacto no build.
+O símbolo é `BAIKAL_MEMORY`. Os typos `BAALAK`/`BAILAK` foram corrigidos em 2026-11-12: Kconfig e Makefile agora vêm dentro do `baikal-memory-fase2.patch` (aplicado após o `git reset --hard`), e o `00-build-kernel-7.0.sh` habilita `CONFIG_BAIKAL_MEMORY` via `scripts/config` **antes** do `olddefconfig` — o `config` rastreado não traz esse símbolo.
 
 ### Como o driver sobe no PS4
 Carrega automaticamente via udev (não precisa de `insmod` manual). No boot de teste, apareceu no dmesg aos ~12,9 s:
@@ -209,13 +209,13 @@ tail -f outros/tests/uart_logs/baikal-memory-fase2_*.log
 
 | Item | Valor |
 |------|-------|
-| Patch | `kernel/patches/baikal-memory-fase2.patch` (Fases 1–3, 533 linhas) |
+| Patch | `kernel/patches/baikal-memory-fase2.patch` (Fases 1–3 + Kconfig/Makefile) |
 | Aplicação | `00-build-kernel-7.0.sh` — preflight + bloco próprio com `git apply --check` e `exit 1` |
 | Validação | `git apply --cached --check` contra o índice pristino: OK |
 | Compilação isolada | `make ... drivers/misc/baikal-memory.o` e `.ko`: OK, vermagic `7.0.8-Strawberry-ThinLTO-Baikal-+` |
 | Binário testado | `outros/rea/spm/dumps/baikal-memory-fase2.ko` (502.488 bytes, com debug_info) |
 
-> Kconfig/Makefile e `config` (`CONFIG_BAALAK_MEMORY=m`) já estão commitados na árvore — o patch cobre apenas `drivers/misc/baikal-memory.c`.
+> O patch cobre `drivers/misc/baikal-memory.c` **e** `drivers/misc/Kconfig` + `drivers/misc/Makefile` (símbolo `CONFIG_BAIKAL_MEMORY`). O `config` rastreado não tem o símbolo do driver: o build o habilita com `scripts/config --module CONFIG_BAIKAL_MEMORY` antes do `olddefconfig`.
 
 ---
 

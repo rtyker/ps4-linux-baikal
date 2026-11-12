@@ -454,11 +454,15 @@ fi
 git apply "$PATCH_RTC"
 echo "✓ Patch RTC wrapper aplicado com sucesso (git apply, validado com --check)"
 
-# Memória Baikal (SPM/DDR3, 00:14.6): driver inteiro (probe com logging de
-# diagnóstico da Fase 1 + layout de leitura da Fase 2 em /dev/baikal-memory).
-# Kconfig/Makefile/`config` (CONFIG_BAALAK_MEMORY=m) já estão commitados na
-# árvore; só o .c precisa de patch. Mesmo padrão rigoroso: `--check` antes,
-# `exit 1` se falhar — nunca `|| echo AVISO`.
+# Memória Baikal (SPM/DDR3, 00:14.6): o patch traz o driver inteiro
+# (`drivers/misc/baikal-memory.c`: probe com logging da Fase 1, layout de
+# leitura da Fase 2, sysfs da Fase 3) e também `drivers/misc/Kconfig` +
+# `drivers/misc/Makefile` (símbolo CONFIG_BAIKAL_MEMORY, com o nome corrigido).
+# O `config` rastreado NÃO tem esse símbolo, então ele é
+# habilitado via `scripts/config` mais abaixo, antes do `olddefconfig`;
+# sem isso `obj-$(CONFIG_BAIKAL_MEMORY)` fica vazio e o .ko não é gerado.
+# Mesmo padrão rigoroso: `--check` antes, `exit 1` se falhar — nunca
+# `|| echo AVISO`.
 PATCH_BAIKAL_MEM="$SCRIPT_DIR/patches/baikal-memory-fase2.patch"
 if [ ! -f "$PATCH_BAIKAL_MEM" ]; then
   echo "❌ ERRO FATAL: $PATCH_BAIKAL_MEM não encontrado"
@@ -822,6 +826,11 @@ scripts/config --set-str CONFIG_RTC_SYSTOHC_DEVICE "rtc0"
 # Habilitado em 2026-08-01 para teste prático.
 scripts/config --enable  CONFIG_KVM
 scripts/config --enable  CONFIG_KVM_AMD
+
+# Memória Baikal (SPM/DDR3, 00:14.6): habilita o módulo, que vem do patch
+# aplicado acima (Kconfig/Makefile incluídos nele). Precisa acontecer antes do
+# olddefconfig para o símbolo existir no .config resolvido.
+scripts/config --module CONFIG_BAIKAL_MEMORY
 
 echo "=== Executando olddefconfig ==="
 make "${MAKE_OPTS[@]}" olddefconfig

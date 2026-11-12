@@ -143,7 +143,7 @@ ls -l /sys/class/baikal-memory/
 | Arquivo | Descrição |
 |---------|-----------|
 | `baikal-memory.c` | Fonte do driver |
-| `Kconfig` | Opção de compilação CONFIG_BAALAK_MEMORY |
+| `Kconfig` | Opção de compilação CONFIG_BAIKAL_MEMORY |
 | `Makefile` | Regra de compilação |
 | `baikal-memory.ko` | Módulo compilado |
 | `HANDOFF.md` | Este documento |

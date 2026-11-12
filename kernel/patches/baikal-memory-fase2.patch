@@ -1,3 +1,26 @@
+diff --git a/drivers/misc/Kconfig b/drivers/misc/Kconfig
+index b44679308..816b99d54 100644
+--- a/drivers/misc/Kconfig
++++ b/drivers/misc/Kconfig
+@@ -661,7 +661,7 @@ source "drivers/misc/keba/Kconfig"
+ source "drivers/misc/amd-sbi/Kconfig"
+ source "drivers/misc/rp1/Kconfig"
+ 
+-config BAALAK_MEMORY
++config BAIKAL_MEMORY
+ 	tristate "Sony Baikal Memory (SPM/DDR3, 00:14.6)"
+ 	depends on PCI
+ 	help
+diff --git a/drivers/misc/Makefile b/drivers/misc/Makefile
+index a0d475004..dfaa9f502 100644
+--- a/drivers/misc/Makefile
++++ b/drivers/misc/Makefile
+@@ -75,4 +75,4 @@ obj-$(CONFIG_MCHP_LAN966X_PCI)	+= lan966x-pci.o
+ obj-y				+= keba/
+ obj-y				+= amd-sbi/
+ obj-$(CONFIG_MISC_RP1)		+= rp1/
+-obj-$(CONFIG_BAALAK_MEMORY)	+= baikal-memory.o
++obj-$(CONFIG_BAIKAL_MEMORY)	+= baikal-memory.o
 diff --git a/drivers/misc/baikal-memory.c b/drivers/misc/baikal-memory.c
 index 1504655e3..1feb215fd 100644
 --- a/drivers/misc/baikal-memory.c
