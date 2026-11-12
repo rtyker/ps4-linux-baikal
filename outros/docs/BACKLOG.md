@@ -845,7 +845,9 @@ Dados salvos em:
 
 **Driver (2026-11-12):** `baikal-memory.ko` compila no kernel 7.0.8 e sobe via udev (`CONFIG_BAALAK_MEMORY=m`). `/dev/baikal-memory` (0444) expõe BAR0 em `0x0`, primeiros 4 MiB do BAR2 em `0x1000` e BAR5 em `0x500000`; leitura além de `0x540000` retorna EOF. Validado ao vivo: `skip=$((0x52f000))` devolve o MAC real (`2c cc 44 3f 69 5f`) estável em leituras repetidas, e `skip=$((0x52c000))` devolve a região `spm.icc`. Fonte: `kernel/patches/baikal-memory-fase2.patch`, plugado no `00-build-kernel-7.0.sh` (falha alta se não aplicar). Binário testado: `outros/rea/spm/dumps/baikal-memory-fase2.ko`.
 
-**Pendente:** Fase 3 (sysfs dos registradores com dados reais — ICC/MAC), Fase 4 (RTC/ICC), Fase 5 (escrita, `allow_write=0`), e um build oficial completo para confirmar o patch pós-`git reset`.
+**Fase 3 concluída (2026-11-12):** sysfs no `kobj` do device PCI expõe `bar5_0x2c000` (dump de 16 bytes da região `spm.icc`) e `bar5_0x2f000` (MAC via `%pM`), ambos `0444`; validado ao vivo (`2c:cc:44:3f:69:5f`). De quebra, corrigido bug em que `bar5_0x00…0x1c` extraíam o offset do nome com `simple_strtoul` e liam `0xba` em vez do offset real.
+
+**Pendente:** build oficial completo para confirmar o patch pós-`git reset`, Fase 4 (RTC/ICC), Fase 5 (escrita, `allow_write=0`).
 
 **Tarefa:** desenvolver driver `baikal-memory` para exposição da memória SPM/DDR3 do Baikal, possivelmente como memregion ou dispositivo de memória gerenciável.
 

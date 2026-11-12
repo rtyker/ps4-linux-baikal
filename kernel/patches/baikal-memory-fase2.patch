@@ -1,8 +1,23 @@
 diff --git a/drivers/misc/baikal-memory.c b/drivers/misc/baikal-memory.c
-index 1504655e3..9e093e0f3 100644
+index 1504655e3..1feb215fd 100644
 --- a/drivers/misc/baikal-memory.c
 +++ b/drivers/misc/baikal-memory.c
-@@ -45,6 +45,25 @@
+@@ -33,18 +33,38 @@
+ #include <linux/mutex.h>
+ #include <linux/sysfs.h>
+ #include <linux/device.h>
++#include <linux/etherdevice.h>
+ 
+ #define DRIVER_NAME		"baikal-memory"
+ #define DRIVER_DESC		"Sony Baikal Memory (SPM/DDR3) driver"
+ 
+-#define BAILAK_VENDOR_ID	0x104d
+-#define BAILAK_DEVICE_ID	0x90dd
++#define BAIKAL_VENDOR_ID	0x104d
++#define BAIKAL_DEVICE_ID	0x90dd
+ 
+ #define BAR0_SIZE		SZ_4K
+ #define BAR2_SIZE		SZ_256M
  #define BAR4_SIZE		SZ_1M
  #define BAR5_SIZE		SZ_256K
  
@@ -19,16 +34,16 @@ index 1504655e3..9e093e0f3 100644
 + *
 + * BAR4 fica de fora por ora (todo zero ao vivo, sem dados úteis).
 + */
-+#define BAILAK_DEV_BAR0_OFF	0x000000ULL
-+#define BAILAK_DEV_BAR2_OFF	0x001000ULL
-+#define BAILAK_DEV_BAR2_WIN	SZ_4M
-+#define BAILAK_DEV_BAR5_OFF	0x00500000ULL
-+#define BAILAK_DEV_SIZE		(BAILAK_DEV_BAR5_OFF + BAR5_SIZE)
++#define BAIKAL_DEV_BAR0_OFF	0x000000ULL
++#define BAIKAL_DEV_BAR2_OFF	0x001000ULL
++#define BAIKAL_DEV_BAR2_WIN	SZ_4M
++#define BAIKAL_DEV_BAR5_OFF	0x00500000ULL
++#define BAIKAL_DEV_SIZE		(BAIKAL_DEV_BAR5_OFF + BAR5_SIZE)
 +
  struct baikal_mem_dev {
  	struct pci_dev		*pdev;
  	struct miscdevice	misc;
-@@ -77,47 +96,77 @@ static u32 baikal_mem_read32(void __iomem *addr)
+@@ -77,47 +97,77 @@ static u32 baikal_mem_read32(void __iomem *addr)
  	return ioread32(addr);
  }
  
@@ -54,25 +69,25 @@ index 1504655e3..9e093e0f3 100644
 +static void __iomem *baikal_mem_resolve(struct baikal_mem_dev *dev, loff_t pos,
 +					size_t *avail)
 +{
-+	if (pos < BAILAK_DEV_BAR0_OFF + BAR0_SIZE) {
++	if (pos < BAIKAL_DEV_BAR0_OFF + BAR0_SIZE) {
 +		if (!dev->bar0_mapped)
 +			return NULL;
-+		*avail = BAILAK_DEV_BAR0_OFF + BAR0_SIZE - pos;
-+		return dev->bar0 + (pos - BAILAK_DEV_BAR0_OFF);
++		*avail = BAIKAL_DEV_BAR0_OFF + BAR0_SIZE - pos;
++		return dev->bar0 + (pos - BAIKAL_DEV_BAR0_OFF);
 +	}
 +
-+	if (pos < BAILAK_DEV_BAR2_OFF + BAILAK_DEV_BAR2_WIN) {
++	if (pos < BAIKAL_DEV_BAR2_OFF + BAIKAL_DEV_BAR2_WIN) {
 +		if (!dev->bar2_mapped)
 +			return NULL;
-+		*avail = BAILAK_DEV_BAR2_OFF + BAILAK_DEV_BAR2_WIN - pos;
-+		return dev->bar2 + (pos - BAILAK_DEV_BAR2_OFF);
++		*avail = BAIKAL_DEV_BAR2_OFF + BAIKAL_DEV_BAR2_WIN - pos;
++		return dev->bar2 + (pos - BAIKAL_DEV_BAR2_OFF);
 +	}
 +
-+	if (pos < BAILAK_DEV_SIZE) {
++	if (pos < BAIKAL_DEV_SIZE) {
 +		if (!dev->bar5_mapped)
 +			return NULL;
-+		*avail = BAILAK_DEV_SIZE - pos;
-+		return dev->bar5 + (pos - BAILAK_DEV_BAR5_OFF);
++		*avail = BAIKAL_DEV_SIZE - pos;
++		return dev->bar5 + (pos - BAIKAL_DEV_BAR5_OFF);
 +	}
 +
 +	return NULL;
@@ -97,7 +112,7 @@ index 1504655e3..9e093e0f3 100644
 -		mutex_unlock(&dev->lock);
 -		return -ENODEV;
 -	}
-+	while (total_read < count && *ppos < BAILAK_DEV_SIZE) {
++	while (total_read < count && *ppos < BAIKAL_DEV_SIZE) {
 +		size_t avail = 0;
 +		size_t chunk;
 +		void __iomem *src;
@@ -128,12 +143,12 @@ index 1504655e3..9e093e0f3 100644
  	}
  
  	mutex_unlock(&dev->lock);
-@@ -142,14 +191,14 @@ static loff_t baikal_memory_llseek(struct file *filp, loff_t off, int whence)
+@@ -142,14 +192,14 @@ static loff_t baikal_memory_llseek(struct file *filp, loff_t off, int whence)
  		newpos = filp->f_pos + off;
  		break;
  	case SEEK_END:
 -		newpos = BAR5_SIZE + off;
-+		newpos = BAILAK_DEV_SIZE + off;
++		newpos = BAIKAL_DEV_SIZE + off;
  		break;
  	default:
  		mutex_unlock(&dev->lock);
@@ -141,11 +156,128 @@ index 1504655e3..9e093e0f3 100644
  	}
  
 -	if (newpos < 0 || newpos > BAR5_SIZE) {
-+	if (newpos < 0 || newpos > BAILAK_DEV_SIZE) {
++	if (newpos < 0 || newpos > BAIKAL_DEV_SIZE) {
  		mutex_unlock(&dev->lock);
  		return -EINVAL;
  	}
-@@ -297,6 +346,7 @@ static int baikal_memory_probe(struct pci_dev *pdev,
+@@ -237,50 +287,88 @@ static struct miscdevice baikal_memory_miscdev = {
+ /* Sysfs — atributos só-leitura para registradores conhecidos                */
+ /* ------------------------------------------------------------------------- */
+ 
+-static ssize_t bar5_offset_show(struct device *dev,
+-				struct device_attribute *attr, char *buf)
++/*
++ * Cada atributo carrega o próprio offset/tamanho. Antes o offset era extraído
++ * do nome com simple_strtoul("bar5_0x00", ..., 16), que para em 'r' e devolve
++ * 0xba — os atributos liam o registrador errado (achado na Fase 3).
++ */
++struct baikal_sysfs_reg {
++	struct device_attribute	attr;
++	u32			offset;
++	u32			len;
++	bool			mac;
++};
++
++static ssize_t baikal_sysfs_reg_show(struct device *dev,
++				     struct device_attribute *attr, char *buf)
+ {
+ 	struct baikal_mem_dev *bm = dev_get_drvdata(dev);
+-	u32 offset;
+-	u32 val;
++	struct baikal_sysfs_reg *reg =
++		container_of(attr, struct baikal_sysfs_reg, attr);
++	u8 raw[16];
++	ssize_t n = 0;
++	u32 i;
+ 
+ 	if (!bm || !bm->bar5_mapped)
+ 		return -ENODEV;
+ 
++	if (!reg->len || reg->len > sizeof(raw) ||
++	    reg->offset > BAR5_SIZE - reg->len)
++		return -EINVAL;
++
+ 	mutex_lock(&bm->lock);
+-	offset = simple_strtoul(attr->attr.name, NULL, 16);
+-	if (offset > BAR5_SIZE - 4) {
++	if (reg->len == sizeof(u32)) {
++		u32 val = baikal_mem_read32(bm->bar5 + reg->offset);
++
+ 		mutex_unlock(&bm->lock);
+-		return -EINVAL;
++		return sysfs_emit(buf, "0x%08x\n", val);
+ 	}
+-	val = baikal_mem_read32(bm->bar5 + offset);
++	memcpy_fromio(raw, bm->bar5 + reg->offset, reg->len);
+ 	mutex_unlock(&bm->lock);
+ 
+-	return scnprintf(buf, PAGE_SIZE, "0x%08x\n", val);
++	/* MAC da SPM: 6 primeiros bytes do bootparams (BAR5+0x2f000) */
++	if (reg->mac && reg->len >= ETH_ALEN)
++		return sysfs_emit(buf, "%pM\n", raw);
++
++	for (i = 0; i < reg->len; i++)
++		n += sysfs_emit_at(buf, n, "%02x%s", raw[i],
++				   i + 1 == reg->len ? "\n" : " ");
++
++	return n;
+ }
+ 
+-#define BAILAK_SYSFS_ATTR(offset) \
+-	static struct device_attribute dev_attr_bar5_##offset = \
+-		__ATTR(bar5_##offset, 0444, bar5_offset_show, NULL);
++#define BAIKAL_SYSFS_REG(_name, _offset, _len, _mac) \
++	static struct baikal_sysfs_reg reg_##_name = { \
++		.attr = __ATTR(_name, 0444, baikal_sysfs_reg_show, NULL), \
++		.offset = (_offset), \
++		.len = (_len), \
++		.mac = (_mac), \
++	}
++
++BAIKAL_SYSFS_REG(bar5_0x00, 0x00, 4, false);
++BAIKAL_SYSFS_REG(bar5_0x04, 0x04, 4, false);
++BAIKAL_SYSFS_REG(bar5_0x08, 0x08, 4, false);
++BAIKAL_SYSFS_REG(bar5_0x0c, 0x0c, 4, false);
++BAIKAL_SYSFS_REG(bar5_0x10, 0x10, 4, false);
++BAIKAL_SYSFS_REG(bar5_0x14, 0x14, 4, false);
++BAIKAL_SYSFS_REG(bar5_0x18, 0x18, 4, false);
++BAIKAL_SYSFS_REG(bar5_0x1c, 0x1c, 4, false);
+ 
+-BAILAK_SYSFS_ATTR(0x00);
+-BAILAK_SYSFS_ATTR(0x04);
+-BAILAK_SYSFS_ATTR(0x08);
+-BAILAK_SYSFS_ATTR(0x0c);
+-BAILAK_SYSFS_ATTR(0x10);
+-BAILAK_SYSFS_ATTR(0x14);
+-BAILAK_SYSFS_ATTR(0x18);
+-BAILAK_SYSFS_ATTR(0x1c);
++/* Registradores do BAR5 que realmente têm dados neste console */
++BAIKAL_SYSFS_REG(bar5_0x2c000, 0x2c000, 16, false); /* região spm.icc */
++BAIKAL_SYSFS_REG(bar5_0x2f000, 0x2f000, 16, true);  /* bootparams/MAC */
+ 
+ static struct attribute *baikal_memory_attrs[] = {
+-	&dev_attr_bar5_0x00.attr,
+-	&dev_attr_bar5_0x04.attr,
+-	&dev_attr_bar5_0x08.attr,
+-	&dev_attr_bar5_0x0c.attr,
+-	&dev_attr_bar5_0x10.attr,
+-	&dev_attr_bar5_0x14.attr,
+-	&dev_attr_bar5_0x18.attr,
+-	&dev_attr_bar5_0x1c.attr,
++	&reg_bar5_0x00.attr.attr,
++	&reg_bar5_0x04.attr.attr,
++	&reg_bar5_0x08.attr.attr,
++	&reg_bar5_0x0c.attr.attr,
++	&reg_bar5_0x10.attr.attr,
++	&reg_bar5_0x14.attr.attr,
++	&reg_bar5_0x18.attr.attr,
++	&reg_bar5_0x1c.attr.attr,
++	&reg_bar5_0x2c000.attr.attr,
++	&reg_bar5_0x2f000.attr.attr,
+ 	NULL,
+ };
+ 
+@@ -297,6 +385,7 @@ static int baikal_memory_probe(struct pci_dev *pdev,
  {
  	struct baikal_mem_dev *dev;
  	int ret;
@@ -153,7 +285,7 @@ index 1504655e3..9e093e0f3 100644
  
  	dev = devm_kzalloc(&pdev->dev, sizeof(*dev), GFP_KERNEL);
  	if (!dev)
-@@ -305,101 +355,167 @@ static int baikal_memory_probe(struct pci_dev *pdev,
+@@ -305,101 +394,167 @@ static int baikal_memory_probe(struct pci_dev *pdev,
  	dev->pdev = pdev;
  	mutex_init(&dev->lock);
  
@@ -354,7 +486,7 @@ index 1504655e3..9e093e0f3 100644
  		 DRIVER_NAME);
  
  	return 0;
-@@ -412,13 +528,14 @@ static void baikal_memory_remove(struct pci_dev *pdev)
+@@ -412,17 +567,18 @@ static void baikal_memory_remove(struct pci_dev *pdev)
  	if (!dev)
  		return;
  
@@ -371,7 +503,12 @@ index 1504655e3..9e093e0f3 100644
  }
  
  static const struct pci_device_id baikal_memory_id_table[] = {
-@@ -442,22 +559,22 @@ static int __init baikal_memory_init(void)
+-	{ PCI_DEVICE(BAILAK_VENDOR_ID, BAILAK_DEVICE_ID) },
++	{ PCI_DEVICE(BAIKAL_VENDOR_ID, BAIKAL_DEVICE_ID) },
+ 	{ 0, }
+ };
+ MODULE_DEVICE_TABLE(pci, baikal_memory_id_table);
+@@ -442,22 +598,22 @@ static int __init baikal_memory_init(void)
  {
  	int ret;
  
@@ -398,7 +535,7 @@ index 1504655e3..9e093e0f3 100644
  }
  
  module_init(baikal_memory_init);
-@@ -466,5 +583,4 @@ module_exit(baikal_memory_exit);
+@@ -466,5 +622,4 @@ module_exit(baikal_memory_exit);
  MODULE_LICENSE("GPL v2");
  MODULE_AUTHOR("Projeto PS4 Linux Baikal");
  MODULE_DESCRIPTION(DRIVER_DESC);

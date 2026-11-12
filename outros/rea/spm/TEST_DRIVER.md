@@ -77,19 +77,24 @@ dd if=/dev/baikal-memory bs=1 skip=$((0x540000)) count=4
 
 ### Teste 2: Leitura via sysfs
 
+Os atributos ficam no `kobj` do device PCI (não em `/sys/class/baikal-memory/`):
+
 ```bash
-# Ler registradores conhecidos do BAR5
-cat /sys/class/baikal-memory/bar5_0x00
-cat /sys/class/baikal-memory/bar5_0x04
-cat /sys/class/baikal-memory/bar5_0x08
-cat /sys/class/baikal-memory/bar5_0x0c
-cat /sys/class/baikal-memory/bar5_0x10
-cat /sys/class/baikal-memory/bar5_0x14
-cat /sys/class/baikal-memory/bar5_0x18
-cat /sys/class/baikal-memory/bar5_0x1c
+D=/sys/devices/pci0000:00/0000:00:14.6
+
+# MAC real da SPM (formatado)
+cat $D/bar5_0x2f000          # => 2c:cc:44:3f:69:5f
+
+# Região spm.icc (dump de 16 bytes)
+cat $D/bar5_0x2c000          # => 42 04 38 00 00 00 0c 00 20 00 ab 00 01 00 00 00
+
+# Registradores baixos (u32; zerados neste boot)
+for a in 0x00 0x04 0x08 0x0c 0x10 0x14 0x18 0x1c; do printf '%s=' $a; cat $D/bar5_$a; done
 ```
 
-**Resultado esperado:** Valores hexadecimais (ex: 0x21090002, 0x88050108, etc.)
+**Resultado obtido (2026-11-12):** MAC correto e ICC com dados; baixos em `0x00000000` (estado do hardware). Todos os atributos são `0444`.
+
+> Validado que o `/dev/baikal-memory` continua lendo o mesmo MAC após a mudança de sysfs.
 
 ---
 

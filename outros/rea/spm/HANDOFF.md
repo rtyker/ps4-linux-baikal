@@ -4,7 +4,7 @@
 **Dispositivo PCI:** 00:14.6, Vendor 0x104d, Device 0x90dd  
 **Hardware:** PS4 Slim (CUH-2xxx, Baikal B1), 256 MB SPM DDR3  
 **Kernel alvo:** 7.0.8-Strawberry-ThinLTO-Baikal-+ (x86_64)  
-**Status:** Fases 1 e 2 CONCLUÍDAS (2026-11-12) — driver carrega via udev e a leitura por `/dev/baikal-memory` já retorna os dados reais da SPM (MAC do BAR5+0x2f000, região `spm.icc`), de forma estável. Próximo passo: Fase 3 (sysfs de registradores conhecidos).  
+**Status:** Fases 1, 2 e 3 CONCLUÍDAS (2026-11-12) — driver carrega via udev, a leitura por `/dev/baikal-memory` retorna os dados reais da SPM (MAC do BAR5+0x2f000, região `spm.icc`) e o sysfs expõe `bar5_0x2c000` (ICC) e `bar5_0x2f000` (MAC formatado). Próximo passo: build oficial completo para confirmar o patch pós-`git reset`, depois Fase 4 (RTC/ICC).  
 **Acesso ao PS4:** SSH WiFi `root@192.168.6.128`, senha `ps4`. Porta `eth0` (cabeada) não tem link (PHY mudo, bug conhecido).
 
 ---
@@ -90,7 +90,7 @@ O driver lia apenas **BAR5 offset 0**, que está **zerado** neste boot; o crité
 | `0x001000–0x003fff` | BAR2 (primeiros 4 MiB da SPM DDR3) |
 | `0x500000–0x53ffff` | BAR5 (256 KiB, tabela estruturada) |
 
-`llseek`/`SEEK_END` passaram a usar `BAILAK_DEV_SIZE` (`0x540000`); leitura além do fim retorna 0 bytes (EOF), não lixo. BAR4 segue fora (todo zero ao vivo, sem dados úteis). O sysfs `bar5_0x00…0x1c` foi mantido.
+`llseek`/`SEEK_END` passaram a usar `BAIKAL_DEV_SIZE` (`0x540000`); leitura além do fim retorna 0 bytes (EOF), não lixo. BAR4 segue fora (todo zero ao vivo, sem dados úteis). O sysfs `bar5_0x00…0x1c` foi mantido.
 
 ### Evidências ao vivo (PS4, kernel 7.0.8-Strawberry-ThinLTO-Baikal-+)
 
@@ -107,6 +107,25 @@ O driver lia apenas **BAR5 offset 0**, que está **zerado** neste boot; o crité
 - `.ko` instalado em `/usr/lib/modules/7.0.8-Strawberry-ThinLTO-Baikal-+/kernel/drivers/misc/baikal-memory.ko` + `depmod` (sobe via udev).
 
 > Consequência prática: o "critério de aceite não-zero no offset 0" **não vale** para este console (BAR0/BAR2 zerados). A verificação correta é a leitura do MAC em `0x52f000` descrita acima.
+
+### 3.1 Fase 3 — Sysfs dos registradores com dados reais (CONCLUÍDA em 2026-11-12)
+
+Atributos só-leitura (`0444`) no `kobj` do device PCI (`/sys/devices/pci0000:00/0000:00:14.6/`):
+
+| Atributo | Offset no BAR5 | Saída |
+|----------|----------------|-------|
+| `bar5_0x00` … `bar5_0x1c` | `0x00`–`0x1c` | `0x%08x` (u32) |
+| `bar5_0x2c000` | `0x2c000` | dump de 16 bytes em hex (região `spm.icc`) |
+| `bar5_0x2f000` | `0x2f000` | MAC formatado `%pM` (bootparams) |
+
+```
+# cat /sys/devices/pci0000:00/0000:00:14.6/bar5_0x2f000
+2c:cc:44:3f:69:5f
+# cat /sys/devices/pci0000:00/0000:00:14.6/bar5_0x2c000
+42 04 38 00 00 00 0c 00 20 00 ab 00 01 00 00 00
+```
+
+**Bug corrigido de passagem:** os atributos `bar5_0x00…0x1c` extraíam o offset do próprio nome com `simple_strtoul(attr->attr.name, NULL, 16)` — que para em `'r'` e devolve **0xba** para `"bar5_0x00"`. Ou seja, todos os oito liam o registrador errado (região zerada, então passava despercebido). Agora cada atributo carrega `offset`/`len`/`mac` numa `struct baikal_sysfs_reg` e o `container_of()` resolve o registrador.
 
 ### Regras do projeto para modificar o driver
 - O build kernel (`00-build-kernel-7.0.sh`) faz `git reset --hard HEAD` → **qualquer edição direta no driver será apagada no próximo build**
@@ -184,17 +203,17 @@ tail -f outros/tests/uart_logs/baikal-memory-fase2_*.log
 
 ## 7. Próximo Passo Imediato
 
-**Fase 3 (sysfs de registradores conhecidos):** expor em `/sys/class/baikal-memory/` (ou no `kobj` do device PCI, como hoje) os registradores que têm dados reais — no mínimo `bar5_0x2c000` (região `spm.icc`) e `bar5_0x2f000`/MAC — mantendo tudo só-leitura. Antes disso, o patch da Fase 2 (`kernel/patches/baikal-memory-fase2.patch`, já plugado no `00-build-kernel-7.0.sh`) precisa sobreviver a um build oficial completo: rodar `sudo ./kernel/00-build-kernel-7.0.sh <TAG>` e confirmar que o `git apply --check` do patch passa pós-reset.
+**Rodar um build oficial completo** (`sudo ./kernel/00-build-kernel-7.0.sh <TAG>`) para confirmar que `kernel/patches/baikal-memory-fase2.patch` (Fases 1–3) aplica logo após o `git reset --hard` do script e que o `.ko` resultante continua com o mesmo vermagic. Só depois disso seguir para a **Fase 4 (RTC/ICC)**: revisar `drivers/rtc/rtc-ps4-icc.c` e validar `/dev/rtc0` + `hwclock -r` com o `baikal-memory` carregado.
 
 ### Estado do patch (obrigatório para idempotência)
 
 | Item | Valor |
 |------|-------|
-| Patch | `kernel/patches/baikal-memory-fase2.patch` (14.565 bytes) |
+| Patch | `kernel/patches/baikal-memory-fase2.patch` (Fases 1–3, 533 linhas) |
 | Aplicação | `00-build-kernel-7.0.sh` — preflight + bloco próprio com `git apply --check` e `exit 1` |
 | Validação | `git apply --cached --check` contra o índice pristino: OK |
 | Compilação isolada | `make ... drivers/misc/baikal-memory.o` e `.ko`: OK, vermagic `7.0.8-Strawberry-ThinLTO-Baikal-+` |
-| Binário testado | `outros/rea/spm/dumps/baikal-memory-fase2.ko` (303.752 bytes) |
+| Binário testado | `outros/rea/spm/dumps/baikal-memory-fase2.ko` (502.488 bytes, com debug_info) |
 
 > Kconfig/Makefile e `config` (`CONFIG_BAALAK_MEMORY=m`) já estão commitados na árvore — o patch cobre apenas `drivers/misc/baikal-memory.c`.
 

@@ -89,17 +89,16 @@ O dispositivo 00:14.6 do SoC Baikal expõe memória dedicada (SPM/DDR3) usada pe
 
 ### Fase 3 — Sysfs e Registradores Conhecidos (Semana 2-3)
 
-**Objetivo:** Expor registradores de interesse via sysfs para fácil leitura/monitoramento.
+**Objetivo:** Expor registradores de interesse via sysfs para fácil leitura/monitoramento.**Tarefas:**
+- [x] Atributos só-leitura no `kobj` do device PCI (`/sys/devices/pci0000:00/0000:00:14.6/bar5_*`) — mantido no device em vez de `/sys/class/`, coerente com a Fase 1
+- [x] Mapear offsets conhecidos do BAR5: `bar5_0x2c000` (região `spm.icc`, dump de 16 bytes) e `bar5_0x2f000` (MAC via `%pM`)
+- [x] Exibir em hexadecimal (u32 para `bar5_0x00…0x1c`, bytes separados para o ICC)
+- [x] Documentar os offsets em `outros/rea/spm/HANDOFF.md` e `TEST_DRIVER.md` (não há árvore `Documentation/` própria do projeto)
+- [x] Testar leitura via `cat` ao vivo no PS4
 
-**Tarefas:**
-- [ ] Criar `/sys/class/baikal-memory/` com atributos só-leitura
-- [ ] Mapear offsets conhecidos do BAR5 (tabela de descritores ICC/comandos)
-- [ ] Exibir valores em formato hexadecimal via sysfs
-- [ ] Documentar cada offset conhecido no `Documentation/abi/sysfs-class-baal-memory`
-- [ ] Testar leitura via `cat /sys/class/baikal-memory/...`
+**Critério de aceite:** Sysfs acessível e retorna valores corretos para offsets conhecidos. **Validado em 2026-11-12:** `2c:cc:44:3f:69:5f` no MAC e `42 04 38 00 …` no ICC.
 
-**Critério de ace
-ite:** Sysfs acessível e retorna valores corretos para offsets conhecidos.
+> Bug corrigido nesta fase: os atributos `bar5_0x00…0x1c` extraíam o offset do nome com `simple_strtoul(..., 16)` (que devolve `0xba` para `"bar5_0x00"`) e liam o registrador errado. Agora o offset/tamanho/flag de MAC ficam numa `struct baikal_sysfs_reg`.
 
 ---
 
