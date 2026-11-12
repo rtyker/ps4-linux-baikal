@@ -1,6 +1,6 @@
 # Backlog do Projeto — Fonte Única de Pendências
 
-**Última atualização:** 2026-11-12 (CIFS concluído com autenticação Samba real — opção (b): `smbpasswd -a anderson` no `adsv2`, `guest ok/only` removidos de `[dados_aux]`, mount do PS4 com `credentials=/etc/samba/credentials`; escrita sem `sudo` OK em dirs 755 incl. `downloads`; `/etc/fstab` e receita `distro/01` atualizados; itens CIFS todos `[x]`; revisão de documentação em 2026-11-11: links corrigidos para `docs/planos/`; pasta `consolidado/obsoleto/` apagada; nenhum item de conteúdo foi acrescentado)
+**Última atualização:** 2026-11-12 (CIFS concluído com autenticação Samba real — opção (b); adicionada seção "Hardware — pendentes" com 7 tarefas de hardware/driver re-verificadas ao vivo: GBE eth0 DOWN (PHY não acorda), Bluetooth não detectado, Baikal ACPI/DMA/Memory sem driver, áudio HDMI não testado, RTC sem /dev/rtc, swap desabilitado; referência ao levantamento completo em LEVANTAMENTO_HARDWARE_PS4_BAIKAL.md e STATUS_DRIVERS_PS4_BAIKAL.md)
 
 > ℹ️ **Como ler este arquivo:** itens `[x]` fechados guardam o histórico da solução; itens dentro de
 > `<details>` com o título "Histórico da investigação" são **registro do que foi refutado**, não
@@ -773,3 +773,98 @@ candidato a colidir, disparou só 26 vezes no boot inteiro. Corrigir mesmo assim
 init) e helpers de leitura do glue. A resposta para "por que o glue deixa de sinalizar a
 subfunção 1" não está no material já decompilado. Memória:
 `memory/glue-ack-lock-global-divergencia-orbis-2026-07-28.md`.
+
+---
+
+## Hardware — pendentes (re-verificação 2026-11-12)
+
+Itens abaixo são exclusivamente de hardware/driver. Para cada componente sem driver ou não funcional, a tarefa é conseguir ou desenvolver o suporte no kernel Linux 7.0 Baikal.
+
+### [ ] ⚡ Ethernet GBE eth0 (00:14.1) — PHY nunca sai de power-down
+
+**Estado:** driver `mts` carregado, MAC ligado via ICC, TX ~95% funcional, mas `eth0` está DOWN/NO-CARRIER. PHY não responde a MDIO (Clause 22 e 45). Ping 100% perda.
+
+**Causa raiz:** o power-on físico do PHY é feito pelo firmware/bootloader Sony antes do kernel assumir. Não há sequência replicável via MDIO, ICC, SAMU ou RMU que um driver Linux possa executar (RE da thread `gbe_phy_ctrl` concluída 2026-07-30).
+
+**Tarefa:** encontrar fonte de dados nova (vazamento de firmware, dump de SAMU, documentação de terceiros sobre PHY Baikal) para reabrir a investigação. Até lá, Ethernet continua indisponível.
+
+**Documentos:** `kernel/drivers_mts/PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md`, `kernel/drivers_mts/RE_KERNEL_GBE_ATTACH.md`, `kernel/drivers_mts/ICC_GBE_TEST_LOG.md`, `outros/docs/LEVANTAMENTO_HARDWARE_PS4_BAIKAL.md`
+
+---
+
+### [ ] 📶 Bluetooth — controlador não detectado
+
+**Estado:** nenhum controlador Bluetooth aparece em `lspci`, `lsusb`, `lshw`. Sem interface `hci0`, sem driver carregado, `hciconfig`/`bluetoothctl` não disponíveis. Controles DualShock 4 não funcionam via BT.
+
+**Tarefa:** verificar fisicamente se o PS4 tem hardware Bluetooth integrado (revisar dumps de NOR/flash, procura por strings "bluetooth"/"bt" em binários do sistema). Se houver hardware, identificar o chip e desenvolver ou portar o driver. Se não houver, documentar a ausência e fechar a tarefa.
+
+**Documentos:** `outros/rea/scans/ps4_system_files.txt`, `outros/rea/scans/hardware_search_results.txt`
+
+---
+
+### [ ] 🔌 Baikal ACPI (00:14.0) — sem driver
+
+**Estado:** dispositivo presente no PCI (`104d:90d7`), MMIO `fdf8000000` (32M) + I/O `1000`, mas nenhum driver carregado. Sem controle de power management via ACPI.
+
+**Tarefa:** desenvolver driver `baikal-acpi` para exposição de eventos ACPI (power button, eject, thermal, sleep/wake) do chip Sony Baikal.
+
+**Documentos:** `outros/rea/decompiled/baikal_pcie_attach.txt`, `outros/rea/scans/kernel_hardware_info.txt` (strings `icc_power_shutdown`, `power button notification`)
+
+---
+
+### [ ] 🔄 Baikal DMA (00:14.5) — sem driver
+
+**Estado:** dispositivo presente (`104d:90dc`), MMIO `ca000000` (4K) + `ca800000` (4K), nenhum driver carregado.
+
+**Tarefa:** desenvolver driver `baikal-dma` para exposição do controlador DMA do Baikal ao subsistema DMAEngine do Linux.
+
+**Documentos:** `outros/rea/decompiled/baikal_pcie_attach.txt`
+
+---
+
+### [ ] 💾 Baikal Memory (00:14.6) — sem driver
+
+**Estado:** dispositivo presente (`104d:90dd`), MMIO `cc000000` (4K) + `80000000` (1G SPM/DDR3), nenhum driver carregado.
+
+**Tarefa:** desenvolver driver `baikal-memory` para exposição da memória SPM/DDR3 do Baikal, possivelmente como memregion ou dispositivo de memória gerenciável.
+
+**Documentos:** `outros/rea/decompiled/baikal_pcie_attach.txt`, `outros/rea/scans/kernel_hardware_info.txt` (strings `spm.icc`)
+
+---
+
+### [ ] 🔊 Áudio HDMI (00:01.1) — driver carregado, saída não testada
+
+**Estado:** `snd_hda_intel` carregado, dispositivos `/dev/snd/controlC0`, `hwC0D0`, `pcmC0D3p`, `pcmC0D7p` presentes. `aplay`/`arecord` não instalados no rootfs. Saída de áudio não testada ao vivo.
+
+**Tarefa:** instalar `alsa-utils` no rootfs, testar `aplay -l` e reprodução de áudio via HDMI. Se não funcionar, investigar configuração do HDA e código do codec.
+
+**Documentos:** `outros/docs/LEVANTAMENTO_HARDWARE_PS4_BAIKAL.md` (seção Áudio)
+
+---
+
+### [ ] ⏱️ RTC — sem /dev/rtc (já tem item próprio no BACKLOG)
+
+**Estado:** `CONFIG_RTC_CLASS=n` → sem `/dev/rtc`, sem `/sys/class/rtc`. Clock travado na build epoch (2026-06-26), bloqueia `pacman` por validação SSL. Driver `drivers/rtc/rtc-ps4-icc.c` existe mas nunca foi testado ao vivo (bug de leitura MMIO corrigido 2026-07-31, mas Fase 4 pendente de power-cycle físico).
+
+**Tarefa:** ligar o PS4 fisicamente, `modprobe rtc-ps4-icc`, validar `/dev/rtc0`, `hwclock -r`, `date` estável entre boots, `pacman -Sy` sem erro SSL/clock.
+
+**Item no BACKLOG:** linha ~591 (`### [ ] RTC via ICC no PS4 Linux — implementar driver rtc-ps4-icc`)
+
+---
+
+### [ ] 💾 Swap — desabilitado
+
+**Estado:** `SwapTotal=0`, `zram0` presente sem swap configurado, `zswap.enabled=1` mas sem swap zswap não faz nada. Risco de OOM em builds de kernel (pico de 10,9 GB de RSS no `pahole` já observado).
+
+**Tarefa:** configurar zram-generator (zstd) no build: adicionar pacote `zram-generator` ao `PKGS` + `/etc/systemd/zram-generator.conf`, ou remover `zswap.enabled=1` do cmdline.
+
+**Documentos:** `outros/docs/LEVANTAMENTO_HARDWARE_PS4_BAIKAL.md` (seção Memória)
+
+---
+
+### Critério de aceite geral (hardware)
+
+- Cada item `[ ]` acima só fecha quando o driver está carregado **e** o dispositivo é utilizável ao vivo no PS4 (não apenas "compila").
+- Para itens sem solução via software (ex: GBE PHY), a tarefa fecha quando há documentação/fonte de dados que justifique o fechamento permanente ou quando uma nova abordagem viável é encontrada.
+- Qualquer novo hardware descoberto deve ser adicionado aqui como `[ ]`, não em outros documentos do projeto.
+
