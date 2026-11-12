@@ -455,7 +455,7 @@ Devido à necessidade de frequentes compilações e edições de drivers (ex: `m
 
 **Configuração e Otimização:**
 1. Pacote `ccache` instalado no Host (Arch Linux), diretório apontado para `/mnt/hdauxiliar/ccache` (partição com >110 GB livres) e limite de cache configurado para 50 GB (`ccache -M 50G`).
-2. Script [`00-build-kernel-7.0.sh`](../../00-build-kernel-7.0.sh#L36) atualizado com `export CCACHE_DIR="/mnt/hdauxiliar/ccache"` e `CC="ccache clang"` no `MAKE_OPTS`.
+2. Script [`00-build-kernel-7.0.sh`](../../kernel/00-build-kernel-7.0.sh#L36) atualizado com `export CCACHE_DIR="/mnt/hdauxiliar/ccache"` e `CC="ccache clang"` no `MAKE_OPTS`.
 3. **Resultado:** Nas recompilações incrementais de alterações em módulos/drivers, o kbuild reaproveita os arquivos `.o` em cache do HD auxiliar, reduzindo o tempo de build de ~20 minutos para menos de 1 minuto e aliviando a CPU do Host.
 
 

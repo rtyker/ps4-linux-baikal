@@ -13,7 +13,7 @@ Fonte única da documentação técnica do projeto PS4 Linux Baikal (kernel 7.0.
 | Você quer | Vá para |
 |-----------|---------|
 | Visão geral e status por subsistema | [`../../README.md`](../../README.md) |
-| Regras, procedimentos, build/deploy, SSH, UART | [`../../AGENTS.md`](../../../AGENTS.md) (auto-carregado via `../../CLAUDE.md`) |
+| Regras, procedimentos, build/deploy, SSH, UART | [`../../AGENTS.md`](../../AGENTS.md) (auto-carregado via `../../CLAUDE.md`) |
 | **Índice de toda a documentação** | [`INDEX_DOCUMENTACAO.md`](INDEX_DOCUMENTACAO.md) |
 | O que está pendente / próximos passos | [`BACKLOG.md`](BACKLOG.md) |
 | O que funciona e o que não funciona agora | [`ESTADO_E_HISTORICO.md`](ESTADO_E_HISTORICO.md) |
@@ -30,8 +30,10 @@ Fonte única da documentação técnica do projeto PS4 Linux Baikal (kernel 7.0.
 - ~~`memory/`~~ — **pasta apagada em 2026-11-11** por decisão do usuário (descobertas datadas iam
   para lá). O que continua valendo vive em `ESTADO_E_HISTORICO.md`/`BACKLOG.md`; o resto é
   recuperável pelo histórico do git.
-- **`docs/planos/`** — frentes ativas. Documentação do MTS (motor GBE, testes, RE) fica em
-  [`../../drivers_mts/`](../../drivers_mts/); a antiga `docs/relatorios/` foi consolidada lá.
+- ~~`docs/planos/`~~ — **planos individuais apagados em 2026-11-11**. Marcos consolidados em
+  [`../docs/MARCOS_CONSOLIDADOS.md`](../docs/MARCOS_CONSOLIDADOS.md); procedimento em
+  [`../docs/MIGRACAO_7.0.md`](../docs/MIGRACAO_7.0.md). Documentação do MTS (motor GBE, testes, RE) fica em
+  [`../../kernel/drivers_mts/`](../../kernel/drivers_mts/).
 - ~~`obsoleto/`~~ — **pasta apagada em 2026-11-11** por decisão do usuário. Documentos superados
   ou refutados que continuem relevantes devem ser resumidos no documento vivo correspondente.
 

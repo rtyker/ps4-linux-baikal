@@ -32,7 +32,7 @@ outros/rea/dumps/
 outros/consolidado/memoriateste.bin
 
 # --- Logs de hardware/capturas UART (grandes e efêmeros) ---
-outros/tests/uart_logs/
+outros/tests/
 dmesg_output/
 netconsole_ps4_captures/
 
@@ -80,6 +80,7 @@ distro/boot_referencia/
 kernel/extra_firmware/
 kernel/drivers_mts/build/
 outros/rea/tools/ghidra_project/
+outros/tools/ps4_hdd_tools/pkg_pfs_tool/build/
 
 # --- Frente 2: distro/ ---
 distro/arch_minimal_v2-7.0.tar

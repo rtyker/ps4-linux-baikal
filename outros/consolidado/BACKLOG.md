@@ -30,7 +30,7 @@ O trabalho **ativo no momento** (investigação detalhada, passo a passo) fica n
 
 **Próximo passo exato:** validar pós-power-cycle os fixes de `mts_mac_stop()`/doorbell TX, depois varredura read-only da janela Glue BAR2 `0x140000`-`0x180000+` e reordenar o diagnóstico MDIO para rodar após o release do hold.
 
-**Documentos:** plano consolidado ATIVO (2026-07-29, revisão de UART+SQLite+código) em [`../../drivers_mts/PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md`](../../drivers_mts/PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md) — substitui o plano de 07-25 como fonte de próximos passos (o de 07-25 fica só como histórico); histórico de RE em [`../../drivers_mts/RE_KERNEL_GBE_ATTACH.md`](../../drivers_mts/RE_KERNEL_GBE_ATTACH.md) e [`../../drivers_mts/ICC_GBE_TEST_LOG.md`](../../drivers_mts/ICC_GBE_TEST_LOG.md).
+**Documentos:** plano consolidado ATIVO (2026-07-29, revisão de UART+SQLite+código) em [`../../kernel/drivers_mts/PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md`](../../kernel/drivers_mts/PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md) — substitui o plano de 07-25 como fonte de próximos passos (o de 07-25 fica só como histórico); histórico de RE em [`../../kernel/drivers_mts/RE_KERNEL_GBE_ATTACH.md`](../../kernel/drivers_mts/RE_KERNEL_GBE_ATTACH.md) e [`../../kernel/drivers_mts/ICC_GBE_TEST_LOG.md`](../../kernel/drivers_mts/ICC_GBE_TEST_LOG.md).
 
 **Status 2026-07-30:** bug de polaridade MDIO Clause 22 corrigido em `mts.c` (ver `memory/mdio-clause22-bug-polaridade-corrigido-2026-07-29.md`) e testado ao vivo — eliminou o falso-positivo de dado residual, mas PHY continua sem link. **🏆 Tag `20260730-sata-reverted` CONFIRMADA ao vivo como o novo BASELINE OFICIAL/ponto de rollback** (boot completo, SSH ok, `eth0` sobe com MAC real) — ver `memory/baseline-oficial-20260730-sata-reverted.md`.
 
@@ -480,7 +480,7 @@ VM básica.
 ### [x] ✅ Reorganização do repo em duas frentes + **build da distro testado de ponta a ponta** (2026-11-11)
 
 **Reorg (frente 1 / frente 2):** `kernel/` ficou só com build+patches; documentação do driver MTS
-consolidada em [`../../drivers_mts/`](../../drivers_mts/); acervo de RE em [`../rea/`](../rea/);
+consolidada em [`../../kernel/drivers_mts/`](../../kernel/drivers_mts/); acervo de RE em [`../rea/`](../rea/);
 harnesses e ferramentas em [`../tools/`](../tools/); `boot_referencia/` migrou para
 `distro/boot_referencia/` (fonte única, consumida pelas duas frentes).
 

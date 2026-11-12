@@ -3,7 +3,7 @@
 Build do kernel Linux **7.0.8-Strawberry-ThinLTO-Baikal-+** para o PS4 Slim/Pro
 Baikal (CUH-2xxx). Na raiz desta frente fica só o que participa do build e dos
 patches; todo o resto (RE, dumps, docs, diagnósticos, memória de sessão) foi
-separado em [`outros/`](outros/) para revisão/reorganização.
+separado em [`../outros/`](../outros/) para revisão/reorganização.
 
 > A distro que roda **em cima** deste kernel é a frente 2, em [`../distro/`](../distro/).
 

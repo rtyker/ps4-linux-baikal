@@ -77,4 +77,4 @@ Os binários validados foram organizados nos seguintes locais no projeto:
 1. `distros/arch_minimal_v2/firmware_gpu/amdgpu/` (substituindo as cópias antigas)
 2. `rea/firmware_gladius_real/` (backup dedicado de referência)
 
-Script utilitário de extração utilizado: [`scripts/fetch_gladius_fw.py`](../../../distro/scripts/fetch_gladius_fw.py).
+Script utilitário de extração utilizado: [`scripts/fetch_gladius_fw.py`](../../distro/scripts/fetch_gladius_fw.py).

@@ -12,7 +12,7 @@ Gama de ferramentas para decriptação, inspeção de GPT e verificação de sup
 | [`ps4_gpt_partition_inspector.py`](ps4_gpt_partition_inspector.py) | Lê a tabela GPT, compara os Type GUIDs com os 16 GUIDs oficiais do Orbis e calcula os LBAs. | `python3 ps4_gpt_partition_inspector.py /dev/sda` |
 | [`ps4_cmtab_generator.py`](ps4_cmtab_generator.py) | Gera o arquivo de configuração `/etc/cryptmount/cmtab` com os `ivoffset` absolutos para `cryptmount`. | `python3 ps4_cmtab_generator.py /dev/sda /etc/ps4_keys.bin` |
 | [`ps4_pfs_magic_checker.py`](ps4_pfs_magic_checker.py) | Checa se o dispositivo decriptado possui o magic number UFS2 (`0x1332A0B`). | `python3 ps4_pfs_magic_checker.py /dev/mapper/ps4_sda13` |
-| [`scripts/ps4_crypt_mount.sh`](../../../../distro/scripts/ps4_crypt_mount.sh) | Runner principal que aplica `--skip <LBA>` e realiza o `cryptsetup create` read-only. | `bash scripts/ps4_crypt_mount.sh /dev/sda13 /mnt/ps4_system` |
+| [`scripts/ps4_crypt_mount.sh`](../../../distro/scripts/ps4_crypt_mount.sh) | Runner principal que aplica `--skip <LBA>` e realiza o `cryptsetup create` read-only. | `bash scripts/ps4_crypt_mount.sh /dev/sda13 /mnt/ps4_system` |
 
 ---
 

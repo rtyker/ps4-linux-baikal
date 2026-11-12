@@ -419,7 +419,8 @@ Antes desta data havia planos e scripts espalhados na raiz, o que poluía o repo
 | `AGENTS.md` | **Fonte única de regras e procedimentos.** Escreva aqui. | Sim, via import do stub |
 | `CLAUDE.md` | Stub de uma linha (`@AGENTS.md`). **Não escrever regras aqui.** | Sim (o Claude Code só lê este nome) |
 | `kernel/README.md` · `distro/README.md` | Porta de entrada de cada frente (build, conteúdo, regras próprias) | Não |
-| `outros/docs/planos/` | Planos de investigação, descobertas e arquitetura (`PLANO_*.md`, `DESCOBERTA_*.md`) | Não |
+| `outros/docs/MARCOS_CONSOLIDADOS.md` | Marcos de sucesso e bloqueadores validados ao vivo (kernel 7.0 apenas) | Não |
+| `outros/docs/MIGRACAO_7.0.md` | Procedimento de build/deploy do kernel 7.0 e distro | Não |
 | `kernel/drivers_mts/` | **Documentação do driver MTS/GBE**: `README.md` (fonte única), RE, testes e plano consolidado | Não |
 | `outros/rea/` | **Acervo de engenharia reversa**: dumps do Orbis, código decompilado (`decompiled/`), varreduras (`scans/`), scripts Ghidra (`tools/`) e o banco SQLite `ps4_hardware_memory.db` | Não |
 | `outros/consolidado/` | Documentação técnica consolidada (SATA, GPU, RTC, build), `BACKLOG.md` e `LICOES_APRENDIDAS.md` | Não |

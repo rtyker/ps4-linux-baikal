@@ -13,11 +13,11 @@
 | # | Arquivo | Para quê |
 |---|---------|----------|
 | 1 | [`../../README.md`](../../README.md) | Visão geral, status por subsistema, estrutura do repo |
-| 2 | [`../../AGENTS.md`](../../../AGENTS.md) | **Fonte única de regras e procedimentos** (build, deploy, SSH, UART, banco de RE). Auto-carregado via `../../CLAUDE.md` |
+| 2 | [`../../AGENTS.md`](../../AGENTS.md) | **Fonte única de regras e procedimentos** (build, deploy, SSH, UART, banco de RE). Auto-carregado via `../../CLAUDE.md` |
 | 3 | [`LICOES_APRENDIDAS.md`](LICOES_APRENDIDAS.md) | Lições imperativas — o que já quebrou o console e por quê |
 | 4 | [`BACKLOG.md`](BACKLOG.md) | **Único** lugar com pendências e próximos passos |
 | 5 | [`ESTADO_E_HISTORICO.md`](ESTADO_E_HISTORICO.md) | Narrativa das grandes sagas técnicas (migração 7.0, GBE, SATA) e mapa de onde achar cada coisa |
-| 6 | [`../../distro/RELEASE/README.md`](../../../distro/RELEASE/README.md) | Artefatos prontos para deploy (`v1.0.0`) |
+| 6 | [`../../distro/RELEASE/README.md`](../../distro/RELEASE/README.md) | Artefatos prontos para deploy (`v1.0.0`) |
 
 ---
 
@@ -29,8 +29,7 @@
 | [`ESTADO_E_HISTORICO.md`](ESTADO_E_HISTORICO.md) | Narrativa das grandes sagas técnicas (migração 7.0, GBE, SATA) e mapa de onde achar cada coisa | Histórico + mapa |
 | [`LICOES_APRENDIDAS.md`](LICOES_APRENDIDAS.md) | Lições imperativas — o que já quebrou o console e por quê | **Vivo** |
 
-Planejamento ativo fica em [`../docs/planos/`](../docs/planos/). Documentos do MTS foram
-centralizados em [`../../drivers_mts/`](../../drivers_mts/).
+Planejamento ativo e marcos validados ficam em [`../docs/MARCOS_CONSOLIDADOS.md`](../docs/MARCOS_CONSOLIDADOS.md). Procedimento de build/deploy em [`../docs/MIGRACAO_7.0.md`](../docs/MIGRACAO_7.0.md). Documentos do MTS foram centralizados em [`../../kernel/drivers_mts/`](../../kernel/drivers_mts/).
 
 ---
 
@@ -47,20 +46,20 @@ O acervo de coleta de hardware bruto (dmesg, lspci, pinouts, fotos) está em:
 
 ### Ethernet GBE (`mts.ko`)
 
-> **Toda a documentação do MTS foi centralizada em [`../../drivers_mts/`](../../drivers_mts/)**
+> **Toda a documentação do MTS foi centralizada em [`../../kernel/drivers_mts/`](../../kernel/drivers_mts/)**
 > (README + RE + testes). O índice completo está no
-> [`README.md`](../../drivers_mts/README.md) do driver.
+> [`README.md`](../../kernel/drivers_mts/README.md) do driver.
 
 | Arquivo | Conteúdo |
 |---------|----------|
-| [`../../drivers_mts/README.md`](../../drivers_mts/README.md) | **Fonte única do driver**: mapa de registradores, params, build, histórico |
-| [`../../drivers_mts/PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md`](../../drivers_mts/PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md) | Plano consolidado e conclusão do PHY |
-| [`../../drivers_mts/TESTES_HISTORICO.md`](../../drivers_mts/TESTES_HISTORICO.md) | Testes ao vivo consolidados (o que vale e o que foi refutado) |
-| [`../../drivers_mts/MTS_INIT_SEQUENCE_dc5a31f0.md`](../../drivers_mts/MTS_INIT_SEQUENCE_dc5a31f0.md) | Sequência de init do MAC (`dc5a31f0`) |
-| [`../../drivers_mts/RE_KERNEL_GBE_ATTACH.md`](../../drivers_mts/RE_KERNEL_GBE_ATTACH.md) | RE do attach da GBE no kernel Orbis |
-| [`../../drivers_mts/RE_IF_MSK.md`](../../drivers_mts/RE_IF_MSK.md) | RE do `if_msk` (Aeolia/Belize) × `if_mts` (Baikal) |
-| [`../../drivers_mts/ICC_GBE_TEST_LOG.md`](../../drivers_mts/ICC_GBE_TEST_LOG.md) | Log dos testes de energia via ICC/MMIO |
-| [`../../drivers_mts/MARCO_HISTORICO_ETH0_MTS_BAIKAL.md`](../../drivers_mts/MARCO_HISTORICO_ETH0_MTS_BAIKAL.md) | Marco: `eth0` registrada com MAC real e DMA funcionando |
+| [`../../kernel/drivers_mts/README.md`](../../kernel/drivers_mts/README.md) | **Fonte única do driver**: mapa de registradores, params, build, histórico |
+| [`../../kernel/drivers_mts/PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md`](../../kernel/drivers_mts/PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md) | Plano consolidado e conclusão do PHY |
+| [`../../kernel/drivers_mts/TESTES_HISTORICO.md`](../../kernel/drivers_mts/TESTES_HISTORICO.md) | Testes ao vivo consolidados (o que vale e o que foi refutado) |
+| [`../../kernel/drivers_mts/MTS_INIT_SEQUENCE_dc5a31f0.md`](../../kernel/drivers_mts/MTS_INIT_SEQUENCE_dc5a31f0.md) | Sequência de init do MAC (`dc5a31f0`) |
+| [`../../kernel/drivers_mts/RE_KERNEL_GBE_ATTACH.md`](../../kernel/drivers_mts/RE_KERNEL_GBE_ATTACH.md) | RE do attach da GBE no kernel Orbis |
+| [`../../kernel/drivers_mts/RE_IF_MSK.md`](../../kernel/drivers_mts/RE_IF_MSK.md) | RE do `if_msk` (Aeolia/Belize) × `if_mts` (Baikal) |
+| [`../../kernel/drivers_mts/ICC_GBE_TEST_LOG.md`](../../kernel/drivers_mts/ICC_GBE_TEST_LOG.md) | Log dos testes de energia via ICC/MMIO |
+| [`../../kernel/drivers_mts/MARCO_HISTORICO_ETH0_MTS_BAIKAL.md`](../../kernel/drivers_mts/MARCO_HISTORICO_ETH0_MTS_BAIKAL.md) | Marco: `eth0` registrada com MAC real e DMA funcionando |
 
 **Resumo do estado:** MAC liga via ICC, DMA TX funciona, mas o PHY nunca sai de power-down —
 investigação de RE **encerrada** em 2026-07-30 (bloqueador é firmware Sony, não driver).
@@ -69,7 +68,6 @@ investigação de RE **encerrada** em 2026-07-30 (bloqueador é firmware Sony, n
 
 | Arquivo | Conteúdo |
 |---------|----------|
-| [`../docs/planos/DESCOBERTA_SATA_MSI_MASKING_2026-07-29.md`](../docs/planos/DESCOBERTA_SATA_MSI_MASKING_2026-07-29.md) | Descoberta do mascaramento MSI (`Masking=000000fe`) |
 | `../patches/ahci-baikal-polling-fallback.patch` | O patch em si (as duas pontas, `.2` e `.7`) |
 
 ### GPU / vídeo / Mesa
@@ -108,17 +106,12 @@ sqlite3 outros/rea/ps4_hardware_memory.db \
 
 ## 5. Planos e relatórios (`docs/`)
 
-**`docs/planos/`** — frentes de investigação/implementação:
+**`docs/`** — marcos consolidados e procedimento:
 
 | Arquivo | Tema |
 |---------|------|
-| `PLANO_INVESTIGACAO_CHAVE_PFS_SDA_2026-07-30.md` | Decriptação do HD interno (chave EAP, tweak XTS) |
-| `PLANO_MONTAGEM_NATIVA_HD_INTERNO_SDA.md` | Montagem nativa das partições PFS do HD interno |
-| `PLANO_MONTAGEM_NATIVA_NEMO_NAUTILUS_FUSE.md` | Driver FUSE `ps4_pfs_fuse` |
-| `PLANO_RTC_FINALIZACAO_2026-08-01.md` | RTC via ICC (Fase 4) |
-| `PLANO_KVM_PS4_VIABILIDADE_2026-07-24.md` | Viabilidade do KVM-AMD |
-| `PLANO_KEXEC_WARM_REBOOT_2026-07-27.md` | `kexec` a partir do Linux nativo |
-| `DESCOBERTA_SATA_MSI_MASKING_2026-07-29.md` | Descoberta (não plano): mascaramento MSI do AHCI |
+| `MARCOS_CONSOLIDADOS.md` | Marcos de sucesso e bloqueadores validados ao vivo (kernel 7.0 apenas) |
+| `MIGRACAO_7.0.md` | Procedimento de build/deploy do kernel 7.0 e distro |
 
 ---
 

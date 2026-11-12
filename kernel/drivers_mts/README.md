@@ -3,7 +3,7 @@
 **Este README é a fonte única sobre o driver MTS.** Tudo que era espalhado por
 `consolidado/`, `docs/` e memórias de sessão sobre a GBE do Baikal está resumido e
 indexado aqui. Documentos de dados brutos (RE, logs de teste) continuam em
-`../outros/` e são linkados na seção [Onde está o resto](#onde-está-o-resto).
+`../../../outros/` e são linkados na seção [Onde está o resto](#onde-está-o-resto).
 
 | | |
 |---|---|
@@ -103,13 +103,13 @@ Nada a fazer além do build oficial.
 
 ```bash
 # compila contra a árvore já construída -> drivers_mts/build/mts.ko
-sudo ../outros/scripts/build_mts_module.sh
+sudo ../../outros/scripts/build_mts_module.sh
 
 # push via SSH (root/ps4 em 192.168.6.128, rede WiFi) + insmod stage=4
-../outros/scripts/deploy_mts.sh push
+../../outros/scripts/deploy_mts.sh push
 
 # configura eth0 192.168.0.2, ping -I eth0 192.168.0.1, coleta dmesg + mts_regs
-../outros/scripts/deploy_mts.sh test
+../../outros/scripts/deploy_mts.sh test
 ```
 
 `01-build-image-7.0.sh` também sobrescreve o `mts.ko` do rootfs com
@@ -292,7 +292,7 @@ integral está no histórico do git). Resumo:
 
 O histórico narrativo completo (o que valeu, o que foi refutado, por quê) está em
 [`TESTES_HISTORICO.md`](TESTES_HISTORICO.md). A fonte estruturada é a tabela
-`test_history` do `../outros/rea/ps4_hardware_memory.db`
+`test_history` do `../../outros/rea/ps4_hardware_memory.db`
 (consulta útil: `SELECT id, timestamp, phase, test_name, status FROM test_history
 WHERE lower(phase||test_name) LIKE '%gbe%' OR lower(phase||test_name) LIKE '%mts%'`).
 
@@ -347,8 +347,8 @@ WHERE lower(phase||test_name) LIKE '%gbe%' OR lower(phase||test_name) LIKE '%mts
 
 | Documento | Conteúdo |
 |---|---|
-| [`../outros/rea/decompiled/INDEX.md`](../outros/rea/decompiled/INDEX.md) | catálogo de funções decompiladas (consultar antes de pedir RE nova) |
-| [`../outros/rea/ps4_hardware_memory.db`](../outros/rea/ps4_hardware_memory.db) | `bar0_register_map`, `test_history`, `decompiled_functions` |
-| [`../outros/scripts/build_mts_module.sh`](../outros/scripts/build_mts_module.sh) · [`deploy_mts.sh`](../outros/scripts/deploy_mts.sh) | build out-of-tree e deploy por SSH |
+| [`../../outros/rea/decompiled/INDEX.md`](../../outros/rea/decompiled/INDEX.md) | catálogo de funções decompiladas (consultar antes de pedir RE nova) |
+| [`../../outros/rea/ps4_hardware_memory.db`](../../outros/rea/ps4_hardware_memory.db) | `bar0_register_map`, `test_history`, `decompiled_functions` |
+| [`../../outros/scripts/build_mts_module.sh`](../../outros/scripts/build_mts_module.sh) · [`deploy_mts.sh`](../../outros/scripts/deploy_mts.sh) | build out-of-tree e deploy por SSH |
 | [`../patches/mts-baikal-gbe-driver.patch`](../patches/mts-baikal-gbe-driver.patch) | patch in-tree (duplicata — ver §3) |
 | [`../00-build-kernel-7.0.sh`](../00-build-kernel-7.0.sh) | build oficial (copia `drivers_mts/` para a árvore) |
