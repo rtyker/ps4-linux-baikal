@@ -1,6 +1,6 @@
 # Backlog do Projeto — Fonte Única de Pendências
 
-**Última atualização:** 2026-11-12 (CIFS concluído com autenticação Samba real — opção (b); seção "Hardware — pendentes" com 7 tarefas; Baikal Memory (00:14.6) Fase 1 concluída: BARs confirmados ao vivo (BAR5 com tabela estruturada, BAR2 com 256 MB real no Slim), strings `Baikal Scratch Pad Memory`/`SceDdr3Swap` encontradas no kernel Orbis; documentos `ACHADOS_MEMORIA_BAIKAL_FASE1.md` e `PLANO_DRIVER_MEMORIA_BAIKAL.md` criados; referência ao levantamento completo em LEVANTAMENTO_HARDWARE_PS4_BAIKAL.md e STATUS_DRIVERS_PS4_BAIKAL.md)
+**Última atualização:** 2026-11-12 (CIFS concluído com autenticação Samba real — opção (b); seção Hardware com 7 tarefas; Baikal Memory (00:14.6) Fases 1 e 2 concluídas: BARs confirmados ao vivo (BAR5 com tabela estruturada, 256 MB real no Slim), strings do kernel Orbis encontradas (Baikal Scratch Pad Memory, spm_pci, SceDdr3Swap, icc_query, etc.), documentos ACHADOS_MEMORIA_BAIKAL_FASE1.md e FASE2.md criados; kernel Orbis é FreeBSD-based — driver Linux precisa ser desenvolvido do zero)
 
 > ℹ️ **Como ler este arquivo:** itens `[x]` fechados guardam o histórico da solução; itens dentro de
 > `<details>` com o título "Histórico da investigação" são **registro do que foi refutado**, não
@@ -822,21 +822,30 @@ Itens abaixo são exclusivamente de hardware/driver. Para cada componente sem dr
 
 ---
 
-### [~] 💾 Baikal Memory (00:14.6) — investigação em andamento (Fase 1 concluída)
+### [~] 💾 Baikal Memory (00:14.6) — investigação em andamento (Fases 1 e 2 concluídas)
 
 **Estado:** dispositivo presente (`104d:90dd`), BARs confirmados ao vivo:
 - BAR0 0xcc000000 (4 KiB): todo 0xFF (não mapeado)
 - BAR2 0x80000000–0xbfffffff (1 GiB endereçado, 256 MB real no Slim): zeros até 256MB, depois 0xFF
 - BAR4 0xcd000000 (1 MiB): todo 0x00
-- BAR5 0xcd400000 (256 KiB): tabela estruturada com dados (padrões repetitivos `da9b/d49b`, `8413/8813/8c13`, `8013 0d00`)
+- BAR5 0xcd400000 (256 KiB): tabela estruturada com dados (padrões repetitivos)
 
-Strings encontradas no kernel Orbis (kmem_dump_1252.bin): `Baikal Scratch Pad Memory`, `spm_pci`, `pci/spm`, `SceDdr3Swap`, `ddr3swap_state`, `failed to call bootparam_get_ddr3_capacity`.
+**Fase 1 concluída:** mapeamento ao vivo validado.
+**Fase 2 concluída:** análise de strings do kernel Orbis (kmem_dump_1252.bin) revelou:
+- `Baikal Scratch Pad Memory`, `spm_pci`, `pci/spm`, `SceDdr3Swap`
+- `Baikal DDR3 memory`, `baikal_dmac_pci`, `baikal_get_intr_vector`
+- `bootparam_get_ddr3_capacity`, `invalid ddr3_size %#x`
+- `icc_query`, `icc_device_power`, `icc_power_shutdown`, `icc_nvs`
+- ⚠️ Kernel Orbis é **FreeBSD-based** — driver Linux precisa ser desenvolvido do zero
 
-**Fase 1 concluída:** mapeamento ao vivo validado. Dados salvos em `outros/docs/ACHADOS_MEMORIA_BAIKAL_FASE1.md` + arquivos binários em `/tmp/baikal_bar5.bin` e `/tmp/baikal_bar0_correto.bin`.
+Dados salvos em:
+- `outros/docs/ACHADOS_MEMORIA_BAIKAL_FASE1.md` (Fase 1 — BARs)
+- `outros/docs/ACHADOS_MEMORIA_BAIKAL_FASE2.md` (Fase 2 — strings do kernel Orbis)
+- Arquivos binários em `/tmp/baikal_bar5.bin` e `/tmp/baikal_bar0_correto.bin`
 
 **Tarefa:** desenvolver driver `baikal-memory` para exposição da memória SPM/DDR3 do Baikal, possivelmente como memregion ou dispositivo de memória gerenciável.
 
-**Documentos:** `outros/docs/ACHADOS_MEMORIA_BAIKAL_FASE1.md`, `outros/docs/PLANO_DRIVER_MEMORIA_BAIKAL.md`, `outros/rea/decompiled/baikal_pcie_attach.txt`, `outros/rea/scans/kernel_hardware_info.txt`
+**Documentos:** `outros/docs/ACHADOS_MEMORIA_BAIKAL_FASE1.md`, `outros/docs/ACHADOS_MEMORIA_BAIKAL_FASE2.md`, `outros/docs/PLANO_DRIVER_MEMORIA_BAIKAL.md`, `outros/rea/decompiled/baikal_pcie_attach.txt`, `outros/rea/scans/kernel_hardware_info.txt`
 
 ---
 
