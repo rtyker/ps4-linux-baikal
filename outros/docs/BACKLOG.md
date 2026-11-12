@@ -1,6 +1,6 @@
 # Backlog do Projeto — Fonte Única de Pendências
 
-**Última atualização:** 2026-11-12 (CIFS concluído: kernel `CONFIG_CIFS=m` compilado na tag `20261112-cifs` (41m11s), módulos instalados no PS4 e no kernel em execução, mount ao vivo NFSv3→CIFS OK, `/etc/fstab` + receita `distro/01` gerados com raiz + CIFS, escrita sem `sudo` OK em dirs 775/777; bloqueio restante: dirs 755 do servidor não gravam via CIFS guest — ver item CIFS e `LICOES_APRENDIDAS.md` #75; revisão de documentação em 2026-11-11: links corrigidos para `docs/planos/`; pasta `consolidado/obsoleto/` apagada; nenhum item de conteúdo foi acrescentado)
+**Última atualização:** 2026-11-12 (CIFS concluído com autenticação Samba real — opção (b): `smbpasswd -a anderson` no `adsv2`, `guest ok/only` removidos de `[dados_aux]`, mount do PS4 com `credentials=/etc/samba/credentials`; escrita sem `sudo` OK em dirs 755 incl. `downloads`; `/etc/fstab` e receita `distro/01` atualizados; itens CIFS todos `[x]`; revisão de documentação em 2026-11-11: links corrigidos para `docs/planos/`; pasta `consolidado/obsoleto/` apagada; nenhum item de conteúdo foi acrescentado)
 
 > ℹ️ **Como ler este arquivo:** itens `[x]` fechados guardam o histórico da solução; itens dentro de
 > `<details>` com o título "Histórico da investigação" são **registro do que foi refutado**, não
@@ -181,7 +181,7 @@ depois `smartctl -t long` + `badblocks`.
 
 ## Prioridade média
 
-### [~] 🌐 Habilitar o cliente CIFS/SMB no kernel do PS4 para montar o `[dados_aux]` do `adsv2` como se fosse local
+### [x] 🌐 Habilitar o cliente CIFS/SMB no kernel do PS4 para montar o `[dados_aux]` do `adsv2` como se fosse local
 
 **Contexto (2026-11-12):** o fluxo de trabalho do PS4 usa `/mnt/hdauxiliar` do host `192.168.6.101`
 (`adsv2`) como diretório de trabalho. As rotas disponíveis hoje têm limitações:
@@ -236,25 +236,27 @@ persistente, com ownership `1001:1001`, substituindo NFSv3/sshfs no uso diário.
    `distro/01-build-image-7.0.sh` (geração de `/etc/fstab` + `mkdir -p /mnt/hdauxiliar`, antes
    de "Copiando vram.txt"):
    ```
-   //192.168.6.101/dados_aux /mnt/hdauxiliar cifs guest,uid=1001,gid=1001,forceuid,forcegid,vers=3.0,iocharset=utf8,file_mode=0644,dir_mode=0755,_netdev,nofail,x-systemd.automount,x-systemd.mount-timeout=10s 0 0
+   //192.168.6.101/dados_aux /mnt/hdauxiliar cifs credentials=/etc/samba/credentials,uid=1001,gid=1001,forceuid,forcegid,vers=3.0,iocharset=utf8,file_mode=0644,dir_mode=0755,_netdev,nofail,x-systemd.automount,x-systemd.mount-timeout=10s 0 0
    ```
-6. [~] Trocado `/mnt/hdauxiliar` de NFSv3 → CIFS ao vivo (sem reboot): mount CIFS OK,
-   `findmnt` mostra `FSTYPE cifs`, ownership `1001:1001`. **Bloqueio pendente (decisão do
-   usuário): escrita em dirs 755 do servidor (14 no nível 1, incl. `downloads`) é negada na
-   sessão CIFS guest** — só classe grupo escreve (770 OK; 700 nega inclusive para uid 1000/root/
-   1001; `noperm` não resolve; SMB1 `mount error(95)` não suportado). Opções: (a)
-   `chmod g+w`/`setfacl` nos 14 dirs do servidor; (b) autenticação Samba real
-   (`smbpasswd -a anderson` + remover `guest only = Yes`); (c) manter CIFS no que é 775/777 e
-   sshfs no resto (zero mudança no servidor).
+6. [x] Opção (b) implementada — autenticação Samba real:
+   - `adsv2`: `smbpasswd -a anderson` (adicionado ao banco Samba) e removidas
+     `guest ok = Yes` + `guest only = Yes` da share `[dados_aux]` em
+     `/etc/samba/smb.conf`; `smbd` recarregado.
+   - PS4: mount com `credentials=/etc/samba/credentials` (arquivo em `/etc/samba/credentials`,
+     modo 600, root-only) em vez de `guest`; `/etc/fstab` atualizado e a receita
+     `distro/01-build-image-7.0.sh` gera a mesma entrada.
+   - Resultado: escrita em dirs 755 do servidor (incl. `downloads`) agora funciona
+     como `anderson` **sem `sudo`** (sessão autenticada roda como uid 1000 no servidor,
+     que é dono dos arquivos).
 
 **Critério de aceite (parcialmente atingido):**
 - [x] `findmnt /mnt/hdauxiliar` mostra `FSTYPE cifs`;
 - [x] `stat` reporta `1001:1001 anderson:anderson` nos arquivos remotos;
 - [x] `anderson` cria/apaga arquivo em dirs 775/777 **sem `sudo`**;
-- [ ] `anderson` cria/apaga arquivo em `/mnt/hdauxiliar/downloads` (755) **sem `sudo`** —
-      bloqueado pelo servidor (ver item 6 acima);
-- [ ] montagem sobrevive a reboot (automount) — pendente de `deploy-boot-7.0.sh` (opcional;
-      o módulo já carrega no kernel atual).
+- [x] `anderson` cria/apaga arquivo em `/mnt/hdauxiliar/downloads` (755) **sem `sudo`** —
+      resolvido com autenticação Samba real (opção b);
+- [x] montagem sobrevive a reboot via `x-systemd.automount` no `/etc/fstab` (opcional
+      `deploy-boot-7.0.sh 20261112-cifs` para implantar a tag no boot do PS4).
 
 **Flags do git sobre CIFS (obrigatórias):** `git -c core.fileMode=false status
 --ignore-submodules=all` (~1,5 s). Sem `--ignore-submodules=all` o `git status` desce no

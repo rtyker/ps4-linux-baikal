@@ -540,6 +540,13 @@ git -c core.fileMode=false status --ignore-submodules=all   # ~1,5 s
 
 **Estado final (2026-11-12):** kernel 7.0 com `CONFIG_CIFS=m` compilado (tag `20261112-cifs`, 41m11s), módulos instalados no rootfs e no kernel em execução, `/etc/fstab` do PS4 e da receita `distro/01-build-image-7.0.sh` gerados com raiz + CIFS, mount ao vivo NFSv3→CIFS OK, escrita sem `sudo` OK em dirs 775/777. Pendente: dirs 755 (item 1 acima) e `deploy-boot-7.0.sh` para sobrevivência a reboot (opcional; o módulo já carrega hoje).
 
+**Resolução dos dirs 755 — opção (b) implementada (2026-11-12):** autenticação Samba real
+(`smbpasswd -a anderson` no servidor + remoção de `guest ok/only = Yes` de `[dados_aux]`;
+mount do PS4 com `credentials=/etc/samba/credentials`). Sessão autenticada roda como uid 1000
+no servidor (dono dos arquivos), então escrita em dirs 755 (incl. `downloads`) funciona como
+`anderson` sem `sudo`. Pendente apenas: `deploy-boot-7.0.sh 20261112-cifs` para implantar a
+tag no boot do PS4 (opcional — o módulo já carrega no kernel atual).
+
 
 
 

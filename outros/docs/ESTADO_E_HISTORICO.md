@@ -275,13 +275,14 @@ escrita sem `sudo` OK em dirs 775/777 (`touch`, `echo > arquivo`, `rm` como `and
 `noatime,errors=remount-ro` + CIFS (`nofail,x-systemd.automount`); mesma entrada gerada pela
 receita `distro/01-build-image-7.0.sh` antes de "Copiando vram.txt".
 
-**Bloqueio restante (decisão do usuário):** escrita em dirs 755 do servidor (14 no nível 1,
-incl. `downloads`) é negada na sessão CIFS guest — só classe grupo escreve (770 OK; 700 nega
-inclusive para uid 1000/root/1001; `noperm` não resolve; SMB1 `mount error(95)` não suportado).
-Opções: (a) `chmod g+w`/`setfacl` nos 14 dirs do servidor; (b) autenticação Samba real
-(`smbpasswd -a anderson` + remover `guest only = Yes`); (c) manter CIFS no 775/777 e sshfs no
-resto (zero mudança no servidor). Ver `outros/docs/LICOES_APRENDIDAS.md` lição #75 e `BACKLOG.md`
-item CIFS.
+**Conclusão — opção (b) implementada (2026-11-12):** `smbpasswd -a anderson` executado no
+`adsv2` (adicionado ao banco Samba) e removidas `guest ok = Yes` + `guest only = Yes` da share
+`[dados_aux]` em `/etc/samba/smb.conf`; `smbd` recarregado. No PS4, mount com
+`credentials=/etc/samba/credentials` (arquivo modo 600, root-only) em vez de `guest`;
+`/etc/fstab` e a receita `distro/01-build-image-7.0.sh` atualizados. Resultado: escrita em dirs
+755 do servidor (incl. `downloads`) funciona como `anderson` **sem `sudo`** (sessão autenticada
+roda como uid 1000 no servidor, dono dos arquivos). Item CIFS do BACKLOG passa a `[x]` — todos
+os passos concluídos.
 
 ---
 

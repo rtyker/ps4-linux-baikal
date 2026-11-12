@@ -691,7 +691,7 @@ echo "=== Gerando /etc/fstab (raiz + share CIFS do adsv2) ==="
 #    Ver outros/docs/BACKLOG.md, item "Habilitar o cliente CIFS/SMB".
 cat > "$ROOTFS_DIR/etc/fstab" << 'FSTABEOF'
 LABEL=psxitarch  /               ext4  rw,noatime,errors=remount-ro  0 1
-//192.168.6.101/dados_aux  /mnt/hdauxiliar  cifs  guest,uid=1001,gid=1001,forceuid,forcegid,vers=3.0,iocharset=utf8,file_mode=0644,dir_mode=0755,_netdev,nofail,x-systemd.automount,x-systemd.mount-timeout=10s  0 0
+//192.168.6.101/dados_aux  /mnt/hdauxiliar  cifs  credentials=/etc/samba/credentials,uid=1001,gid=1001,forceuid,forcegid,vers=3.0,iocharset=utf8,file_mode=0644,dir_mode=0755,_netdev,nofail,x-systemd.automount,x-systemd.mount-timeout=10s  0 0
 FSTABEOF
 mkdir -p "$ROOTFS_DIR/mnt/hdauxiliar"
 
