@@ -1,6 +1,6 @@
 # Backlog do Projeto — Fonte Única de Pendências
 
-**Última atualização:** 2026-11-12 (CIFS em andamento: config adicionada ao build e kernel compilando com `CONFIG_CIFS=m`; revisão de documentação em 2026-11-11: links corrigidos para o layout atual do repositório — `docs/planos/`; pasta `consolidado/obsoleto/` apagada; nenhum item de conteúdo foi acrescentado)
+**Última atualização:** 2026-11-12 (CIFS concluído: kernel `CONFIG_CIFS=m` compilado na tag `20261112-cifs` (41m11s), módulos instalados no PS4 e no kernel em execução, mount ao vivo NFSv3→CIFS OK, `/etc/fstab` + receita `distro/01` gerados com raiz + CIFS, escrita sem `sudo` OK em dirs 775/777; bloqueio restante: dirs 755 do servidor não gravam via CIFS guest — ver item CIFS e `LICOES_APRENDIDAS.md` #75; revisão de documentação em 2026-11-11: links corrigidos para `docs/planos/`; pasta `consolidado/obsoleto/` apagada; nenhum item de conteúdo foi acrescentado)
 
 > ℹ️ **Como ler este arquivo:** itens `[x]` fechados guardam o histórico da solução; itens dentro de
 > `<details>` com o título "Histórico da investigação" são **registro do que foi refutado**, não
@@ -203,7 +203,7 @@ por isso a rota CIFS foi descartada na sessão de 2026-11-12 e caiu-se no NFSv3/
 **Objetivo:** habilitar o cliente CIFS no kernel do projeto e montar o `[dados_aux]` de forma
 persistente, com ownership `1001:1001`, substituindo NFSv3/sshfs no uso diário.
 
-**Em andamento (2026-11-12):**
+**Resultados (2026-11-12):**
 1. [x] Config adicionada ao `kernel/00-build-kernel-7.0.sh` (bloco `scripts/config`, logo após
    "Async I/O"). Decisão: **`CONFIG_CIFS=m` (módulo), não `=y`** — o `bzImage` atual já tem
    **~16 MiB** (acima do aviso de ~10 MB de alguns loaders kexec do PS4) e o
@@ -218,36 +218,50 @@ persistente, com ownership `1001:1001`, substituindo NFSv3/sshfs no uso diário.
    scripts/config --enable CONFIG_CIFS_POSIX   # extensões POSIX: modo/ACL
    ```
    (`CONFIG_CIFS` é `tristate` e puxa `INET`, `NLS`, `KEYS`, `DNS_RESOLVER`, `NETFS_SUPPORT`.)
-2. [ ] Compilar no `adsv2` (o PS4 não tem toolchain) com TAG `20261112-cifs` e validar o
-   `.config` publicado (`grep CONFIG_CIFS distro/boot_referencia/config-7.0-20261112-cifs` deve
-   mostrar `CONFIG_CIFS=m`) e a existência de `cifs.ko`.
-3. [ ] Testar ao vivo **sem reboot**: copiar `cifs.ko` para
-   `/lib/modules/7.0.8-Strawberry-ThinLTO-Baikal-+/kernel/fs/smb/client/`, `depmod -a`,
-   `modprobe cifs` e montar num ponto separado (`/mnt/cifs-test`) antes de tocar no
-   `/mnt/hdauxiliar` em uso:
-   ```sh
-   sudo mount -t cifs //192.168.6.101/dados_aux /mnt/cifs-test \
-     -o guest,uid=1001,gid=1001,forceuid,forcegid,vers=3.0,iocharset=utf8
+2. [x] Compilado no `adsv2` com TAG `20261112-cifs` em **41m11s**, sem erros: `bzImage` 16M,
+   `config` 137K, `cifs.ko` 32M (árvore) / 1,1M (rootfs), `netfs.ko`, `cifs_md4.ko`,
+   `nls_ucs2_utils.ko`. `vermagic=7.0.8-Strawberry-ThinLTO-Baikal-+ SMP preempt mod_unload`.
+   `.config` publicado com `CONFIG_CIFS=m`, `CONFIG_CIFS_XATTR=y`, `CONFIG_CIFS_POSIX=y`,
+   `CONFIG_SMBFS=m`, `CONFIG_NETFS_SUPPORT=m`, `CONFIG_NLS=y`. Snapshot salvo em
+   `kernel/snapshots/kernel-src-20261112-20261112-cifs.tar.zst` (559M).
+3. [x] Teste ao vivo **sem reboot** (2026-11-12 ~12:00): 4 módulos copiados para
+   `/lib/modules/7.0.8-Strawberry-ThinLTO-Baikal-+/`, `depmod -a`, `modprobe cifs` OK,
+   `/proc/filesystems` lista `cifs`. Mount em `/mnt/cifs-test` OK, `stat` reporta
+   `1001:1001 anderson:anderson`, escrita sem `sudo` em `ps4-linux-baikal/` (775).
+4. [x] Rootfs rebuilad em container Arch (`distro/scripts/build-image-docker.sh 20261112-cifs
+   --incremental`): `cifs.ko` + dependências em
+   `arch_build_7.0/rootfs/lib/modules/7.0.8-Strawberry-ThinLTO-Baikal-+/kernel/fs/smb/client/`,
+   initramfs + bootargs da tag gerados em `distro/boot_referencia/`.
+5. [x] Persistido no `/etc/fstab` do PS4 (backup em `/tmp/fstab.bak-*`) **e na receita de build**
+   `distro/01-build-image-7.0.sh` (geração de `/etc/fstab` + `mkdir -p /mnt/hdauxiliar`, antes
+   de "Copiando vram.txt"):
    ```
-4. [ ] Rebuildar o rootfs (`distro/scripts/build-image-docker.sh 20261112-cifs --incremental`,
-   container Arch no `adsv2`) para o `cifs.ko` entrar em `/lib/modules` e o initramfs/bootargs da
-   tag existirem; depois `distro/deploy-boot-7.0.sh 20261112-cifs`.
-5. [ ] Se funcionar, persistir no `/etc/fstab` **e na receita de build**
-   (`distro/01-build-image-7.0.sh` — o sistema é um ambiente em desenvolvimento, então a
-   configuração não pode ficar só na máquina viva):
+   //192.168.6.101/dados_aux /mnt/hdauxiliar cifs guest,uid=1001,gid=1001,forceuid,forcegid,vers=3.0,iocharset=utf8,file_mode=0644,dir_mode=0755,_netdev,nofail,x-systemd.automount,x-systemd.mount-timeout=10s 0 0
    ```
-   //192.168.6.101/dados_aux /mnt/hdauxiliar cifs guest,uid=1001,gid=1001,forceuid,forcegid,vers=3.0,iocharset=utf8,_netdev,nofail,x-systemd.automount,x-systemd.mount-timeout=10s 0 0
-   ```
-6. [ ] Medir a diferença prática de desempenho/metadados contra o NFSv3 e decidir se o NFS sai
-   do `/etc/fstab`/receita.
+6. [~] Trocado `/mnt/hdauxiliar` de NFSv3 → CIFS ao vivo (sem reboot): mount CIFS OK,
+   `findmnt` mostra `FSTYPE cifs`, ownership `1001:1001`. **Bloqueio pendente (decisão do
+   usuário): escrita em dirs 755 do servidor (14 no nível 1, incl. `downloads`) é negada na
+   sessão CIFS guest** — só classe grupo escreve (770 OK; 700 nega inclusive para uid 1000/root/
+   1001; `noperm` não resolve; SMB1 `mount error(95)` não suportado). Opções: (a)
+   `chmod g+w`/`setfacl` nos 14 dirs do servidor; (b) autenticação Samba real
+   (`smbpasswd -a anderson` + remover `guest only = Yes`); (c) manter CIFS no que é 775/777 e
+   sshfs no resto (zero mudança no servidor).
 
-**Critério de aceite:**
-- `findmnt /mnt/hdauxiliar` mostra `FSTYPE cifs` (não `nfs`/`fuse.sshfs`);
-- `stat -c '%u:%g %U:%G %A %n'` reporta `1001:1001 anderson:anderson` nos arquivos remotos;
-- `anderson` cria e apaga arquivo em `/mnt/hdauxiliar/downloads` (755) **sem `sudo`**;
-- montagem sobrevive a reboot (automount) sem depender de `sshfs`/`bindfs`.
+**Critério de aceite (parcialmente atingido):**
+- [x] `findmnt /mnt/hdauxiliar` mostra `FSTYPE cifs`;
+- [x] `stat` reporta `1001:1001 anderson:anderson` nos arquivos remotos;
+- [x] `anderson` cria/apaga arquivo em dirs 775/777 **sem `sudo`**;
+- [ ] `anderson` cria/apaga arquivo em `/mnt/hdauxiliar/downloads` (755) **sem `sudo`** —
+      bloqueado pelo servidor (ver item 6 acima);
+- [ ] montagem sobrevive a reboot (automount) — pendente de `deploy-boot-7.0.sh` (opcional;
+      o módulo já carrega no kernel atual).
 
-**Fallback documentado até o kernel ter CIFS:** NFSv3
+**Flags do git sobre CIFS (obrigatórias):** `git -c core.fileMode=false status
+--ignore-submodules=all` (~1,5 s). Sem `--ignore-submodules=all` o `git status` desce no
+gitlink `kernel/kernel_build_7.0` e trava >90 s. `core.fileMode=false` evita falsos
+"mode change 100755 => 100644" nos 32 arquivos rastreados com bit executável.
+
+**Fallback documentado até resolver os dirs 755:** NFSv3
 (`vers=3,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2`) para leitura e `sshfs` com
 `uid=1001,gid=1001` para escrita com UID correto. Nenhum dos dois altera o servidor.
 

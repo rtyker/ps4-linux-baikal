@@ -510,6 +510,36 @@ Durante diagnóstico e testes de serviços no microcontrolador Syscon/EMC do PS4
 3. **Aplicação Futura:** Este comando pode ser utilizado intencionalmente por drivers ou utilitários para realizar o reboot limpo por software do PS4 quando a reinicialização padrão via ACPI/Kexec não for suficiente (ex: reset do barramento PCIe/EMC).
 4. **Registro em Banco:** Registrado na tabela `hardware_registers` (`ICC_CMD_SYSCON_HARD_RESET`) e `test_history` no `rea/ps4_hardware_memory.db`.
 
+---
+
+## Lição Aprendida #75 (2026-11-12) — CIFS: sessão guest só recebe classe "grupo"; git sobre CIFS exige flags
+
+**Contexto:** montar o share `[dados_aux]` do `adsv2` (`/mnt/hdauxiliar`) no PS4 via CIFS com `guest,uid=1001,gid=1001,forceuid,forcegid`, substituindo NFSv3 (que não mapeia UID e trava o `anderson` local em pastas 755).
+
+### 1. Escrita em pastas 755 é negada no servidor — independentemente do UID do cliente
+Sessão CIFS com `guest ok=Yes` + `force user=anderson`: o `smbd` mostra o cliente como `anderson` (1000:1000) e escreve localmente como tal, **mas a checagem de permissão SMB honra só a classe "grupo"** (outros/dono são ignorados na prática):
+- `drwxr-xr-x` (755, dono `anderson`) → `touch` NEGADO, inclusive para uid 1000/root/1001;
+- `drwxrwx---` (770, grupo `anderson`) → `touch` OK;
+- `drwxrwxrwx` (777) → `touch` OK.
+`noperm` no cliente **não** resolve (a negação é do servidor). SMB1 não é suportado (`mount error(95)`).
+
+**Consequência:** CIFS guest grava em pastas 775/777 do share (15 no nível 1) mas **não em 755** (14, incl. `downloads`). Opções em aberto (decidir com o usuário):
+- (a) `chmod g+w`/`setfacl` nos 14 dirs 755 do servidor;
+- (b) autenticação Samba real (`smbpasswd -a anderson` + remover `guest only = Yes` de `[dados_aux]`);
+- (c) manter CIFS no que é 775/777 e sshfs no resto (zero mudança no servidor).
+
+### 2. `mount.cifs` regride modos no cliente (arquivos 644, pastas 755)
+Com `file_mode=0644,dir_mode=0755,nounix`, arquivos criados aparecem 644 no cliente (server-side 766) e pastas 755 (server-side 777). Isso **remove o bit de execução** dos arquivos do repositório (32 rastreados com 100755) — aceitável para o fluxo de trabalho, mas exige `git -c core.fileMode=false`.
+
+### 3. `git` sobre CIFS trava sem flags (~>90 s)
+O `git status` desce no gitlink `kernel/kernel_build_7.0` (≈100 k arquivos) e trava. Workaround obrigatório:
+```
+git -c core.fileMode=false status --ignore-submodules=all   # ~1,5 s
+```
+`--ignore-submodules=all` é o que corta a travessia do gitlink; `core.fileMode=false` evita falsos "mode change 100755 => 100644".
+
+**Estado final (2026-11-12):** kernel 7.0 com `CONFIG_CIFS=m` compilado (tag `20261112-cifs`, 41m11s), módulos instalados no rootfs e no kernel em execução, `/etc/fstab` do PS4 e da receita `distro/01-build-image-7.0.sh` gerados com raiz + CIFS, mount ao vivo NFSv3→CIFS OK, escrita sem `sudo` OK em dirs 775/777. Pendente: dirs 755 (item 1 acima) e `deploy-boot-7.0.sh` para sobrevivência a reboot (opcional; o módulo já carrega hoje).
+
 
 
 

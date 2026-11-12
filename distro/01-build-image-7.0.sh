@@ -681,6 +681,20 @@ cat > "$BOOTARGS_OUT" << 'CMDLINEEOF'
 panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0 drm.debug=0x06 earlycon=uart8250,mmio32,0xC890E000 console=uart8250,mmio32,0xC890E000 console=tty0 keep_bootcon earlyprintk=efi,keep loglevel=8 root=LABEL=psxitarch rw rootwait systemd.unified_cgroup_hierarchy=0 systemd.legacy_systemd_cgroup_controller=yes audit=0 amdgpu.audio=1 usbcore.autosuspend=-1 video=HDMI-A-1:1920x1080@60 mitigations=off zswap.enabled=1 log_buf_len=4M libata.force=1.00:3.0Gbps,noncq ahci.mobile_lpm_policy=1 netconsole=@192.168.0.2/eth0,6666@192.168.0.1/ff:ff:ff:ff:ff:ff
 CMDLINEEOF
 
+echo "=== Gerando /etc/fstab (raiz + share CIFS do adsv2) ==="
+# O build nunca gerava /etc/fstab (a raiz monta por root=LABEL no cmdline). As duas
+# entradas abaixo tiram a configuracao da maquina viva:
+#  - raiz: noatime (menos escrita no SSD via bridge USB) e errors=remount-ro (o SSD
+#    do PS4 esta falhando; ver BACKLOG, P0);
+#  - CIFS: share [dados_aux] do adsv2 com uid/gid 1001 (usuario local anderson).
+#    nofail + x-systemd.automount: sem rede o boot nao trava, monta no 1o acesso.
+#    Ver outros/docs/BACKLOG.md, item "Habilitar o cliente CIFS/SMB".
+cat > "$ROOTFS_DIR/etc/fstab" << 'FSTABEOF'
+LABEL=psxitarch  /               ext4  rw,noatime,errors=remount-ro  0 1
+//192.168.6.101/dados_aux  /mnt/hdauxiliar  cifs  guest,uid=1001,gid=1001,forceuid,forcegid,vers=3.0,iocharset=utf8,file_mode=0644,dir_mode=0755,_netdev,nofail,x-systemd.automount,x-systemd.mount-timeout=10s  0 0
+FSTABEOF
+mkdir -p "$ROOTFS_DIR/mnt/hdauxiliar"
+
 echo "=== Copiando vram.txt ==="
 if [ ! -f "$BOOT_DIR/vram.txt" ]; then
   echo "1024" > "$BOOT_DIR/vram.txt"

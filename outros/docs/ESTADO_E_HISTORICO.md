@@ -239,6 +239,50 @@ Arch não lê `.bashrc`, então nesse caso usar `bash -l -c` ou o caminho comple
 console=uart8250,mmio32,0xC890E000 console=tty0`,
 `netconsole=@192.168.0.2/eth0,6666@192.168.0.1/ff:ff:ff:ff:ff:ff`.
 
+**CIFS no kernel — concluído (parcialmente) (2026-11-12):** o share `[dados_aux]` do `adsv2`
+(`/mnt/hdauxiliar`) é usado como diretório de trabalho do PS4; o kernel 7.0 estava com
+`# CONFIG_CIFS is not set`. Adicionado ao bloco `scripts/config` de
+`kernel/00-build-kernel-7.0.sh` (logo após "Async I/O"):
+
+```sh
+scripts/config --module CONFIG_CIFS
+scripts/config --enable CONFIG_CIFS_XATTR   # xattrs (Samba)
+scripts/config --enable CONFIG_CIFS_POSIX   # extensões POSIX: modo/ACL
+```
+
+Decisão: **módulo (`=m`), não built-in** — o `bzImage` já tem ~16 MiB e o
+`distro/01-build-image-7.0.sh:~431` roda `modules_install` no rootfs. Como
+`CONFIG_MODVERSIONS` e `CONFIG_MODULE_SIG` estão desligados, o `cifs.ko` do build carrega também
+no kernel **já em execução** (mesma `UTS_RELEASE`), permitindo validar o mount antes de reiniciar.
+`.config` publicado com `CONFIG_CIFS=m`, `CONFIG_CIFS_XATTR=y`, `CONFIG_CIFS_POSIX=y`,
+`CONFIG_SMBFS=m`, `CONFIG_NETFS_SUPPORT=m`, `CONFIG_NLS=y`.
+
+Build no `adsv2` (TAG `20261112-cifs`) concluído em **41m11s**, sem erros:
+`bzImage` 16M, `config` 137K, `cifs.ko` 32M (árvore) / 1,1M (rootfs), `netfs.ko`,
+`cifs_md4.ko`, `nls_ucs2_utils.ko`; snapshot salvo em
+`kernel/snapshots/kernel-src-20261112-20261112-cifs.tar.zst` (559M).
+`distro/scripts/build-image-docker.sh 20261112-cifs --incremental` rebuilidou o rootfs:
+`cifs.ko` + deps em
+`arch_build_7.0/rootfs/lib/modules/7.0.8-Strawberry-ThinLTO-Baikal-+/kernel/fs/smb/client/`,
+initramfs + bootargs em `distro/boot_referencia/`.
+
+**Mount ao vivo (sem reboot):** 4 módulos instalados em
+`/lib/modules/7.0.8-Strawberry-ThinLTO-Baikal-+/`, `depmod -a`, `modprobe cifs` OK,
+`/proc/filesystems` lista `cifs`. `/mnt/hdauxiliar` trocado de NFSv3 → CIFS ao vivo;
+`findmnt` mostra `FSTYPE cifs`, `stat` reporta `1001:1001 anderson:anderson`,
+escrita sem `sudo` OK em dirs 775/777 (`touch`, `echo > arquivo`, `rm` como `anderson`).
+`/etc/fstab` do PS4 criado (backup em `/tmp/fstab.bak-*`) com raiz
+`noatime,errors=remount-ro` + CIFS (`nofail,x-systemd.automount`); mesma entrada gerada pela
+receita `distro/01-build-image-7.0.sh` antes de "Copiando vram.txt".
+
+**Bloqueio restante (decisão do usuário):** escrita em dirs 755 do servidor (14 no nível 1,
+incl. `downloads`) é negada na sessão CIFS guest — só classe grupo escreve (770 OK; 700 nega
+inclusive para uid 1000/root/1001; `noperm` não resolve; SMB1 `mount error(95)` não suportado).
+Opções: (a) `chmod g+w`/`setfacl` nos 14 dirs do servidor; (b) autenticação Samba real
+(`smbpasswd -a anderson` + remover `guest only = Yes`); (c) manter CIFS no 775/777 e sshfs no
+resto (zero mudança no servidor). Ver `outros/docs/LICOES_APRENDIDAS.md` lição #75 e `BACKLOG.md`
+item CIFS.
+
 ---
 
 ## Estado Atual do Projeto (Resumo Rápido) — ATUALIZADO 2026-07-23 NOITE (causa raiz RX confirmada: PHY não acorda)
