@@ -36,4 +36,4 @@ Só opera com o controlador ocioso; zera `LEN`/`SRC`/`DST` e confere a releitura
 ## Achados que ficaram aqui
 
 - BAR0 (DMAC1?) entrega MSI; **BAR2 (DMAC2?) não entrega**: investigação pendente no `BACKLOG.md`.
-- Para liberar MSI no teardown use `pci_free_irq_vectors(pdev)`; o `bpcie_free_irqs()` deixou entradas e gerou `WARNING` em `msi_device_data_release`.
+- Há um `WARNING` em `msi_device_data_release` no `rmmod` que **persiste mesmo com `pci_free_irq_vectors(pdev)`**. (Uma versão anterior deste README dizia que essa função o resolvia: estava errada; o `WARN_ON_ONCE` só imprime uma vez por boot e mascarou o resultado.) Ver `BACKLOG.md`.

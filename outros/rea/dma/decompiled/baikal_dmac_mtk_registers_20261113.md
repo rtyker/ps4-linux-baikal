@@ -136,7 +136,7 @@ Harness com `irqmode=1`, `INT = 3`, espera por `completion`.
 - Hipótese **não confirmada**: BAR0 = DMAC1 (subfunção 0), BAR2 = DMAC2 (subfunção 1), pelo `baikal.h`.
 - A causa de o DMAC2 não interromper é desconhecida (demux/glue/ACK em `ps4-bpcie.c:88`, ou um passo de habilitação que o Orbis faz e eu não repliquei). **Pista de RE:** a rotina de attach do `dmac_mtk.c` (strings `Can't allocate IRQ`, `failed to set up interrupt`) mostra como cada controlador obtém a IRQ.
 - Para `pci_alloc_irq_vectors(pdev, 2, 2, PCI_IRQ_MSI)` no `00:14.5`: funciona (IRQs 37 e 38).
-- **Achado no código do projeto:** liberar com `bpcie_free_irqs(irq, 1)` no teardown deixou entradas MSI e gerou `WARNING` em `msi_device_data_release` (`kernel/irq/msi.c:294`) no `rmmod`. `pci_free_irq_vectors(pdev)` direto resolve. Pode ser um bug do ramo alternativo de `bpcie_free_irqs()`.
+- **Achado no código do projeto (causa NÃO resolvida):** no `rmmod` aparece um `WARNING` em `msi_device_data_release` (`kernel/irq/msi.c:294`, `WARN_ON_ONCE`). **Persiste também com `pci_free_irq_vectors(pdev)`**: foi visto no `remove` do driver `baikal-dmac`, no primeiro `rmmod` após o boot. *(Correção: esta linha dizia que `pci_free_irq_vectors()` "resolvia". Estava errada. O `WARN_ON_ONCE` imprime só uma vez por boot, e os testes do harness depois do primeiro aviso rodaram no mesmo boot, então a ausência do aviso não provava nada.)* O lado PCI fica limpo (MSI volta a `Enable-`, IRQ liberada e reutilizada em 3 ciclos). Provável origem: domínio MSI do `bpcie`. Sem efeito funcional observado.
 
 **Ainda NÃO testado:** os dois controladores ao mesmo tempo, `CON` diferente do alinhamento (por ex. `0x40000` com dados alinhados a 4 B), `len=0` e erros induzidos.
 

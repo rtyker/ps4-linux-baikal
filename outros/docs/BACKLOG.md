@@ -857,7 +857,7 @@ de validação, checklist de merge).
 
 ---
 
-### [~] 🔄 Baikal DMA (00:14.5) — hardware validado ao vivo; driver `dmaengine` em desenvolvimento
+### [~] 🔄 Baikal DMA (00:14.5) — driver `dmaengine` `baikal-dmac` v0.1 **validado ao vivo** (dmatest 3000/0 falhas)
 
 **Estado (2026-11-13):** dispositivo `104d:90dc`, dois controladores idênticos: BAR0 `ca000000` (DMAC1?) e BAR2 `ca800000` (DMAC2?), 4K cada, registradores em `+0x70` e `+0x80…+0xac`. **Memcpy por descritor validado nos dois** (cadeia de descritores, até 1 MiB, alinhamentos 4–64 B, ~900 MB/s), via harness `outros/rea/dma/harness/baikal_dmac_test/`. **Interrupção MSI funciona no BAR0 e NÃO chega no BAR2.** Decisão do usuário: o driver começa com IRQ no DMAC1 e **polling no DMAC2**.
 
@@ -865,7 +865,9 @@ de validação, checklist de merge).
 - [x] Driver `dmaengine` escrito (`drivers/dma/baikal-dmac.c`, v0.1): memcpy, 2 canais, `virt-dma`, descritores de 16 B encadeados, endereços de 32 bits e múltiplos de 4 B. Compila sem avisos (inclusive `W=1`). Patch: `kernel/patches/baikal-dmac.patch` (`git apply --check` validado em estado pristino).
 - [x] Integrado ao `00-build-kernel-7.0.sh` (aprovado pelo usuário em 2026-11-13): aplica o patch com `--check` + `exit 1`; liga `CONFIG_DMA_ENGINE=y`, `CONFIG_DMA_VIRTUAL_CHANNELS`, `CONFIG_BAIKAL_DMAC=m`, `CONFIG_DMATEST=m`. **Nota:** `DMA_VIRTUAL_CHANNELS` não tem prompt, então resolve para `m` (derivado do `BAIKAL_DMAC=m`); é um `virt-dma.ko` a carregar antes do driver.
 - [x] Build oficial da tag `20261113-dmaengine` **concluído** (2026-11-13 13:30): `bzImage` 16,1 MB e `config` em `distro/boot_referencia/`; `baikal-dmac.ko`, `virt-dma.ko` e `dmatest.ko` construídos (`vermagic` idêntico ao do PS4); snapshot salvo. Config da tag: `DMA_ENGINE=y`, `DMA_VIRTUAL_CHANNELS=m`, `BAIKAL_DMAC=m`, `DMATEST=m`.
-- [ ] **Deploy da tag no PS4** (falta initramfs da tag, `bootargs` e o power cycle do usuário) e **validação ao vivo**: carregar `virt-dma` → `baikal-dmac`, rodar `dmatest` nos 2 canais e repetir os testes do harness.
+- [x] **Deploy da tag `20261113-dmaengine` no PS4 feito e validado ao vivo (2026-11-13).** `initramfs` e `bootargs` reaproveitados da tag `20261113-baikal-memory-fase5` por cópia explícita; só o kernel mudou. O HD caiu no meio do primeiro deploy (ver `LICOES_APRENDIDAS.md`); o segundo foi conferido relendo o disco.
+- [x] **`baikal-dmac` v0.1 carregou:** `virt-dma` → `baikal-dmac`; `dma0chan0` e `dma0chan1`; IRQ 37 (DMAC1); sem erro. **`dmatest` (padrão do kernel): 3000 testes, 0 falhas**: canal 0 (IRQ) 200/200; canal 1 (polling) 200/200; **dois canais ao mesmo tempo, 4 threads cada**, 2400/2400; buffers de 256 KiB 200/200. 3 ciclos de `rmmod`/`insmod` sem problema (ver "Achado lateral" abaixo para o `WARNING`).
+- [ ] **Falta:** persistir os módulos no rootfs (item "Módulos do rootfs" abaixo), `CON` fora do alinhamento, `len=0`, erro induzido, e a IRQ do DMAC2.
 
 **Documentos:** `outros/rea/dma/plans/PLANO_DRIVER_DMA_BAIKAL.md`, `outros/rea/dma/decompiled/baikal_dmac_mtk_registers_20261113.md`, `outros/rea/dma/scans/dmac_bars_full_20261113.json`. Banco: `test_history` 80–82.
 
@@ -881,7 +883,13 @@ Investigação a fazer, em ordem de custo:
 
 **Enquanto isso:** o canal do DMAC2 conclui por polling (`hrtimer`). Quando resolvido, trocar para IRQ.
 
-**Achado lateral (pendente de decisão):** `bpcie_free_irqs()` deixa entradas MSI e gera `WARNING` em `msi_device_data_release` no `rmmod`; `pci_free_irq_vectors()` direto resolve. Avaliar corrigir o ramo alternativo da função.
+**Achado lateral (causa NÃO resolvida):** no primeiro `rmmod` após o boot aparece um `WARNING` em `msi_device_data_release` (`kernel/irq/msi.c:294`, `WARN_ON_ONCE(!xa_empty(...))`). **Persiste mesmo com `pci_free_irq_vectors()`** no `remove` do driver `baikal-dmac`. *(Correção: uma versão anterior deste item dizia que `pci_free_irq_vectors()` "resolvia". Estava errada: o `WARN_ON_ONCE` só imprime uma vez por boot, e os testes seguintes do harness rodaram no mesmo boot, então a ausência do aviso lá não provava nada.)* Lado PCI limpo: MSI volta a `Enable-`, a IRQ é liberada e reutilizada nos 3 ciclos de recarga, sem vazamento de vetores. Hipótese (não verificada): entradas deixadas pelo domínio MSI customizado do `bpcie` (`ps4-bpcie.c`). Sem impacto funcional observado. Investigar o domínio do `bpcie`.
+
+#### [ ] Módulos do rootfs ficam inválidos quando o kernel é rebuildado (BTF)
+
+Depois do deploy da tag `20261113-dmaengine`, o `rtc-ps4-icc.ko` que está em `/lib/modules/…` no rootfs **não carregou** (`failed to validate module [rtc_ps4_icc] BTF: -22`) e o PS4 ficou **sem `/dev/rtc0`**. O módulo era de um build anterior; o BTF dele não valida contra o do kernel novo. O `baikal_memory.ko` do rootfs carregou normalmente. Mesmo problema que o projeto contorna no `mts.ko` removendo o BTF.
+- **Contorno aplicado (só ao vivo, não persiste):** módulo recompilado fora da árvore, sem BTF (`objcopy --remove-section=.BTF --remove-section=.BTF.base`), carregado com `insmod`; o RTC voltou (`registered as rtc0`, relógio acertado).
+- **Pendente:** persistir no rootfs, atualizando os módulos de `/lib/modules/$(uname -r)/` a cada kernel novo (e/ou removendo o BTF no passo do `01-build-image-7.0.sh`). Alterar o rootfs e o script de build exige decisão do usuário.
 
 ---
 

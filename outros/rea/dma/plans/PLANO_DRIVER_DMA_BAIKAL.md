@@ -38,7 +38,8 @@
 - **Feito:** mapa de registradores e sequência de início de transferência decodificados do `dmac_mtk.c` do Orbis, e **12 registradores lidos em cada BAR** (somente leitura). Detalhes: `outros/rea/dma/decompiled/baikal_dmac_mtk_registers_20261113.md`. Leituras no banco (`readonly_verification`).
 - **Correção:** os registradores ficam em `+0x80…+0xac` de cada BAR (não `0x00–0x1F`/`0xC0–0xDF`). O mapa antigo do `hardware_report.txt` não vale.
 - **ATUALIZAÇÃO (mesmo dia, autorizado pelo usuário): memcpy por descritor FUNCIONA nos dois controladores.** Teste de 256 bytes com buffers próprios (harness `baikal_dmac_test`). Sem glue, clock, `EN` ou reset prévios. Detalhes e o que ainda não foi testado: `baikal_dmac_mtk_registers_20261113.md`. Isso desfaz o "bloqueio" que eu havia registrado: não havia configuração prévia a fazer.
-- **Ainda não feito:** encadeamento de descritores, tamanhos maiores, outros alinhamentos, interrupção/MSI e **o driver `dmaengine`** em si. O harness é de RE, não um driver.
+- **ATUALIZAÇÃO 2 (2026-11-13): o driver `dmaengine` `baikal-dmac` v0.1 existe e foi VALIDADO ao vivo.** Encadeamento, tamanhos até 1 MiB, alinhamentos e MSI (BAR0) já tinham passado no harness. O driver real (`drivers/dma/baikal-dmac.c`, patch `kernel/patches/baikal-dmac.patch`) carregou no kernel da tag `20261113-dmaengine`, registrou `dma0chan0` e `dma0chan1` e passou no `dmatest` do kernel: **3000 testes, 0 falhas** (canal 0 por IRQ, canal 1 por polling, **os dois ao mesmo tempo com 4 threads cada**, e buffers de 256 KiB). O canal do DMAC2 conclui por polling até a IRQ dele ser resolvida (pendente no `BACKLOG.md`).
+- **Ainda não feito:** `CON` diferente do alinhamento, `len=0`, erro induzido, a IRQ do DMAC2, e persistir os módulos no rootfs. O harness continua sendo ferramenta de RE, não driver.
 
 ## 2b. Hipótese que enfraquece o plano (2026-11-13) — substituída pela seção 2a
 
