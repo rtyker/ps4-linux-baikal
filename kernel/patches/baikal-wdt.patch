@@ -1,0 +1,293 @@
+From 5dde01013ba4bda85bd42e5934c29e15565098bd Mon Sep 17 00:00:00 2001
+From: rtyker <rtyker@gmail.com>
+Date: Fri, 13 Nov 2026 13:55:15 -0300
+Subject: [PATCH 2/2] watchdog: add Baikal HPET watchdog driver (optional)
+
+Watchdog driver using Timer 0 of the HPET block in the Baikal
+southbridge (PCI device 104d:90db, function 4, ICC subfunction 22).
+Uses Timer 0 in one-shot mode with interrupt enable.
+
+WARNING: Writes to GENERAL_CONFIG and TIMER_0_CONFIG registers.
+Only enable after live validation of read-only access is complete.
+
+Kconfig: CONFIG_BAIKAL_WDT (module, depends on WATCHDOG_CORE)
+---
+ drivers/watchdog/Kconfig      |  17 +++
+ drivers/watchdog/Makefile     |   2 +
+ drivers/watchdog/baikal_wdt.c | 227 ++++++++++++++++++++++++++++++++++
+ 3 files changed, 246 insertions(+)
+ create mode 100644 drivers/watchdog/baikal_wdt.c
+
+diff --git a/drivers/watchdog/Kconfig b/drivers/watchdog/Kconfig
+index dc78729ba..efa018803 100644
+--- a/drivers/watchdog/Kconfig
++++ b/drivers/watchdog/Kconfig
+@@ -2354,4 +2354,21 @@ config KEEMBAY_WATCHDOG
+ 	  To compile this driver as a module, choose M here: the
+ 	  module will be called keembay_wdt.
+ 
++config BAIKAL_WDT
++	tristate "Sony Baikal Southbridge Watchdog"
++	depends on X86 && PCI && WATCHDOG_CORE
++	help
++	  This enables the watchdog driver for the HPET Timer 0 in the
++	  Sony Baikal southbridge (PCI device 104d:90db, function 4,
++	  ICC subfunction 22). The watchdog uses the HPET's Timer 0
++	  in one-shot mode with interrupt enable.
++
++	  This driver requires the HPET block at BAR2 + 0x109000 of the
++	  Baikal PCIe Glue (00:14.4). It writes to GENERAL_CONFIG and
++	  TIMER_0_CONFIG registers - only enable after live validation
++	  of read-only access is complete.
++
++	  Say M if you are running on a PS4 Slim/Pro with Baikal southbridge
++	  (CUH-2xxx/CUH-7xxx) and want watchdog support.
++
+ endif # WATCHDOG
+diff --git a/drivers/watchdog/Makefile b/drivers/watchdog/Makefile
+index d2fb16b9f..f3f3032f0 100644
+--- a/drivers/watchdog/Makefile
++++ b/drivers/watchdog/Makefile
+@@ -241,3 +241,5 @@ obj-$(CONFIG_MENZ069_WATCHDOG) += menz69_wdt.o
+ obj-$(CONFIG_RAVE_SP_WATCHDOG) += rave-sp-wdt.o
+ obj-$(CONFIG_STPMIC1_WATCHDOG) += stpmic1_wdt.o
+ obj-$(CONFIG_SL28CPLD_WATCHDOG) += sl28cpld_wdt.o
++
++obj-$(CONFIG_BAIKAL_WDT) += baikal_wdt.o
+diff --git a/drivers/watchdog/baikal_wdt.c b/drivers/watchdog/baikal_wdt.c
+new file mode 100644
+index 000000000..847a80883
+--- /dev/null
++++ b/drivers/watchdog/baikal_wdt.c
+@@ -0,0 +1,227 @@
++#include <linux/module.h>
++#include <linux/pci.h>
++#include <linux/watchdog.h>
++#include <linux/io.h>
++#include <linux/delay.h>
++#include <linux/slab.h>
++#include <linux/err.h>
++
++#define DRV_NAME	"baikal-wdt"
++
++#define HPET_CAP		0x00
++#define HPET_GEN_CONFIG		0x10
++#define HPET_TIMER_CONFIG(n)	(0x100 + 0x20 * (n))
++#define HPET_TIMER_COMP(n)	(0x108 + 0x20 * (n))
++#define HPET_MAIN_COUNTER	0xF0
++
++#define HPET_GCONF_ENABLE		(1UL << 0)
++#define HPET_TCONF_INT_ENB		(1UL << 2)
++#define HPET_TCONF_PERIODIC		(1UL << 3)
++#define HPET_TCONF_32MODE		(1UL << 8)
++
++#define BAIKAL_HPET_VENDOR	0x104d
++#define BAIKAL_HPET_DEVICE	0x90db
++
++#define DEFAULT_TIMEOUT		30  /* seconds */
++#define MAX_TIMEOUT		600
++
++struct baikal_wdt {
++	void __iomem *base;
++	struct watchdog_device wdd;
++	struct pci_dev *pdev;
++	unsigned long freq_hz;
++};
++
++static inline u64 baikal_wdt_readq(struct baikal_wdt *bwd, unsigned int off)
++{
++	return readq(bwd->base + off);
++}
++
++static inline void baikal_wdt_writeq(struct baikal_wdt *bwd, unsigned int off, u64 val)
++{
++	writeq(val, bwd->base + off);
++}
++
++static inline u32 baikal_wdt_readl(struct baikal_wdt *bwd, unsigned int off)
++{
++	return readl(bwd->base + off);
++}
++
++static inline void baikal_wdt_writel(struct baikal_wdt *bwd, unsigned int off, u32 val)
++{
++	writel(val, bwd->base + off);
++}
++
++static int baikal_wdt_start(struct watchdog_device *wdd)
++{
++	struct baikal_wdt *bwd = watchdog_get_drvdata(wdd);
++	u64 gen_cfg, timer_cfg;
++	u64 counter_val;
++
++	pr_info("%s: starting watchdog (timeout=%u sec)\n", DRV_NAME, wdd->timeout);
++
++	/* Read current GENERAL_CONFIG */
++	gen_cfg = baikal_wdt_readq(bwd, HPET_GEN_CONFIG);
++
++	/* Calculate comparator value: current counter + timeout * freq */
++	counter_val = baikal_wdt_readq(bwd, HPET_MAIN_COUNTER) + wdd->timeout * bwd->freq_hz;
++
++	/* Configure Timer 0: one-shot, interrupt enabled, 64-bit mode */
++	timer_cfg = baikal_wdt_readq(bwd, HPET_TIMER_CONFIG(0));
++	timer_cfg &= ~(HPET_TCONF_PERIODIC | HPET_TCONF_32MODE);
++	timer_cfg |= HPET_TCONF_INT_ENB | HPET_TCONF_32MODE; /* 64-bit comparator */
++	baikal_wdt_writeq(bwd, HPET_TIMER_CONFIG(0), timer_cfg);
++
++	/* Set comparator */
++	baikal_wdt_writeq(bwd, HPET_TIMER_COMP(0), counter_val);
++
++	/* Enable HPET globally */
++	gen_cfg |= HPET_GCONF_ENABLE;
++	baikal_wdt_writeq(bwd, HPET_GEN_CONFIG, gen_cfg);
++
++	pr_info("%s: watchdog started, gen_cfg=0x%llx, timer_cfg=0x%llx, comp=0x%llx\n",
++		DRV_NAME, gen_cfg, timer_cfg, counter_val);
++
++	return 0;
++}
++
++static int baikal_wdt_stop(struct watchdog_device *wdd)
++{
++	struct baikal_wdt *bwd = watchdog_get_drvdata(wdd);
++	u64 gen_cfg, timer_cfg;
++
++	pr_info("%s: stopping watchdog\n", DRV_NAME);
++
++	/* Disable HPET globally */
++	gen_cfg = baikal_wdt_readq(bwd, HPET_GEN_CONFIG);
++	gen_cfg &= ~HPET_GCONF_ENABLE;
++	baikal_wdt_writeq(bwd, HPET_GEN_CONFIG, gen_cfg);
++
++	/* Disable Timer 0 interrupt */
++	timer_cfg = baikal_wdt_readq(bwd, HPET_TIMER_CONFIG(0));
++	timer_cfg &= ~HPET_TCONF_INT_ENB;
++	baikal_wdt_writeq(bwd, HPET_TIMER_CONFIG(0), timer_cfg);
++
++	return 0;
++}
++
++static int baikal_wdt_ping(struct watchdog_device *wdd)
++{
++	struct baikal_wdt *bwd = watchdog_get_drvdata(wdd);
++	u64 counter_val;
++
++	/* Reload comparator with current counter + timeout */
++	counter_val = baikal_wdt_readq(bwd, HPET_MAIN_COUNTER) + wdd->timeout * bwd->freq_hz;
++	baikal_wdt_writeq(bwd, HPET_TIMER_COMP(0), counter_val);
++
++	return 0;
++}
++
++static int baikal_wdt_set_timeout(struct watchdog_device *wdd, unsigned int timeout)
++{
++	if (timeout > MAX_TIMEOUT)
++		return -EINVAL;
++
++	wdd->timeout = timeout;
++	return 0;
++}
++
++static const struct watchdog_ops baikal_wdt_ops = {
++	.owner		= THIS_MODULE,
++	.start		= baikal_wdt_start,
++	.stop		= baikal_wdt_stop,
++	.ping		= baikal_wdt_ping,
++	.set_timeout	= baikal_wdt_set_timeout,
++};
++
++static int baikal_wdt_probe(struct pci_dev *pdev, const struct pci_device_id *id)
++{
++	struct baikal_wdt *bwd;
++	int ret;
++
++	pr_info("%s: probing Baikal WDT at %s\n", DRV_NAME, pci_name(pdev));
++
++	ret = pcim_enable_device(pdev);
++	if (ret) {
++		dev_err(&pdev->dev, "Failed to enable PCI device\n");
++		return ret;
++	}
++
++	ret = pcim_iomap_regions(pdev, 1 << 2, DRV_NAME);  /* BAR2 */
++	if (ret) {
++		dev_err(&pdev->dev, "Failed to request BAR2 region\n");
++		return ret;
++	}
++
++	bwd = devm_kzalloc(&pdev->dev, sizeof(*bwd), GFP_KERNEL);
++	if (!bwd)
++		return -ENOMEM;
++
++	bwd->pdev = pdev;
++	bwd->base = pcim_iomap_table(pdev)[2];
++	if (!bwd->base) {
++		dev_err(&pdev->dev, "Failed to map BAR2\n");
++		return -ENOMEM;
++	}
++
++	/* Read CAP register to get frequency */
++	u64 cap = readq(bwd->base + HPET_CAP);
++	bwd->freq_hz = (1000000000000000ULL + ((cap >> 32) & 0xffffffff) / 2) /
++			((cap >> 32) & 0xffffffff);
++	if (!bwd->freq_hz)
++		bwd->freq_hz = 14318180;  /* Default 14.31818 MHz */
++
++	pr_info("%s: CAP=0x%llx, freq=%lu Hz\n", DRV_NAME, cap, bwd->freq_hz);
++
++	/* Initialize watchdog device */
++	bwd->wdd.info = &(struct watchdog_info){
++		.options	= WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING | WDIOF_MAGICCLOSE,
++		.identity	= DRV_NAME,
++	};
++	bwd->wdd.ops = &baikal_wdt_ops;
++	bwd->wdd.min_timeout = 1;
++	bwd->wdd.max_timeout = MAX_TIMEOUT;
++	bwd->wdd.timeout = DEFAULT_TIMEOUT;
++	bwd->wdd.parent = &pdev->dev;
++	watchdog_set_drvdata(&bwd->wdd, bwd);
++
++	ret = watchdog_register_device(&bwd->wdd);
++	if (ret) {
++		dev_err(&pdev->dev, "Failed to register watchdog: %d\n", ret);
++		return ret;
++	}
++
++	pci_set_drvdata(pdev, bwd);
++	dev_info(&pdev->dev, "Baikal Watchdog registered (timeout=%u sec)\n", DEFAULT_TIMEOUT);
++
++	return 0;
++}
++
++static void baikal_wdt_remove(struct pci_dev *pdev)
++{
++	struct baikal_wdt *bwd = pci_get_drvdata(pdev);
++
++	if (bwd) {
++		watchdog_unregister_device(&bwd->wdd);
++	}
++}
++
++static const struct pci_device_id baikal_wdt_id_table[] = {
++	{ PCI_DEVICE(BAIKAL_HPET_VENDOR, BAIKAL_HPET_DEVICE) },
++	{ 0, }
++};
++MODULE_DEVICE_TABLE(pci, baikal_wdt_id_table);
++
++static struct pci_driver baikal_wdt_driver = {
++	.name		= DRV_NAME,
++	.id_table	= baikal_wdt_id_table,
++	.probe		= baikal_wdt_probe,
++	.remove		= baikal_wdt_remove,
++};
++
++module_pci_driver(baikal_wdt_driver);
++
++MODULE_AUTHOR("PS4 Linux Baikal Project");
++MODULE_DESCRIPTION("Sony Baikal Southbridge Watchdog Driver");
++MODULE_LICENSE("GPL");
++MODULE_VERSION("0.1");
+\ No newline at end of file
+-- 
+2.47.3
+

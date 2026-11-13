@@ -862,7 +862,8 @@ de validação, checklist de merge).
 **Tarefas:**
 - [x] Driver `dmaengine` escrito (`drivers/dma/baikal-dmac.c`, v0.1): memcpy, 2 canais, `virt-dma`, descritores de 16 B encadeados, endereços de 32 bits e múltiplos de 4 B. Compila sem avisos (inclusive `W=1`). Patch: `kernel/patches/baikal-dmac.patch` (`git apply --check` validado em estado pristino).
 - [x] Integrado ao `00-build-kernel-7.0.sh` (aprovado pelo usuário em 2026-11-13): aplica o patch com `--check` + `exit 1`; liga `CONFIG_DMA_ENGINE=y`, `CONFIG_DMA_VIRTUAL_CHANNELS`, `CONFIG_BAIKAL_DMAC=m`, `CONFIG_DMATEST=m`. **Nota:** `DMA_VIRTUAL_CHANNELS` não tem prompt, então resolve para `m` (derivado do `BAIKAL_DMAC=m`); é um `virt-dma.ko` a carregar antes do driver.
-- [~] Build oficial da tag `20261113-dmaengine` (em andamento) e validação ao vivo com `dmatest` + testes do harness. Depois: deploy da tag no PS4 (4 artefatos), com power cycle do usuário.
+- [x] Build oficial da tag `20261113-dmaengine` **concluído** (2026-11-13 13:30): `bzImage` 16,1 MB e `config` em `distro/boot_referencia/`; `baikal-dmac.ko`, `virt-dma.ko` e `dmatest.ko` construídos (`vermagic` idêntico ao do PS4); snapshot salvo. Config da tag: `DMA_ENGINE=y`, `DMA_VIRTUAL_CHANNELS=m`, `BAIKAL_DMAC=m`, `DMATEST=m`.
+- [ ] **Deploy da tag no PS4** (falta initramfs da tag, `bootargs` e o power cycle do usuário) e **validação ao vivo**: carregar `virt-dma` → `baikal-dmac`, rodar `dmatest` nos 2 canais e repetir os testes do harness.
 
 **Documentos:** `outros/rea/dma/plans/PLANO_DRIVER_DMA_BAIKAL.md`, `outros/rea/dma/decompiled/baikal_dmac_mtk_registers_20261113.md`, `outros/rea/dma/scans/dmac_bars_full_20261113.json`. Banco: `test_history` 80–82.
 

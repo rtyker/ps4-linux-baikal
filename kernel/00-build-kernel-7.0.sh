@@ -148,7 +148,8 @@ preflight() {
   # Patches que o build aplica (os 'git apply --check' reais rodam pós-reset).
   for p in ahci-baikal-polling-fallback.patch ps4-icc-rtc-wrapper.patch \
            ps4-icc-proc-debug.patch mts-baikal-gbe-driver.patch \
-           baikal-memory-fase2.patch baikal-dmac.patch; do
+           baikal-memory-fase2.patch baikal-dmac.patch \
+           clocksource-baikal-hpet.patch baikal-wdt.patch; do
     [ -f "$SCRIPT_DIR/patches/$p" ] || die "patch ausente: $SCRIPT_DIR/patches/$p"
   done
 
@@ -849,6 +850,16 @@ scripts/config --enable CONFIG_DMA_ENGINE
 scripts/config --enable CONFIG_DMA_VIRTUAL_CHANNELS
 scripts/config --module CONFIG_BAIKAL_DMAC
 scripts/config --module CONFIG_DMATEST
+
+# HPET/Clocksource do Baikal (glue 00:14.4, subfunção ICC 22): clocksource
+# baseado no contador principal de 64 bits do HPET. Habilitado como módulo
+# para iteração sem rebuild do kernel.
+scripts/config --module CONFIG_CLKSRC_BAIKAL_HPET
+
+# Watchdog do Baikal (Timer 0 do HPET, opcional): requer WATCHDOG_CORE.
+# Habilitado como módulo para iteração sem rebuild do kernel.
+scripts/config --enable CONFIG_WATCHDOG_CORE
+scripts/config --module CONFIG_BAIKAL_WDT
 
 echo "=== Executando olddefconfig ==="
 make "${MAKE_OPTS[@]}" olddefconfig
