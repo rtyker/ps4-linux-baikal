@@ -4,7 +4,7 @@
 **Dispositivo PCI:** 00:14.6, Vendor 0x104d, Device 0x90dd  
 **Hardware:** PS4 Slim (CUH-2xxx, Baikal B1), 256 MB SPM DDR3  
 **Kernel alvo:** 7.0.8-Strawberry-ThinLTO-Baikal-+ (x86_64)  
-**Status:** Fases 1–5 IMPLEMENTADAS (2026-11-12) — driver carrega via udev, leitura/sysfs da SPM validados, build oficial Fase 1–3 OK (tag `20261112-baikal-memory-fase3`) e RTC via ICC convive com o `baikal-memory` e reporta tempo real (Fase 4: `hwclock -r` exige kernel com UIE emulation). Fase 5 adiciona escrita controlada, **desligada por padrão** (`allow_write=0`) e restrita à janela BAR2 (DDR3/SPM) exposta em `/dev`; **não testada ao vivo** e depende de deploy de kernel/módulo novo. Próximo passo: validar Fase 5 em hardware (somente BAR2) e Fase 6.  
+**Status:** Fases 1–5 VALIDADAS AO VIVO (2026-11-12) — driver carrega via udev, leitura/sysfs da SPM validados, build oficial Fase 1–3 OK (tag `20261112-baikal-memory-fase3`), RTC via ICC convive com o `baikal-memory` e reporta tempo real (Fase 4: `hwclock -r` exige kernel com UIE emulation) e Fase 5 (escrita controlada restrita à janela BAR2 com proteção `allow_write=0`) testada e aprovada ao vivo no PS4 Slim. Próximo passo: Fase 6 (stress test e cold boot) e deploy de kernel com UIE emulation para fechar `hwclock -r`.  
 **Acesso ao PS4:** SSH WiFi `root@192.168.6.128`, senha `ps4`. Porta `eth0` (cabeada) não tem link (PHY mudo, bug conhecido).
 
 ---
@@ -232,17 +232,21 @@ Antes do fix o kernel registrava `setting system clock to 1970-01-01` (zerava o 
 
 **Artefatos:** patch `kernel/patches/ps4-icc-rtc-wrapper.patch` regenerado com o seed (validado com `git apply --cached --check`); módulo testado em `outros/rea/spm/dumps/rtc-ps4-icc-fase4.ko`.
 
-### 3.3 Fase 5 — Escrita controlada (IMPLEMENTADA, não testada ao vivo, 2026-11-12)
+### 3.3 Fase 5 — Escrita controlada (VALIDADA AO VIVO NO PS4, 2026-11-12)
 
 **Implementação:** parâmetro de módulo `allow_write` (`bool`, `0444`, **padrão `0`/desligado**), operação `.write` em `/dev/baikal-memory` e `MODULE_VERSION("0.2")`. O nó do dispositivo passa a `0600` (root), mas toda escrita retorna `-EPERM` enquanto `allow_write=0`.
 
-**Whitelist/regra de segurança (conservadora):** mesmo com `allow_write=1`, `baikal_mem_resolve(..., writable_only=true)` só aceita a **janela BAR2** exposta no layout do dispositivo (`0x001000–0x003fff`, primeiros 4 MiB da DDR3/SPM). Escritas em **BAR0** (MMIO de controle), **BAR5** (tabela estruturada; `spm.icc` em `0x2c000` é reservada pelo `ps4-bpcie-icc`) e fora dos limites são rejeitadas (`-EPERM`). BAR4 não é exposta. **Nenhum registrador MMIO foi identificado como seguro para escrita via RE do kernel Orbis**; por isso não há whitelist fora da BAR2.
+**Whitelist/regra de segurança (conservadora):** mesmo com `allow_write=1`, `baikal_mem_resolve(..., writable_only=true)` só aceita a **janela BAR2** exposta no layout do dispositivo (`0x001000–0x003fff`, primeiros 4 MiB da DDR3/SPM). Escritas em **BAR0** (MMIO de controle), **BAR5** (tabela estruturada; `spm.icc` em `0x2c000` é reservada pelo `ps4-bpcie-icc`) e fora dos limites são rejeitadas (`-EPERM`). BAR4 não é exposta.
 
-**Riscos:** escrita na SPM pode corromper estado do Syscon/EMC e travar o console. A BAR2 é tratada aqui como memória DDR3, mas seu conteúdo/uso real não foi totalmente mapeado — testar primeiro com blocos pequenos, não-críticos, e sempre com possibilidade de power cycle. Não usar em BAR5/ICC.
+**Validação ao vivo no PS4 (2026-11-12):**
+1. Com `allow_write=0` (padrão): `/dev/baikal-memory` em modo `0600`. Tentativa de escrita em qualquer região devolve `dd: error writing '/dev/baikal-memory': Operation not permitted` (EPERM). Leitura de MAC e ICC 100% preservada.
+2. Com `allow_write=1`:
+   - Escrita em BAR0 (`seek=0`): Rejeitada com `Operation not permitted`.
+   - Escrita em BAR5 (`seek=0x52f000`): Rejeitada com `Operation not permitted`.
+   - Escrita em BAR2 (`seek=0x2000`, 4 bytes): Escrito padrão `\xde\xad\xbe\xef`. Leitura imediata confirmou `de ad be ef`. Escrita de `\x00\x00\x00\x00` restaurou para zeros. Zero erros ou alertas no dmesg do kernel.
+3. Módulo v0.2 instalado em `/usr/lib/modules/...` e recarregado em modo seguro padrão (`allow_write=0`).
 
-**Validação local (procedimento obrigatório cumprido):** `drivers/misc/baikal-memory.o` compilado isoladamente (`sudo make CC="ccache clang" LLVM=1 ARCH=x86_64 ...`), patch `kernel/patches/baikal-memory-fase2.patch` regenerado por `git diff HEAD -- drivers/misc/{Kconfig,Makefile,baikal-memory.c}` a partir da árvore modificada, árvore resetada para `HEAD` pristino e `git apply --check` OK. **Sem teste ao vivo no PS4** (requer deploy de kernel/módulo novo).
-
-**Próximo passo:** validar Fase 5 em hardware (somente janela BAR2, com `allow_write=1` explícito, leituras antes/depois) e Fase 6; antes disso, deploy de um kernel com UIE emulation para fechar o `hwclock -r` da Fase 4.
+**Próximo passo:** Fase 6 (teste de stress prolongado e cold boot) e deploy de kernel com UIE emulation para fechar o `hwclock -r` da Fase 4.
 
 ### Estado do patch (obrigatório para idempotência)
 
