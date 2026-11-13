@@ -184,6 +184,24 @@ decifra o HD daquele console. Nada de chave vai no git nem na imagem — quem in
 - **Dump do kernel Orbis (`kmem_dump_1252.bin`, `0xae7ef0`):** ERK
   `7fcf0536…476af6` — cópia de debug/rodata, **NÃO** decifra (testada).
 
+#### ⚠️ Exposição histórica desta chave (2026-08-01 → 2026-11-13)
+
+A chave EAP **deste console de teste** ficou em texto puro em arquivos versionados deste
+repositório público do commit `22fc2f1` (2026-08-01) até a limpeza em 2026-11-13 (docs, SQLite
+`readonly_verification` ids 862/866, scripts históricos de XTS). Em 2026-11-13 a árvore foi
+limpa — hoje nenhuma chave aparece em arquivo rastreado — mas **o histórico publicado não foi
+reescrito** (decisão do dono: `force-push` despublica só parcialmente; commits antigos seguem
+acessíveis por SHA e em forks/caches).
+
+Consequência assumida: **a chave deste console é considerada pública**. Ela é derivada do
+hardware e **não pode ser trocada sem reformatar o HD do PS4**. Quem tiver o disco (ou uma
+imagem dele) e essa chave decifra os dados. Regras práticas:
+
+- não publicar imagens/backups do disco interno (`/dev/sda`, dumps de `sda27`/`sda29`);
+- ao vender ou descartar o console, apagar/reformatar o HD (contém saves, troféus, conta);
+- em console novo a chave é **outra** — dump novo, nunca reaproveitar esta;
+- ver `LICOES_APRENDIDAS.md` #77 e o helper `outros/scripts/checa_segredos.sh`.
+
 ### 3.2 Montagem do filesystem
 
 | Partição | Comando |

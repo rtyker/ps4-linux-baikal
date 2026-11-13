@@ -253,7 +253,7 @@ Endereco                Tamanho    Descricao
 0xC4000000              32K        Baikal SATA AHCI
 0xC6000000              4K         Baikal SD/MMC (mmc0)
 0xC8000000-0xC9FFFFFF   4M         Baikal PCIe Glue (bpcie.glue, bpcie.chipid)
-0xCA000000-0xCAFFFFFF   8K         Baikal DMA
+0xCA000000-0xCAFFFFFF   8K         Baikal DMA   [CORRECAO 2026-11-13: sao 2 regioes de 4K (lspci): ca000000 (BAR0) e ca800000 (BAR2), nao uma faixa de 8K contigua. Registradores em +0x80..+0xac de cada uma]
 0xCC000000-0xCD43FFFF   ~6.25M     Baikal Memory controller (spm.icc em cd42c000)
 0xCE000000-0xCF7FFFFF   24M        USB xHCI
 0xE0000000-0xE4FFFFFF   ~80M       GPU VRAM + MMIO
@@ -265,16 +265,16 @@ Endereco                Tamanho    Descricao
 I/O PORTS
 ================================================================================
 Range             Descricao
-0x0000-0x001F     DMA Channel 1
+0x0000-0x001F     DMA Channel 1   [CORRECAO 2026-11-13: porta de I/O do DMA legado do PC (8237). NAO e registrador do Baikal DMAC (00:14.5), que e so MMIO. Ver rea/dma/decompiled/baikal_dmac_mtk_registers_20261113.md]
 0x0020-0x0021     PIC1 (8259A)
 0x0040-0x0043     Timer 0 (PIT)
 0x0050-0x0053     Timer 1 (PIT)
 0x0060            Teclado (8042)
 0x0064            Teclado (8042)
 0x0070-0x0071     RTC CMOS
-0x0080-0x008F     DMA Page Registers
+0x0080-0x008F     DMA Page Registers   [CORRECAO 2026-11-13: porta de I/O do DMA legado do PC (8237). NAO e registrador do Baikal DMAC (00:14.5), que e so MMIO. Ver rea/dma/decompiled/baikal_dmac_mtk_registers_20261113.md]
 0x00A0-0x00A1     PIC2
-0x00C0-0x00DF     DMA Channel 2
+0x00C0-0x00DF     DMA Channel 2   [CORRECAO 2026-11-13: porta de I/O do DMA legado do PC (8237). NAO e registrador do Baikal DMAC (00:14.5), que e so MMIO. Ver rea/dma/decompiled/baikal_dmac_mtk_registers_20261113.md]
 0x00F0-0x00FF     FPU
 0x0CF8-0x0CFF     PCI Configuration (CONFIG_MECH)
 0x1000-0x13FF     Baikal ACPI (PM1a_EVT, PM1a_CNT, PM_TMR, GPE0)

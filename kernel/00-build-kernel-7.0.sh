@@ -148,7 +148,7 @@ preflight() {
   # Patches que o build aplica (os 'git apply --check' reais rodam pós-reset).
   for p in ahci-baikal-polling-fallback.patch ps4-icc-rtc-wrapper.patch \
            ps4-icc-proc-debug.patch mts-baikal-gbe-driver.patch \
-           baikal-memory-fase2.patch; do
+           baikal-memory-fase2.patch baikal-dmac.patch; do
     [ -f "$SCRIPT_DIR/patches/$p" ] || die "patch ausente: $SCRIPT_DIR/patches/$p"
   done
 
@@ -367,22 +367,17 @@ scripts/config --disable CONFIG_DWMAC_GENERIC
 # - ps4-icc-proc-debug.patch: /proc/ps4_icc pra enviar comandos ICC
 #   arbitrários ao vivo (mapear o serviço device-power que liga a GBE —
 #   syscon mantém "gbe off" por padrão, por isso o Yukon lê chip id 0x0).
-# - mts-baikal-gbe-driver.patch: driver `mts` novo para a GBE do Baikal.
-#   O Orbis usa `msk`/Yukon para Aeolia/Belize mas `mts` (sys/dev/mts/if_mts.c)
-#   para o Baikal — silício diferente, por isso o sky2 nunca ia funcionar aqui.
-#   Bring-up em estágios via `mts.stage=N` (default 1 = só dump, não escreve).
-#   Ver memory/GBE-VIVA-driver-errado-mts-nao-sky2.md e
-#   drivers_mts/MTS_INIT_SEQUENCE_dc5a31f0.md
-if [ ! -f "drivers/net/ethernet/sony/mts.c" ]; then
-  for P in ps4-icc-proc-debug.patch mts-baikal-gbe-driver.patch; do
+# - mts-baikal-kconfig.patch: Kconfig/Makefile do vendor Sony + driver MTS.
+#   O driver `mts.c`/`mts.h` vem de `drivers_mts/` (fonte única autoritativa).
+#   Ver drivers_mts/README.md, drivers_mts/MTS_INIT_SEQUENCE_dc5a31f0.md.
+if [ ! -d "drivers/net/ethernet/sony" ]; then
+  for P in ps4-icc-proc-debug.patch mts-baikal-kconfig.patch; do
     PATCH="$SCRIPT_DIR/patches/$P"
     if [ ! -f "$PATCH" ]; then
       echo "❌ ERRO FATAL: $PATCH não encontrado."
       exit 1
     fi
     echo "Aplicando patch $P..."
-    # Mesmo padrão rigoroso dos patches AHCI/RTC: --check antes, exit 1 com
-    # diagnóstico se falhar (nunca falha silenciosa, ver AGENTS.md).
     if ! git apply --check "$PATCH" 2>/tmp/mts_patch_check.log; then
       echo "❌ ERRO FATAL: patch $P não aplica contra o kernel atual:"
       cat /tmp/mts_patch_check.log
@@ -394,36 +389,18 @@ if [ ! -f "drivers/net/ethernet/sony/mts.c" ]; then
     git apply "$PATCH"
     echo "✓ Patch $P aplicado com sucesso (git apply, validado com --check)"
   done
-
-  # --- Consistência patch ↔ drivers_mts/ (fonte única, sem divergência) ---
-  # O patch é a implementação AUTORITATIVA (fonte única p/ o build, conforme
-  # AGENTS.md); drivers_mts/ é a superfície de EDIÇÃO. Os dois precisam ser
-  # idênticos: se alguém editar drivers_mts/mts.c e esquecer de regerar o
-  # patch, a cópia do passo seguinte sobrescreveria o driver silenciosamente —
-  # o build passaria, mas o patch (e o git history) ficariam mentirosos.
-  # Aqui a divergência vira FALHA ALTA, no início do build.
-  for F in mts.c mts.h; do
-    if ! cmp -s "drivers/net/ethernet/sony/$F" "$SCRIPT_DIR/drivers_mts/$F"; then
-      echo "❌ ERRO FATAL: patches/mts-baikal-gbe-driver.patch e drivers_mts/$F divergem."
-      echo ""
-      echo "  O patch traz a implementação autoritativa do driver; drivers_mts/ é"
-      echo "  onde se edita. Regenere o patch a partir da árvore limpa:"
-      echo ""
-      echo "    cd $KERNEL_SRC_DIR"
-      echo "    git add -N drivers/net/ethernet/sony/mts.c drivers/net/ethernet/sony/mts.h"
-      echo "    git diff HEAD -- drivers/net/ethernet/sony/ drivers/net/ethernet/Kconfig drivers/net/ethernet/Makefile \\"
-      echo "      > $SCRIPT_DIR/patches/mts-baikal-gbe-driver.patch"
-      echo ""
-      echo "  (ver AGENTS.md, seção 'Idempotência de Alterações no Kernel')"
-      exit 1
-    fi
-  done
-  echo "✓ drivers_mts/ e o patch estão idênticos (mts.c, mts.h)"
 fi
 
-echo "Copiando mts.c e mts.h atualizados para o diretório de build do kernel..."
+# drivers_mts/ é a fonte única autoritativa do driver MTS (mts.c, mts.h).
+# O patch mts-baikal-kconfig.patch contém apenas Kconfig/Makefile do vendor Sony.
+# Isso elimina ~3.200 linhas duplicadas e evita divergência patch ↔ source.
+echo "Copiando driver MTS autoritativo de drivers_mts/ para a árvore do kernel..."
+mkdir -p "drivers/net/ethernet/sony"
 cp -f "$SCRIPT_DIR/drivers_mts/mts.c" "drivers/net/ethernet/sony/mts.c"
 cp -f "$SCRIPT_DIR/drivers_mts/mts.h" "drivers/net/ethernet/sony/mts.h"
+# Kconfig/Makefile do vendor Sony já foram aplicados via patch acima.
+# Se drivers_mts/ tiver Kconfig/Makefile próprios, eles são ignorados (patch já fez).
+echo "✓ Driver MTS copiado de drivers_mts/ (fonte única)"
 
 # RTC via ICC: wrapper ps4_icc_rtc_cmd() com retry loop (100x50ms) em
 # ps4-bpcie-icc.c + declaração em baikal.h/aeolia.h + Kconfig/Makefile +
@@ -482,6 +459,31 @@ fi
 git apply "$PATCH_BAIKAL_MEM"
 echo "✓ Patch baikal-memory aplicado com sucesso (git apply, validado com --check)"
 
+# Controladores DMA do Baikal (00:14.5): driver dmaengine `baikal-dmac`.
+# O patch traz drivers/dma/baikal-dmac.c (arquivo novo) + Kconfig + Makefile.
+# O driver é módulo (CONFIG_BAIKAL_DMAC=m); o núcleo do dmaengine
+# (DMA_ENGINE, DMA_VIRTUAL_CHANNELS) é habilitado via `scripts/config` mais
+# abaixo, antes do `olddefconfig`. Mesmo padrão rigoroso: `--check` antes,
+# `exit 1` se falhar — nunca `|| echo AVISO`.
+PATCH_BAIKAL_DMAC="$SCRIPT_DIR/patches/baikal-dmac.patch"
+if [ ! -f "$PATCH_BAIKAL_DMAC" ]; then
+  echo "❌ ERRO FATAL: $PATCH_BAIKAL_DMAC não encontrado"
+  echo "  Sem ele o build perde o driver dmaengine baikal-dmac."
+  exit 1
+fi
+
+if ! git apply --check "$PATCH_BAIKAL_DMAC" 2>/tmp/baikal_dmac_patch_check.log; then
+  echo "❌ ERRO FATAL: patch baikal-dmac não aplica contra o kernel atual:"
+  cat /tmp/baikal_dmac_patch_check.log
+  echo ""
+  echo "  Regenere o patch a partir de uma árvore limpa (ver AGENTS.md,"
+  echo "  seção 'Idempotência de Alterações no Kernel') e substitua $PATCH_BAIKAL_DMAC."
+  exit 1
+fi
+
+git apply "$PATCH_BAIKAL_DMAC"
+echo "✓ Patch baikal-dmac aplicado com sucesso (git apply, validado com --check)"
+
 # build.sh (upstream rmuxnet/linux) NÃO é mais usado — em 2026-07-22 seu perfil
 # "General/ThinLTO/Baikal" (--option 3 use=General lto=ThinLTO southbridge=Baikal)
 # foi incorporado diretamente neste script, para haver um único lugar decidindo a
@@ -535,6 +537,7 @@ scripts/config --set-str CONFIG_ZRAM_DEF_COMP "zstd"
 # CPU freq / DPM - testar habilitado
 scripts/config --enable CONFIG_X86_AMD_PSTATE
 scripts/config --set-val CONFIG_X86_AMD_PSTATE_DEFAULT_MODE 3
+scripts/config --enable CONFIG_X86_ACPI_CPUFREQ   # driver ACPI legado para Jaguar (fallback)
 
 # Mitigations off
 scripts/config --disable CONFIG_CPU_MITIGATIONS
@@ -837,6 +840,15 @@ scripts/config --enable  CONFIG_KVM_AMD
 # aplicado acima (Kconfig/Makefile incluídos nele). Precisa acontecer antes do
 # olddefconfig para o símbolo existir no .config resolvido.
 scripts/config --module CONFIG_BAIKAL_MEMORY
+
+# DMA dos southbridges Baikal (00:14.5): o núcleo do dmaengine PRECISA ser
+# embutido (DMA_ENGINE é bool), senão um módulo externo nem carrega. O driver
+# baikal-dmac fica como módulo (iteração de versões sem rebuild do kernel) e o
+# dmatest como módulo é a ferramenta padrão para validar um dmaengine.
+scripts/config --enable CONFIG_DMA_ENGINE
+scripts/config --enable CONFIG_DMA_VIRTUAL_CHANNELS
+scripts/config --module CONFIG_BAIKAL_DMAC
+scripts/config --module CONFIG_DMATEST
 
 echo "=== Executando olddefconfig ==="
 make "${MAKE_OPTS[@]}" olddefconfig

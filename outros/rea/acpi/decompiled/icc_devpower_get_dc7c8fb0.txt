@@ -1,0 +1,29 @@
+
+void fcn.ffffffffdc7c8fb0(int64_t arg1,int64_t arg2)
+
+{
+    code *pcVar1;
+    int iVar2;
+    int64_t var_818h;
+    ushort var_810h;
+    uchar var_80ah;
+    int64_t var_28h;
+    
+    var_28h = *0xffffffffdeaacea0;
+    func_0xffffffffdc60d400(&var_818h,0x7f0);
+    var_818h._1_1_ = 5;
+    var_810h = 0x20;
+    var_818h._2_2_ = arg1;
+    iVar2 = func_0xffffffffdc797090(&var_818h,&var_818h);
+    if (iVar2 == 0) {
+        *arg2 = var_80ah;
+    }
+    if (*0xffffffffdeaacea0 == var_28h) {
+        return;
+    }
+    func_0xffffffffdca17ba0();
+    //WARNING: Does not return
+    pcVar1 = invalidInstructionException();
+    (*pcVar1)();
+}
+

@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  mesa-build:
+    build:
+      context: ..
+      dockerfile: mesa/Dockerfile
+    image: mesa-ps4-build:latest
+    volumes:
+      # Repositório completo (para acessar patches, scripts)
+      - ../:/repo
+      # Área de build e cache (persistente entre runs)
+      - /mnt/hdauxiliar/temp:/mnt/hdauxiliar/temp
+    # Variáveis de ambiente opcionais
+    environment:
+      - MESA_VERSION=${MESA_VERSION:-}
+    # Roda como root (necessário para meson install --destdir)
+    privileged: false
+    # Remove container após execução
+    # restart: "no" (default)
+
+# Uso:
+#   cd distro/mesa
+#   docker-compose up --build
+#   # ou com versão específica:
+#   MESA_VERSION=26.1.5 docker-compose up --build
+#
+# Artefatos gerados em:
+#   distro/mesa/build_artifacts/
+#   distro/mesa/mesa-*-ps4-gladius-liverpool.tar.xz
+#   distro/mesa/mesa-ps4-gladius-liverpool-latest.tar.xz

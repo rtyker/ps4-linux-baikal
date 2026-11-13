@@ -1,0 +1,52 @@
+=== Arquivo: libSceNet.sprx ===
+  Palavra-chave 'gbe' encontrada 1 vezes.
+  Exemplos:
+    - gbe0
+
+=== Arquivo: libkernel.sprx ===
+  Palavra-chave 'icc_power' encontrada 1 vezes.
+  Exemplos:
+    - /dev/icc_power
+  Palavra-chave 'icc_device_power' encontrada 1 vezes.
+  Exemplos:
+    - /dev/icc_device_power
+  Palavra-chave 'icc_nvs' encontrada 1 vezes.
+  Exemplos:
+    - /dev/icc_nvs
+
+=== Arquivo: libkernel_sys.sprx ===
+  Palavra-chave 'icc_power' encontrada 1 vezes.
+  Exemplos:
+    - /dev/icc_power
+  Palavra-chave 'icc_device_power' encontrada 1 vezes.
+  Exemplos:
+    - /dev/icc_device_power
+  Palavra-chave 'icc_nvs' encontrada 1 vezes.
+  Exemplos:
+    - /dev/icc_nvs
+
+=== Arquivo: libkernel_web.sprx ===
+  Palavra-chave 'icc_power' encontrada 1 vezes.
+  Exemplos:
+    - /dev/icc_power
+  Palavra-chave 'icc_device_power' encontrada 1 vezes.
+  Exemplos:
+    - /dev/icc_device_power
+  Palavra-chave 'icc_nvs' encontrada 1 vezes.
+  Exemplos:
+    - /dev/icc_nvs
+
+=== Arquivo: mini-syscore.elf ===
+  Palavra-chave 'gbe' encontrada 1 vezes.
+  Exemplos:
+    - gbe0
+  Palavra-chave 'icc_power' encontrada 1 vezes.
+  Exemplos:
+    - /dev/icc_power
+
+=== Arquivo: safemode.elf ===
+  Palavra-chave 'gbe' encontrada 2 vezes.
+  Exemplos:
+    - gbe0
+    - AAOCAQEAT8IGrp+PN0YfuLi33IExImSaePRa0AwCMTsbmsQwNbeR4UpHrRAuoGBe
+

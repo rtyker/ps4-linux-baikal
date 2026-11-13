@@ -120,7 +120,7 @@ Todos os dispositivos Baikal estão em **IOMMU Group 0** e conectados via PCIe G
 | 0xC4000000 | 32 KiB | Baikal SATA AHCI |
 | 0xC6000000 | 4 KiB | Baikal SD/MMC (mmc0) |
 | 0xC8000000–0xC9FFFFFF | 4 MiB | Baikal PCIe Glue (bpcie.glue, bpcie.chipid) |
-| 0xCA000000–0xCAFFFFFF | 8 KiB | Baikal DMA |
+| 0xCA000000 e 0xCA800000 | 2 × 4 KiB | Baikal DMA (00:14.5): BAR0 e BAR2, registradores em +0x80..+0xAC (corrigido em 2026-11-13) |
 | 0xCC000000–0xCD43FFFF | ~6,25 MiB | Baikal Memory controller (spm.icc em 0xCD42C000) |
 | 0xCE000000–0xCF7FFFFF | 24 MiB | USB xHCI |
 | 0xE0000000–0xE4FFFFFF | ~80 MiB | GPU VRAM + MMIO |

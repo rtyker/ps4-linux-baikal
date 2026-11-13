@@ -65,7 +65,8 @@ mkdir -p "$BUILD_ROOT" "$TARBALL_DIR" "$ARTIFACTS_DIR"
 echo "=== Conferindo dependencias de build ==="
 pacman -S --needed --noconfirm \
 	base-devel meson ninja git pkgconf python python-mako \
-	llvm clang libdrm wayland libglvnd libunwind libxml2 libxkbcommon 2>&1 | tail -5
+	llvm clang libdrm wayland libglvnd libunwind libxml2 libxkbcommon \
+	glslang 2>&1 | tail -5
 
 # --- Download (automático se não existir em cache) ----------------------
 if [ ! -f "$MESA_TAR" ]; then
@@ -111,11 +112,27 @@ if [ ! -d "$BUILD_DIR" ]; then
 		-Dglx=dri \
 		-Degl=enabled \
 		-Dgbm=enabled \
+		-Dgallium-va=enabled \
+		-Dvideo-codecs=all \
 		-Dllvm=enabled \
 		-Dvalgrind=disabled \
 		-Db_ndebug=true
 else
-	echo "  (build dir ja configurado, rode 'meson configure' manualmente se precisar mudar opcoes)"
+	# Reconhecer opções de meson que mudaram e reconfigurar
+	meson configure "$BUILD_DIR" \
+		-Dgallium-drivers=radeonsi \
+		-Dvulkan-drivers=amd \
+		-Dplatforms=x11 \
+		-Dgles1=disabled \
+		-Dgles2=enabled \
+		-Dglx=dri \
+		-Degl=enabled \
+		-Dgbm=enabled \
+		-Dgallium-va=enabled \
+		-Dvideo-codecs=all \
+		-Dllvm=enabled \
+		-Dvalgrind=disabled \
+		-Db_ndebug=true
 fi
 
 # --- Compilação -----------------------------------------------------------

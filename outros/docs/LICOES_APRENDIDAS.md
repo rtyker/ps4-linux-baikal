@@ -617,3 +617,32 @@ hipótese refutada devem ser **removidos**, não mantidos "por garantia".
 **Estado final:** `sda27` (UFS2, 884 GiB / 485 GiB usados, 44 títulos em `app/`), `sda29` e `sda25`
 montam read-only; scripts de produção `distro/monta_particao.sh` + `automount.sh` instalados no
 rootfs. Detalhes: `MONTAGEM_HD_INTERNO.md` §2; tarefas: `BACKLOG_MOUNT.md`.
+
+---
+
+## Lição Aprendida #77 (2026-11-13) — Segredo commitado é segredo público (e reescrever depois não desfaz)
+
+O que aconteceu: a chave EAP do HD interno deste PS4 ficou **em texto puro** em arquivos
+versionados (`MONTAGEM_HD_INTERNO.md`, `BACKLOG*.md`, `ENVIO_DE_PAYLOADS.md`,
+`outros/rea/ps4_hardware_memory.db`, scripts de XTS) e o repositório é **público**
+(`github.com/rtyker/ps4-linux-baikal`). Do commit de publicação (`22fc2f1`, 2026-08-01) até a
+limpeza (2026-11-13) foram ~3,5 meses de exposição contínua. A chave é **por console** e
+**não pode ser trocada** sem reformatar o HD do PS4 — não existe "rotação" como numa senha.
+
+Regras que saem disso:
+
+1. **Segredo nunca entra em arquivo rastreado** — nem em documentação, nem em SQLite, nem em
+   script "histórico", nem em mensagem de commit. Lugar de segredo: arquivo gitignored
+   (`.env.keys`), pasta `700` fora do repo (`~/ps4-keys/`) ou o próprio console.
+2. **Mascarar não é proteger**: `sha256`/fingerprint pode ir para doc (serve para conferência);
+   o valor em si, não. Cuidado com `grep`/`log`/`dmesg` colados em doc.
+3. **Assuma que todo push é público e permanente**: mesmo apagando depois, o commit antigo
+   continua acessível por SHA (API), em forks, caches e no histórico local de cada clone.
+   `git filter-repo` + `force-push` só reduz a superfície; quem já clonou, já tem.
+4. **Antes de commitar, varrer o index**: `git grep --cached -nE '[0-9a-f]{64}'` e checar se
+   algum hit é chave e não hash. Helper: `outros/scripts/checa_segredos.sh`.
+5. **Decisão registrada (2026-11-13):** o histórico publicado **não** foi reescrito
+   (`force-push` foi descartado pelo dono do console). A chave deste console é tratada como
+   **pública**; a árvore foi limpa e o segredo passou a viver só em `.env.keys` +
+   `~/ps4-keys/`. Consequência assumida: não publicar imagens/backups do disco interno e
+   apagar/reformatar o HD antes de vender/descartar o console.

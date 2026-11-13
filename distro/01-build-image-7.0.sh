@@ -471,6 +471,7 @@ export XDG_MENU_PREFIX=cinnamon-
 export DESKTOP_SESSION=cinnamon
 export LD_LIBRARY_PATH="/opt/mesa-ps4-patched/lib:${LD_LIBRARY_PATH:-}"
 export LIBGL_DRIVERS_PATH="/opt/mesa-ps4-patched/lib/dri:${LIBGL_DRIVERS_PATH:-}"
+export GBM_BACKENDS_PATH="/opt/mesa-ps4-patched/lib/gbm"
 exec cinnamon-session
 XINITEOF
   chmod +x "$ROOTFS_DIR/home/anderson/.xinitrc"
@@ -599,7 +600,15 @@ if [ -f "$MESA_PATCHED_TAR" ]; then
     echo 'LD_LIBRARY_PATH=/opt/mesa-ps4-patched/lib' >> "$ENV_FILE"
   grep -q '^LIBGL_DRIVERS_PATH=' "$ENV_FILE" || \
     echo 'LIBGL_DRIVERS_PATH=/opt/mesa-ps4-patched/lib/dri' >> "$ENV_FILE"
-  echo "Variaveis LD_LIBRARY_PATH/LIBGL_DRIVERS_PATH persistidas em /etc/environment."
+  # GBM: o libgbm do patch tem o caminho de backends gravado como
+  # /usr/local/lib/gbm (prefixo do build). Sem esta variavel o Mesa nao acha o
+  # dri_gbm.so, gbm_create_device() retorna NULL, o glamor nao sobe e o Xorg
+  # cai em DRISWRAST (software). Validado ao vivo em 2026-11-13: com
+  # GBM_BACKENDS_PATH o glamor sobe com "radeonsi, gladius" e o Cinnamon abre.
+  # (O nome correto e GBM_BACKENDS_PATH; GBM_DRIVERS_PATH NAO tem efeito.)
+  grep -q '^GBM_BACKENDS_PATH=' "$ENV_FILE" || \
+    echo 'GBM_BACKENDS_PATH=/opt/mesa-ps4-patched/lib/gbm' >> "$ENV_FILE"
+  echo "Variaveis LD_LIBRARY_PATH/LIBGL_DRIVERS_PATH/GBM_BACKENDS_PATH persistidas em /etc/environment."
 else
   echo "AVISO: $MESA_PATCHED_TAR nao encontrado -- rode mesa/01-build-mesa.sh antes"
   echo "       desta imagem pra incluir a correcao. Prosseguindo SEM o Mesa"
