@@ -315,6 +315,11 @@ else
     echo "[info] mts.ko NAO sera carregado no boot (padrao; use ENABLE_MTS=1 para reativar)."
 fi
 
+# SPM Baikal & RTC via ICC: auto-carregamento no boot
+mkdir -p "$ROOTFS_DIR/etc/modules-load.d"
+echo "baikal-memory" > "$ROOTFS_DIR/etc/modules-load.d/baikal-memory.conf"
+echo "rtc-ps4-icc" > "$ROOTFS_DIR/etc/modules-load.d/rtc.conf"
+
 # SSH (config permissiva, paridade com o rootfs 5.4 que funciona).
 # Idempotente: usa um drop-in em sshd_config.d/ em vez de reescrever o sshd_config
 # a cada build (o modelo antigo fazia `mv` + prepend, o que DUPLICAVA o bloco a cada
