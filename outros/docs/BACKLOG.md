@@ -792,7 +792,9 @@ Itens abaixo são exclusivamente de hardware/driver. Para cada componente sem dr
 - `systemctl enable --now bluetooth` → service ativo
 - `bluetoothctl scan on` → descobre dispositivos (ex: "L3250 Series")
 
-**Pendente:** parear DualShock 4 (testar se funciona com o profile HIDP já habilitado no kernel).
+**Teste do usuário (2026-11-13):** Bluetooth, **áudio via Bluetooth em caixa de som** e **joystick** testados e funcionando perfeitamente. (Relato do usuário; não medido por mim. Modelo do joystick e forma de conexão não foram informados.)
+
+**Pendente:** parear DualShock 4 (testar se funciona com o profile HIDP já habilitado no kernel). Fechar esta pendência só se o joystick testado pelo usuário era o DualShock 4; se era outro controle, ela continua aberta.
 
 ---
 

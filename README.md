@@ -38,6 +38,9 @@ conhece rootfs. `PS4_BOOT_REF` permite apontar a distro para outro conjunto de a
 | **KVM-AMD** | ✅ | `/dev/kvm` responde a ioctls reais, QEMU no rootfs |
 | **Baikal Memory / SPM (`00:14.6`)** | ✅ | Driver próprio `baikal-memory.ko` v0.2 in-tree: expõe `/dev/baikal-memory` (0600) e sysfs, lê MAC real de fábrica (`2c:cc:44:3f:69:5f`), região de mailbox ICC, e escrita controlada com proteção por parâmetro (`allow_write=0`) na janela DDR3 (BAR2) |
 | **RTC via ICC** | ✅ | `/dev/rtc0` operacional via `rtc-ps4-icc`, sincronização em tempo real e NTP ativo (`timedatectl` synchronized: yes), sem reset para 1970 no boot |
+| **Bluetooth** | ✅ | `btmtksdio` (MediaTek MT7668, SDIO): funcionando perfeitamente. Teste do usuário em 2026-11-13 |
+| **Áudio via Bluetooth** | ✅ | Reprodução em caixa de som Bluetooth funcionando perfeitamente. Teste do usuário em 2026-11-13 |
+| **Joystick** | ✅ | Funcionando perfeitamente. Teste do usuário em 2026-11-13 (modelo e forma de conexão não registrados) |
 | **Ethernet cabeada (`eth0`)** | ⚠️ parcial | Driver próprio `mts.ko` liga MAC e DMA, mas o PHY nunca sai de power-down (bloqueador de firmware, investigação encerrada) |
 | **Desligamento total (S5)** | ⚠️ parcial | `poweroff` encerra o SO; a luz azul não apaga sozinha |
 
