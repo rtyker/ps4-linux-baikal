@@ -47,7 +47,8 @@ ROOTFS_DIR="$BUILD_ROOT/rootfs"
 # initramfs-7.0-<TAG>.cpio.gz). Sem TAG, autodetecta apenas se houver
 # exatamente uma tag disponível — nunca escolhe no escuro.
 TAG="${1:-}"
-INCREMENTAL="${2:-}"
+shift 2>/dev/null || true
+DESKTOP=0
 if [ -z "$TAG" ]; then
   mapfile -t _TAGS < <(cd "$BOOT_DIR" 2>/dev/null && ls -1 bzImage-7.0-* 2>/dev/null | sed 's/^bzImage-7\.0-//')
   case "${#_TAGS[@]}" in
@@ -61,16 +62,19 @@ if [ -z "$TAG" ]; then
     *)
       echo "ERRO: há ${#_TAGS[@]} tags em $BOOT_DIR — diga qual usar:"
       printf '  %s\n' "${_TAGS[@]}"
-      echo "Uso: sudo $0 <TAG> [--incremental]"
+      echo "Uso: sudo $0 <TAG> [--incremental] [--desktop]"
       exit 1 ;;
   esac
 fi
 
-if [ "$INCREMENTAL" = "--incremental" ]; then
-  INCREMENTAL=1
-else
-  INCREMENTAL=0
-fi
+INCREMENTAL=0
+for arg in "$@"; do
+  case "$arg" in
+    --incremental) INCREMENTAL=1 ;;
+    --desktop)     DESKTOP=1 ;;
+    *)             echo "AVISO: argumento desconhecido ignorado: $arg" ;;
+  esac
+done
 
 BZIMAGE="$BOOT_DIR/bzImage-7.0-$TAG"
 CONFIG="$BOOT_DIR/config-7.0-$TAG"
@@ -251,6 +255,7 @@ PKGS=(
   mesa-utils
   xorg-server
   xorg-xinit
+  xf86-video-amdgpu
   openbox
 )
 
@@ -265,6 +270,18 @@ mount -t proc proc "$ROOTFS_DIR/proc"
 pacman --root "$ROOTFS_DIR" --config "$HOST_PACMAN_CONF" --cachedir "$HOST_PACMAN_CACHE" -Sy --noconfirm "${PKGS[@]}"
 
 umount "$ROOTFS_DIR/proc"
+
+# Pacotes adicionais para desktop (Cinnamon) — só com --desktop
+if [ "$DESKTOP" = "1" ]; then
+  echo "=== Instalando pacotes desktop (Cinnamon) ==="
+  PKGS_DESKTOP=(
+    cinnamon
+    remmina
+  )
+  mount -t proc proc "$ROOTFS_DIR/proc"
+  pacman --root "$ROOTFS_DIR" --config "$HOST_PACMAN_CONF" --cachedir "$HOST_PACMAN_CACHE" -Sy --noconfirm "${PKGS_DESKTOP[@]}"
+  umount "$ROOTFS_DIR/proc"
+fi
 
 echo "=== Configurando sistema ==="
 
@@ -443,6 +460,22 @@ PS1='[\u@\h \W]\$ '
 HISTSIZE=10000
 HISTFILESIZE=20000
 BASHRC_EOF
+
+# .xinitrc do anderson: inicia Cinnamon com Mesa patcheado quando --desktop
+if [ "$DESKTOP" = "1" ]; then
+  cat > "$ROOTFS_DIR/home/anderson/.xinitrc" << 'XINITEOF'
+#!/bin/sh
+export XDG_CURRENT_DESKTOP=X-Cinnamon
+export XDG_MENU_PREFIX=cinnamon-
+export DESKTOP_SESSION=cinnamon
+export LD_LIBRARY_PATH="/opt/mesa-ps4-patched/lib:${LD_LIBRARY_PATH:-}"
+export LIBGL_DRIVERS_PATH="/opt/mesa-ps4-patched/lib/dri:${LIBGL_DRIVERS_PATH:-}"
+exec cinnamon-session
+XINITEOF
+  chmod +x "$ROOTFS_DIR/home/anderson/.xinitrc"
+  arch-chroot "$ROOTFS_DIR" chown anderson:anderson /home/anderson/.xinitrc
+  echo "=== .xinitrc do anderson configurado para iniciar Cinnamon (--desktop) ==="
+fi
 
 # Sudo sem senha para root
 echo "root ALL=(ALL) NOPASSWD: ALL" > "$ROOTFS_DIR/etc/sudoers.d/root-nopasswd"
