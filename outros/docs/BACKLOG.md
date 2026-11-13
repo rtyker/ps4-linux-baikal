@@ -796,31 +796,71 @@ Itens abaixo são exclusivamente de hardware/driver. Para cada componente sem dr
 
 ---
 
-### [~] 🔌 Baikal ACPI (00:14.0) — sem driver necessário
+### [~] 🔌 Baikal ACPI (00:14.0) — sem driver · HPET/WDT da glue (00:14.4) — driver inexistente
 
-**Estado:** dispositivo presente no PCI (`104d:90d7`), MMIO `fdf8000000` (32M) + I/O `1000`, mas nenhum driver carregado. **Encerrado como "sem driver necessário" (2026-11-13).**
+**Estado (revisado 2026-11-13):** duas coisas distintas.
 
-**Justificativa:**
-- DSDT/SSDT/FACP analisadas: nenhum dispositivo HPET ou WDT declarado.
-- FACP decodificada: PM1A_EVENT em 0x1000 (confere com /proc/ioports), sem bloco de timer HPET.
-- Banco `ps4_hardware_memory.db`: nenhuma entrada de HPET/WDT/0x109000.
-- Sistema ao vivo: sem `/dev/watchdog`, sem `/dev/hpet`.
-- Leitura de `BAR2 + 0x109000` (glue) adiada por risco (desligamento instantâneo).
-- Funcionalidade de energia já coberta: power button via `ps4-apcie-pwrbutton.c`/`icc_pwrbutton_init()`, shutdown via `icc_shutdown` → `pm_power_off`.
+**a) Função ACPI `00:14.0` (`104d:90d7`) — SEM DRIVER (mantido).**
+MMIO `fdf8000000` (32M) + I/O `1000`, nenhum driver carregado — e está correto assim:
+- PM1a_EVT `0x1000`, PM1a_CNT `0x1004`, PM_TMR `0x1008`, GPE0 `0x1014` já são reclamados pelo núcleo ACPI
+  (FACP tem corpo ACPI 1.0 legado; confere com `/proc/ioports`).
+- DSDT com 396 bytes: nenhum objeto de dispositivo a parsear.
+- Power button já implementado (`ps4-apcie-pwrbutton.c` / `icc_pwrbutton_init()` → `KEY_POWER` via ICC).
+- Shutdown já implementado (`icc_shutdown` → `pm_power_off`).
+- **Sleep/wake NÃO está implementado** (`bpcie_icc_suspend()`/`bpcie_icc_resume()` são stubs vazios).
 
-**Plano:** `outros/rea/acpi/plans/PLANO_DRIVER_ACPI_BAIKAL.md` (Fase 1 decisão registrada).
+**b) HPET/WDT da glue `00:14.4` (`104d:90db`, subfunção ICC 22) — REABERTO, driver inexistente.**
+O hardware **existe** e **não há driver Linux público**:
+- `drivers/ps4/baikal.h`: `BPCIE_SUBFUNC_HPET = 22 //Baikal Timer/WDT`, `BPCIE_HPET_BASE = 0x109000`,
+  `BPCIE_HPET_SIZE = 0x400` e a rotina `stop_hpet_timers()` usando o **layout de registradores HPET padrão**.
+- Kernel Orbis (`kmem_dump_1252.bin`): device `"Baikal Timer/WDT"` registrado para vendor `0x104d`,
+  device `0x90db`, função 4, subfunção `0x16` (=22); driver de HPET com nome por SoC
+  (`"Baikal High Precision Event Timer"`).
+- Nenhum kernel Linux público (5.4 whitehax0r/DFAUS-git/noob404yt, 6.15 crashniels, 7.0) expõe esse bloco.
 
-**Documentos:** `outros/rea/acpi/plans/PLANO_DRIVER_ACPI_BAIKAL.md`, `outros/rea/acpi/decompiled/`, `outros/rea/acpi/scans/`, `outros/rea/acpi/docs/LEVANTAMENTO_HARDWARE_PS4_BAIKAL.md`
+**Correção de lógica (importante):** as evidências negativas usadas para fechar o item em 2026-11-13 eram
+**nulas** — `CONFIG_HPET` e `CONFIG_WATCHDOG` estão desligados (logo `/dev/hpet` e `/dev/watchdog`
+**não poderiam existir** mesmo com o hardware presente), e o FADT **não tem campo HPET em nenhuma
+revisão da especificação** (a ausência era tautológica). A DSDT/SSDT também não declara o timer porque
+o Orbis o expõe via PCI+ICC, não via ACPI.
+
+**Tarefa (b):**
+1. Leitura **pontual** de 8 bytes em `BAR2(00:14.4) + 0x109000` (`0xc8909000`) — registro CAP/TIMCAP do
+   HPET; esperado `vendor ID = 0xA808` nos bits 16-31. **Exige autorização explícita**: varredura
+   sequencial na BAR2 da glue dispara desligamento instantâneo (banco: `BAR2_SEQUENTIAL_BLOCK_READ`,
+   risco `HIGH_RISK_POWER_OFF`).
+2. Se confirmar: `drivers/watchdog/baikal_wdt.c` (ou clocksource HPET) como `pci_driver` da glue, ligando
+   `CONFIG_WATCHDOG`/`CONFIG_HPET` (hoje desligados). Nada de escrita antes de ler em 2 boots.
+
+**Plano:** `outros/rea/acpi/plans/PLANO_DRIVER_ACPI_BAIKAL.md` (revisão crítica completa em §0).
+
+**Documentos:** `outros/rea/acpi/plans/PLANO_DRIVER_ACPI_BAIKAL.md`, `outros/rea/acpi/decompiled/`, `outros/rea/acpi/scans/`, `outros/rea/acpi/docs/LEVANTAMENTO_HARDWARE_PS4_BAIKAL.md`, `outros/rea/dumps/kmem_dump_1252.bin`
 
 ---
 
-### [ ] 🔄 Baikal DMA (00:14.5) — sem driver
+### [~] 🔄 Baikal DMA (00:14.5) — hardware validado ao vivo; driver `dmaengine` em desenvolvimento
 
-**Estado:** dispositivo presente (`104d:90dc`), MMIO `ca000000` (4K) + `ca800000` (4K), nenhum driver carregado.
+**Estado (2026-11-13):** dispositivo `104d:90dc`, dois controladores idênticos: BAR0 `ca000000` (DMAC1?) e BAR2 `ca800000` (DMAC2?), 4K cada, registradores em `+0x70` e `+0x80…+0xac`. **Memcpy por descritor validado nos dois** (cadeia de descritores, até 1 MiB, alinhamentos 4–64 B, ~900 MB/s), via harness `outros/rea/dma/harness/baikal_dmac_test/`. **Interrupção MSI funciona no BAR0 e NÃO chega no BAR2.** Decisão do usuário: o driver começa com IRQ no DMAC1 e **polling no DMAC2**.
 
-**Tarefa:** desenvolver driver `baikal-dma` para exposição do controlador DMA do Baikal ao subsistema DMAEngine do Linux.
+**Tarefas:**
+- [~] Driver `dmaengine` (`drivers/dma/baikal-dmac.c`): memcpy, 2 canais, `virt-dma`, descritores de 16 B encadeados, endereços de 32 bits e múltiplos de 4 B.
+- [ ] Integrar o patch ao `00-build-kernel-7.0.sh` (exige aprovação, mexe no script de build) e validar em um build oficial.
 
-**Documentos:** `outros/rea/dma/plans/PLANO_DRIVER_DMA_BAIKAL.md`, `outros/rea/dma/decompiled/`, `outros/rea/dma/scans/`, `outros/rea/dma/docs/LEVANTAMENTO_HARDWARE_PS4_BAIKAL.md`
+**Documentos:** `outros/rea/dma/plans/PLANO_DRIVER_DMA_BAIKAL.md`, `outros/rea/dma/decompiled/baikal_dmac_mtk_registers_20261113.md`, `outros/rea/dma/scans/dmac_bars_full_20261113.json`. Banco: `test_history` 80–82.
+
+#### [ ] 🔎 PENDENTE (executar assim que possível): por que o DMAC2 (BAR2) não gera interrupção
+
+Com o hardware concluindo a transferência (`INT_FLAG = 1`), **nenhum vetor MSI é chamado** para o BAR2, nem com 1 vetor compartilhado (`bpcie_assign_irqs`) nem com 2 vetores (`pci_alloc_irq_vectors(pdev,2,2,MSI)`). O BAR0 entrega normalmente pelo vetor 0.
+
+Investigação a fazer, em ordem de custo:
+1. **RE do attach do `dmac_mtk.c` no Orbis** (estático, sem risco): achar a rotina que referencia `Can't allocate IRQ` (`0xffffffffdcb55ecd`) e `failed to set up interrupt`; ver como cada controlador obtém a IRQ (rid, `bus_setup_intr`) e se há passo extra para o segundo. Endereço = `0xffffffffdc350000` + offset do arquivo no `kmem_dump_1252.bin`.
+2. **Ler o demux** `bpcie_handle_edge_irq()` (`ps4-bpcie.c:88`): confirmar se o ACK/`irq_find_mapping(initial_hwirq + 1)` cobre a sub-função 1 (`DMAC2`), e se o `BPCIE_ACK_READ` reflete o DMAC2.
+3. **Confirmar o mapeamento** BAR0↔DMAC1 / BAR2↔DMAC2 (hipótese pelo `baikal.h`).
+4. Se for preciso, instrumentar o demux (leitura do `ACK_READ` durante uma transferência do BAR2) — **só depois** dos passos estáticos, por tocar a glue.
+
+**Enquanto isso:** o canal do DMAC2 conclui por polling (`hrtimer`). Quando resolvido, trocar para IRQ.
+
+**Achado lateral (pendente de decisão):** `bpcie_free_irqs()` deixa entradas MSI e gera `WARNING` em `msi_device_data_release` no `rmmod`; `pci_free_irq_vectors()` direto resolve. Avaliar corrigir o ramo alternativo da função.
 
 ---
 
