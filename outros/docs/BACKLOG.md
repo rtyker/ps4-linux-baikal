@@ -657,9 +657,9 @@ VM básica.
 
 **Cuidado ao executar esta tarefa:** mudar o `.config` dispara recompilação ampla (~40 min nesta máquina). Vale agrupar todas as remoções em **uma única** rodada e testar o boot depois, em vez de ir removendo aos poucos. E manter a tag anterior em `boot_referencia/` para rollback — cada teste ao vivo custa um power cycle completo.
 
-### [ ] WiFi/BT — manufacture data ausente
+### [ ] WiFi — manufacture data (NVRAM) ausente → movido para `outros/rea/wifi/`
 
-`wlanAdapterStart: load manufacture data fail` — NVRAM `/data/nvram/APCFG/APRDEB/WIFI` ausente. WiFi conecta mesmo assim usando defaults do eFUSE, mas pode ter potência/canal subótimo. Baixa prioridade, não bloqueador.
+Pendência e plano de correção (NVRAM `/data/nvram/APCFG/APRDEB/WIFI`, país BR, MAC do eFUSE) agora vivem em [`outros/rea/wifi/plans/PLANO_DRIVER_WIFI_BAIKAL.md`](../rea/wifi/plans/PLANO_DRIVER_WIFI_BAIKAL.md). Índice da pasta: [`outros/rea/wifi/INDEX.md`](../rea/wifi/INDEX.md).
 
 ### [ ] Power Management — reativar DPM
 
@@ -780,21 +780,35 @@ Itens abaixo são exclusivamente de hardware/driver. Para cada componente sem dr
 
 ---
 
-### [ ] 📶 Bluetooth — controlador não detectado
+### [x] 📶 Bluetooth — **FUNCIONANDO** (validado 2026-11-13)
 
-**Estado:** nenhum controlador Bluetooth aparece em `lspci`, `lsusb`, `lshw`. Sem interface `hci0`, sem driver carregado, `hciconfig`/`bluetoothctl` não disponíveis. Controles DualShock 4 não funcionam via BT.
+**Estado:** Driver `btmtksdio` (MediaTek MT7668) carregado e bound ao SDIO function 2. Controlador `hci0` detectado (MAC: `E8:D8:19:93:CC:AE`). Bluetooth daemon rodando, descoberta de dispositivos funcionando (testado: "L3250 Series" detectado).
 
-**Tarefa:** verificar fisicamente se o PS4 tem hardware Bluetooth integrado (revisar dumps de NOR/flash, procura por strings "bluetooth"/"bt" em binários do sistema). Se houver hardware, identificar o chip e desenvolver ou portar o driver. Se não houver, documentar a ausência e fechar a tarefa.
+**O que estava faltando:** apenas instalar `bluez-utils` (já está no PKGS do build) e habilitar o serviço `bluetooth.service`. O driver `btmtksdio` já estava compilado no kernel (`CONFIG_BT_MTKSDIO=y`) e funcionando — bound ao SDIO device `mmc0:0001:2` (MT7668).
 
-**Documentos:** `outros/rea/scans/ps4_system_files.txt`, `outros/rea/scans/hardware_search_results.txt`, `outros/rea/ethernet/scans/` (strings `gbe`/`bluetooth` search)
+**Validado ao vivo:**
+- `lsmod | grep btmtk` → driver bound (built-in kernel)
+- `dmesg | grep -i bluetooth` → hci0 setup OK, firmware downloaded
+- `systemctl enable --now bluetooth` → service ativo
+- `bluetoothctl scan on` → descobre dispositivos (ex: "L3250 Series")
+
+**Pendente:** parear DualShock 4 (testar se funciona com o profile HIDP já habilitado no kernel).
 
 ---
 
-### [ ] 🔌 Baikal ACPI (00:14.0) — sem driver
+### [~] 🔌 Baikal ACPI (00:14.0) — sem driver necessário
 
-**Estado:** dispositivo presente no PCI (`104d:90d7`), MMIO `fdf8000000` (32M) + I/O `1000`, mas nenhum driver carregado. Sem controle de power management via ACPI.
+**Estado:** dispositivo presente no PCI (`104d:90d7`), MMIO `fdf8000000` (32M) + I/O `1000`, mas nenhum driver carregado. **Encerrado como "sem driver necessário" (2026-11-13).**
 
-**Tarefa:** desenvolver driver `baikal-acpi` para exposição de eventos ACPI (power button, eject, thermal, sleep/wake) do chip Sony Baikal.
+**Justificativa:**
+- DSDT/SSDT/FACP analisadas: nenhum dispositivo HPET ou WDT declarado.
+- FACP decodificada: PM1A_EVENT em 0x1000 (confere com /proc/ioports), sem bloco de timer HPET.
+- Banco `ps4_hardware_memory.db`: nenhuma entrada de HPET/WDT/0x109000.
+- Sistema ao vivo: sem `/dev/watchdog`, sem `/dev/hpet`.
+- Leitura de `BAR2 + 0x109000` (glue) adiada por risco (desligamento instantâneo).
+- Funcionalidade de energia já coberta: power button via `ps4-apcie-pwrbutton.c`/`icc_pwrbutton_init()`, shutdown via `icc_shutdown` → `pm_power_off`.
+
+**Plano:** `outros/rea/acpi/plans/PLANO_DRIVER_ACPI_BAIKAL.md` (Fase 1 decisão registrada).
 
 **Documentos:** `outros/rea/acpi/plans/PLANO_DRIVER_ACPI_BAIKAL.md`, `outros/rea/acpi/decompiled/`, `outros/rea/acpi/scans/`, `outros/rea/acpi/docs/LEVANTAMENTO_HARDWARE_PS4_BAIKAL.md`
 
@@ -908,6 +922,7 @@ Os itens abaixo foram corrigidos nos scripts de build e entrarão em vigor na pr
 | Bootargs limpos | `distro/01-build-image-7.0.sh` (~linha 727) | Removidos: `systemd.unified_cgroup_hierarchy=0`, `systemd.legacy_systemd_cgroup_controller=yes`, `zswap.enabled=1`, `libata.force=1.00:3.0Gbps,noncq`, `ahci.mobile_lpm_policy=1` |
 | `CONFIG_X86_ACPI_CPUFREQ` | `kernel/00-build-kernel-7.0.sh` (~linha 538) | Driver ACPI legado para Jaguar (fallback do amd_pstate) |
 | Estrutura fonte MTS | `kernel/00-build-kernel-7.0.sh` (~linhas 376-427) + `kernel/patches/mts-baikal-kconfig.patch` | `drivers_mts/` = fonte única (mts.c, mts.h); patch = apenas Kconfig/Makefile vendor Sony; elimina ~3.200 linhas duplicadas |
+| **Bluetooth (btmtksdio/MT7668)** | Kernel já tinha `CONFIG_BT_MTKSDIO=y`; distro adiciona `bluez-utils` | Driver bound ao SDIO function 2; `hci0` detectado (E8:D8:19:93:CC:AE); descoberta funcionando |
 
 **UART mantido** no bootargs (`earlycon=uart8250,mmio32,0xC890E000` + `console=...`) — obrigatório
 para diagnóstico via console serial físico (ver AGENTS.md, convenções de bootargs).
