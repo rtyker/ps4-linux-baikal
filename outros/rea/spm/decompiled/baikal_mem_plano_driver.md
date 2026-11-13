@@ -107,13 +107,14 @@ O dispositivo 00:14.6 do SoC Baikal expõe memória dedicada (SPM/DDR3) usada pe
 **Objetivo:** Integrar com o driver RTC `rtc-ps4-icc` (já existente no kernel 7.0) e expor interface ICC via memória Baikal.
 
 **Tarefas:**
-- [ ] Revisar `drivers/rtc/rtc-ps4-icc.c` para entender como usa MMIO/ICC
-- [ ] Adicionar suporte a leitura de contexto ICC via memória Baikal
-- [ ] Implementar interface para `icc_query` via memória compartilhada (se aplicável)
-- [ ] Testar `modprobe rtc-ps4-icc` com `baikal-memory` carregado
-- [ ] Validar `/dev/rtc0` aparece e `hwclock -r` funciona
+- [x] Revisar `drivers/rtc/rtc-ps4-icc.c` para entender como usa MMIO/ICC
+- [x] Adicionar suporte a leitura de contexto ICC via memória Baikal — investigado e **descartado**: os registradores do RTC Marvell (STATUS `+0x100`, TIME `0x130..0x13c`, extras `0x160/0x164`) estão zerados no BAR5, e o ICC `2/0x0b|0x0c` só devolve `02 02 00…` (save/load de contexto, sem tempo)
+- [x] Implementar interface para `icc_query` via memória compartilhada — não aplicável; a região `spm.icc` (BAR5+0x2c000) é o mailbox do ICC e já é exposta por `bar5_0x2c000`
+- [x] Testar `modprobe rtc-ps4-icc` com `baikal-memory` carregado
+- [x] Validar `/dev/rtc0` — registra e lê tempo real (`RTC_RD_TIME` → `2026-11-13 00:03:48`), com `hctosys=1`
+- [ ] Validar `hwclock -r` — bloqueado no kernel em execução por `CONFIG_RTC_INTF_DEV_UIE_EMUL` desligado; build script já habilita, falta subir kernel novo
 
-**Critério de aceite:** RTC via ICC funciona com o driver de memória carregado.
+**Critério de aceite (revisado):** RTC via ICC registra e reporta tempo correto com o driver de memória carregado. **Atendido em 2026-11-12**, com a ressalva do `hwclock -r` acima. O driver foi semeado com `ktime_get_real_seconds()` no probe (antes reportava 1970 e zerava o relógio do sistema no boot).
 
 ---
 

@@ -849,7 +849,9 @@ Dados salvos em:
 
 **Build oficial validado (2026-11-12):** tag `20261112-baikal-memory-fase3`, exit 0 — patch aplicado após o `git reset --hard`, `CONFIG_BAIKAL_MEMORY=m` resolvido no `olddefconfig` e `.ko` gerado (502.144 bytes, vermagic `7.0.8-Strawberry-ThinLTO-Baikal-+`), instalado e testado no PS4 (MAC `2c:cc:44:3f:69:5f` no sysfs e no `/dev`).
 
-**Pendente:** Fase 4 (RTC/ICC), Fase 5 (escrita, `allow_write=0`), Fase 6 (stress + documentação final).
+**Fase 4 (RTC/ICC) concluída com ressalva (2026-11-12):** `/dev/rtc0` sobe com o `baikal-memory` carregado e o RTC agora é semeado com o relógio do sistema (`/sys/class/rtc/rtc0/date` = 2026-11-13, `hctosys=1`; antes registrava 1970). Descoberto que o RTC Marvell **não** está no BAR5 (registradores `+0x100`/`0x130..0x164` zerados) e que o ICC `2/0x0b|0x0c` só faz save/load de contexto (reply `02 02 00…`). `hwclock -r` ainda falha no kernel em execução por falta de UIE emulation — o build script já habilita `CONFIG_RTC_INTF_DEV_UIE_EMUL=y`; falta subir kernel novo.
+
+**Pendente:** deploy de kernel com UIE emulation (para fechar `hwclock -r`), Fase 5 (escrita, `allow_write=0`), Fase 6 (stress + documentação final).
 
 **Tarefa:** desenvolver driver `baikal-memory` para exposição da memória SPM/DDR3 do Baikal, possivelmente como memregion ou dispositivo de memória gerenciável.
 

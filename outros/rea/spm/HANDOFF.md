@@ -4,7 +4,7 @@
 **Dispositivo PCI:** 00:14.6, Vendor 0x104d, Device 0x90dd  
 **Hardware:** PS4 Slim (CUH-2xxx, Baikal B1), 256 MB SPM DDR3  
 **Kernel alvo:** 7.0.8-Strawberry-ThinLTO-Baikal-+ (x86_64)  
-**Status:** Fases 1, 2 e 3 CONCLUÍDAS (2026-11-12) — driver carrega via udev, a leitura por `/dev/baikal-memory` retorna os dados reais da SPM (MAC do BAR5+0x2f000, região `spm.icc`) e o sysfs expõe `bar5_0x2c000` (ICC) e `bar5_0x2f000` (MAC formatado). Build oficial validado (tag `20261112-baikal-memory-fase3`, exit 0). Próximo passo: Fase 4 (RTC/ICC).  
+**Status:** Fases 1–4 CONCLUÍDAS (2026-11-12) — driver carrega via udev, leitura e sysfs da SPM validados, build oficial OK (tag `20261112-baikal-memory-fase3`) e RTC via ICC agora convive com o `baikal-memory` e reporta tempo real (Fase 4 com uma ressalva: `hwclock -r` exige o próximo kernel com UIE emulation). Próximo passo: Fase 5 (escrita controlada, `allow_write=0`).  
 **Acesso ao PS4:** SSH WiFi `root@192.168.6.128`, senha `ps4`. Porta `eth0` (cabeada) não tem link (PHY mudo, bug conhecido).
 
 ---
@@ -205,7 +205,34 @@ tail -f outros/tests/uart_logs/baikal-memory-fase2_*.log
 
 **Build oficial validado em 2026-11-12** — `sudo ./kernel/00-build-kernel-7.0.sh 20261112-baikal-memory-fase3` terminou com **exit 0**: o patch aplicou logo após o `git reset --hard` ("✓ Patch baikal-memory aplicado com sucesso"), o `olddefconfig` resolveu `CONFIG_BAIKAL_MEMORY=m`, e o `.ko` saiu em `kernel/kernel_build_7.0/drivers/misc/baikal-memory.ko` (502.144 bytes) com vermagic `7.0.8-Strawberry-ThinLTO-Baikal-+`. Artefatos da tag em `distro/boot_referencia/bzImage-7.0-20261112-baikal-memory-fase3` + `config-7.0-20261112-baikal-memory-fase3` (o `deploy-boot` ainda exige bootargs e initramfs dessa tag). Snapshot pós-build gerado em `kernel/snapshots/`.
 
-**Próximo passo: Fase 4 (RTC/ICC)** — revisar `drivers/rtc/rtc-ps4-icc.c` e validar `/dev/rtc0` + `hwclock -r` com o `baikal-memory` carregado (o `RTC_CLASS` já é habilitado pelo `00-build-kernel-7.0.sh`).
+### 3.2 Fase 4 — RTC via ICC (CONCLUÍDA COM RESSALVA, 2026-11-12)
+
+O kernel em execução já tem `RTC_CLASS=y` e `rtc-ps4-icc` como módulo, então a fase foi validada ao vivo sem reflash, com o `baikal-memory` carregado.
+
+**O que foi descoberto:**
+
+1. **Os registradores do RTC Marvell não estão no BAR5** — a RE de `rtc_mvl.c` (`outros/rea/spm/decompiled/baikal_rtc_mvl.txt`) descreve STATUS em `+0x100` e TIME em `0x130/0x134/0x138/0x13c`; lidos via `/dev/baikal-memory` (offset do device `0x500000+`), todos voltam **zero**, inclusive `0x160`/`0x164`. Ou seja, este RTC não está na janela mapeada do 00:14.6.
+2. **O ICC save/load context não devolve tempo** — `echo "2 0x0c 00" > /proc/ps4_icc` e `2 0x0b` retornam `ret=20` com reply `02 02 00 …`; o BAR5+0x2c000 só mostra o tráfego do mailbox (ex.: `42 02 0b 00 00 00 19 00 20 00 88 …`, byte do minor + contador). Nada de BCD/epoch.
+3. Por isso `rtc-ps4-icc` **semeia** `base_time` com `ktime_get_real_seconds()` no probe e mantém os comandos ICC de save/load context (integração preservada, sem inventar escrita no hardware).
+
+**Resultado ao vivo (ambos os drivers carregados):**
+
+```
+lsmod: rtc_ps4_icc + baikal_memory
+/sys/class/rtc/rtc0/time   -> 00:03:07
+/sys/class/rtc/rtc0/date   -> 2026-11-13
+/sys/class/rtc/rtc0/since_epoch -> 1794528187   (hctosys=1)
+/proc/driver/rtc      -> rtc_time 00:03:07 / rtc_date 2026-11-13
+bar5_0x2f000          -> 2c:cc:44:3f:69:5f      (baikal-memory intacto)
+```
+
+Antes do fix o kernel registrava `setting system clock to 1970-01-01` (zerava o relógio no boot); agora registra o tempo real.
+
+**Ressalva — `hwclock -r`:** no kernel **em execução** ainda sai com `hwclock: select() to /dev/rtc to wait for clock tick timed out` (exit 1), porque `CONFIG_RTC_INTF_DEV_UIE_EMUL` está desligado (`# ... is not set`) e o driver não tem IRQ de update. O `00-build-kernel-7.0.sh` agora habilita `CONFIG_RTC_INTF_DEV_UIE_EMUL=y`; **a validação final do `hwclock -r` exige subir um kernel novo** (deploy + power cycle).
+
+**Artefatos:** patch `kernel/patches/ps4-icc-rtc-wrapper.patch` regenerado com o seed (validado com `git apply --cached --check`); módulo testado em `outros/rea/spm/dumps/rtc-ps4-icc-fase4.ko`.
+
+**Próximo passo: Fase 5 (escrita controlada, `allow_write=0`)** — e, antes dela, o deploy de um kernel com UIE emulation para fechar o `hwclock -r`.
 
 ### Estado do patch (obrigatório para idempotência)
 

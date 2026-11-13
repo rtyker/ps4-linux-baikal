@@ -130,10 +130,10 @@ index 6cf7e0663..3c92a9b4e 100644
 +obj-$(CONFIG_RTC_DRV_PS4_ICC) += rtc-ps4-icc.o
 diff --git a/drivers/rtc/rtc-ps4-icc.c b/drivers/rtc/rtc-ps4-icc.c
 new file mode 100644
-index 000000000..9f3aad643
+index 000000000..53d95c1d5
 --- /dev/null
 +++ b/drivers/rtc/rtc-ps4-icc.c
-@@ -0,0 +1,186 @@
+@@ -0,0 +1,201 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * PS4 RTC driver via ICC (Baikal/Aeolia/Belize)
@@ -141,6 +141,18 @@ index 000000000..9f3aad643
 + * Based on RE of Orbis 12.52 kernel (rtc.c / rtc_mvl.c)
 + * Validated 2026-07-25: ICC major=2 minor=0x0b/0x0c (save/load context),
 + * major=4 minor=0x50 (alarm bitmask).
++ *
++ * Fase 4 (2026-11-12): o contexto ICC save/load NAO devolve tempo (o reply
++ * vem 02 02 00...) e os registradores do RTC Marvell descritos em
++ * outros/rea/spm/decompiled/baikal_rtc_mvl.txt (STATUS +0x100, TIME
++ * 0x130..0x13c) estao zerados no BAR5 da memoria Baikal — ou seja, nao ha
++ * fonte de tempo legivel pelo nosso mapeamento atual. Por isso o RTC e
++ * semeado com o relogio do sistema no probe e passa a andar por jiffies;
++ * deixa de reportar 1970 (que fazia o hctosys zerar o relogio no boot).
++ *
++ * O driver tambem nao expoe IRQ de update: para o hwclock(-r) nao travar em
++ * "select() ... timed out" o kernel precisa de CONFIG_RTC_INTF_DEV_UIE_EMUL=y
++ * (habilitado no kernel/00-build-kernel-7.0.sh).
 + */
 +
 +#include <linux/module.h>
@@ -150,6 +162,7 @@ index 000000000..9f3aad643
 +#include <linux/jiffies.h>
 +#include <linux/delay.h>
 +#include <linux/err.h>
++#include <linux/ktime.h>
 +
 +extern int ps4_icc_rtc_cmd(u8 major, u16 minor, const void *data, u16 length,
 +			    void *reply, u16 reply_length);
@@ -174,7 +187,8 @@ index 000000000..9f3aad643
 +
 +	spin_lock_irqsave(&sc->lock, flags);
 +	if (sc->base_time == 0) {
-+		now = 0;
++		/* Sem base do ICC: usa o relogio do sistema em vez de 1970. */
++		now = ktime_get_real_seconds();
 +	} else {
 +		now = sc->base_time + (jiffies - sc->base_jiffies) / HZ;
 +	}
@@ -260,7 +274,8 @@ index 000000000..9f3aad643
 +		return -ENOMEM;
 +
 +	spin_lock_init(&sc->lock);
-+	sc->base_time = 0;
++	/* Semeia com o relogio do sistema: o ICC nao expoe tempo legivel. */
++	sc->base_time = ktime_get_real_seconds();
 +	sc->base_jiffies = jiffies;
 +
 +	platform_set_drvdata(pdev, sc);

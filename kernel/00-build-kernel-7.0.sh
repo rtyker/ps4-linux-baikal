@@ -811,6 +811,11 @@ scripts/config --set-str CONFIG_DEFAULT_NET_SCH "fq_codel"
 # hardware, ver consolidado/BACKLOG.md. RTC_DRV_CMOS continua habilitado como
 # fallback caso o rtc-ps4-icc nao registre /dev/rtc0 corretamente.
 scripts/config --enable  CONFIG_RTC_CLASS
+# UIE emulation: o rtc-ps4-icc nao tem IRQ de update no hardware. Sem isso o
+# `hwclock -r` fica esperando o tick em select() e sai com
+# "select() to /dev/rtc to wait for clock tick timed out" (exit 1) mesmo com
+# a hora correta no /sys/class/rtc/rtc0. Validado em 2026-11-12.
+scripts/config --enable  CONFIG_RTC_INTF_DEV_UIE_EMUL
 scripts/config --enable  CONFIG_RTC_INTF_DEV
 scripts/config --enable  CONFIG_RTC_INTF_SYSFS
 scripts/config --enable  CONFIG_RTC_INTF_PROC
