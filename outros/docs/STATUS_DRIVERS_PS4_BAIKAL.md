@@ -21,6 +21,9 @@
 | Baikal Memory [00:14.6] | `baikal-memory` | Funcional | Driver v0.2 in-tree: expõe `/dev/baikal-memory` (0600) e sysfs, leitura de MAC/ICC, escrita controlada na janela BAR2 (DDR3) |
 | RTC via ICC | `rtc-ps4-icc` | Funcional | `/dev/rtc0` operacional, sincronização automática com relógio do sistema e NTP (`timedatectl`), fim do bug de 1970 |
 | CIFS (rede /mnt/hdauxiliar) | `cifs` | Funcional | Mount leitura/escrita com credenciais Samba, escrita sem sudo em dirs 755 |
+| Bluetooth | `btmtksdio` (MediaTek MT7668, SDIO) | Funcional | **Teste do usuário em 2026-11-13: funcionando perfeitamente.** Detalhes técnicos no `BACKLOG.md` (item Bluetooth) |
+| Áudio via Bluetooth | `btmtksdio` + áudio do sistema | Funcional | **Teste do usuário em 2026-11-13:** reprodução em caixa de som Bluetooth, funcionando perfeitamente |
+| Joystick | — | Funcional | **Teste do usuário em 2026-11-13:** funcionando perfeitamente. Modelo e forma de conexão não registrados |
 
 ---
 
@@ -29,7 +32,6 @@
 | Componente | Status | Problema |
 |------------|--------|----------|
 | Ethernet GBE eth0 [00:14.1] | `mts` carregado, **DOWN** | Sem carrier. PHY não acorda — causa raiz conhecida (PHY em power-down separado do MAC; requer sequência via ICC/Syscon). Documentado em `LICOES_APRENDIDAS.md` e `kernel/drivers_mts/ICC_GBE_TEST_LOG.md`. |
-| Bluetooth | Não detectado | Nenhum controlador em `lspci`/`lsusb`/`lshw`. Sem interface `hci0`, sem driver carregado. |
 | Baikal ACPI [00:14.0] | Sem driver | MMIO mapeado, nenhum driver carregado |
 | Baikal DMA [00:14.5] | Sem driver | MMIO mapeado, nenhum driver carregado |
 
@@ -48,6 +50,6 @@
 ## Resumo
 
 - **Com aceleração de GPU:** sim (`amdgpu`, OpenGL 4.6, Vulkan 1.4).
-- **Bluetooth:** não (não detectado, sem driver).
+- **Bluetooth, áudio via Bluetooth e joystick:** sim (teste do usuário em 2026-11-13, funcionando perfeitamente). A linha antiga "Bluetooth não detectado" (levantamento de 2026-11-12) estava desatualizada. Provavelmente porque o MT7668 é um dispositivo SDIO (`mmc0`), que `lspci`/`lsusb` não listam; não verifiquei essa causa.
 - **Nem tudo tem driver:** faltam drivers para Baikal ACPI, DMA e Memory; o GBE tem driver mas não estabelece link.
-- **Itens funcionais:** 9 de 14 componentes listados.
+- **Itens funcionais:** ver a tabela acima (a contagem anterior, "9 de 14", já não batia com a tabela e foi removida).

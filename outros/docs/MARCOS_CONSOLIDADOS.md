@@ -20,6 +20,7 @@
 | **Netconsole pronto** | 2026-07-23 | ✅ | `netconsole=@192.168.0.2/eth0,6666@192.168.0.1/ff:ff:ff:ff:ff:ff` nos bootargs. |
 | **Desligamento remoto** | 2026-07-22 | ⚠️ | `sync && poweroff -f` encerra SO + rede, mas luz azul permanece (S5 exige ICC dedicado). |
 | **Auto-eth0 no boot** | 2026-07-23 | ✅ | `mts.ko stage=4` carrega automaticamente, `eth0` sobe sem Telnet. |
+| **Bluetooth, áudio Bluetooth e joystick** | 2026-11-13 | ✅ | Teste do usuário: Bluetooth, reprodução de áudio em caixa de som Bluetooth e joystick funcionando perfeitamente. Driver `btmtksdio` (MT7668). Modelo do joystick e forma de conexão não registrados. |
 | **KVM-AMD viável** | 2026-07-24 | ✅ | CPU Jaguar expõe SVM/NPT completo; build estático com `kvm.ko` + `kvm-amd.ko` OK (não testado no PS4). |
 
 ---
