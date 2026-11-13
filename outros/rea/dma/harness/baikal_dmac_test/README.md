@@ -4,6 +4,8 @@ Módulo de kernel **externo** para validar o hardware, com buffers próprios (`d
 
 **Os dois disputam o mesmo dispositivo PCI (`104d:90dc`).** Descarregue o `baikal-dmac` (`rmmod baikal_dmac`) antes de carregar este.
 
+> Para recompilar o **driver real** (`baikal-dmac`, `virt-dma`, `dmatest`) e o `rtc-ps4-icc` fora da árvore, use `../build_dma_modules.sh <dir_saida>`. Este README trata só do harness de RE.
+
 ## Build (host)
 
 ```bash

@@ -41,6 +41,7 @@ conhece rootfs. `PS4_BOOT_REF` permite apontar a distro para outro conjunto de a
 | **Bluetooth** | ✅ | `btmtksdio` (MediaTek MT7668, SDIO): funcionando perfeitamente. Teste do usuário em 2026-11-13 |
 | **Áudio via Bluetooth** | ✅ | Reprodução em caixa de som Bluetooth funcionando perfeitamente. Teste do usuário em 2026-11-13 |
 | **Joystick** | ✅ | Funcionando perfeitamente. Teste do usuário em 2026-11-13 (modelo e forma de conexão não registrados) |
+| **DMA do southbridge (`00:14.5`)** | ✅ | Driver `dmaengine` próprio `baikal-dmac` v0.1 (2 canais, memcpy por descritores encadeados): validado ao vivo com o `dmatest` do kernel, **3000 testes, 0 falhas**. Carrega como módulo (`virt-dma` + `baikal-dmac`); o canal 2 conclui por polling (a IRQ dele não chega). Utilidade prática ainda modesta, ver `BACKLOG.md` |
 | **Ethernet cabeada (`eth0`)** | ⚠️ parcial | Driver próprio `mts.ko` liga MAC e DMA, mas o PHY nunca sai de power-down (bloqueador de firmware, investigação encerrada) |
 | **Desligamento total (S5)** | ⚠️ parcial | `poweroff` encerra o SO; a luz azul não apaga sozinha |
 

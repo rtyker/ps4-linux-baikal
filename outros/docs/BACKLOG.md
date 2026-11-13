@@ -869,7 +869,19 @@ de validação, checklist de merge).
 - [x] **`baikal-dmac` v0.1 carregou:** `virt-dma` → `baikal-dmac`; `dma0chan0` e `dma0chan1`; IRQ 37 (DMAC1); sem erro. **`dmatest` (padrão do kernel): 3000 testes, 0 falhas**: canal 0 (IRQ) 200/200; canal 1 (polling) 200/200; **dois canais ao mesmo tempo, 4 threads cada**, 2400/2400; buffers de 256 KiB 200/200. 3 ciclos de `rmmod`/`insmod` sem problema (ver "Achado lateral" abaixo para o `WARNING`).
 - [ ] **Falta:** persistir os módulos no rootfs (item "Módulos do rootfs" abaixo), `CON` fora do alinhamento, `len=0`, erro induzido, e a IRQ do DMAC2.
 
-**Documentos:** `outros/rea/dma/plans/PLANO_DRIVER_DMA_BAIKAL.md`, `outros/rea/dma/decompiled/baikal_dmac_mtk_registers_20261113.md`, `outros/rea/dma/scans/dmac_bars_full_20261113.json`. Banco: `test_history` 80–82.
+**Documentos:** `outros/rea/dma/plans/PLANO_DRIVER_DMA_BAIKAL.md`, `outros/rea/dma/decompiled/baikal_dmac_mtk_registers_20261113.md`, `outros/rea/dma/scans/dmac_bars_full_20261113.json`. Banco: `test_history` 80–83.
+
+**⏸️ FRENTE PAUSADA em 2026-11-13 (decisão do usuário).** Estado de retomada: driver `baikal-dmac` v0.1 validado ao vivo; falta persistir os módulos no rootfs e os itens "Falta" acima.
+
+**Para iterar versões do driver sem rebuild do kernel:** `outros/rea/dma/harness/build_dma_modules.sh <dir_saida>` recompila `virt-dma`, `baikal-dmac`, `dmatest` e `rtc-ps4-icc` fora da árvore (sem BTF, `vermagic` conferido), a partir do `baikal-dmac.patch` (fonte única). No PS4: `insmod virt-dma.ko && insmod baikal-dmac.ko`; validar com `dmatest`.
+
+**Utilidade do driver (avaliação honesta, 2026-11-13):**
+- **Prática hoje: modesta.** É cópia memória→memória por hardware (~900 MB/s isolada, medida no harness), provavelmente **mais lenta que o `memcpy` da CPU**. Só serve a quem pedir pela API `dmaengine`; hoje ninguém pede.
+- **Onde o valor deve estar (hipóteses, NÃO verificadas):** o Orbis usa esse DMAC no caminho do HDD e da memória do southbridge (`aeolia_dmac_xfer_upstream/downstream` em logs de swap e escrita em HDD). Se ele move dados entre a RAM e a SPM de 256 MB (a do `baikal-memory`), daria acesso em bloco à SPM em vez de leitura/escrita direta.
+- **Já entregue de valor:** núcleo do `dmaengine` no kernel, driver em módulo com ciclo rápido de iteração, `dmatest` como teste de regressão, mapa de registradores e formato do descritor documentados.
+- **Limites:** endereços de 32 bits e múltiplos de 4 B; DMAC2 sem IRQ (conclui por polling); módulos ainda não persistidos no rootfs.
+
+**Próximo passo sugerido (não feito):** testar se o DMAC lê a SPM (`0x80000000`, abaixo de 4 GiB, portanto endereçável). **Só leitura.** Cuidado: o DMA **ignora a proteção `allow_write=0`** do `baikal-memory`, então não escrever na SPM por DMA sem decisão explícita.
 
 #### [ ] 🔎 PENDENTE (executar assim que possível): por que o DMAC2 (BAR2) não gera interrupção
 
