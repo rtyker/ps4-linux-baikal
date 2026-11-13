@@ -18,6 +18,8 @@
 | PCIe Glue Baikal [00:14.4] | `baikal_pcie` | Funcional | Probe OK, chip revision lido |
 | Platforma PS4 (LED/Fan/Buzzer) | `ps4-led`, `ps4-fan`, `ps4-buzzer` | Funcional | Sensores de temp/fan, LED, buzzer |
 | Áudio HDMI [00:01.1] | `snd_hda_intel` | Driver carregado | Carregado, IRQ 43; saída de áudio não testada |
+| Baikal Memory [00:14.6] | `baikal-memory` | Funcional | Driver v0.2 in-tree: expõe `/dev/baikal-memory` (0600) e sysfs, leitura de MAC/ICC, escrita controlada na janela BAR2 (DDR3) |
+| RTC via ICC | `rtc-ps4-icc` | Funcional | `/dev/rtc0` operacional, sincronização automática com relógio do sistema e NTP (`timedatectl`), fim do bug de 1970 |
 | CIFS (rede /mnt/hdauxiliar) | `cifs` | Funcional | Mount leitura/escrita com credenciais Samba, escrita sem sudo em dirs 755 |
 
 ---
@@ -30,7 +32,6 @@
 | Bluetooth | Não detectado | Nenhum controlador em `lspci`/`lsusb`/`lshw`. Sem interface `hci0`, sem driver carregado. |
 | Baikal ACPI [00:14.0] | Sem driver | MMIO mapeado, nenhum driver carregado |
 | Baikal DMA [00:14.5] | Sem driver | MMIO mapeado, nenhum driver carregado |
-| Baikal Memory [00:14.6] | Sem driver | MMIO/SPM mapeado, nenhum driver carregado |
 
 ---
 

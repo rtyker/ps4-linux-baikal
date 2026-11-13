@@ -25,7 +25,7 @@ O script:
    a restaurar do snapshot (o upstream não publica mais esse branch — ver seção
    abaixo);
 2. aplica os patches em uso — `ahci-baikal-polling-fallback`, `ps4-icc-rtc-wrapper`,
-   `mts-baikal-gbe-driver` e `ps4-icc-proc-debug` — com `git apply --check` +
+   `mts-baikal-gbe-driver`, `ps4-icc-proc-debug` e `baikal-memory-fase2` — com `git apply --check` +
    aborto em caso de falha (sem fallback silencioso). Os demais arquivos em
    `patches/` são **legado não aplicado** (ver abaixo);
 3. copia `drivers_mts/{mts.c,mts.h}` para `drivers/net/ethernet/sony/`;

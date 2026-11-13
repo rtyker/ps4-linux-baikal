@@ -36,9 +36,17 @@ conhece rootfs. `PS4_BOOT_REF` permite apontar a distro para outro conjunto de a
 | **SATA interno (HD real)** | ✅ | `ata1` estável via polling timer de 1 ms na function PCI `.7` (`xhci_aeolia`) — validado ao vivo na tag `20260730-sata-polling-fase-ab`; a build do `v1.0.0` contém o mecanismo mas não tem boot de validação registrado |
 | **USB 3.0 / SD-MMC** | ✅ | `xhci_aeolia` / `sdhci` |
 | **KVM-AMD** | ✅ | `/dev/kvm` responde a ioctls reais, QEMU no rootfs |
-| **RTC** | ⚠️ parcial | `/dev/rtc0` funciona manualmente (`date`/`hwclock`), não persiste entre boots |
+| **Baikal Memory / SPM (`00:14.6`)** | ✅ | Driver próprio `baikal-memory.ko` v0.2 in-tree: expõe `/dev/baikal-memory` (0600) e sysfs, lê MAC real de fábrica (`2c:cc:44:3f:69:5f`), região de mailbox ICC, e escrita controlada com proteção por parâmetro (`allow_write=0`) na janela DDR3 (BAR2) |
+| **RTC via ICC** | ✅ | `/dev/rtc0` operacional via `rtc-ps4-icc`, sincronização em tempo real e NTP ativo (`timedatectl` synchronized: yes), sem reset para 1970 no boot |
 | **Ethernet cabeada (`eth0`)** | ⚠️ parcial | Driver próprio `mts.ko` liga MAC e DMA, mas o PHY nunca sai de power-down (bloqueador de firmware, investigação encerrada) |
 | **Desligamento total (S5)** | ⚠️ parcial | `poweroff` encerra o SO; a luz azul não apaga sozinha |
+
+### 🌟 Destaque de Engenharia Reversa: Driver Baikal Memory (SPM/DDR3)
+O Southbridge Baikal (PS4 Slim) possui um chip de memória DDR3 auxiliar dedicado de 256 MB (Scratch Pad Memory - SPM, PCI `00:14.6`), anteriormente sem suporte algum no Linux. O projeto desenvolveu do zero o driver `baikal-memory`:
+* **Mapeamento de Hardware:** BAR0 (4 KiB MMIO), BAR2 (256 MB DDR3), BAR4 (1 MiB), BAR5 (256 KiB Mailbox/ICC/Bootparams).
+* **Identidade do Hardware:** Extração do endereço MAC de fábrica em tempo de execução (`BAR5+0x2f000`).
+* **Ponte Syscon/ICC:** Mapeamento seguro da área compartilhada de mensagens com o Syscon (`BAR5+0x2c000`).
+* **Segurança e Idempotência:** Módulo com escrita protegida (`allow_write=0`), whitelist estrita para a janela BAR2 e integração idempotente via patch no kernel 7.0.
 
 Detalhamento, causa raiz e o que já foi descartado: [`outros/docs/BACKLOG.md`](outros/docs/BACKLOG.md).
 
