@@ -838,10 +838,16 @@ revisão da especificação** (a ausência era tautológica). A DSDT/SSDT també
 o Orbis o expõe via PCI+ICC, não via ACPI.
 
 **Próximas tarefas (b):**
-1. Validar a leitura em 2 boots (conferir estabilidade do valor `0x05f5e10000002301`).
-2. Se confirmar: `drivers/watchdog/baikal_wdt.c` (ou clocksource HPET) como `pci_driver` da glue, ligando
+1. ✅ **Validar a leitura em 2 boots (CONCLUÍDO 2026-11-13):** leitura de `0xc8909000` após reboot =
+   `0x05f5e10000002301` — **IDÊNTICA** à 1ª leitura. Valor estável confirmado. Registrado em
+   `readonly_verification` id 893. **Nenhuma escrita** feita.
+2. `drivers/watchdog/baikal_wdt.c` (ou clocksource HPET) como `pci_driver` da glue, ligando
    `CONFIG_WATCHDOG`/`CONFIG_HPET` (hoje desligados).
-3. **Nenhuma escrita** em `0xc8909000` ou `0xc8909010` até a validação em 2 boots.
+3. **Nenhuma escrita** em `0xc8909000` ou `0xc8909010` até driver pronto e validado.
+
+**Especificação completa de implementação:** `outros/rea/acpi/plans/PLANO_DRIVER_ACPI_BAIKAL.md` §3.3–3.9
+(hardware confirmado, mapa de registradores, restrições críticas, estrutura do driver, configs, passos
+de validação, checklist de merge).
 
 **Plano:** `outros/rea/acpi/plans/PLANO_DRIVER_ACPI_BAIKAL.md` (revisão crítica completa em §0).
 

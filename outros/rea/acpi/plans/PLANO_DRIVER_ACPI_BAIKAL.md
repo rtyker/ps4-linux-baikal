@@ -184,16 +184,151 @@ compatíveis com um controlador de timer. **Não foi feita nenhuma escrita** nes
   campos de CAP register do HPET. Não há driver Linux público (§7). **Nada deve ser escrito** nesse
   bloco até validar contra o Orbis em 2 boots.
 
-### Fase 2 — Driver (planejada, não iniciada)
+### Fase 2 — Validação em 2º boot (CONCLUÍDA 2026-11-13)
 
-Não existe ainda. Esboço do que **terá** de ser feito (só após a leitura da Fase 0):
+**Resultado:** leitura de `0xc8909000` após reboot = `0x05f5e10000002301` — **IDÊNTICA** à 1ª leitura.
+Valor estável confirmado. **Nenhuma escrita** foi feita. Registro atualizado em `readonly_verification` (id 893).
 
-1. `drivers/watchdog/baikal_wdt.c` ou `drivers/clocksource/baikal-hpet.c` como `pci_driver` da **glue**
-   (`104d:90db`), lendo `bar2 + 0x109000`.
-2. **CAP/TIMCAP já lido ao vivo:** `0x05f5e10000002301` (REV_ID=1, NUM_TIM_CAP=3, LEG_RT_CAP=1,
-   vendor bits=`0x0000` atípico). Validar contra o Orbis em 2 boots antes de escrever.
-3. `CONFIG_WATCHDOG`/`CONFIG_HPET` **ligados** no build (hoje desligados) se quiser expor `/dev/watchdog`.
-4. Nenhuma escrita até o registro ser lido em 2 boots e conferido contra o Orbis.
+---
+
+### Fase 3 — Especificação de Implementação do Driver (PARA OUTRO AGENTE)
+
+Esta seção é a **especificação completa** para que outro agente implemente o driver. Não inicie antes
+de ler e entender todo o documento.
+
+#### 3.1 Objetivo
+Expor o HPET/WDT do Baikal (glue `00:14.4`, subfunção ICC 22) ao Linux via:
+- **Clocksource** (`drivers/clocksource/baikal-hpet.c`) — timer de alta precisão para o subsistema de tempo
+- **Watchdog opcional** (`drivers/watchdog/baikal_wdt.c`) — se `CONFIG_WATCHDOG` for ligado
+
+Ambos como **um único `pci_driver` da glue** (`104d:90db`), porque o bloco HPET vive na BAR2 da glue.
+
+#### 3.2 Hardware confirmado
+
+| Item | Valor |
+|------|-------|
+| Dispositivo PCI | `104d:90db` (Baikal PCIe Glue), função 4 (`00:14.4`) |
+| Subfunção ICC | 22 (`BPCIE_SUBFUNC_HPET`) |
+| Base MMIO | `BAR2 + 0x109000` = `0xc8909000` (BAR2 base `0xc8800000`, tamanho 2 MiB) |
+| Tamanho do bloco | `0x400` bytes (`BPCIE_HPET_SIZE`) |
+| CAP/TIMCAP (offset 0x00) | `0x05f5e10000002301` — **estável em 2 boots** |
+| REV_ID | 1 |
+| NUM_TIM_CAP | 3 (→ 4 timers: 0, 1, 2, 3) |
+| LEG_RT_CAP | 1 |
+| Vendor ID (bits 16-31) | `0x0000` (atípico — **não usar como validação de presença**) |
+| General Config (offset 0x10) | **NÃO LER/ESCREVER** — marcado `HIGH_RISK_POWER_OFF` no banco |
+| Timer N Config (offset 0x100 + 0x20*N) | **NÃO LER/ESCREVER** até driver pronto |
+
+#### 3.3 Mapeamento de registradores HPET (padrão Intel/Microsoft)
+
+| Offset | Registro | Bits relevantes |
+|--------|----------|-----------------|
+| +0x00 | CAPABILITY / TIMCAP | RO — lido: `0x05f5e10000002301` |
+| +0x10 | GENERAL_CONFIG | RW — **bit 0 = ENABLE_CNF** — **NÃO TOCAR** até driver pronto |
+| +0x20 | GENERAL_INT_STATUS | RO |
+| +0x100 + 0x20*N | TIMER_N_CONFIG | RW — **bit 2 = TIMER_INT_ENB_CNF** — **NÃO TOCAR** |
+| +0x108 + 0x20*N | TIMER_N_COMPARATOR | RW |
+| +0x110 + 0x20*N | TIMER_N_FSB | RW (se 64-bit) |
+| +0xF0 | MAIN_COUNTER | RO — contador principal |
+
+#### 3.4 Restrições CRÍTICAS (violação = PS4 desliga)
+
+1. **Nunca varredura sequencial/bloco na BAR2 da glue** (`0xc8800000`–`0xc89fffff`). Risco
+   `HIGH_RISK_POWER_OFF` registrado como `BAR2_SEQUENTIAL_BLOCK_READ`. Apenas acessos **pontuais**
+   de 8 bytes (ou 4 bytes alinhados) em offsets validados.
+2. **Offsets validados como SAFE no banco:**
+   - `0x109000` (CAP/TIMCAP) — `safe_to_read=1` (id 1339)
+   - `0x10a000`, `0x10a004`, `0x10a008`, `0x10a00c`, `0x10a030`, `0x10a034`, `0x10a038`, `0x10a03c`, `0x180004` — outros offsets da glue já lidos
+   - `0x109010` (GENERAL_CONFIG) — **`HIGH_RISK_POWER_OFF`, safe_to_read=0** (id 1340)
+3. **Nenhuma escrita** antes do driver estar completo, testado em 2 boots, e revisado.
+4. **Leitura via `/dev/mem`** (como feito nas validações) ou `ioremap` + `readq` no driver.
+   `/dev/mem` existe, `CONFIG_STRICT_DEVMEM` não está setado.
+
+#### 3.5 Estrutura do driver (recomendada)
+
+```c
+// drivers/clocksource/baikal-hpet.c  (ou drivers/watchdog/baikal_wdt.c unificado)
+#include <linux/pci.h>
+#include <linux/clocksource.h>
+#include <linux/watchdog.h>   // se watchdog
+#include <linux/io.h>
+#include <linux/delay.h>
+
+#define BAIKAL_HPET_VENDOR   0x104d
+#define BAIKAL_HPET_DEVICE   0x90db
+#define BAIKAL_HPET_BAR      2
+#define BAIKAL_HPET_OFFSET   0x109000
+#define BAIKAL_HPET_SIZE     0x400
+
+#define HPET_CAP             0x00
+#define HPET_GEN_CONFIG      0x10
+#define HPET_TIMER_CONFIG(n) (0x100 + 0x20 * (n))
+#define HPET_TIMER_COMP(n)   (0x108 + 0x20 * (n))
+#define HPET_MAIN_COUNTER    0xF0
+
+struct baikal_hpet {
+    void __iomem *base;
+    struct clocksource cs;
+    struct watchdog_device wdd;  // opcional
+    u64 cap;
+    int num_timers;
+};
+
+// PCI probe: valida vendor/device, mapeia BAR2 + 0x109000, lê CAP,
+// valida REV_ID==1, NUM_TIM_CAP>=3, LEG_RT_CAP==1.
+// NÃO escreve GENERAL_CONFIG no probe.
+
+// clocksource: usa MAIN_COUNTER (64-bit, free-running) como clocksource
+// rating alto (ex: 300), read() retorna readq(base + HPET_MAIN_COUNTER).
+
+// watchdog (se habilitado): usa Timer 0 em modo one-shot, INT_ENB_CNF,
+// GENERAL_CONFIG enable, nowayout=0, timeout default 30s.
+
+// remove: desabilita GENERAL_CONFIG (bit 0 = 0), desabilita timers,
+// iounmap, pci_release_regions.
+```
+
+#### 3.6 Configs de kernel necessárias (em `00-build-kernel-7.0.sh`)
+
+```bash
+scripts/config --enable CONFIG_CLOCKSOURCE_WATCHDOG   # se watchdog
+scripts/config --enable CONFIG_HPET                   # ou CONFIG_HPET_TIMER
+scripts/config --enable CONFIG_WATCHDOG               # se watchdog
+scripts/config --module CONFIG_BAIKAL_HPET            # driver como módulo
+```
+
+#### 3.7 Passos de validação obrigatórios (antes de considerar "pronto")
+
+1. **Compile isolado:** `make drivers/clocksource/baikal-hpet.o` (ou watchdog) — sem erros.
+2. **Boot 1:** `insmod baikal-hpet.ko`, `dmesg` mostra probe + clocksource registrado,
+   `/sys/devices/system/clocksource/clocksource0/current_clocksource` = `baikal-hpet`.
+3. **Boot 2 (reboot frio):** mesmo comportamento, valor CAP idêntico (`0x05f5e10000002301`).
+4. **Teste clocksource:** `cat /sys/devices/system/clocksource/clocksource0/current_clocksource`
+   não muda com carga; `clocksource -l` lista o driver.
+5. **Teste watchdog (se implementado):** `echo 1 > /dev/watchdog` não reinicia o PS4;
+   `wdctl` mostra status.
+6. **Nenhuma escrita em GENERAL_CONFIG** até etapa 5 passar.
+
+#### 3.8 Referências de código existentes no projeto
+
+| Arquivo | O que contém |
+|---------|--------------|
+| `kernel/kernel_build_7.0/drivers/ps4/baikal.h` | `BPCIE_HPET_BASE`, `BPCIE_HPET_SIZE`, `stop_hpet_timers()` (layout HPET padrão) |
+| `kernel/kernel_build_7.0/drivers/ps4/ps4-bpcie-icc.c` | `bpcie_icc_cmd()` — padrão de retry ICC (100x50ms) se precisar falar com firmware |
+| `outros/rea/dumps/kmem_dump_1252.bin` | Orbis: strings `"Baikal Timer/WDT"`, `"Baikal High Precision Event Timer"`, driver `hpet_identify`/`hpet_pci` |
+| `outros/rea/acpi/decompiled/` | `orbis_baikal_timer_wdt_register` (0xc02275ec), `orbis_hpet_device_name_by_soc` (0xc03fe77d), `orbis_hpet_identify` (0xc03fc1fa) |
+
+#### 3.9 Checklist de "pronto para merge"
+
+- [ ] Driver compila isolado (`make M=drivers/clocksource baikal-hpet.o`)
+- [ ] Probe PCI da glue `104d:90db` função 4 funciona
+- [ ] Clocksource registrado e selecionado automaticamente
+- [ ] Valor CAP lido no probe = `0x05f5e10000002301` (logado no dmesg)
+- [ ] 2 boots frios consecutivos estáveis
+- [ ] Nenhuma escrita em `0xc8909010` (GENERAL_CONFIG) no código
+- [ ] `CONFIG_HPET`/`CONFIG_WATCHDOG` ligados no build script
+- [ ] Patch gerado via `git diff HEAD` (padrão AGENTS.md) em `kernel/patches/baikal-hpet.patch`
+- [ ] `00-build-kernel-7.0.sh` aplica patch com `git apply --check` + `exit 1` se falhar
 
 ---
 
