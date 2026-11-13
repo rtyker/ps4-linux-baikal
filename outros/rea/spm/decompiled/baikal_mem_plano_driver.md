@@ -118,18 +118,18 @@ O dispositivo 00:14.6 do SoC Baikal expõe memória dedicada (SPM/DDR3) usada pe
 
 ---
 
-### Fase 5 — Escrita Controlada (Opcional, Semana 4-5)
+### Fase 5 — Escrita Controlada (Opcional, Semana 4-5) — IMPLEMENTADA (não testada ao vivo, 2026-11-12)
 
-**Objetivo:** Permitir escrita em registros específicos da SPM (APENAS após validação extensa de leitura).
+**Objetivo:** Permitir escrita controlada na SPM (APENAS após validação extensa de leitura), **desligada por padrão**.
 
 **Tarefas:**
-- [ ] Identificar quais registros são seguros para escrita (via RE do kernel Orbis)
-- [ ] Implementar `baikal_memory_write()` com validação rígida
-- [ ] Adicionar parâmetro de módulo `allow_write=0` (desligado por padrão)
-- [ ] Testar escrita em registros não críticos primeiro
-- [ ] Documentar riscos de escrita na SPM
+- [x] Identificar quais registros são seguros para escrita (via RE do kernel Orbis) — **nenhum registrador MMIO identificado como seguro** com os dados disponíveis; BAR0 é MMIO de controle, BAR5 contém a região `spm.icc` (`0x2c000`) usada pelo `ps4-bpcie-icc`. A whitelist de escrita adotada é conservadora: apenas a **janela BAR2** (DDR3/SPM, `0x001000–0x003fff` no layout de `/dev`) quando explicitamente habilitada.
+- [x] Implementar `baikal_memory_write()` com validação rígida (bounds + `allow_write` + `writable_only` restrito à BAR2; `memcpy_toio` em bounce de 64 B, mutex).
+- [x] Adicionar parâmetro de módulo `allow_write=0` (desligado por padrão, `0444`); `/dev/baikal-memory` passa a `0600`, escrita retorna `-EPERM` sem o parâmetro.
+- [ ] Testar escrita em registros não críticos primeiro — **pendente em hardware** (requer deploy de kernel/módulo novo; nunca feito ao vivo).
+- [x] Documentar riscos de escrita na SPM (ver HANDOFF 3.3 e cabeçalho do driver).
 
-**Critério de aceite:** Escrita funciona apenas em registros identificados como seguros; não causa panic.
+**Critério de aceite (parcial):** mecanismo implementado, desligado por padrão e restrito à janela BAR2; validação ao vivo de que "não causa panic" **ainda pendente**. Patch em `kernel/patches/baikal-memory-fase2.patch`, `.o` compilado isoladamente e `git apply --check` OK.
 
 ---
 

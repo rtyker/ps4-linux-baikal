@@ -1,6 +1,6 @@
 # Backlog do Projeto — Fonte Única de Pendências
 
-**Última atualização:** 2026-11-12 (CIFS concluído com autenticação Samba real — opção (b); seção Hardware com 7 tarefas; Baikal Memory (00:14.6) Fases 1 e 2 concluídas: BARs confirmados ao vivo (BAR5 com tabela estruturada, 256 MB real no Slim), strings do kernel Orbis encontradas (Baikal Scratch Pad Memory, spm_pci, SceDdr3Swap, icc_query, etc.), documentos ACHADOS_MEMORIA_BAIKAL_FASE1.md e FASE2.md criados; kernel Orbis é FreeBSD-based — driver Linux precisa ser desenvolvido do zero)
+**Última atualização:** 2026-11-12 (CIFS concluído com autenticação Samba real — opção (b); seção Hardware com 7 tarefas; Baikal Memory (00:14.6) Fases 1–5 implementadas: BARs/sysfs/leitura validados, RTC via ICC convivendo, e Fase 5 com escrita controlada `allow_write=0` restrita à janela BAR2 — patch regenerado/compilado/checkado, pendente teste ao vivo; kernel Orbis é FreeBSD-based — driver Linux desenvolvido do zero)
 
 > ℹ️ **Como ler este arquivo:** itens `[x]` fechados guardam o histórico da solução; itens dentro de
 > `<details>` com o título "Histórico da investigação" são **registro do que foi refutado**, não
@@ -822,7 +822,7 @@ Itens abaixo são exclusivamente de hardware/driver. Para cada componente sem dr
 
 ---
 
-### [~] 💾 Baikal Memory (00:14.6) — driver implementado e leitura validada ao vivo (Fases 1-2 OK; Fase 3 pendente)
+### [~] 💾 Baikal Memory (00:14.6) — Fases 1–5 implementadas; Fase 5 pendente de teste ao vivo (Fase 6 pendente)
 
 **Estado:** dispositivo presente (`104d:90dd`), BARs confirmados ao vivo:
 - BAR0 0xcc000000 (4 KiB): todo 0xFF (não mapeado)
@@ -851,7 +851,9 @@ Dados salvos em:
 
 **Fase 4 (RTC/ICC) concluída com ressalva (2026-11-12):** `/dev/rtc0` sobe com o `baikal-memory` carregado e o RTC agora é semeado com o relógio do sistema (`/sys/class/rtc/rtc0/date` = 2026-11-13, `hctosys=1`; antes registrava 1970). Descoberto que o RTC Marvell **não** está no BAR5 (registradores `+0x100`/`0x130..0x164` zerados) e que o ICC `2/0x0b|0x0c` só faz save/load de contexto (reply `02 02 00…`). `hwclock -r` ainda falha no kernel em execução por falta de UIE emulation — o build script já habilita `CONFIG_RTC_INTF_DEV_UIE_EMUL=y`; falta subir kernel novo.
 
-**Pendente:** deploy de kernel com UIE emulation (para fechar `hwclock -r`), Fase 5 (escrita, `allow_write=0`), Fase 6 (stress + documentação final).
+**Fase 5 (escrita controlada) implementada (2026-11-12, sem teste ao vivo):** `allow_write` (`bool`, padrão `0`, `0444`), `.write` em `/dev/baikal-memory` (agora `0600`) e `MODULE_VERSION("0.2")`. Mesmo com `allow_write=1`, a escrita é restrita à janela BAR2 exposta (`0x001000–0x003fff`, DDR3/SPM, 4 MiB); BAR0/BAR5 (MMIO/ICC/mailbox) e fora dos limites retornam `-EPERM`. Nenhum registrador MMIO identificado como seguro por RE — whitelist conservadora. Patch `kernel/patches/baikal-memory-fase2.patch` regenerado, `baikal-memory.o` compilado isoladamente (`CC="ccache clang" LLVM=1 ARCH=x86_64`) e `git apply --check` OK contra `HEAD` pristino (`9c260fc53`).
+
+**Pendente:** deploy de kernel com UIE emulation (para fechar `hwclock -r`), validar Fase 5 em hardware (escrita somente na BAR2, com leitura antes/depois, sem escrita em BAR5/ICC), Fase 6 (stress + documentação final). Risco: escrita na SPM pode corromper estado do Syscon/EMC e travar o console.
 
 **Tarefa:** desenvolver driver `baikal-memory` para exposição da memória SPM/DDR3 do Baikal, possivelmente como memregion ou dispositivo de memória gerenciável.
 

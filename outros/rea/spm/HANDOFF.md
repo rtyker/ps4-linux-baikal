@@ -4,7 +4,7 @@
 **Dispositivo PCI:** 00:14.6, Vendor 0x104d, Device 0x90dd  
 **Hardware:** PS4 Slim (CUH-2xxx, Baikal B1), 256 MB SPM DDR3  
 **Kernel alvo:** 7.0.8-Strawberry-ThinLTO-Baikal-+ (x86_64)  
-**Status:** Fases 1–4 CONCLUÍDAS (2026-11-12) — driver carrega via udev, leitura e sysfs da SPM validados, build oficial OK (tag `20261112-baikal-memory-fase3`) e RTC via ICC agora convive com o `baikal-memory` e reporta tempo real (Fase 4 com uma ressalva: `hwclock -r` exige o próximo kernel com UIE emulation). Próximo passo: Fase 5 (escrita controlada, `allow_write=0`).  
+**Status:** Fases 1–5 IMPLEMENTADAS (2026-11-12) — driver carrega via udev, leitura/sysfs da SPM validados, build oficial Fase 1–3 OK (tag `20261112-baikal-memory-fase3`) e RTC via ICC convive com o `baikal-memory` e reporta tempo real (Fase 4: `hwclock -r` exige kernel com UIE emulation). Fase 5 adiciona escrita controlada, **desligada por padrão** (`allow_write=0`) e restrita à janela BAR2 (DDR3/SPM) exposta em `/dev`; **não testada ao vivo** e depende de deploy de kernel/módulo novo. Próximo passo: validar Fase 5 em hardware (somente BAR2) e Fase 6.  
 **Acesso ao PS4:** SSH WiFi `root@192.168.6.128`, senha `ps4`. Porta `eth0` (cabeada) não tem link (PHY mudo, bug conhecido).
 
 ---
@@ -232,18 +232,28 @@ Antes do fix o kernel registrava `setting system clock to 1970-01-01` (zerava o 
 
 **Artefatos:** patch `kernel/patches/ps4-icc-rtc-wrapper.patch` regenerado com o seed (validado com `git apply --cached --check`); módulo testado em `outros/rea/spm/dumps/rtc-ps4-icc-fase4.ko`.
 
-**Próximo passo: Fase 5 (escrita controlada, `allow_write=0`)** — e, antes dela, o deploy de um kernel com UIE emulation para fechar o `hwclock -r`.
+### 3.3 Fase 5 — Escrita controlada (IMPLEMENTADA, não testada ao vivo, 2026-11-12)
+
+**Implementação:** parâmetro de módulo `allow_write` (`bool`, `0444`, **padrão `0`/desligado**), operação `.write` em `/dev/baikal-memory` e `MODULE_VERSION("0.2")`. O nó do dispositivo passa a `0600` (root), mas toda escrita retorna `-EPERM` enquanto `allow_write=0`.
+
+**Whitelist/regra de segurança (conservadora):** mesmo com `allow_write=1`, `baikal_mem_resolve(..., writable_only=true)` só aceita a **janela BAR2** exposta no layout do dispositivo (`0x001000–0x003fff`, primeiros 4 MiB da DDR3/SPM). Escritas em **BAR0** (MMIO de controle), **BAR5** (tabela estruturada; `spm.icc` em `0x2c000` é reservada pelo `ps4-bpcie-icc`) e fora dos limites são rejeitadas (`-EPERM`). BAR4 não é exposta. **Nenhum registrador MMIO foi identificado como seguro para escrita via RE do kernel Orbis**; por isso não há whitelist fora da BAR2.
+
+**Riscos:** escrita na SPM pode corromper estado do Syscon/EMC e travar o console. A BAR2 é tratada aqui como memória DDR3, mas seu conteúdo/uso real não foi totalmente mapeado — testar primeiro com blocos pequenos, não-críticos, e sempre com possibilidade de power cycle. Não usar em BAR5/ICC.
+
+**Validação local (procedimento obrigatório cumprido):** `drivers/misc/baikal-memory.o` compilado isoladamente (`sudo make CC="ccache clang" LLVM=1 ARCH=x86_64 ...`), patch `kernel/patches/baikal-memory-fase2.patch` regenerado por `git diff HEAD -- drivers/misc/{Kconfig,Makefile,baikal-memory.c}` a partir da árvore modificada, árvore resetada para `HEAD` pristino e `git apply --check` OK. **Sem teste ao vivo no PS4** (requer deploy de kernel/módulo novo).
+
+**Próximo passo:** validar Fase 5 em hardware (somente janela BAR2, com `allow_write=1` explícito, leituras antes/depois) e Fase 6; antes disso, deploy de um kernel com UIE emulation para fechar o `hwclock -r` da Fase 4.
 
 ### Estado do patch (obrigatório para idempotência)
 
 | Item | Valor |
 |------|-------|
-| Patch | `kernel/patches/baikal-memory-fase2.patch` (Fases 1–3 + Kconfig/Makefile) |
+| Patch | `kernel/patches/baikal-memory-fase2.patch` (Fases 1–5 + Kconfig/Makefile) |
 | Aplicação | `00-build-kernel-7.0.sh` — preflight + bloco próprio com `git apply --check` e `exit 1` |
-| Validação | `git apply --cached --check` contra o índice pristino: OK |
-| Compilação isolada | `make ... drivers/misc/baikal-memory.o` e `.ko`: OK, vermagic `7.0.8-Strawberry-ThinLTO-Baikal-+` |
-| Binário testado | `outros/rea/spm/dumps/baikal-memory-fase2.ko` (build oficial, 502.144 bytes, com debug_info) |
-| Build oficial | tag `20261112-baikal-memory-fase3`, exit 0 (patch aplicado pós-`git reset`) |
+| Validação (2026-11-12) | `git diff HEAD` regenerado, árvore resetada e `git apply --check` OK |
+| Compilação isolada (2026-11-12) | `make ... CC="ccache clang" LLVM=1 ARCH=x86_64 drivers/misc/baikal-memory.o`: OK |
+| Binário testado Fase 1–3 | `outros/rea/spm/dumps/baikal-memory-fase2.ko` (build oficial tag `20261112-baikal-memory-fase3`, 502.144 bytes) — **não inclui Fase 5** |
+| Build oficial | tag `20261112-baikal-memory-fase3`, exit 0 (patch aplicado pós-`git reset`) — Fase 5 entrará no próximo build que usar este patch |
 
 > O patch cobre `drivers/misc/baikal-memory.c` **e** `drivers/misc/Kconfig` + `drivers/misc/Makefile` (símbolo `CONFIG_BAIKAL_MEMORY`). O `config` rastreado não tem o símbolo do driver: o build o habilita com `scripts/config --module CONFIG_BAIKAL_MEMORY` antes do `olddefconfig`.
 

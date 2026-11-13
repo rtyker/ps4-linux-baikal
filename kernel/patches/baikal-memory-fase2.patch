@@ -22,20 +22,32 @@ index a0d475004..dfaa9f502 100644
 -obj-$(CONFIG_BAALAK_MEMORY)	+= baikal-memory.o
 +obj-$(CONFIG_BAIKAL_MEMORY)	+= baikal-memory.o
 diff --git a/drivers/misc/baikal-memory.c b/drivers/misc/baikal-memory.c
-index 1504655e3..1feb215fd 100644
+index 1504655e3..77bd93486 100644
 --- a/drivers/misc/baikal-memory.c
 +++ b/drivers/misc/baikal-memory.c
-@@ -33,18 +33,38 @@
+@@ -33,18 +33,50 @@
  #include <linux/mutex.h>
  #include <linux/sysfs.h>
  #include <linux/device.h>
 +#include <linux/etherdevice.h>
++#include <linux/moduleparam.h>
  
  #define DRIVER_NAME		"baikal-memory"
  #define DRIVER_DESC		"Sony Baikal Memory (SPM/DDR3) driver"
  
 -#define BAILAK_VENDOR_ID	0x104d
 -#define BAILAK_DEVICE_ID	0x90dd
++/*
++ * Escrita controlada (Fase 5): desligada por padrão. Mesmo com allow_write=1
++ * a escrita é restrita à janela BAR2 (DDR3/SPM) exposta em /dev, nunca em
++ * BAR0/BAR5 (MMIO/ICC/mailbox). Sem RE provando registradores MMIO seguros,
++ * não há whitelist de escrita fora da BAR2.
++ */
++static bool allow_write;
++module_param(allow_write, bool, 0444);
++MODULE_PARM_DESC(allow_write,
++	"Permitir escrita controlada na janela BAR2 da SPM (padrao: 0/desligado)");
++
 +#define BAIKAL_VENDOR_ID	0x104d
 +#define BAIKAL_DEVICE_ID	0x90dd
  
@@ -66,7 +78,7 @@ index 1504655e3..1feb215fd 100644
  struct baikal_mem_dev {
  	struct pci_dev		*pdev;
  	struct miscdevice	misc;
-@@ -77,47 +97,77 @@ static u32 baikal_mem_read32(void __iomem *addr)
+@@ -77,53 +109,127 @@ static u32 baikal_mem_read32(void __iomem *addr)
  	return ioread32(addr);
  }
  
@@ -87,13 +99,14 @@ index 1504655e3..1feb215fd 100644
 +/*
 + * Resolve um offset de /dev/baikal-memory para o BAR correspondente.
 + * Retorna o ponteiro virtual e, em *avail, quantos bytes ainda são legíveis
-+ * de forma contígua a partir dele. Retorna NULL no fim do dispositivo.
++ * (ou graváveis, se writable_only) de forma contígua a partir dele.
++ * Retorna NULL no fim do dispositivo.
 + */
 +static void __iomem *baikal_mem_resolve(struct baikal_mem_dev *dev, loff_t pos,
-+					size_t *avail)
++					size_t *avail, bool writable_only)
 +{
 +	if (pos < BAIKAL_DEV_BAR0_OFF + BAR0_SIZE) {
-+		if (!dev->bar0_mapped)
++		if (writable_only || !dev->bar0_mapped)
 +			return NULL;
 +		*avail = BAIKAL_DEV_BAR0_OFF + BAR0_SIZE - pos;
 +		return dev->bar0 + (pos - BAIKAL_DEV_BAR0_OFF);
@@ -107,7 +120,7 @@ index 1504655e3..1feb215fd 100644
 +	}
 +
 +	if (pos < BAIKAL_DEV_SIZE) {
-+		if (!dev->bar5_mapped)
++		if (writable_only || !dev->bar5_mapped)
 +			return NULL;
 +		*avail = BAIKAL_DEV_SIZE - pos;
 +		return dev->bar5 + (pos - BAIKAL_DEV_BAR5_OFF);
@@ -139,11 +152,8 @@ index 1504655e3..1feb215fd 100644
 +		size_t avail = 0;
 +		size_t chunk;
 +		void __iomem *src;
- 
--	while (total_read < count && *ppos < BAR5_SIZE) {
--		tmp = baikal_mem_read8(dev->bar5 + *ppos);
--		if (put_user(tmp, buf + total_read)) {
-+		src = baikal_mem_resolve(dev, *ppos, &avail);
++
++		src = baikal_mem_resolve(dev, *ppos, &avail, false);
 +		if (!src) {
 +			mutex_unlock(&dev->lock);
 +			return total_read ? total_read : -ENODEV;
@@ -151,7 +161,10 @@ index 1504655e3..1feb215fd 100644
 +
 +		chunk = min_t(size_t, count - total_read, avail);
 +		chunk = min_t(size_t, chunk, sizeof(bounce));
-+
+ 
+-	while (total_read < count && *ppos < BAR5_SIZE) {
+-		tmp = baikal_mem_read8(dev->bar5 + *ppos);
+-		if (put_user(tmp, buf + total_read)) {
 +		memcpy_fromio(bounce, src, chunk);
 +
 +		if (copy_to_user(buf + total_read, bounce, chunk)) {
@@ -166,7 +179,56 @@ index 1504655e3..1feb215fd 100644
  	}
  
  	mutex_unlock(&dev->lock);
-@@ -142,14 +192,14 @@ static loff_t baikal_memory_llseek(struct file *filp, loff_t off, int whence)
+ 	return total_read;
+ }
+ 
++static ssize_t baikal_memory_write(struct file *filp, const char __user *buf,
++				   size_t count, loff_t *ppos)
++{
++	struct baikal_mem_dev *dev = filp->private_data;
++	size_t total_written = 0;
++	u8 bounce[64];
++
++	if (!dev)
++		return -ENODEV;
++	if (!allow_write)
++		return -EPERM;
++
++	mutex_lock(&dev->lock);
++
++	while (total_written < count && *ppos < BAIKAL_DEV_SIZE) {
++		size_t avail = 0;
++		size_t chunk;
++		void __iomem *dst;
++
++		dst = baikal_mem_resolve(dev, *ppos, &avail, true);
++		if (!dst) {
++			mutex_unlock(&dev->lock);
++			return total_written ? total_written : -EPERM;
++		}
++
++		chunk = min_t(size_t, count - total_written, avail);
++		chunk = min_t(size_t, chunk, sizeof(bounce));
++
++		if (copy_from_user(bounce, buf + total_written, chunk)) {
++			mutex_unlock(&dev->lock);
++			return -EFAULT;
++		}
++
++		memcpy_toio(dst, bounce, chunk);
++
++		*ppos += chunk;
++		total_written += chunk;
++	}
++
++	mutex_unlock(&dev->lock);
++	return total_written;
++}
++
+ static loff_t baikal_memory_llseek(struct file *filp, loff_t off, int whence)
+ {
+ 	struct baikal_mem_dev *dev = filp->private_data;
+@@ -142,14 +248,14 @@ static loff_t baikal_memory_llseek(struct file *filp, loff_t off, int whence)
  		newpos = filp->f_pos + off;
  		break;
  	case SEEK_END:
@@ -183,7 +245,23 @@ index 1504655e3..1feb215fd 100644
  		mutex_unlock(&dev->lock);
  		return -EINVAL;
  	}
-@@ -237,50 +287,88 @@ static struct miscdevice baikal_memory_miscdev = {
+@@ -220,6 +326,7 @@ static int baikal_memory_release(struct inode *inode, struct file *filp)
+ static const struct file_operations baikal_memory_fops = {
+ 	.owner		= THIS_MODULE,
+ 	.read		= baikal_memory_read,
++	.write		= baikal_memory_write,
+ 	.llseek		= baikal_memory_llseek,
+ 	.mmap		= baikal_memory_mmap,
+ 	.open		= baikal_memory_open,
+@@ -230,57 +337,95 @@ static struct miscdevice baikal_memory_miscdev = {
+ 	.minor		= MISC_DYNAMIC_MINOR,
+ 	.name		= DRIVER_NAME,
+ 	.fops		= &baikal_memory_fops,
+-	.mode		= 0444, /* Somente leitura por padrão */
++	.mode		= 0600,
+ };
+ 
+ /* ------------------------------------------------------------------------- */
  /* Sysfs — atributos só-leitura para registradores conhecidos                */
  /* ------------------------------------------------------------------------- */
  
@@ -300,7 +378,7 @@ index 1504655e3..1feb215fd 100644
  	NULL,
  };
  
-@@ -297,6 +385,7 @@ static int baikal_memory_probe(struct pci_dev *pdev,
+@@ -297,6 +442,7 @@ static int baikal_memory_probe(struct pci_dev *pdev,
  {
  	struct baikal_mem_dev *dev;
  	int ret;
@@ -308,7 +386,7 @@ index 1504655e3..1feb215fd 100644
  
  	dev = devm_kzalloc(&pdev->dev, sizeof(*dev), GFP_KERNEL);
  	if (!dev)
-@@ -305,101 +394,167 @@ static int baikal_memory_probe(struct pci_dev *pdev,
+@@ -305,101 +451,167 @@ static int baikal_memory_probe(struct pci_dev *pdev,
  	dev->pdev = pdev;
  	mutex_init(&dev->lock);
  
@@ -509,7 +587,7 @@ index 1504655e3..1feb215fd 100644
  		 DRIVER_NAME);
  
  	return 0;
-@@ -412,17 +567,18 @@ static void baikal_memory_remove(struct pci_dev *pdev)
+@@ -412,17 +624,18 @@ static void baikal_memory_remove(struct pci_dev *pdev)
  	if (!dev)
  		return;
  
@@ -531,7 +609,7 @@ index 1504655e3..1feb215fd 100644
  	{ 0, }
  };
  MODULE_DEVICE_TABLE(pci, baikal_memory_id_table);
-@@ -442,22 +598,22 @@ static int __init baikal_memory_init(void)
+@@ -442,22 +655,22 @@ static int __init baikal_memory_init(void)
  {
  	int ret;
  
@@ -558,11 +636,11 @@ index 1504655e3..1feb215fd 100644
  }
  
  module_init(baikal_memory_init);
-@@ -466,5 +622,4 @@ module_exit(baikal_memory_exit);
+@@ -466,5 +679,4 @@ module_exit(baikal_memory_exit);
  MODULE_LICENSE("GPL v2");
  MODULE_AUTHOR("Projeto PS4 Linux Baikal");
  MODULE_DESCRIPTION(DRIVER_DESC);
 -MODULE_VERSION("0.1");
 -MODULE_DEVICE_TABLE(pci, baikal_memory_id_table);
-+MODULE_VERSION("0.1");
++MODULE_VERSION("0.2");
 \ No newline at end of file

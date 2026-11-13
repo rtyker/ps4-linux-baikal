@@ -106,13 +106,43 @@ sudo rmmod baikal-memory
 
 ---
 
-## 5. Problemas Conhecidos
+## 5. Fase 5 — Escrita controlada (desligada por padrão)
+
+> ⚠️ **Risco crítico:** escrita na SPM pode corromper estado do Syscon/EMC e travar o console. Só testar com kernel/módulo que já contenha a Fase 5, em blocos pequenos, e **nunca** em BAR0/BAR5/ICC. Tenha um power cycle físico disponível.
+
+- Parâmetro: `allow_write` (`bool`, padrão `0`, `0444`). Sem ele, qualquer `write` em `/dev/baikal-memory` retorna `-EPERM`.
+- Mesmo com `allow_write=1`, a escrita é aceita **apenas** na janela BAR2 exposta pelo dispositivo (`0x001000–0x003fff`, primeiros 4 MiB da DDR3/SPM). Escritas em BAR0, BAR5 (inclui `spm.icc` em `0x2c000`) e fora dos limites retornam `-EPERM`.
+- O nó do dispositivo passa a `0600` (root).
+
+Exemplo de teste seguro (somente BAR2, offset `0x001000` no dispositivo = início da janela BAR2):
+
+```bash
+# Recarregar com escrita habilitada (apenas quando for testar de propósito)
+rmmod baikal-memory 2>/dev/null; insmod /caminho/baikal-memory.ko allow_write=1
+
+# Ler -> escrever um padrão pequeno -> reler -> restaurar
+dd if=/dev/baikal-memory bs=1 skip=$((0x001000)) count=16 2>/dev/null | od -An -tx1
+printf '\x5a\xa5\x5a\xa5\x5a\xa5\x5a\xa5' | dd of=/dev/baikal-memory bs=1 seek=$((0x001000)) count=8 conv=notrunc
+dd if=/dev/baikal-memory bs=1 skip=$((0x001000)) count=16 2>/dev/null | od -An -tx1
+# (restaurar os bytes originais lidos no primeiro passo)
+
+# Confirmar que BAR5 continua protegido
+printf 'x' | dd of=/dev/baikal-memory bs=1 seek=$((0x52f000)) count=1 conv=notrunc
+# => deve falhar com "Operation not permitted" (EPERM) mesmo com allow_write=1
+```
+
+**Status:** mecanismo implementado e validado localmente (`baikal-memory.o` isolado, patch regenerado, `git apply --check` OK). **Ainda não testado ao vivo** no PS4.
+
+---
+
+## 6. Problemas Conhecidos
 
 | Problema | Solução |
 |----------|---------|
 | `insmod: ERROR: could not insert module` | Verificar se o kernel versão corresponde (7.0.8-Strawberry-ThinLTO-Baikal-+) |
 | `/dev/baikal-memory` não aparece | Verificar dmesg para erros de probe PCI |
 | Leitura retorna zeros no offset 0 | Esperado neste console (BAR0/BAR2 zerados); testar `skip=$((0x52f000))` para ler o MAC |
+| `write` retorna `Operation not permitted` | Esperado: `allow_write=0` por padrão, ou offset fora da janela BAR2 permitida |
 | SSH não conecta | Verificar se o serviço SSH está rodando no PS4 |
 
 ---
