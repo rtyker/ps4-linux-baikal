@@ -37,6 +37,8 @@ kernel; o kernel **nunca** conhece rootfs.
    - **🏆 NOVO BASELINE OFICIAL (2026-07-30), tag `20260730-sata-reverted` — MELHOR VERSÃO ATÉ AGORA, PONTO DE ROLLBACK:** kernel `7.0.8-Strawberry-ThinLTO-Baikal-+ #23` com o fix de polaridade MDIO Clause 22 (`mts.c`) ativo e as mudanças de SATA polling-timer da noite de 2026-07-29 revertidas (só instrumentação não validada). Boot completo confirmado ao vivo: `kexec` → shutdown normal da Orbis → `Run /init as init process` → `systemd[1]` sem erros, vídeo HDMI OK, **SSH via WiFi confirmado**, `eth0` sobe com MAC real (PHY ainda sem link, bug conhecido, não é regressão). Artefatos em `distro/boot_referencia/*-7.0-20260730-sata-reverted*` **NUNCA podem ser sobrescritos/descartados** — em caso de regressão futura, restaurar com `sudo ./deploy-boot-7.0.sh 20260730-sata-reverted` (boot-only, mantém rootfs). (A memória de sessão com os checksums MD5 foi removida em 2026-11-11 — recuperável no histórico do git.)
    - **🏆🏆 NOVO BASELINE OFICIAL, MAIS RECENTE (2026-07-30), tag `20260730-sata-polling-fase-ab` — SUPERA O ANTERIOR, SATA INTERNO FUNCIONAL PELA PRIMEIRA VEZ:** mesmo kernel do baseline acima + Fase A/B do plano de correção do SATA polling (o plano original foi apagado em 2026-11-11 junto com a pasta `outros/docs/obsoleto/`; o código vivo é `patches/ahci-baikal-polling-fallback.patch`) reaplicada e validada ao vivo. `ata1.00: configured for UDMA/100` sem nenhuma exceção, `dd`/`fdisk` confirmam leitura real do HD interno (931.51 GiB), zero `disable device` em todo o dmesg. **Este é o baseline mais completo/recomendado a partir de agora** — GBE (com PHY ainda mudo, bug conhecido) + SATA interno funcional juntos. Artefatos em `distro/boot_referencia/*-7.0-20260730-sata-polling-fase-ab*` **NUNCA podem ser sobrescritos/descartados**. Rollback: `sudo ./deploy-boot-7.0.sh 20260730-sata-polling-fase-ab` (boot-only). (Detalhes completos estavam na memória de sessão, removida em 2026-11-11 — recuperável no histórico do git.)
    - **🏆🏆🏆 MARCO HISTÓRICO — BAIKAL MEMORY SPM (00:14.6) & RTC VIA ICC (2026-11-13), tag `20261113-baikal-memory-fase5`:** Primeiro driver de Scratch Pad Memory do Southbridge Baikal desenvolvido do zero e integrado oficialmente ao kernel (`baikal-memory.ko` v0.2, in-tree). Mapeamento completo dos BARs (BAR0 MMIO 4 KiB, BAR2 DDR3 256 MB, BAR4 1 MiB, BAR5 256 KiB). Extração em runtime do endereço MAC real de fábrica (`2c:cc:44:3f:69:5f`), mapeamento seguro do Mailbox ICC e escrita controlada com proteção por parâmetro (`allow_write=0`) e whitelist estrita na janela BAR2 validada com readback ao vivo (`0xCAFEBABE`). Adicionalmente, o driver `rtc-ps4-icc` passou a operar em tempo real com o RTC semeado e sincronizado com NTP (`timedatectl` synchronized: yes, fim definitivo do bug de 1970). Artefatos completos em `distro/boot_referencia/*-7.0-20261113-baikal-memory-fase5*`.
+   - **🏆🏆🏆 MARCO — MONTAGEM DO HD INTERNO DO PS4 NO LINUX (2026-11-13) — `sda27` (user/UFS2, 884 GiB) monta read-only:** a partição de jogos/dados do Orbis passou a montar ao vivo com a chave EAP. **Causa raiz do bloqueio histórico:** em CUH-1100+ (todo Baikal) o dm-crypt plain usa **IV offset** `iv_offset = (dev_no - 1) << 32` (`sda27`→`111669149696`, `sda29`→`120259084288`, `sda25`→`103079215104`) — com IV=0 o mapper decifra lixo (`bad magic number`). **`cryptsetup` NÃO sabe aplicar isso** (`--offset`/`--skip` são *data offset*; `--offset 111669149696` aborta com "beyond real size") → o mapper é criado com `dmsetup create -r <name> --table "0 <setores> crypt aes-xts-plain64 <chave_hex> <iv_offset> <dev> 0"`. **Premissa errada corrigida:** `sda27` **não é PFS**, é **UFS2** (magic `0x19540119` em `0x1055C`; jogos são containers PFS `app/<TITLE_ID>/app.pkg` *dentro* do UFS2). `sda13` **não é montável** (é o *swap antigo*, swapfs com chave versioned_key + OpenPsId — não é UFS2 nem EAP). Validado ao vivo: `sda27` 884 GiB / 485 GiB usados, `app/` com 44 títulos, `savedata`, `trophy`; `sda29` (`eap_user`, `storage_stats`); `sda25` (`update`, FAT32, `PS4UPDATE.PUP`). Scripts: `distro/monta_particao.sh` (produção, `dmsetup`+`blkid`, recria mapper com IV errado), `automount.sh` (27/29/25, não toca no 13), `desmonta_*.sh` (`dmsetup remove`). Fluxo completo: `outros/docs/MONTAGEM_HD_INTERNO.md`; pendências: `outros/docs/BACKLOG_MOUNT.md`.
+   - **CHAVE EAP DO USUÁRIO FINAL (2026-11-13):** a chave **não** vai no git nem na imagem. Local canônico no rootfs: `/etc/ps4-keys/eap_hdd_key.bin` (root, 600; pasta 700 criada pelo `01-build-image-7.0.sh` com `LEIA-ME.txt`). O `monta_particao.sh` aceita 32 B crus, 33 B (32+`\n`), 64 hex ou a saída `.txt` do EAPDumper e tem `--check-key`; o `automount.sh` consulta `--check-key` no início e, **sem chave, avisa uma vez e sai com 0** (boot normal, sem `failed` no systemd). Instalação: `distro/scripts/provisiona-chave.sh <arquivo> [--ssh root@IP | --rootfs DIR]` (normaliza, confere sha256 e prova montando o `sda27`). Cópia local do segredo: `.env.keys` (gitignored) **e** `~/ps4-keys/` no host (700, `eap_hdd_key.bin` + `.hex` + `LEIA-ME.txt`) — **nunca** comitar chave em documento/DB.
 
 ---
 
@@ -256,7 +258,15 @@ Os dumps brutos/análise textual de varreduras grandes (ex: a janela Glue BAR2) 
 
 ## 🔴 PRIORIDADE ALTA — Topologia de Rede (NUNCA confundir)
 
-- **WiFi (`wlan0`, subnet `192.168.6.0/24`) é SÓ PARA SSH/acesso administrativo ao console.** IP típico do PS4: `192.168.6.128`. Porta SSH: 22 (root/ps4). Porta telnet 23 está fechada (telnetd não iniciado).
+- **WiFi (`wlan0`, subnet `192.168.6.0/24`) é SÓ PARA SSH/acesso administrativo ao console.** Porta SSH: 22 (root/ps4) — **só existe com o Linux rodando**. Porta telnet 23 está fechada (telnetd não iniciado).
+- **🔴 O IP do PS4 MUDA conforme o ambiente (mesmo WiFi, DHCP, MACs diferentes) — medido ao vivo em 2026-11-13:**
+
+  | Ambiente | IP | MAC WiFi |
+  |---|---|---|
+  | **Orbis + GoldHEN** (antes do `kexec`) | **`192.168.6.130`** | `6A:FA:C4:EA:34:9C` |
+  | **Linux 7.0** (pós-`kexec`) | **`192.168.6.128`** | outro (do `wlan0`) |
+
+  Consequência: **dois pings resolvem "em que ambiente o console está"** (`ping -c1 192.168.6.130` → Orbis; `ping -c1 192.168.6.128` → Linux). Nunca concluir "PS4 desligado" porque só o `.128` não respondeu. Payload/loader só existem no Orbis (`.130`); SSH só existe no Linux (`.128`).
 - **Rede cabeada (`eth0`, driver `mts.ko`) é a rede sob teste — IP FIXO `192.168.0.2`.** Host do PC no Ethernet: `192.168.0.1` (interface `enp60s0`).
 - **NUNCA testar o `eth0` usando a subnet do WiFi (`192.168.6.x`).** Um ping "funcionando" para `192.168.6.100`/`192.168.6.128` passa pelo `wlan0`, não prova nada sobre o `eth0`.
 - **Todo teste de RX/TX do driver `mts.ko` deve usar a subnet `192.168.0.0/24`**: `ping -c N 192.168.0.2` do lado do host, ou `ping -I eth0 -c N 192.168.0.1` do lado do PS4.
@@ -269,6 +279,37 @@ Os dumps brutos/análise textual de varreduras grandes (ex: a janela Glue BAR2) 
 ```bash
 sshpass -p ps4 ssh root@192.168.6.128 "<cmd>"
 ```
+
+---
+
+## 🔴 Envio de payload para o PS4 (loader Orbis / GoldHEN)
+
+**Procedimento completo: [`outros/docs/ENVIO_DE_PAYLOADS.md`](outros/docs/ENVIO_DE_PAYLOADS.md).**
+Script oficial: `outros/scripts/ps4_send_payload.sh`.
+
+| Ambiente | Loader | IP / MAC | Portas |
+|----------|--------|----------|--------|
+| **Orbis + GoldHEN** (antes do `kexec`) | ✅ BinLoader | **`192.168.6.130`** · `6A:FA:C4:EA:34:9C` | `9090` (payload), `2121` (FTP), `3232` (klog) |
+| **Linux 7.0** (pós-`kexec`) | ❌ | **`192.168.6.128`** · MAC do `wlan0` | nada escuta essas portas; SSH `root/ps4` é o único acesso |
+
+> O script usa `.130` por padrão e avisa explicitamente se só o `.128` (Linux) responder.
+> Se o DHCP mudar, `--ip <novo>`.
+
+```bash
+cd /mnt/hdauxiliar/ps4-linux-baikal
+./outros/scripts/ps4_send_payload.sh --check <payload.bin>    # valida (não envia)
+./outros/scripts/ps4_send_payload.sh <payload.bin>            # envia via BinLoader :9090
+./outros/scripts/ps4_send_payload.sh --ftp-get /data/...      # puxa o que o payload gravou
+```
+
+**Regras (violá-las quebra o loader até reiniciar o GoldHEN):**
+- **NUNCA** fazer probe na porta 9090 (`nc -z`, `telnet`, `curl -v`): o BinLoader tem `accept()`
+  **único** — o teste consome a conexão. Só `ping` para checar presença.
+- `9020`/`9021` **não** são do GoldHEN: pertencem ao `elfldr` do `ps4-payload-dev` (não usado aqui).
+- Payload é **descartável**: morre no reboot/`kexec`. Enviar apenas binário conferido por `sha256sum`.
+- **Dumper de memória (EAPDumper etc.) exige reboot do console após rodar:** a memória do Orbis fica travada; não tente segundo envio nem FTP antes de reiniciar.
+- Chave EAP obtida ao vivo (2026-11-13) registrada no arquivo local não-versionado `.env.keys`
+  (variável `EAP_HDD_KEY`); nunca comitar este arquivo.
 
 ---
 
@@ -428,8 +469,9 @@ Antes desta data havia planos e scripts espalhados na raiz, o que poluía o repo
 | `outros/docs/MARCOS_CONSOLIDADOS.md` | Marcos de sucesso e bloqueadores validados ao vivo (kernel 7.0 apenas) | Não |
 | `outros/docs/MIGRACAO_7.0.md` | Procedimento de build/deploy do kernel 7.0 e distro | Não |
 | `kernel/drivers_mts/` | **Documentação do driver MTS/GBE**: `README.md` (fonte única), RE, testes e plano consolidado | Não |
-| `outros/rea/` | **Acervo de engenharia reversa**: dumps do Orbis, código decompilado (`decompiled/`), varreduras (`scans/`), scripts Ghidra (`tools/`) e o banco SQLite `ps4_hardware_memory.db` | Não |
-| `outros/docs/` | Documentação técnica consolidada (SATA, GPU, RTC, build), `BACKLOG.md` e `LICOES_APRENDIDAS.md` | Não |
+| `outros/rea/` | **Acervo de engenharia reversa**: dumps do Orbis, código decompilado (`<subsistema>/decompiled/`), varreduras (`scans/`), scripts Ghidra (`tools/`), índice `INDEX.md` e o banco SQLite `ps4_hardware_memory.db` | Não |
+| `outros/docs/` | Documentação técnica consolidada (SATA, GPU, RTC, build, montagem do HD, **envio de payloads**), `BACKLOG.md` e `LICOES_APRENDIDAS.md` | Não |
+| `outros/scripts/` | Scripts de host: UART (`uart_*`), `deploy_mts.sh`, webhost do exploit (`webhost_*`) e **envio de payload** (`ps4_send_payload.sh`) | Não |
 | `outros/tools/harness/` | Scripts Python de diagnóstico, varredura de registradores e testes de hardware | Não |
 | `outros/tools/ps4_hdd_tools/` | Ferramentas de manipulação de disco e utilitários PS4 HDD | Não |
 | `outros/` | Contêiner do que **não** é build/patches (em revisão) | Não |

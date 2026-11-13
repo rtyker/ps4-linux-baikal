@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+# ⚠️  HISTÓRICO (2026-11-13): este scanner procura o magic 0x1332A0B, que foi
+#     uma hipótese ERRADA (não é o magic de nada no HD do PS4). O magic real do
+#     UFS2 é 0x19540119, no offset 0x1055C (SBLOCK_UFS2 65536 + fs_magic 1372).
+#     E o IV offset não é o LBA da partição, e sim (dev_no - 1) << 32.
+#     O esquema correto e validado está em outros/docs/MONTAGEM_HD_INTERNO.md §2.
+#     Este arquivo fica só como registro da investigação; NÃO use para validar.
 import sys, struct
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
@@ -6,11 +12,23 @@ from cryptography.hazmat.backends import default_backend
 PFS_LE = (0x1332A0B).to_bytes(4, 'little')
 PFS_BE = (0x1332A0B).to_bytes(4, 'big')
 
+# ATENÇÃO: a chave EAP real do console NÃO fica aqui (o repo é público). Carregue-a
+# do ambiente ou do arquivo local não-versionado `.env.keys` antes de rodar:
+#     set -a; . .env.keys; set +a     # define EAP_HDD_KEY
+#     EAP_HDD_KEY=... python3 xts_ps4_decrypt_scan.py
+import os
 KEYS_32 = {
-    'EAP':  bytes.fromhex('edf3f4d33b16a17bf4ea92070fe8af6b08c23c91f98006ae5b4f7d363c2bf0a3'),
-    'ERK':  bytes.fromhex('7fcf0536d3b5f5bd09a5d7b3833f868bbe1f6d90803b4f54029e6265f6476af6'),
-    'PROD': bytes.fromhex('e4090248c0aaa615eb00c761f6d1f1a83564c1f52883c9b47d63b58970d911c7'),
+    name: bytes.fromhex(os.environ[f'{name}_HDD_KEY'])
+    for name in ('EAP',)
+    if os.environ.get(f'{name}_HDD_KEY')
 }
+# ERK e PROD eram chaves de debug do Orbis (não decifram as partições). Mantidas
+# só se você as tiver localmente:
+for _name in ('ERK', 'PROD'):
+    if os.environ.get(f'{_name}_HDD_KEY'):
+        KEYS_32[_name] = bytes.fromhex(os.environ[f'{_name}_HDD_KEY'])
+if not KEYS_32:
+    raise SystemExit("Defina EAP_HDD_KEY (hex) no ambiente — ver .env.keys")
 
 def get_key_candidates():
     candidates = {}

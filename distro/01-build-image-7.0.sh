@@ -206,6 +206,7 @@ PKGS=(
   perf
   dmidecode
   smartmontools
+  pacman-contrib
   nvme-cli
   mdadm
   lvm2
@@ -233,7 +234,9 @@ PKGS=(
   gzip
   xz
   zstd
+  zram-generator
   jq
+  alsa-utils
   ccache
   distcc
   meson
@@ -388,6 +391,59 @@ echo "root:ps4" | arch-chroot "$ROOTFS_DIR" chpasswd
 arch-chroot "$ROOTFS_DIR" useradd -m -G wheel -s /bin/bash ps4 2>/dev/null || true
 echo "ps4:ps4" | arch-chroot "$ROOTFS_DIR" chpasswd
 
+# Usuario anderson (uid 1001) — persistir acesso no build
+# Chave SSH: prioridade 1) env ANDERSON_SSH_PUBKEY, 2) arquivo local keys/anderson.pub (gitignored), 3) vazio
+arch-chroot "$ROOTFS_DIR" useradd -m -u 1001 -G wheel -s /bin/bash anderson 2>/dev/null || true
+echo "anderson:$(openssl rand -base64 32)" | arch-chroot "$ROOTFS_DIR" chpasswd  # senha aleatória, login só por chave
+mkdir -p "$ROOTFS_DIR/home/anderson/.ssh"
+chmod 700 "$ROOTFS_DIR/home/anderson/.ssh"
+
+ANDERSON_KEY=""
+if [ -n "${ANDERSON_SSH_PUBKEY:-}" ]; then
+  ANDERSON_KEY="$ANDERSON_SSH_PUBKEY"
+  echo "[info] Usando chave SSH da variável de ambiente ANDERSON_SSH_PUBKEY"
+elif [ -f "$SCRIPT_DIR/../../keys/anderson.pub" ]; then
+  ANDERSON_KEY="$(cat "$SCRIPT_DIR/../../keys/anderson.pub")"
+  echo "[info] Usando chave SSH de keys/anderson.pub (arquivo local, não versionado)"
+fi
+
+if [ -n "$ANDERSON_KEY" ]; then
+  echo "$ANDERSON_KEY" > "$ROOTFS_DIR/home/anderson/.ssh/authorized_keys"
+  echo "[info] Chave pública instalada para anderson"
+else
+  touch "$ROOTFS_DIR/home/anderson/.ssh/authorized_keys"
+  echo "[aviso] Nenhuma chave SSH fornecida — authorized_keys vazio"
+  echo "       Para adicionar: ssh-copy-id anderson@192.168.6.128  (após deploy + boot)"
+  echo "       Ou defina ANDERSON_SSH_PUBKEY='ssh-ed25519 AAAA...' antes do build"
+fi
+chmod 600 "$ROOTFS_DIR/home/anderson/.ssh/authorized_keys"
+arch-chroot "$ROOTFS_DIR" chown -R anderson:anderson /home/anderson/.ssh
+
+# Sudo NOPASSWD para anderson (zz-anderson para ordenar depois de wheel)
+echo "anderson ALL=(ALL:ALL) NOPASSWD: ALL" > "$ROOTFS_DIR/etc/sudoers.d/zz-anderson"
+chmod 440 "$ROOTFS_DIR/etc/sudoers.d/zz-anderson"
+
+# .bashrc com PATH do OpenCode
+cat > "$ROOTFS_DIR/home/anderson/.bashrc" << 'BASHRC_EOF'
+# ~/.bashrc
+[[ $- != *i* ]] && return
+
+# OpenCode PATH
+export PATH="$HOME/.opencode/bin:$PATH"
+
+# Aliases úteis
+alias ls='ls --color=auto'
+alias ll='ls -la'
+alias grep='grep --color=auto'
+
+# PS1
+PS1='[\u@\h \W]\$ '
+
+# History
+HISTSIZE=10000
+HISTFILESIZE=20000
+BASHRC_EOF
+
 # Sudo sem senha para root
 echo "root ALL=(ALL) NOPASSWD: ALL" > "$ROOTFS_DIR/etc/sudoers.d/root-nopasswd"
 chmod 440 "$ROOTFS_DIR/etc/sudoers.d/root-nopasswd"
@@ -395,6 +451,33 @@ chmod 440 "$ROOTFS_DIR/etc/sudoers.d/root-nopasswd"
 mkdir -p "$ROOTFS_DIR/etc/sudoers.d"
 echo "%wheel ALL=(ALL:ALL) ALL" > "$ROOTFS_DIR/etc/sudoers.d/wheel"
 chmod 440 "$ROOTFS_DIR/etc/sudoers.d/wheel"
+
+# smartd — monitorar o SSD que está falhando (P0)
+# SMART funciona pelo bridge USB JMicron (driver usb-storage). -d sat é o tipo correto.
+cat > "$ROOTFS_DIR/etc/smartd.conf" << 'SMARTEOF'
+/dev/sdb -d sat -a -m root
+SMARTEOF
+arch-chroot "$ROOTFS_DIR" systemctl enable smartd.service
+
+# paccache.timer — limpar cache do pacman (767 MB / 413 pacotes num SSD de 120 GB falhando)
+arch-chroot "$ROOTFS_DIR" systemctl enable paccache.timer
+
+# zram-generator — swap em zram (zstd) para evitar OOM em builds; zswap desabilitado
+cat > "$ROOTFS_DIR/etc/systemd/zram-generator.conf" << 'ZRAMEOF'
+[zram0]
+zram-size = ram / 2
+compression-algorithm = zstd
+swap-priority = 100
+ZRAMEOF
+
+# archlinux-keyring-wkd-sync.timer — evitar rodar no boot (2min13s)
+mkdir -p "$ROOTFS_DIR/etc/systemd/system/archlinux-keyring-wkd-sync.timer.d"
+cat > "$ROOTFS_DIR/etc/systemd/system/archlinux-keyring-wkd-sync.timer.d/override.conf" << 'TIMEREOF'
+[Timer]
+OnBootSec=10min
+Persistent=false
+RandomizedDelaySec=30min
+TIMEREOF
 
 # WiFi (paridade com o rootfs 5.4 que funciona - mesmo SSID/senha)
 echo "=== Configurando wpa_supplicant para WiFi ==="
@@ -579,9 +662,61 @@ mkdir -p "$ROOTFS_DIR/usr/local/bin"
 if [ -f "$SCRIPT_DIR/monta_particao.sh" ]; then
   cp -v "$SCRIPT_DIR/monta_particao.sh" "$ROOTFS_DIR/usr/local/bin/monta_particao.sh"
   cp -v "$SCRIPT_DIR/desmonta_particao.sh" "$ROOTFS_DIR/usr/local/bin/desmonta_particao.sh"
+  cp -v "$SCRIPT_DIR/desmonta_todas.sh" "$ROOTFS_DIR/usr/local/bin/desmonta_todas.sh"
   cp -v "$SCRIPT_DIR/automount.sh" "$ROOTFS_DIR/usr/local/bin/automount.sh"
-  chmod +x "$ROOTFS_DIR/usr/local/bin/monta_particao.sh" "$ROOTFS_DIR/usr/local/bin/desmonta_particao.sh" "$ROOTFS_DIR/usr/local/bin/automount.sh"
+  chmod +x "$ROOTFS_DIR/usr/local/bin/monta_particao.sh" "$ROOTFS_DIR/usr/local/bin/desmonta_particao.sh" "$ROOTFS_DIR/usr/local/bin/desmonta_todas.sh" "$ROOTFS_DIR/usr/local/bin/automount.sh"
 fi
+
+# Pasta canônica da chave EAP do HD interno (usuário final).
+# Não contém nenhum segredo no build: o usuário coloca a chave dumpada dele.
+echo "=== Criando /etc/ps4-keys (chave EAP do usuário) ==="
+install -d -m 700 -o root -g root "$ROOTFS_DIR/etc/ps4-keys"
+cat > "$ROOTFS_DIR/etc/ps4-keys/LEIA-ME.txt" << 'KEYEOF'
+Chave EAP do HD interno do PS4
+==============================
+
+O HD interno do PS4 é cifrado (dm-crypt / AES-XTS). Para o Linux montar as
+partições do console (jogos, saves, dados), coloque aqui a chave EAP que VOCÊ
+dumpou do SEU console:
+
+    /etc/ps4-keys/eap_hdd_key.bin      (dono root, modo 600)
+
+Formatos aceitos (o automount detecta):
+  - binário cru de 32 bytes (saída do EAPDumper)   <- recomendado
+  - arquivo de texto com 64 caracteres hex
+  - a saída .txt do payload (o hex é extraído do texto)
+
+Como instalar, a partir do PC (com SSH no PS4 ligado):
+
+    distro/scripts/provisiona-chave.sh <arquivo> --ssh root@192.168.6.128
+
+Ou direto no PS4:
+
+    sudo install -d -m 700 /etc/ps4-keys
+    sudo install -m 600 <arquivo> /etc/ps4-keys/eap_hdd_key.bin
+    sudo systemctl restart ps4-automount.service
+
+Conferir / montar:
+
+    monta_particao.sh --check-key     # mostra QUAL arquivo de chave será usado
+    ls -l /mnt/ps4_internal/          # sda27 (user), sda29 (eap_user), sda25 (update)
+    desmonta_todas.sh                 # desmonta tudo e remove os mappers
+
+Sem a chave o boot continua normal — o serviço ps4-automount só não monta nada
+e avisa no log (journalctl -u ps4-automount).
+
+A chave é um segredo: nunca comite, nunca deixe modo 644, nunca compartilhe.
+Documentação completa: outros/docs/MONTAGEM_HD_INTERNO.md
+KEYEOF
+chmod 600 "$ROOTFS_DIR/etc/ps4-keys/LEIA-ME.txt"
+
+if [ -f "$SCRIPT_DIR/scripts/provisiona-chave.sh" ]; then
+  cp -v "$SCRIPT_DIR/scripts/provisiona-chave.sh" "$ROOTFS_DIR/usr/local/bin/provisiona-chave.sh"
+  chmod +x "$ROOTFS_DIR/usr/local/bin/provisiona-chave.sh"
+fi
+
+# Diagnóstico do esquema de IV (iv_offset) — o monta_particao.sh já imprime
+# dmsetup table/blkid/magic em caso de falha; não há script de tweak separado.
 if [ -f "$SCRIPT_DIR/../outros/tools/ps4_hdd_tools/pkg_pfs_tool/build/pkg_pfs_tool" ]; then
   cp -v "$SCRIPT_DIR/../outros/tools/ps4_hdd_tools/pkg_pfs_tool/build/pkg_pfs_tool" "$ROOTFS_DIR/usr/local/bin/pkg_pfs_tool"
   cp -v "$SCRIPT_DIR/../outros/tools/ps4_hdd_tools/pkg_pfs_tool/config.ini" "$ROOTFS_DIR/usr/local/bin/config.ini"
@@ -614,8 +749,12 @@ ENV{DM_NAME}=="ps4_*", GROUP="disk", MODE="0666"
 UDEVEOF
 
 cat > "$ROOTFS_DIR/etc/udev/rules.d/99-ps4-media.rules" << 'UDEVEOF'
-ENV{DM_NAME}=="ps4_sda27", ENV{ID_FS_LABEL}="PS4_HDD_Games", ENV{ID_FS_TYPE}="pfs", ENV{UDISKS_CAN_MOUNT}="1", ENV{UDISKS_SYSTEM}="0", ENV{UDISKS_NAME}="PS4 Internal HDD (Games)"
-ENV{DM_NAME}=="ps4_sda13", ENV{ID_FS_LABEL}="PS4_HDD_System", ENV{ID_FS_TYPE}="ufs2", ENV{UDISKS_CAN_MOUNT}="1", ENV{UDISKS_SYSTEM}="0", ENV{UDISKS_NAME}="PS4 Internal HDD (System)"
+# Partições do HD interno acessíveis com a chave EAP (validadas ao vivo 2026-11-13).
+# sda13 NÃO entra: é o swap antigo (swapfs, chave versioned_key + OpenPsId),
+# não é UFS2 e não é decifrável com a chave EAP.
+ENV{DM_NAME}=="ps4_sda27", ENV{ID_FS_LABEL}="PS4_HDD_Games", ENV{ID_FS_TYPE}="ufs2", ENV{UDISKS_CAN_MOUNT}="1", ENV{UDISKS_SYSTEM}="0", ENV{UDISKS_NAME}="PS4 Internal HDD (user)"
+ENV{DM_NAME}=="ps4_sda29", ENV{ID_FS_LABEL}="PS4_HDD_EapUser", ENV{ID_FS_TYPE}="ufs2", ENV{UDISKS_CAN_MOUNT}="1", ENV{UDISKS_SYSTEM}="0", ENV{UDISKS_NAME}="PS4 Internal HDD (eap_user)"
+ENV{DM_NAME}=="ps4_sda25", ENV{ID_FS_LABEL}="PS4_HDD_Update", ENV{ID_FS_TYPE}="vfat", ENV{UDISKS_CAN_MOUNT}="1", ENV{UDISKS_SYSTEM}="0", ENV{UDISKS_NAME}="PS4 Internal HDD (update)"
 UDEVEOF
 
 # Serviço systemd de montagem automática no boot
@@ -628,7 +767,10 @@ After=local-fs.target
 Type=oneshot
 RemainAfterExit=yes
 ExecStart=/usr/local/bin/automount.sh
-ExecStop=/usr/local/bin/desmonta_particao.sh /dev/sda27
+# MOUNT-07: desmonta TODAS as partições montadas em /mnt/ps4_internal e remove
+# todos os mappers ps4_* — não só sda27 com caminho fixo (o HD interno pode ser
+# /dev/sdb quando o HD USB de boot ocupa /dev/sda).
+ExecStop=/usr/local/bin/desmonta_todas.sh
 
 [Install]
 WantedBy=multi-user.target
@@ -687,7 +829,7 @@ echo "=== Criando bootargs-7.0-$TAG.txt ==="
 # tinha console=tty0 sem UART e rootdelay=10 -- 02-burn-image-7.0.sh grava
 # esse bootargs.txt direto, sem passar pela tag validada em boot_referencia/.
 cat > "$BOOTARGS_OUT" << 'CMDLINEEOF'
-panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0 earlycon=uart8250,mmio32,0xC890E000 console=uart8250,mmio32,0xC890E000 console=tty0 root=LABEL=psxitarch rw rootwait systemd.unified_cgroup_hierarchy=0 systemd.legacy_systemd_cgroup_controller=yes amdgpu.audio=1 usbcore.autosuspend=-1 video=HDMI-A-1:1920x1080@60 zswap.enabled=1 log_buf_len=4M libata.force=1.00:3.0Gbps,noncq ahci.mobile_lpm_policy=1
+panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0 earlycon=uart8250,mmio32,0xC890E000 console=uart8250,mmio32,0xC890E000 console=tty0 root=LABEL=psxitarch rw rootwait amdgpu.audio=1 usbcore.autosuspend=-1 video=HDMI-A-1:1920x1080@60 log_buf_len=4M
 CMDLINEEOF
 
 echo "=== Gerando /etc/fstab (raiz + share CIFS do adsv2) ==="

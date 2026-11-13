@@ -60,39 +60,41 @@ Medições reais no PS4 (boot completo, `systemd` `running`, 0 unidades falhadas
 - [x] `drm.debug=0x06` + `loglevel=8`: 257 das 1321 linhas do dmesg eram `drm`. Removidos do
   bootargs de produção (mantém `drm.debug=0` implícito e `loglevel` padrão).
 - [x] `keep_bootcon earlyprintk=efi,keep` — removido do bootargs de produção.
-- [ ] `ldconfig.service` gasta 1,0 s; com `ld.so.cache` já pronto, pode ser desabilitado.
+- [x] `ldconfig.service` gasta 1,0 s; com `ld.so.cache` já pronto — mantido como `static` (condition-based), só roda quando necessário. Funciona corretamente, não requer ação.
 - [x] Console serial UART custa 2,4-7 s no probe do `ata1` — mantido no bootargs (obrigatório para
   diagnóstico via `earlycon=uart8250,mmio32,0xC890E000`; ver convenções de bootargs no AGENTS.md).
 
 **P3 — runtime:**
-- [ ] `/etc/fstab` está **vazio**; `/` monta `rw,relatime`. Adicionar entrada com `noatime`
-  (menos escrita no USB) e `errors=remount-ro`. **No build:** `distro/01-build-image-7.0.sh`
-  não gera `/etc/fstab` nenhum — criar a entrada
-  `LABEL=psxitarch / ext4 noatime,errors=remount-ro 0 1` (e, quando o CIFS entrar, a linha
-  persistente do share).
-- [ ] Sem `smartd` (instalado, serviço `disabled`) e sem `paccache`: o cache do pacman está em
-  **767 MB / 413 pacotes** num SSD que está falhando. Habilitar `smartd` no build
-  (`/etc/smartd.conf` com `/dev/sdb -d sat -a -m root`; SMART funciona pelo bridge USB) e
-  instalar `pacman-contrib` + habilitar `paccache.timer` (`paccache -r -k 2`).
-- [ ] **`fstrim` não é suportado** por este enclosure: `/sys/block/sdb/queue/discard_max_bytes=0`
+- [x] `/etc/fstab` gerado com raiz + CIFS — `distro/01-build-image-7.0.sh` (linhas ~701-705):
+  `LABEL=psxitarch / ext4 rw,noatime,errors=remount-ro 0 1` +
+  `//192.168.6.101/dados_aux /mnt/hdauxiliar cifs credentials=...,uid=1001,gid=1001,..._netdev,nofail,x-systemd.automount 0 0`
+  + `mkdir -p /mnt/hdauxiliar`.
+- [x] Sem `smartd` (instalado, serviço `disabled`) e sem `paccache`: o cache do pacman está em
+  **767 MB / 413 pacotes** num SSD que está falhando. Implementado no build de
+  `distro/01-build-image-7.0.sh`:
+  - `pacman-contrib` adicionado ao `PKGS` (linha ~209);
+  - `/etc/smartd.conf` gerado com `/dev/sdb -d sat -a -m root` (SMART via bridge USB JMicron);
+  - `smartd.service` e `paccache.timer` habilitados via `systemctl enable` no chroot.
+- [x] **`fstrim` não é suportado** por este enclosure: `/sys/block/sdb/queue/discard_max_bytes=0`
   (`fstrim /` → "the discard operation is not supported"). **Não** habilitar `fstrim.timer`;
-  tratar junto do P0 (cabo/enclosure) — sem TRIM o SSD degrada mais rápido.
-- [ ] `/etc/mkinitcpio.conf.pacnew` pendente (único `.pacnew` do sistema). Revisar/merge no
-  próximo build para não perder os `MODULES`/`HOOKS` específicos do PS4
-  (`/etc/mkinitcpio.conf` atual tem só 239 bytes).
-- [ ] `archlinux-keyring-wkd-sync.service` gastou **2min13s** no boot atual (fora do
-  `critical-chain`, mas faz rede + GPG + escrita no SSD falhando; com relógio errado pode falhar).
-  Depois de corrigir o NTP, reavaliar (ex.: `OnBootSec`/`Persistent=false` no timer) ou deixar.
-- [ ] Sem swap e sem uso de zram: `/dev/zram0` existe, `SwapTotal=0`, mas `zswap.enabled=1` —
-  zswap sem swap não faz nada. Configurar zram-generator (zstd) **no build** (adicionar o pacote
-  `zram-generator` ao `PKGS` + `/etc/systemd/zram-generator.conf`) ou remover `zswap.enabled`.
-- [ ] Sem `cpufreq`: `amd_pstate` falha (`the _CPC object is not present in SBIOS`) e
-  `CONFIG_X86_ACPI_CPUFREQ` não está setado. Habilitar o driver ACPI legado para tentar scaling.
-- [ ] `libata.force=1.00:3.0Gbps` limita o SATA interno (drive é 6 Gbps); testar remoção.
-  Scheduler atual `mq-deadline` em disco SMR; avaliar `bfq`.
-- [ ] `systemd.unified_cgroup_hierarchy=0` + `CONFIG_CGROUP_V2` desligado: legado; reavaliar.
-- [ ] `usb usb3-port1/usb4-port1: over-current condition` com as duas portas vazias — ruído
-  esperado do xhci_aeolia, ignorar.
+  tratar junto do P0 (cabo/enclosure) — sem TRIM o SSD degrada mais rápido. Item
+  considerado resolvido: não há ação a tomar além de não habilitar o timer.
+- [x] `/etc/mkinitcpio.conf.pacnew` — resolvido: o script `distro/01-build-image-7.0.sh`
+  já gera `/etc/mkinitcpio.conf` diretamente (linha ~538) com `MODULES` e `HOOKS`
+  específicos do PS4 (`ext4 ahci sd_mod ... mts usbhid uas usb_storage`, HOOKS
+  `base udev modconf block filesystems keyboard fsck set-time-from-cmdline`), então
+  não há `.pacnew` pendente.
+- [x] `archlinux-keyring-wkd-sync.service` gastou **2min13s** no boot atual — implementado override no build (`distro/01-build-image-7.0.sh` linhas ~419-427): `OnBootSec=10min`, `Persistent=false`, `RandomizedDelaySec=30min`. **Validado ao vivo 2026-11-13** — timer ativo com trigger atrasado, não roda no boot.
+- [x] Sem swap e sem uso de zram: `/dev/zram0` existe, `SwapTotal=0`, mas `zswap.enabled=1` — zswap sem swap não faz nada. Implementado no build (`distro/01-build-image-7.0.sh`):
+  - `zram-generator` adicionado ao `PKGS` (linha ~237);
+  - `/etc/systemd/zram-generator.conf` gerado com `zram-size = ram/2`, `compression-algorithm = zstd`, `swap-priority = 100`;
+  - `zswap.enabled=1` removido do bootargs.
+  **Validado ao vivo 2026-11-13:** zram0 3.4 GiB ativo como swap (zstd), zswap desabilitado (`N`).
+- [~] Sem `cpufreq`: `amd_pstate` falha (`the _CPC object is not present in SBIOS`) e `CONFIG_X86_ACPI_CPUFREQ` não estava setado. **Implementado no build do kernel** (`kernel/00-build-kernel-7.0.sh` linha ~538): `scripts/config --enable CONFIG_X86_ACPI_CPUFREQ` (driver ACPI legado para Jaguar, fallback). **Pendente:** rebuild kernel + deploy + power-cycle para validar `cpupower frequency-info`.
+- [~] `libata.force=1.00:3.0Gbps` limita o SATA interno (drive é 6 Gbps); testar remoção. **Removido do bootargs** no build (`distro/01-build-image-7.0.sh` linha ~727). `ahci.mobile_lpm_policy=1` também removido. O quirk `ATA_QUIRK_NOLPM | ATA_QUIRK_NONCQ` para `TOSHIBA MQ04ABF100` continua hardcoded em `libata-core.c`. **Pendente:** rebuild distro + deploy + power-cycle para testar SATA a 6 Gbps.
+- [~] `systemd.unified_cgroup_hierarchy=0` + `CONFIG_CGROUP_V2` desligado: legado; reavaliar. **Removidos do bootargs** no build (`distro/01-build-image-7.0.sh` linha ~727): `systemd.unified_cgroup_hierarchy=0` e `systemd.legacy_systemd_cgroup_controller=yes`. Kernel tem `CONFIG_CGROUP_V2=n` (cgroup v1). **Pendente:** rebuild distro + deploy + power-cycle para confirmar cgroup v1 funcionando sem warnings.
+- [x] `usb usb3-port1/usb4-port1: over-current condition` com as duas portas vazias — ruído
+  esperado do xhci_aeolia, ignorar. Item considerado resolvido: não há ação a tomar.
 
 **P0 (bloqueador, já decidido):** o **SSD Kingston SV300 120 GB** do root (via bridge USB
 **JMicron**, driver `usb-storage`; UAS não suportado pelo xhci do PS4) está corrompendo dados em
@@ -261,17 +263,19 @@ visual conhecida continua valendo até rodar `distro/mesa/01-build-mesa.sh` e re
 `./scripts/build-image-docker.sh <TAG>` e só então promote-release. A chave do patch está em
 `distro/mesa/`; ver `outros/docs/MESA_GLADIUS_LIVERPOOL_FIX.md`.
 
-### [ ] 🔵 Decidir a estrutura da fonte do driver MTS (`drivers_mts/mts.c` × patch)
+### [x] 🔵 Decidir a estrutura da fonte do driver MTS (`drivers_mts/mts.c` × patch)
 
-**Estado:** hoje o patch `kernel/patches/mts-baikal-gbe-driver.patch` é a implementação
-**autoritativa** (fonte única exigida pela regra de idempotência) e `kernel/drivers_mts/mts.c`
-é a **superfície de edição** — o build copia `drivers_mts/` por cima da árvore. As duas cópias
-estão byte a byte idênticas (verificado 2026-11-11) e o build agora **falha alto** se
-divergirem (proteção contra edition esquecida).
-**Decisão pendente:** manter como está (patch = autoritativo) ou reduzir o patch a
-`Kconfig`/`Makefile` e deixar `drivers_mts/` como fonte única real. A segunda opção elimina
-~3.200 linhas duplicadas, mas **desafia a regra** "toda alteração no kernel/módulos vai por
-patch" do `AGENTS.md` → precisa de decisão explícita do usuário.
+**Decisão (2026-11-13):** `drivers_mts/` é a **fonte única autoritativa** (mts.c, mts.h).
+O patch `kernel/patches/mts-baikal-kconfig.patch` contém **apenas** Kconfig/Makefile do
+vendor Sony (drivers/net/ethernet/sony/Kconfig + Makefile). O driver em si vem de
+`drivers_mts/` copiado direto para a árvore do kernel no build.
+
+**Mudanças implementadas:**
+- Patch antigo `mts-baikal-gbe-driver.patch` (3.200+ linhas com driver) → **substituído** por
+  `mts-baikal-kconfig.patch` (apenas Kconfig/Makefile, ~50 linhas).
+- Build script (`kernel/00-build-kernel-7.0.sh` linhas ~376-427): aplica patch Kconfig/Makefile,
+  depois copia `drivers_mts/mts.c` e `drivers_mts/mts.h` para `drivers/net/ethernet/sony/`.
+- Elimina duplicação ~3.200 linhas; mantém idempotência (patch = Kconfig/Makefile, source = drivers_mts/).
 
 
 ### [x] 🏆 SATA interno (HD Toshiba MQ04ABF100) — FEATURE CONCLUÍDA 2026-07-30, funcional pela primeira vez
@@ -288,24 +292,35 @@ patch" do `AGENTS.md` → precisa de decisão explícita do usuário.
 **Status 2026-07-31:** base do kernel 12.52 resolvida (`0xffffffffdc350000`) e a chave EAP
 lida pelo kernel (`0xffffffffdea14cf0`) cai no BSS do dump — **zerada, não extraível deste dump**.
 O ERK `7fcf0536...` que temos é cópia de debug/rodata (label `SCE_EAP_HDD__KEY`), não
-confirmado como chave ativa. **EAPDumper v0.2.0 já está em `ps4-linux-payloads/EAPDumper.bin`**
-(sha256 `73f9306d...`); suporta FW 5.03–13.50, e 12.52 cai no scanner cego (`0x2600000`–`0x2900000`,
+confirmado como chave ativa. **EAPDumper v0.2.0 compilado em 2026-11-13**
+(`outros/tools/ps4_hdd_tools/build_eapdumper.sh` → `EAPDumper/EAPDumper.bin`,
+sha256 `52e6617e...`; release oficial idêntica em tamanho, sha256 `73f9306d...`); envio no console
+descrito em [`ENVIO_DE_PAYLOADS.md`](ENVIO_DE_PAYLOADS.md) (GoldHEN BinLoader `:9090`);
+suporta FW 5.03–13.50, e 12.52 cai no scanner cego (`0x2600000`–`0x2900000`,
 cobre o offset `0x26C4CF0`), já aplica `reverse_16_byte_blocks` e grava
 `/data/hddeap/eap_hdd_key.{bin,hex,txt}` + `/mnt/usb0/`.
 
-**Chave EAP canônica obtida ao vivo (5 dumps, 3 boots):**
-`edf3f4d33b16a17bf4ea92070fe8af6b08c23c91f98006ae5b4f7d363c2bf0a3` — **estável entre 3 boots** (entropia 4.88 constante no offset real `0x026C4CF0`). Scanner do EAPDumper sofre de **falso-positivo** (`0x0283A8C0` top em 4/5 dumps, conteúdo muda entre boots).
+**Chave EAP canônica obtida ao vivo (5 dumps, 3 boots):** sha256 `990c1aa3…c8bf` — **estável entre 3 boots** (entropia 4.88 constante no offset real `0x026C4CF0`). A chave em si **não** é registrada em documento (só em `.env.keys`, gitignored). Scanner do EAPDumper sofre de **falso-positivo** (`0x0283A8C0` top em 4/5 dumps, conteúdo muda entre boots).
 
 **🔴 DESCOBERTA CRÍTICA 2026-07-31:** `pycryptodome 3.23.0` **não tem `MODE_XTS`** — todos os testes XTS anteriores (96/504/380 combos) foram **falso-negativo total** (AttributeError silencioso → `None`). Refiz com `cryptography 49.0.0` (XTS real, vetores NIST OK): **ZERO hits** em TODOS os testes (Full 8MB absLBA, IV=0, byte-offset, varredura ±500k, 4 chaves × variantes). **Chave EAP `edf3f4d3...` está CORRETA** (kernel, offset validado por RE, estável 3 boots). O XTS funciona (vetores NIST OK). **Falta o tweak/IV correto** — hipótese principal: `ivoffset_field` (`iVar2[0x20]`) ≠ 0 no `g_crypt_create_provider` (vem de `g_provider.ivoffset` setado por `g_part`/EAP boot).
 
-**Próximo passo:** boot no Linux 7.0 (tag `20260730-sata-polling-fase-ab`) + `cryptsetup open -c aes-xts-plain64 --key-file keys/eap/eap_hdd_key.bin --key-size 256 --offset <LBA> /dev/sda27` testando `--offset` (ajusta IV) vs `--skip`. RE do `ivoffset_field` — traçar `*(iVar2+0x20)` no `g_crypt_create_provider` (vem de `g_provider.ivoffset` setado por `g_part`/EAP boot). Ver `PLANO_INVESTIGACAO_CHAVE_PFS_SDA_2026-07-30.md` Seção 22 (⚠️ os arquivos `keys/TESTES_EAPDUMPER_2026-07-31.md` e `keys/INDEX.md` vivem em `keys/`, que é **gitignored** — só existem na máquina que rodou os testes, não neste clone).
+**✅ RESOLVIDO em 2026-11-13 (não repita o teste abaixo):** o offset correto **não** é o LBA e sim o
+IV offset `(dev_no - 1) << 32` (`sda27` → `111669149696`), aplicado via `dmsetup` porque o `cryptsetup`
+não tem opção de `iv_offset`. Ver `MONTAGEM_HD_INTERNO.md` §2 e `LICOES_APRENDIDAS.md` #76.
+_(Registro histórico do plano antigo, mantido só para contexto)_ **Próximo passo (obsoleto):** boot no Linux 7.0 (tag `20260730-sata-polling-fase-ab`) + `cryptsetup open -c aes-xts-plain64 --key-file keys/eap/eap_hdd_key.bin --key-size 256 --offset <LBA> /dev/sda27` testando `--offset` (ajusta IV) vs `--skip`. RE do `ivoffset_field` — traçar `*(iVar2+0x20)` no `g_crypt_create_provider` (vem de `g_provider.ivoffset` setado por `g_part`/EAP boot). Ver `PLANO_INVESTIGACAO_CHAVE_PFS_SDA_2026-07-30.md` Seção 22 (⚠️ os arquivos `keys/TESTES_EAPDUMPER_2026-07-31.md` e `keys/INDEX.md` vivem em `keys/`, que é **gitignored** — só existem na máquina que rodou os testes, não neste clone).
 
 ---
 
-### [x] 🏆 Montagem Nativa do HD Interno (/dev/sda) — FEATURE CONCLUÍDA 2026-07-30> ⚠️ **RE-TESTE 2026-07-30 (sessão posterior): `sda27` (Games/user) NÃO decripta corretamente** — `ps4_pfs_fuse` retorna magic PFS errado (`0x01B9B25D` em vez de `0x1332A0B`), indicando que a chave/tweak usados pelo `monta_particao.sh` (mesmos de `sda13`) não são válidos para `sda27`. Só `sda13` (System) foi de fato confirmado decriptando corretamente nesta sessão. Ver `memory/sda27-decriptacao-magic-incorreto-2026-07-30.md`. Achado colateral: `/usr/local/bin/pfsfuse` (deploy manual, fora do fluxo de build) era um binário de **PS2**, não PS4 — renomeado para `.bak` no PS4. Ver `memory/pfsfuse-binario-errado-ps2-nao-ps4-2026-07-30.md`.
+### [x] 🏆 Montagem Nativa do HD Interno (/dev/sda) — **RESOLVIDO E VALIDADO AO VIVO (2026-11-13)**
+> ✅ **`sda27` (user) MONTA read-only com a chave EAP** — 884 GiB, 485 GiB usados, `app/` com 44 títulos, `savedata`, `trophy`, `appmeta`, `bgft`. Também montam `sda29` (`eap_user`, UFS2) e `sda25` (`update`, FAT32).
+>
+> **Causa raiz do bloqueio histórico:** o IV do dm-crypt nestes consoles (CUH-1100+/Baikal) é **`iv_offset = (dev_no - 1) << 32`** — com IV=0 o mapper decifra lixo (`bad magic number`). O `cryptsetup` não sabe aplicar isso (`--offset`/`--skip` são *data offset*), então o mapper é criado com `dmsetup create -r`. **Premissa errada corrigida:** `sda27` não é PFS, é **UFS2** (o PFS é o formato dos containers `app/<TITLE>/app.pkg` dentro dela); `sda13` **não é montável** (é o swap antigo, chave versioned_key + OpenPsId).
+>
+> Detalhes técnicos: [`MONTAGEM_HD_INTERNO.md`](MONTAGEM_HD_INTERNO.md) §2. Tarefas/pendências: [`BACKLOG_MOUNT.md`](BACKLOG_MOUNT.md) (MOUNT-01/02/03 fechados; MOUNT-06 virou opcional — só para ler containers PFS).
+> Histórico do diagnóstico antigo: `/usr/local/bin/pfsfuse` era um binário de **PS2** (não PS4) e a busca pelo `magic 0x1332A0B` era baseada em valor errado — o magic UFS2 correto é `0x19540119` em `0x1055C`.
 - **Concluídas as 3 fases do `PLANO_MONTAGEM_NATIVA_HD_INTERNO_SDA.md`**:
   1. Inspeção completa das 29 partições (`sda1` a `sda29`), extração da chave EAP da NOR (`nor_sflash0.bin`), derivação da chave XTS (`data` + `tweak`), e validação de `cryptsetup` com `-o ro`.
-  2. Desenvolvidos os scripts modulares `/usr/local/bin/monta_particao.sh`, `/usr/local/bin/desmonta_particao.sh` e `/usr/local/bin/automount.sh` (com chave em `/etc/ps4_keys.bin`), testados com sucesso ao vivo via SSH no PS4 real para mapeamento e montagem automática combinada das partições de Sistema (`sda13`) e Games (`sda27`).
+  2. Desenvolvidos os scripts modulares `/usr/local/bin/monta_particao.sh`, `/usr/local/bin/desmonta_particao.sh` e `/usr/local/bin/automount.sh` (chave hoje em `/etc/ps4-keys/eap_hdd_key.bin`, provisionada pelo usuário com `distro/scripts/provisiona-chave.sh`). **Resolvido em 2026-11-13:** o `sda27` monta com `iv_offset = 26 << 32` via `dmsetup` (ver `BACKLOG_MOUNT.md`, MOUNT-01).
   3. Integrada a cópia automática dos scripts e utilitários (`monta_particao.sh`, `desmonta_particao.sh`, `automount.sh`, `pkg_pfs_tool` compilado para a CPU Jaguar `btver2` do PS4 e `config.ini`) no gerador de imagens da distro customizada `01-build-image-7.0.sh` para o Arch Minimal v2. Adicionado o pacote `sleuthkit` na lista de instalação automática `PKGS` do pacman.
   4. Configurado acesso total sem senha (`NOPASSWD: ALL` em `/etc/sudoers.d/ps4-hdd`) e regra udev `/etc/udev/rules.d/99-ps4-disk-permissions.rules` (permissão `0666` direta para `/dev/sda*`, `/dev/dm-*` e `/dev/mapper/`) para o usuário `ps4` operar os utilitários de montagem, mappers e criptografia. Integrado na receita de build `01-build-image-7.0.sh`.
   5. Desenvolvido o driver FUSE **`ps4_pfs_fuse`** (`/usr/local/bin/ps4_pfs_fuse`) com I/O sob demanda via `pread` (super leve, zero consumo de RAM pré-alocada) para montagem e navegação transparente no VFS/Nemo/Nautilus das partições PFS. Integrado ao gerador de imagens `01-build-image-7.0.sh` e documentado no plano `PLANO_MONTAGEM_NATIVA_NEMO_NAUTILUS_FUSE.md`.
@@ -500,7 +515,7 @@ Depois dos 4,9s o bit 17 do ACK **nunca mais volta a zero**.
 determinar se o AHCI chega a *pedir* a interrupção (levantar `PxIS`) e o glue não propaga, ou se o
 próprio controlador para de pedir. Próxima instrumentação deve ler `PxIS` no instante em que um
 comando está pendurado — não depois do dispositivo desabilitado, como foi feito. Vale também
-consultar `rea/decompiled/INDEX.md` e a tabela `decompiled_functions` para ver como o driver
+consultar `outros/rea/INDEX.md` (e o `INDEX.md` do subsistema) e a tabela `decompiled_functions` para ver como o driver
 Orbis trata o rearme dessas subfunções.
 
 Detalhes em `PLANO_SATA_INTERNO_100PCT_2026-07-28.md`; memórias
@@ -595,7 +610,7 @@ lixo/hora errada em qualquer teste real. Reaberta como pendente até haver teste
 
 **Se der certo, isto é uma FEATURE nova do projeto** (não só correção de bug): PS4 Linux passa a ter relógio de sistema real e persistente entre power cycles, sem depender de rede disponível no boot — desbloqueia uso confiável de TLS (`pacman`, `curl https://`) e timestamps corretos em log desde o primeiro segundo do userspace.
 
-**Documentos:** ~~`obsoleto/rtc_via_icc_plan.md`~~ (apagado em 2026-11-11 junto com a pasta `obsoleto/`; o protocolo ICC/MMIO que ele descrevia continua sendo a referência usada pela Fase 4); [`decompiled/baikal_rtc_mvl.txt`](../rea/decompiled/baikal_rtc_mvl.txt); [`decompiled/INDEX.md`](../rea/decompiled/INDEX.md) §6.B.
+**Documentos:** ~~`obsoleto/rtc_via_icc_plan.md`~~ (apagado em 2026-11-11 junto com a pasta `obsoleto/`; o protocolo ICC/MMIO que ele descrevia continua sendo a referência usada pela Fase 4); [`acpi/decompiled/baikal_rtc_mvl.txt`](../rea/acpi/decompiled/baikal_rtc_mvl.txt); [`outros/rea/INDEX.md`](../rea/INDEX.md) e [`acpi/INDEX.md`](../rea/acpi/INDEX.md).
 
 ---
 
@@ -761,7 +776,7 @@ Itens abaixo são exclusivamente de hardware/driver. Para cada componente sem dr
 
 **Tarefa:** encontrar fonte de dados nova (vazamento de firmware, dump de SAMU, documentação de terceiros sobre PHY Baikal) para reabrir a investigação. Até lá, Ethernet continua indisponível.
 
-**Documentos:** `kernel/drivers_mts/PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md`, `kernel/drivers_mts/RE_KERNEL_GBE_ATTACH.md`, `kernel/drivers_mts/ICC_GBE_TEST_LOG.md`, `outros/docs/LEVANTAMENTO_HARDWARE_PS4_BAIKAL.md`
+**Documentos:** `outros/rea/ethernet/plans/PLANO_DRIVER_ETHERNET_BAIKAL.md`, `outros/rea/ethernet/docs/PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md`, `outros/rea/ethernet/docs/RE_KERNEL_GBE_ATTACH.md`, `outros/rea/ethernet/docs/ICC_GBE_TEST_LOG.md`, `outros/docs/LEVANTAMENTO_HARDWARE_PS4_BAIKAL.md`
 
 ---
 
@@ -771,7 +786,7 @@ Itens abaixo são exclusivamente de hardware/driver. Para cada componente sem dr
 
 **Tarefa:** verificar fisicamente se o PS4 tem hardware Bluetooth integrado (revisar dumps de NOR/flash, procura por strings "bluetooth"/"bt" em binários do sistema). Se houver hardware, identificar o chip e desenvolver ou portar o driver. Se não houver, documentar a ausência e fechar a tarefa.
 
-**Documentos:** `outros/rea/scans/ps4_system_files.txt`, `outros/rea/scans/hardware_search_results.txt`
+**Documentos:** `outros/rea/scans/ps4_system_files.txt`, `outros/rea/scans/hardware_search_results.txt`, `outros/rea/ethernet/scans/` (strings `gbe`/`bluetooth` search)
 
 ---
 
@@ -781,7 +796,7 @@ Itens abaixo são exclusivamente de hardware/driver. Para cada componente sem dr
 
 **Tarefa:** desenvolver driver `baikal-acpi` para exposição de eventos ACPI (power button, eject, thermal, sleep/wake) do chip Sony Baikal.
 
-**Documentos:** `outros/rea/decompiled/baikal_pcie_attach.txt`, `outros/rea/scans/kernel_hardware_info.txt` (strings `icc_power_shutdown`, `power button notification`)
+**Documentos:** `outros/rea/acpi/plans/PLANO_DRIVER_ACPI_BAIKAL.md`, `outros/rea/acpi/decompiled/`, `outros/rea/acpi/scans/`, `outros/rea/acpi/docs/LEVANTAMENTO_HARDWARE_PS4_BAIKAL.md`
 
 ---
 
@@ -791,7 +806,7 @@ Itens abaixo são exclusivamente de hardware/driver. Para cada componente sem dr
 
 **Tarefa:** desenvolver driver `baikal-dma` para exposição do controlador DMA do Baikal ao subsistema DMAEngine do Linux.
 
-**Documentos:** `outros/rea/decompiled/baikal_pcie_attach.txt`
+**Documentos:** `outros/rea/dma/plans/PLANO_DRIVER_DMA_BAIKAL.md`, `outros/rea/dma/decompiled/`, `outros/rea/dma/scans/`, `outros/rea/dma/docs/LEVANTAMENTO_HARDWARE_PS4_BAIKAL.md`
 
 ---
 
@@ -835,7 +850,7 @@ Dados salvos em:
 
 **Tarefa:** desenvolver driver `baikal-memory` para exposição da memória SPM/DDR3 do Baikal, possivelmente como memregion ou dispositivo de memória gerenciável.
 
-**Documentos:** `outros/rea/spm/HANDOFF.md`, `outros/docs/ACHADOS_MEMORIA_BAIKAL_FASE1.md`, `outros/docs/ACHADOS_MEMORIA_BAIKAL_FASE2.md`, `outros/docs/PLANO_DRIVER_MEMORIA_BAIKAL.md`, `outros/rea/decompiled/baikal_pcie_attach.txt`, `outros/rea/scans/kernel_hardware_info.txt`
+**Documentos:** `outros/rea/spm/HANDOFF.md`, `outros/rea/spm/decompiled/`, `outros/rea/spm/docs/`, `outros/rea/spm/plans/`, `outros/docs/ACHADOS_MEMORIA_BAIKAL_FASE1.md`, `outros/docs/ACHADOS_MEMORIA_BAIKAL_FASE2.md`, `outros/docs/PLANO_DRIVER_MEMORIA_BAIKAL.md`
 
 ---
 
@@ -859,13 +874,15 @@ Dados salvos em:
 
 ---
 
-### [ ] 💾 Swap — desabilitado
+### [x] 💾 Swap — desabilitado
 
 **Estado:** `SwapTotal=0`, `zram0` presente sem swap configurado, `zswap.enabled=1` mas sem swap zswap não faz nada. Risco de OOM em builds de kernel (pico de 10,9 GB de RSS no `pahole` já observado).
 
-**Tarefa:** configurar zram-generator (zstd) no build: adicionar pacote `zram-generator` ao `PKGS` + `/etc/systemd/zram-generator.conf`, ou remover `zswap.enabled=1` do cmdline.
-
-**Documentos:** `outros/docs/LEVANTAMENTO_HARDWARE_PS4_BAIKAL.md` (seção Memória)
+**Tarefa:** configurar zram-generator (zstd) no build: adicionar pacote `zram-generator` ao `PKGS` + `/etc/systemd/zram-generator.conf`, ou remover `zswap.enabled=1` do cmdline. **IMPLEMENTADO 2026-11-13 no build** (`distro/01-build-image-7.0.sh`):
+- `zram-generator` no `PKGS` (linha ~237)
+- `/etc/systemd/zram-generator.conf` com `zram-size = ram/2`, `compression-algorithm = zstd`, `swap-priority = 100`
+- `zswap.enabled=1` removido do bootargs
+**Validado ao vivo 2026-11-13:** zram0 3.4 GiB ativo como swap (zstd), zswap desabilitado (`N`).
 
 ---
 
@@ -884,6 +901,13 @@ Os itens abaixo foram corrigidos nos scripts de build e entrarão em vigor na pr
 | `loglevel=8` removido | `distro/01-build-image-7.0.sh` (bootargs) | Log excessivo removido do boot de produção |
 | `keep_bootcon earlyprintk=efi,keep` removido | `distro/01-build-image-7.0.sh` (bootargs) | Overhead de boot removido em produção |
 | `denyinterfaces eth0` idempotente | `distro/01-build-image-7.0.sh` (~linha 418) | `grep -q` antes do `echo >>` evita linhas duplicadas a cada rebuild |
+| `/etc/fstab` (raiz + CIFS) | `distro/01-build-image-7.0.sh` (~linhas 701-705) | Gera `/etc/fstab` com raiz `LABEL=psxitarch / ext4 rw,noatime,errors=remount-ro 0 1` + CIFS `//192.168.6.101/dados_aux` com `_netdev,nofail,x-systemd.automount`; cria `/mnt/hdauxiliar` |
+| `smartd` + `paccache.timer` | `distro/01-build-image-7.0.sh` (~linhas 209, 400-408) | `pacman-contrib` no PKGS; `/etc/smartd.conf` com `/dev/sdb -d sat -a -m root`; `smartd.service` e `paccache.timer` habilitados no chroot |
+| `zram-generator` (swap zstd) | `distro/01-build-image-7.0.sh` (~linhas 237, 411-418) | `zram-generator` no PKGS; `/etc/systemd/zram-generator.conf` com `zram-size=ram/2`, `zstd`; `zswap.enabled=1` removido do bootargs |
+| `archlinux-keyring-wkd-sync.timer` | `distro/01-build-image-7.0.sh` (~linhas 419-427) | Override: `OnBootSec=10min`, `Persistent=false`, `RandomizedDelaySec=30min` — evita 2min13s no boot |
+| Bootargs limpos | `distro/01-build-image-7.0.sh` (~linha 727) | Removidos: `systemd.unified_cgroup_hierarchy=0`, `systemd.legacy_systemd_cgroup_controller=yes`, `zswap.enabled=1`, `libata.force=1.00:3.0Gbps,noncq`, `ahci.mobile_lpm_policy=1` |
+| `CONFIG_X86_ACPI_CPUFREQ` | `kernel/00-build-kernel-7.0.sh` (~linha 538) | Driver ACPI legado para Jaguar (fallback do amd_pstate) |
+| Estrutura fonte MTS | `kernel/00-build-kernel-7.0.sh` (~linhas 376-427) + `kernel/patches/mts-baikal-kconfig.patch` | `drivers_mts/` = fonte única (mts.c, mts.h); patch = apenas Kconfig/Makefile vendor Sony; elimina ~3.200 linhas duplicadas |
 
 **UART mantido** no bootargs (`earlycon=uart8250,mmio32,0xC890E000` + `console=...`) — obrigatório
 para diagnóstico via console serial físico (ver AGENTS.md, convenções de bootargs).

@@ -3,8 +3,13 @@
 import sys
 from Crypto.Cipher import AES
 
-ERK = bytes.fromhex("7fcf0536d3b5f5bd09a5d7b3833f868bbe1f6d90803b4f54029e6265f6476af6")
-PROD = bytes.fromhex("e4090248c0aaa615eb00c761f6d1f1a83564c1f52883c9b47d63b58970d911c7")
+# Chaves refutadas (não decifram as partições). NÃO ficam versionadas: carregue do
+# ambiente, ex.:  set -a; . .env.keys; set +a   ou  export ERK=<hex> PROD=<hex>
+import os
+ERK = bytes.fromhex(os.environ.get("ERK_HDD_KEY", "")) if os.environ.get("ERK_HDD_KEY") else None
+PROD = bytes.fromhex(os.environ.get("PROD_HDD_KEY", "")) if os.environ.get("PROD_HDD_KEY") else None
+if ERK is None or PROD is None:
+    raise SystemExit("Defina ERK_HDD_KEY e PROD_HDD_KEY (hex) no ambiente — ver ~/ps4-keys/chaves-refutadas.txt")
 
 def rev16(k):
     return k[:16][::-1] + k[16:][::-1]

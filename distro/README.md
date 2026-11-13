@@ -94,14 +94,15 @@ Os artefatos saem direto no disco do host (owner root), em
 | `02-burn-image-7.0.sh` | Particiona o HD (`sda1` FAT32 + `sda2` ext4 label **`psxitarch`**) e grava tudo |
 | `deploy-boot-7.0.sh` | Reescreve só a partição BOOT a partir dos artefatos da tag (com MD5 origem→destino) |
 | `rebuild-initramfs-7.0.sh` | Reconstrói o initramfs num rootfs já montado em `/mnt/ps4_rootfs_7.0` |
-| `monta_particao.sh` / `desmonta_particao.sh` / `automount.sh` | Montagem nativa das partições PFS do HD interno (chave EAP + mapper) |
+| `monta_particao.sh` / `desmonta_particao.sh` / `desmonta_todas.sh` / `automount.sh` | Montagem nativa das partições do HD interno (UFS2/FAT32, chave EAP + `iv_offset` via `dmsetup`); `automount.sh` monta no boot via `ps4-automount.service`. Chave do usuário em `/etc/ps4-keys/eap_hdd_key.bin`. Fluxo e pendências: [`../outros/docs/MONTAGEM_HD_INTERNO.md`](../outros/docs/MONTAGEM_HD_INTERNO.md) e [`../outros/docs/BACKLOG_MOUNT.md`](../outros/docs/BACKLOG_MOUNT.md). Obtenção da chave (payload no Orbis): [`../outros/docs/ENVIO_DE_PAYLOADS.md`](../outros/docs/ENVIO_DE_PAYLOADS.md) |
+| `scripts/provisiona-chave.sh` | Instala a chave EAP do usuário (`--ssh root@IP` ou `--rootfs DIR`), normaliza/valida e confere montando o `sda27` |
 | `ssh-startup.sh` + `ssh-auto-startup.service` | **Legado, não entra mais na imagem**: o rootfs já é o sistema (`root=LABEL=psxitarch`); o SSH sobe pelo `sshd.service` normal |
 | `firmware_gpu/`, `firmware_wifi/` | Firmware genuíno (Gladius/amdgpu, MediaTek MT7668) |
 | `hardware_ps4_real/` | Coletas de hardware feitas no console real (`/proc`, `lspci`, …) |
 | `mesa/` | Patch + build do Mesa que reconhece `CHIP_GLADIUS`/`CHIP_LIVERPOOL` |
 | `monitor_edid/` | EDID do monitor e utilitários de vídeo |
 | `ps4_tv_edid.bin` | EDID injetado no initramfs (`drm.edid_firmware`) |
-| `scripts/` | `promote-release.sh`, `ps4_crypt_mount.sh`, `build-image-docker.sh` (build em container Arch), `fetch_gladius_fw.py` |
+| `scripts/` | `promote-release.sh`, `provisiona-chave.sh` (chave EAP do usuário), `ps4_crypt_mount.sh` (legado), `build-image-docker.sh` (build em container Arch), `fetch_gladius_fw.py` |
 | `RELEASE/` | Artefatos de distribuição (`v1.0.0` versionado; demais tags são build local) |
 
 ## Regras que valem para esta frente

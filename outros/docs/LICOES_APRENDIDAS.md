@@ -550,3 +550,70 @@ tag no boot do PS4 (opcional — o módulo já carrega no kernel atual).
 
 
 
+---
+
+## Lição Aprendida #76 (2026-11-13) — HD interno do PS4: IV offset ≠ data offset, e `sda27` não é PFS
+
+**Contexto:** meses de investigação tentando montar as partições do HD interno do PS4 no Linux
+com a chave EAP, com a conclusão errada de que "o kernel não reconhece o UFS2 do PS4" e que
+`sda27` era PFS. Resolvido ao vivo em 2026-11-13.
+
+### 1. O IV do dm-crypt não é 0 nem o LBA da partição
+Em CUH-1100 e posteriores (todo Baikal/CUH-2xxx) o dm-crypt plain usa um **IV offset** derivado do
+número da partição:
+
+```
+iv_offset = (dev_no - 1) << 32
+sda25 → 24 << 32 = 103079215104      (vfat)
+sda27 → 26 << 32 = 111669149696      (UFS2)
+sda29 → 28 << 32 = 120259084288     (UFS2)
+```
+
+Abrir com IV=0 decifra **lixo** e o kernel responde `ufs_fill_super(): bad magic number`. A
+hipótese "IV = LBA absoluto da partição" (usada em `--skip <LBA>`) também está errada: LBA é
+*data offset*, não IV. Fonte: psdevwiki, *Mounting HDD in Linux*.
+
+### 2. `cryptsetup` NÃO consegue aplicar `iv_offset` — use `dmsetup`
+`--offset`/`--skip` do `cryptsetup` são **data offset**. `cryptsetup open --offset 111669149696`
+aborta com *"Requested offset is beyond real size of device"* (o valor é do IV, não uma posição).
+Não existe opção de `iv_offset` no cryptsetup (verificado na 2.8.8). O mapper tem de ser criado
+com a tabela do dm-crypt na mão:
+
+```bash
+KEY_HEX=$(xxd -p -c 256 /etc/ps4-keys/eap_hdd_key.bin | tr -d '\n')     # 64 chars hex
+dmsetup create -r ps4_sda27 --table \
+  "0 $(blockdev --getsz /dev/sda27) crypt aes-xts-plain64 $KEY_HEX 111669149696 /dev/sda27 0"
+```
+
+(`dmsetup create -r` = mapping read-only real.)
+
+### 3. `sda27` é UFS2, não PFS — e `sda13` não é montável
+- **Magic UFS2 correto: `0x19540119` em `0x1055C`** (= SBLOCK_UFS2 65536 + `fs_magic` 1372).
+  O valor `0x1332A0B` que circulava nos scripts de investigação **não é magic de nada** — era o
+  motivo dos "falsos negativos" que alimentaram a conclusão errada.
+- Os **jogos são containers PFS dentro do UFS2**: `app/<TITLE_ID>/app.pkg`. Logo, navegar a
+  partição só exige o driver `ufs` do kernel; `pkg_pfs_tool`/`ps4_pfs_fuse` só serviriam para
+  abrir o conteúdo dos `.pkg`/`.pfs`.
+- **`sda13` não é "o sistema"**: é o *swap antigo* (swapfs, chave `versioned_key` + OpenPsId).
+  Não é UFS2, não usa a chave EAP, e com o IV correto continua aleatório. A psdevwiki também diz
+  *"sda13 cannot be mounted for now"*.
+- Partições que usam a chave **SAMU/versioned** (`sda9`–`sda12`, `sda19`, `sda31`) **não montam**
+  com a chave EAP — não perder tempo com elas.
+
+### 4. Validar em 3 segundos
+```bash
+dd if=/dev/mapper/ps4_sda27 bs=1 skip=66908 count=4 2>/dev/null | xxd   # 1901 5419
+blkid -p /dev/mapper/ps4_sda27                                          # ufs / VERSION=2
+```
+
+### 5. Lição de método (a mais importante)
+Três premissas erradas ficaram meses no repositório como se fossem fato (magic `0x1332A0B`,
+`sda13` = sistema/UFS2, `sda27` = PFS) e geraram scripts que testavam a hipótese errada
+(`teste_tweak_sda27.sh`, `ps4_cmtab_generator.py` com `ivoffset=LBA`). Antes de codificar um
+diagnóstico, **conferir o valor de referência na documentação primária** (aqui: psdevwiki e o
+próprio magic UFS2) em vez de derivar de observação indireta. Scripts de diagnóstico baseados em
+hipótese refutada devem ser **removidos**, não mantidos "por garantia".
+
+**Estado final:** `sda27` (UFS2, 884 GiB / 485 GiB usados, 44 títulos em `app/`), `sda29` e `sda25`
+montam read-only; scripts de produção `distro/monta_particao.sh` + `automount.sh` instalados no
+rootfs. Detalhes: `MONTAGEM_HD_INTERNO.md` §2; tarefas: `BACKLOG_MOUNT.md`.

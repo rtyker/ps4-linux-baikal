@@ -1,7 +1,8 @@
 # Índice da Documentação — PS4 Linux Baikal
 
-> **Revisão:** 2026-11-11 (reescrito após limpeza). Este índice lista apenas os arquivos que
-> existem atualmente em `outros/docs/` e `kernel/drivers_mts/`.
+> **Revisão:** 2026-11-13 (adicionados `BACKLOG_MOUNT.md`, `MONTAGEM_HD_INTERNO.md` e
+> `ENVIO_DE_PAYLOADS.md`). Este índice
+> lista apenas os arquivos que existem atualmente em `outros/docs/` e `kernel/drivers_mts/`.
 
 > **Projeto:** PS4 Slim/Pro **Baikal** (CUH-2xxx) rodando Linux **7.0.8-Strawberry-ThinLTO-Baikal-+**
 > carregado por `kexec` a partir de payload de jailbreak. Distribuição: Arch Linux mínima.
@@ -26,6 +27,7 @@
 | Arquivo | Conteúdo | Natureza |
 |---------|----------|----------|
 | [`BACKLOG.md`](BACKLOG.md) | Pendências priorizadas (`[ ]`/`[~]`/`[x]`) | **Vivo** |
+| [`BACKLOG_MOUNT.md`](BACKLOG_MOUNT.md) | Pendências específicas da montagem de partições do HD interno (MOUNT-01 a MOUNT-09) | **Vivo** |
 | [`ESTADO_E_HISTORICO.md`](ESTADO_E_HISTORICO.md) | Narrativa das grandes sagas técnicas (migração 7.0, GBE, SATA) e mapa de onde achar cada coisa | Histórico + mapa |
 | [`LICOES_APRENDIDAS.md`](LICOES_APRENDIDAS.md) | Lições imperativas — o que já quebrou o console e por quê | **Vivo** |
 
@@ -70,6 +72,21 @@ investigação de RE **encerrada** em 2026-07-30 (bloqueador é firmware Sony, n
 |---------|----------|
 | `../patches/ahci-baikal-polling-fallback.patch` | O patch em si (as duas pontas, `.2` e `.7`) |
 
+### HD interno / PFS (montagem de partições)
+
+| Arquivo | Conteúdo |
+|---------|----------|
+| [`MONTAGEM_HD_INTERNO.md`](MONTAGEM_HD_INTERNO.md) | Fluxo completo de montagem (chave EAP → cryptsetup → mapper → UFS2/FUSE), modos de tweak e diagnóstico |
+| [`BACKLOG_MOUNT.md`](BACKLOG_MOUNT.md) | Pendências e status da feature (MOUNT-01 a MOUNT-09) |
+
+### Payloads (injeção no Orbis)
+
+| Arquivo | Conteúdo |
+|---------|----------|
+| [`ENVIO_DE_PAYLOADS.md`](ENVIO_DE_PAYLOADS.md) | **Procedimento canônico** de envio de payload (GoldHEN BinLoader `:9090`, FTP `:2121`, klog `:3232`), regras e diagnóstico. **Console no Orbis = `192.168.6.130`** (MAC `6A:FA:C4:EA:34:9C`); no Linux = `192.168.6.128` |
+| [`../scripts/ps4_send_payload.sh`](../scripts/ps4_send_payload.sh) | Script oficial de envio/recuperação (`--check`, envio, `--ftp-get`) |
+| [`../tools/ps4_hdd_tools/README.md`](../tools/ps4_hdd_tools/README.md) | Caso concreto: compilar o `EAPDumper` e obter a chave EAP |
+
 ### GPU / vídeo / Mesa
 
 | Arquivo | Conteúdo |
@@ -91,8 +108,8 @@ investigação de RE **encerrada** em 2026-07-30 (bloqueador é firmware Sony, n
 | Recurso | Conteúdo |
 |---------|----------|
 | [`../rea/ps4_hardware_memory.db`](../rea/ps4_hardware_memory.db) | **SQLite oficial** — registradores, BARs, testes ao vivo, funções decompiladas |
-| [`../rea/decompiled/INDEX.md`](../rea/decompiled/INDEX.md) | Catálogo das funções do kernel Orbis decompiladas |
-| [`../rea/decompiled/`](../rea/decompiled/) | Saídas textuais do Ghidra (`*.txt`) |
+| [`../rea/INDEX.md`](../rea/INDEX.md) | Índice geral do acervo (mapa de subsistemas e onde está cada coisa) |
+| [`../rea/<subsistema>/decompiled/`](../rea/INDEX.md) | Funções decompiladas do kernel Orbis, por subsistema (`acpi/`, `dma/`, `mts/`, `sata/`, `spm/`, ...) |
 | [`../rea/tools/`](../rea/tools/) | Scripts de extração Ghidra e utilitários de RE |
 
 ```bash
@@ -129,9 +146,16 @@ sqlite3 outros/rea/ps4_hardware_memory.db \
 ## 7. Cheat sheet
 
 ```bash
-# --- Acesso ao console ---
-sshpass -p ps4 ssh root@192.168.6.128      # WiFi (administração)
+# --- Acesso ao console (o IP muda conforme o ambiente!) ---
+ping -c1 192.168.6.130                     # Orbis + GoldHEN (loader existe aqui)
+ping -c1 192.168.6.128                     # Linux rodando (SSH root/ps4)
+sshpass -p ps4 ssh root@192.168.6.128      # WiFi (administração, só com Linux rodando)
 ping 192.168.0.2                           # eth0 do PS4 (rede sob teste, host 192.168.0.1)
+
+# --- Payload no Orbis (antes do kexec; GoldHEN ativo em 192.168.6.130) ---
+./outros/scripts/ps4_send_payload.sh --check <payload.bin>
+./outros/scripts/ps4_send_payload.sh <payload.bin>          # BinLoader :9090
+./outros/scripts/ps4_send_payload.sh --ftp-get /data/...    # FTP :2121
 
 # --- Build / deploy (SEMPRE pelos scripts oficiais) ---
 cd kernel && sudo ./00-build-kernel-7.0.sh <TAG>   # FRENTE 1: kernel (ThinLTO, Baikal)

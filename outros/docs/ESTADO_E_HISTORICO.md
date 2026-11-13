@@ -286,6 +286,38 @@ os passos concluídos.
 
 ---
 
+## 🆕 Estado 2026-11-13 — 🏆 HD INTERNO DO PS4 MONTADO (sda27/user UFS2, 884 GiB)
+
+**Resultado:** `sda27` (user — jogos, saves, troféus, dados), `sda29` (eap_user) e `sda25` (update,
+FAT32) montam **read-only** no Linux 7.0.8 Baikal com a chave EAP. `sda13` foi descartado com base
+técnica: é o **swap antigo** (swapfs, chave versioned_key + OpenPsId), não é UFS2 nem EAP.
+
+**As três armadilhas que custaram o dia:**
+
+1. **IV offset.** Em CUH-1100+ (todo Baikal) o dm-crypt plain não usa IV=0: usa
+   `iv_offset = (dev_no - 1) << 32` (`sda27` → `111669149696`). Com IV=0 o mapper decifra lixo e o
+   kernel responde `bad magic number`.
+2. **`cryptsetup` não aplica iv_offset.** `--offset`/`--skip` são *data offset*;
+   `--offset 111669149696` aborta com *"Requested offset is beyond real size of device"*. A solução é
+   `dmsetup create -r <name> --table "0 <setores> crypt aes-xts-plain64 <chave_hex> <iv_offset> <dev> 0"`.
+3. **Premissa errada (PFS).** `sda27` **não é PFS** — é **UFS2**. O PFS é o formato dos containers
+   `app/<TITLE_ID>/app.pkg` *dentro* do UFS2; navegar a partição só exige o driver `ufs` do kernel.
+   O magic usado nas investigações antigas (`0x1332A0B`) era valor errado; o correto é `0x19540119`
+   em `0x1055C`.
+
+**Evidência ao vivo:** magic `1901 5419` em `0x1055C`, `blkid` = `TYPE="ufs" VERSION="2"`, `df` = 884 GiB
+(485 GiB usados), `app/` com 44 títulos, `savedata`, `home`, `trophy`, `patch`, `appmeta`, `bgft`.
+
+**Código:** `distro/monta_particao.sh` (produção: `dmsetup` + `blkid`, recria mapper com IV errado),
+`distro/automount.sh` (27/29/25, ignora o 13), `desmonta_*.sh` (`dmsetup remove`). Instalados também no
+rootfs vivo em `/usr/local/bin`. `distro/scripts/teste_tweak_sda27.sh` (hipótese refutada) foi removido e
+`ps4_crypt_mount.sh` virou shim legado.
+
+**Documentos:** [`MONTAGEM_HD_INTERNO.md`](MONTAGEM_HD_INTERNO.md) (fluxo e diagnóstico),
+[`BACKLOG_MOUNT.md`](BACKLOG_MOUNT.md) (MOUNT-01/02/03 fechados; MOUNT-06 reescopado).
+
+---
+
 ## Estado Atual do Projeto (Resumo Rápido) — ATUALIZADO 2026-07-23 NOITE (causa raiz RX confirmada: PHY não acorda)
 
 **🎯 STATUS:** Módulo `mts.ko` estável (crash eliminado), TX funcional (~95%), RX bloqueado — causa raiz é o PHY nunca sair de power-down (não é mais bug de software/anéis). Próxima pista: reabilitar IRQ real (`IMR` não-zero), já que a única sessão com duplex genuinamente correto (`Full duplex`, `memory/teste-5-...md`) tinha IRQ habilitada.
@@ -341,6 +373,16 @@ os passos concluídos.
 - 🟡 **S5 desligamento:** `poweroff -f` encerra SO mas deixa luz azul (requer ICC ou toque manual)
 
 ### Contexto de Payloads (Ainda Válido)
+
+> **⚠️ Procedimento ATUAL (2026-11-13) — esta seção é histórico.**
+> O envio de payload hoje é feito por [`ENVIO_DE_PAYLOADS.md`](ENVIO_DE_PAYLOADS.md) +
+> [`../scripts/ps4_send_payload.sh`](../scripts/ps4_send_payload.sh), com o GoldHEN:
+> BinLoader `:9090`, FTP `:2121`, klog `:3232`. Os scripts citados abaixo
+> (`send_payload_loop.py`, `inject.sh`, `inject_diag.sh`, `receive_kmem_dump.py` do
+> `scene-kmem-dumper/`) **não existem mais** — foram perdidos na limpeza de 2026-11-11.
+> As portas `9020` (dumper) e `9090` (loader) citadas aqui são de **serviços dos payloads
+> daquela época**, não do loader do GoldHEN.
+
 - **Firmware Alvo:** 12.52 (GoldHEN) — kernel dumping completado com sucesso (32.2 MB em 3s via TCP)
 - **Limitações do 12.52 mapeadas:**
   - `jailbreak()` da libPS4 original corrompe `rootvnode`, bloqueando USB. **NÃO usar.**
@@ -371,9 +413,9 @@ os passos concluídos.
    docker run --rm -v "$PWD/scene-kmem-dumper":/app -w /app ps4sdk sh -c 'PS4SDK=/lib/ps4-payload-sdk make'
    ```
    (confirmar que o `PS4SDK` dentro do container aponta pra `/lib/ps4-payload-sdk`, conforme o `ENV` do Dockerfile).
-2. Testar ao vivo de novo com o mesmo protocolo já rodado hoje (injetar via `send_payload_loop.py` porta 9090, `receive_kmem_dump.py` esperando na 9020, usuário observando a tela).
+2. Testar ao vivo de novo com o mesmo protocolo já rodado hoje (injetar via ~~`send_payload_loop.py` porta 9090~~ — **script perdido**; hoje usar [`ENVIO_DE_PAYLOADS.md`](ENVIO_DE_PAYLOADS.md), `receive_kmem_dump.py` esperando na 9020, usuário observando a tela).
 3. **Se AINDA parar depois de `"FALHA ao abrir /dev/kmem"`** (ou seja, não é o toolchain): isso aponta pra `get_kernel_base()`/`kexec()` travando de fato nesse console/firmware — próximo passo aí seria um payload mínimo de diagnóstico que só faz `initKernel();initLibc();printf_notification("A");uint64_t kb=get_kernel_base();printf_notification("B base=0x%llx",kb);` pra isolar exatamente se o `kexec()` retorna ou trava, sem nenhuma complexidade de socket junto.
-4. Regra permanente já registrada na memória do assistente: **nunca fazer probe TCP manual nas portas 9090/9020** (só `ping`, nunca `connect()`) — consome o `accept()` único do servidor.
+4. Regra permanente: **nunca fazer probe TCP manual nas portas 9090/9020** (só `ping`, nunca `connect()`) — consome o `accept()` único do servidor. Vale igual para o BinLoader do GoldHEN hoje (ver [`ENVIO_DE_PAYLOADS.md`](ENVIO_DE_PAYLOADS.md) §5).
 
 ### Sessão de testes ao vivo 2026-07-20 — nova abordagem dinâmica (kern_base_finder.c)
 1. **Teste 1 — método LSTAR apenas (versão anterior):** injetado → `LSTAR=0x0 base=0x0 size=0x0` → `rdmsr` retorna 0 no contexto `kexec`. Payload abre porta 9020 mas dumper envia 0 bytes (base 0).
@@ -395,9 +437,13 @@ os passos concluídos.
    - Novos campos de debug em `kern_base_result_t`: `scan_addr_found`, `magic_found`, `phnum_found`, `min_vaddr_found`, `max_vaddr_found`
    - **Próximo teste:** aguardando power cycle completo
 
-### Novos scripts auxiliares criados 2026-07-20 (`scene-kmem-dumper/`)
+### Novos scripts auxiliares criados 2026-07-20 (`scene-kmem-dumper/`) — **histórico, scripts perdidos**
+
+> Estes scripts **não existem mais**. O procedimento atual está em
+> [`ENVIO_DE_PAYLOADS.md`](ENVIO_DE_PAYLOADS.md).
+
 - **`build_diag.sh`** — análogo ao `rebuild.sh`, mas compila só o target `diag.bin` do `Makefile` (payload mínimo `source/diag.c`: `initKernel()`+`initLibc()`+notificação+`get_kernel_base()`+notificação, sem TCP/socket). Já executado com sucesso via Docker `ps4sdk`: gerou `diag.bin` (9356 bytes), build limpo sem erros.
-- **`inject_diag.sh`** — análogo ao `inject.sh`, mas roda `send_payload_loop.py` apontando pro `diag.bin` em vez do `app.bin`. **Ainda NÃO foi executado/injetado no console** — aguardando autorização explícita do usuário ("pronto"), conforme Regra de Ouro da Injeção (item 1 acima).
+- **`inject_diag.sh`** — análogo ao `inject.sh`, mas roda `send_payload_loop.py` apontando pro `diag.bin` em vez do `app.bin`. **Ainda NÃO foi executado/injetado no console** — aguardando autorização explícita do usuário ("pronto").
 - Objetivo desses dois scripts: viabilizar o passo 3 do "PRÓXIMO PASSO EXATO" (payload mínimo de diagnóstico) sem precisar montar/desmontar manualmente comandos Docker/injeção toda vez — só isolar `get_kernel_base()`/`kexec()` travando ou não, sem a complexidade do dumper TCP completo junto.
 - Resumo dos scripts do diretório `scene-kmem-dumper/` até aqui: `rebuild.sh`/`inject.sh` (dumper completo, `app.bin`) vs. `build_diag.sh`/`inject_diag.sh` (diagnóstico mínimo, `diag.bin`).
 
