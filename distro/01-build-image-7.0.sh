@@ -277,6 +277,7 @@ if [ "$DESKTOP" = "1" ]; then
   PKGS_DESKTOP=(
     cinnamon
     remmina
+    xf86-video-amdgpu
   )
   mount -t proc proc "$ROOTFS_DIR/proc"
   pacman --root "$ROOTFS_DIR" --config "$HOST_PACMAN_CONF" --cachedir "$HOST_PACMAN_CACHE" -Sy --noconfirm "${PKGS_DESKTOP[@]}"
