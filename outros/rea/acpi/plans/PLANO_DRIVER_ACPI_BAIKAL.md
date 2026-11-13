@@ -40,10 +40,9 @@
 | `/dev/hpet`, `/dev/watchdog` | inexistentes — **irrelevante**: `CONFIG_HPET`/`CONFIG_WATCHDOG` desligados | config do kernel |
 | Função Aeolia/Baikal | enum `BAIKAL_FUNC_ID_ACPI = 0` (`drivers/ps4/baikal.h`), mesma ordem do `aeolia.h` | árvore do kernel + web |
 
-> **Nota:** a revalidação ao vivo mais recente (clocksource, listagem de tabelas ACPI, `dmesg`) não pôde
-> ser refeita nesta rodada: o `sshd` do PS4 (`192.168.6.128`) passou a resetar a conexão no `kex`
-> (`kex_exchange_identification: read: Connection reset by peer`), embora o host responda a `ping`.
-> Os dados da tabela acima são da medição de 2026-11-13 e permanecem válidos como registro histórico.
+> **Nota:** o `sshd` do PS4 (`192.168.6.128`) esteve instável nesta rodada (reset no `kex`), mas
+> recuperou e respondeu a `ping` + SSH. A leitura pontual da Fase 0 foi executada com sucesso ao vivo
+> (ver §5).
 
 ---
 
@@ -158,13 +157,21 @@ driver — o que é correto e distinto do HPET/WDT (que vive na glue `00:14.4`).
 - [x] RE estática do dump do Orbis: strings + xrefs + desmontagem (§3.2).
 - [x] Pesquisa web: nenhum driver Linux público de HPET/WDT/ACPI para Baikal (§7).
 
-**Pendente (exige autorização explícita — risco de desligamento instantâneo):**
-- [ ] **Leitura pontual de 8 bytes** em `BAR2 + 0x109000` da glue (`0xc8909000`), ou seja o registro
-      CAP/TIMCAP do HPET. Valor esperado se houver HPET: `REV_ID` (bits 0-7), `NUM_TIM_CAP` (bits 8-12),
-      `LEG_RT_CAP` (bit 13), `vendor ID = 0xA808` (bits 16-31) → algo como `0x0000A8xx`.
-      **Restrições do banco:** apenas acessos *pontuais* (sem varredura sequencial/bloco — risco
-      `HIGH_RISK_POWER_OFF` registrado em `BAR2_SEQUENTIAL_BLOCK_READ`). Registrar antes/depois em
-      `readonly_verification`.
+**Concluído (2026-11-13, leitura ao vivo autorizada):**
+- [x] **Leitura pontual de 8 bytes** em `BAR2(00:14.4) + 0x109000` = `0xc8909000` (registro CAP/TIMCAP
+      do HPET). **Resultado:** `0x05f5e10000002301`.
+      - REV_ID (bits 0-7): `1`
+      - NUM_TIM_CAP (bits 8-12): `3` (controlador com 3+ timers)
+      - LEG_RT_CAP (bit 13): `1` (legacy route capable)
+      - vendor ID (bits 16-31): `0x0000` (**não-padrão** — esperado algo não-zero; peculiaridade da
+        implementação Baikal/Sony, não invalida a existência do controlador)
+      - bits 32-63: `0x05f5e100` (não-zero, fora do padrão HPET que reserva esses bits)
+      - **PS4 permaneceu ligado** — leitura pontual é segura; nenhuma escrita foi feita.
+      - Registrado em `readonly_verification` (id 893) e `hardware_registers` (id 1339/1340).
+
+**Conclusão da leitura:** algo **responde** em `0xc8909000` com campos exatamente do CAP register do
+HPET (REV_ID, NUM_TIM_CAP, LEG_RT_CAP). O vendor ID `0x0000` é atípico, mas os demais campos são
+compatíveis com um controlador de timer. **Não foi feita nenhuma escrita** neste bloco.
 
 ### Fase 1 — Decisão (corrigida em 2026-11-13)
 
@@ -172,9 +179,10 @@ driver — o que é correto e distinto do HPET/WDT (que vive na glue `00:14.4`).
 
 - **ACPI `00:14.0` (`104d:90d7`)** → **sem driver** (mantido). O núcleo ACPI já possui PM1a/PM_TMR/GPE0;
   não há objeto ACPI a parsear; power button e shutdown já têm implementação.
-- **HPET/WDT da glue `00:14.4` (`104d:90db`, subfunção ICC 22)** → **item REABERTO**. O hardware existe
-  (evidência §3), não há driver Linux público (§7), e a leitura ao vivo do bloco `0x109000` ainda não foi
-  feita. Enquanto a leitura não for feita, **nada deve ser escrito** nesse bloco.
+- **HPET/WDT da glue `00:14.4` (`104d:90db`, subfunção ICC 22)** → **item REABERTO, leitura feita**.
+  O hardware existe e foi confirmado ao vivo (§3, Fase 0): `0xc8909000` = `0x05f5e10000002301` com
+  campos de CAP register do HPET. Não há driver Linux público (§7). **Nada deve ser escrito** nesse
+  bloco até validar contra o Orbis em 2 boots.
 
 ### Fase 2 — Driver (planejada, não iniciada)
 
@@ -182,8 +190,9 @@ Não existe ainda. Esboço do que **terá** de ser feito (só após a leitura da
 
 1. `drivers/watchdog/baikal_wdt.c` ou `drivers/clocksource/baikal-hpet.c` como `pci_driver` da **glue**
    (`104d:90db`), lendo `bar2 + 0x109000`.
-2. Leitura de `CAP/TIMCAP` e validação de `vendor ID = 0xA808`.
-3. `CONFIG_WATCHDOG`/`CONFIG_HPET` **ligados** no build (hoje desligados) se aWanter expor `/dev/watchdog`.
+2. **CAP/TIMCAP já lido ao vivo:** `0x05f5e10000002301` (REV_ID=1, NUM_TIM_CAP=3, LEG_RT_CAP=1,
+   vendor bits=`0x0000` atípico). Validar contra o Orbis em 2 boots antes de escrever.
+3. `CONFIG_WATCHDOG`/`CONFIG_HPET` **ligados** no build (hoje desligados) se quiser expor `/dev/watchdog`.
 4. Nenhuma escrita até o registro ser lido em 2 boots e conferido contra o Orbis.
 
 ---

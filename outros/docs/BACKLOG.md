@@ -809,13 +809,26 @@ MMIO `fdf8000000` (32M) + I/O `1000`, nenhum driver carregado — e está corret
 - Shutdown já implementado (`icc_shutdown` → `pm_power_off`).
 - **Sleep/wake NÃO está implementado** (`bpcie_icc_suspend()`/`bpcie_icc_resume()` são stubs vazios).
 
-**b) HPET/WDT da glue `00:14.4` (`104d:90db`, subfunção ICC 22) — REABERTO, driver inexistente.**
-O hardware **existe** e **não há driver Linux público**:
+**b) HPET/WDT da glue `00:14.4` (`104d:90db`, subfunção ICC 22) — REABERTO, leitura ao vivo feita, driver inexistente.**
+O hardware **existe** (confirmado ao vivo) e **não há driver Linux público**:
+
+**Leitura pontual executada (2026-11-13, autorizada):**
+- Endereço: `BAR2(00:14.4) + 0x109000` = `0xc8909000` (BAR2 base `0xc8800000`, tamanho 2 MiB — offset cabe dentro da janela)
+- Valor lido (8 bytes, CAP/TIMCAP do HPET): `0x05f5e10000002301`
+  - REV_ID (bits 0-7): `1`
+  - NUM_TIM_CAP (bits 8-12): `3` (controlador com múltiplos timers)
+  - LEG_RT_CAP (bit 13): `1`
+  - vendor ID (bits 16-31): `0x0000` (**atípico**, não `0xA808` como esperado — peculiaridade da
+    implementação Baikal/Sony, não invalida a existência do controlador)
+  - bits 32-63: `0x05f5e100` (não-zero, fora do padrão HPET que reserva esses bits)
+- **PS4 permaneceu ligado** — leitura pontual é segura. Nenhuma escrita foi feita.
+- Registrado em `readonly_verification` (id 893) e `hardware_registers` (id 1339/1340).
+
+Evidências de existência:
 - `drivers/ps4/baikal.h`: `BPCIE_SUBFUNC_HPET = 22 //Baikal Timer/WDT`, `BPCIE_HPET_BASE = 0x109000`,
-  `BPCIE_HPET_SIZE = 0x400` e a rotina `stop_hpet_timers()` usando o **layout de registradores HPET padrão**.
-- Kernel Orbis (`kmem_dump_1252.bin`): device `"Baikal Timer/WDT"` registrado para vendor `0x104d`,
-  device `0x90db`, função 4, subfunção `0x16` (=22); driver de HPET com nome por SoC
-  (`"Baikal High Precision Event Timer"`).
+  `BPCIE_HPET_SIZE = 0x400`, `stop_hpet_timers()` com layout HPET padrão.
+- Kernel Orbis (`kmem_dump_1252.bin`): device `"Baikal Timer/WDT"` para vendor `0x104d`,
+  device `0x90db`, função 4, subfunção `0x16` (=22); driver HPET com `"Baikal High Precision Event Timer"`.
 - Nenhum kernel Linux público (5.4 whitehax0r/DFAUS-git/noob404yt, 6.15 crashniels, 7.0) expõe esse bloco.
 
 **Correção de lógica (importante):** as evidências negativas usadas para fechar o item em 2026-11-13 eram
@@ -824,13 +837,11 @@ O hardware **existe** e **não há driver Linux público**:
 revisão da especificação** (a ausência era tautológica). A DSDT/SSDT também não declara o timer porque
 o Orbis o expõe via PCI+ICC, não via ACPI.
 
-**Tarefa (b):**
-1. Leitura **pontual** de 8 bytes em `BAR2(00:14.4) + 0x109000` (`0xc8909000`) — registro CAP/TIMCAP do
-   HPET; esperado `vendor ID = 0xA808` nos bits 16-31. **Exige autorização explícita**: varredura
-   sequencial na BAR2 da glue dispara desligamento instantâneo (banco: `BAR2_SEQUENTIAL_BLOCK_READ`,
-   risco `HIGH_RISK_POWER_OFF`).
+**Próximas tarefas (b):**
+1. Validar a leitura em 2 boots (conferir estabilidade do valor `0x05f5e10000002301`).
 2. Se confirmar: `drivers/watchdog/baikal_wdt.c` (ou clocksource HPET) como `pci_driver` da glue, ligando
-   `CONFIG_WATCHDOG`/`CONFIG_HPET` (hoje desligados). Nada de escrita antes de ler em 2 boots.
+   `CONFIG_WATCHDOG`/`CONFIG_HPET` (hoje desligados).
+3. **Nenhuma escrita** em `0xc8909000` ou `0xc8909010` até a validação em 2 boots.
 
 **Plano:** `outros/rea/acpi/plans/PLANO_DRIVER_ACPI_BAIKAL.md` (revisão crítica completa em §0).
 
@@ -843,8 +854,9 @@ o Orbis o expõe via PCI+ICC, não via ACPI.
 **Estado (2026-11-13):** dispositivo `104d:90dc`, dois controladores idênticos: BAR0 `ca000000` (DMAC1?) e BAR2 `ca800000` (DMAC2?), 4K cada, registradores em `+0x70` e `+0x80…+0xac`. **Memcpy por descritor validado nos dois** (cadeia de descritores, até 1 MiB, alinhamentos 4–64 B, ~900 MB/s), via harness `outros/rea/dma/harness/baikal_dmac_test/`. **Interrupção MSI funciona no BAR0 e NÃO chega no BAR2.** Decisão do usuário: o driver começa com IRQ no DMAC1 e **polling no DMAC2**.
 
 **Tarefas:**
-- [~] Driver `dmaengine` (`drivers/dma/baikal-dmac.c`): memcpy, 2 canais, `virt-dma`, descritores de 16 B encadeados, endereços de 32 bits e múltiplos de 4 B.
-- [ ] Integrar o patch ao `00-build-kernel-7.0.sh` (exige aprovação, mexe no script de build) e validar em um build oficial.
+- [x] Driver `dmaengine` escrito (`drivers/dma/baikal-dmac.c`, v0.1): memcpy, 2 canais, `virt-dma`, descritores de 16 B encadeados, endereços de 32 bits e múltiplos de 4 B. Compila sem avisos (inclusive `W=1`). Patch: `kernel/patches/baikal-dmac.patch` (`git apply --check` validado em estado pristino).
+- [x] Integrado ao `00-build-kernel-7.0.sh` (aprovado pelo usuário em 2026-11-13): aplica o patch com `--check` + `exit 1`; liga `CONFIG_DMA_ENGINE=y`, `CONFIG_DMA_VIRTUAL_CHANNELS`, `CONFIG_BAIKAL_DMAC=m`, `CONFIG_DMATEST=m`. **Nota:** `DMA_VIRTUAL_CHANNELS` não tem prompt, então resolve para `m` (derivado do `BAIKAL_DMAC=m`); é um `virt-dma.ko` a carregar antes do driver.
+- [~] Build oficial da tag `20261113-dmaengine` (em andamento) e validação ao vivo com `dmatest` + testes do harness. Depois: deploy da tag no PS4 (4 artefatos), com power cycle do usuário.
 
 **Documentos:** `outros/rea/dma/plans/PLANO_DRIVER_DMA_BAIKAL.md`, `outros/rea/dma/decompiled/baikal_dmac_mtk_registers_20261113.md`, `outros/rea/dma/scans/dmac_bars_full_20261113.json`. Banco: `test_history` 80–82.
 
