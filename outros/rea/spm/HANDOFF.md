@@ -246,7 +246,10 @@ Antes do fix o kernel registrava `setting system clock to 1970-01-01` (zerava o 
    - Escrita em BAR2 (`seek=0x2000`, 4 bytes): Escrito padrão `\xde\xad\xbe\xef`. Leitura imediata confirmou `de ad be ef`. Escrita de `\x00\x00\x00\x00` restaurou para zeros. Zero erros ou alertas no dmesg do kernel.
 3. Módulo v0.2 instalado em `/usr/lib/modules/...` e recarregado em modo seguro padrão (`allow_write=0`).
 
-**Próximo passo:** Fase 6 (teste de stress prolongado e cold boot) e deploy de kernel com UIE emulation para fechar o `hwclock -r` da Fase 4.
+**Frentes Pendentes da SPM:**
+1. **Build oficial & deploy de kernel com UIE emulation:** Tag nova com `CONFIG_RTC_INTF_DEV_UIE_EMUL=y` para fechar o `hwclock -r` da Fase 4 e trazer o `baikal-memory.ko` v0.2 compilado pelo pipeline oficial.
+2. **Fase 6 — Estresse & Catalogação:** Teste de estresse contínuo por 30+ minutos via script no PS4 e inserção dos registros no banco SQLite `ps4_hardware_memory.db`.
+3. **Controle de Energia S5 / Desligamento da Luz Azul:** Investigar envio de comando `icc_power_shutdown` via `spm.icc` (BAR5 `0x2c000`) para corte total da fonte de alimentação.
 
 ### Estado do patch (obrigatório para idempotência)
 

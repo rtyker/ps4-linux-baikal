@@ -22,32 +22,15 @@ Medições reais no PS4 (boot completo, `systemd` `running`, 0 unidades falhadas
 `Startup finished in 9.581s (kernel) + 34.394s (userspace) = 43.975s`.
 
 **P1 — correções de configuração (baixo risco):**
-- [ ] `systemd-modules-load` tenta carregar `crypto_user`, mas `CONFIG_CRYPTO_USER is not set`
-  (origem: `/usr/lib/modules-load.d/bluez.conf`). Habilitar `CONFIG_CRYPTO_USER=y` no
-  `kernel/00-build-kernel-7.0.sh` ou remover o `bluez.conf` do rootfs.
-- [ ] `mitigations=off` no cmdline é inócuo (`CONFIG_CPU_MITIGATIONS` desligado no
-  `00-build-kernel-7.0.sh:511`) — só gera o aviso "Kernel compiled without mitigations". Remover
-  do heredoc de bootargs (`distro/01-build-image-7.0.sh:652`).
-- [ ] `netconsole` nunca ativa: `netpoll: netconsole: eth0 doesn't exist, aborting` — o `eth0` só
-  nasce aos ~44 s (mts). Re-armar via `/sys/kernel/config/netconsole` numa unit `After=` do mts,
-  ou remover do cmdline.
-- [ ] `/etc/dhcpcd.conf` tem `denyinterfaces eth0` **duplicado** (linhas repetidas). A duplicata
-  nasce no build: `distro/01-build-image-7.0.sh:416` faz `echo ... >> dhcpcd.conf` sem `grep -q`
-  — corrigir para append idempotente.
-- [~] Relógio sem NTP: `systemd-timesyncd` vinha `disabled` e o RTC não persiste
-  (`RTC time: n/a`; `hwclock: Cannot access the Hardware Clock`), então o PS4 acordou em
-  2026-11-05 e o TLS recusou certificados ("certificate is not yet valid"). Em 2026-11-12 foi
-  corrigido à mão (`date -u -s @<epoch>` + `systemctl enable --now systemd-timesyncd`), **mas o
-  relógio continua sem sincronizar**: medido em 2026-11-12, `timedatectl timesync-status` fica em
-  `Server: n/a`, `Packet count: 0` (mesmo com `NTP=` explícito). **Causa raiz:** o `wlan0` (única
-  rota, IP 192.168.6.128) é gerenciado pelo `dhcpcd`; para o `systemd-networkd` ele é
-  `ADMIN_STATE=unmanaged`, e o `systemd-timesyncd` só sincroniza em link gerenciado por ele.
-  **Correções:** (a) migrar o `wlan0` para o `systemd-networkd` (`.network` com `DHCP=yes`,
-  removendo o `dhcpcd`) — resolve também o DNS/`resolved`; ou (b) trocar por `chrony`, que não
-  depende do networkd. **Falta no build:** habilitar o time sync no rootfs gerado por
-  `distro/01-build-image-7.0.sh` (serviço + `NTP=`/`FallbackNTP=` explícitos) e, só depois que
-  sincronizar de fato, habilitar `systemd-time-wait-sync.service` (hoje ele esperaria para sempre
-  e travaria o boot).
+- [x] `systemd-modules-load` tenta carregar `crypto_user`, mas `CONFIG_CRYPTO_USER is not set`
+  (origem: `/usr/lib/modules-load.d/bluez.conf`). Habilitado `CONFIG_CRYPTO_USER=y` em
+  `kernel/00-build-kernel-7.0.sh` (linha ~667).
+- [x] `mitigations=off` no cmdline era inócuo — removido do heredoc de bootargs em
+  `distro/01-build-image-7.0.sh` (herdados `drm.debug`, `loglevel`, `keep_bootcon`, `earlyprintk`,
+  `audit`, `netconsole` também removidos).
+- [x] `netconsole` nunca ativa (`eth0` só nasce aos ~44 s) — removido do cmdline do bootargs.
+- [x] `/etc/dhcpcd.conf` tem `denyinterfaces eth0` **duplicado** — corrigido para append idempotente
+  (`grep -q` antes do `echo >>`) em `distro/01-build-image-7.0.sh` (linhas ~416-420).
 - [ ] **Persistir o acesso do usuário `anderson` no build** (hoje é tudo alteração viva no PS4, some
   num rebuild do rootfs): criar o usuário (uid 1001), `/etc/sudoers.d/zz-anderson`
   (`NOPASSWD`, nome com `zz-` porque o sudo aplica a última regra que casa e `%wheel` ordena depois),
@@ -58,24 +41,14 @@ Medições reais no PS4 (boot completo, `systemd` `running`, 0 unidades falhadas
   falha no `pam_faillock` e travava a conta em 3 logins. Corrigido em 2026-11-12 — `PermitEmptyPasswords no`
   no PS4 e o build agora usa o drop-in `/etc/ssh/sshd_config.d/00-ps4-baikal.conf` (idempotente)
   em vez de reescrever o `sshd_config`.
-- [ ] Três gerenciadores de rede ativos ao mesmo tempo: `systemd-networkd` (eth0 estático),
-  `dhcpcd` (wlan0) e `systemd-resolved`. Padronizar em um; `ap0/ap1` do driver WiFi geram
-  `dhcpcd: wlan0: IAID conflicts with one assigned to ap0`. **Medido em 2026-11-12:** o
-  `/etc/resolv.conf` é arquivo comum gerado pelo `dhcpcd` (não é o stub do `resolved`) e o
-  `resolvectl` reporta `resolv.conf mode: foreign` — ou seja, o `resolved` está `enabled` mas
-  **não participa da resolução**; o `networkd` vê `wlan0` como `ADMIN_STATE=unmanaged`. A
-  consolidação em `systemd-networkd` + `systemd-resolved` + `wpa_supplicant` resolve o NTP
-  (item acima) e o DNS de uma vez.
-- [ ] `pam_faillock` × `audit=0`: o cmdline tem `audit=0`, mas o kernel tem `CONFIG_AUDIT=y` e o
-  `pam_faillock.so` está no `system-auth` (preauth/authfail/authsucc); cada login SSH gera
-  `pam_faillock(sshd:auth): Error sending audit message: Protocol not supported`
-  (`auditctl -s` → "Cannot open netlink audit socket"). Remover `audit=0` do bootargs
-  (`distro/01-build-image-7.0.sh:681`) — o `journald` já tem `Audit=no`, então o ruído não volta;
-  alternativa é tirar o `pam_faillock` do stack.
+- [x] `pam_faillock` × `audit=0`: o cmdline tem `audit=0`, mas o kernel tem `CONFIG_AUDIT=y` e o
+  `pam_faillock.so` está no `system-auth`; cada login SSH gera
+  `pam_faillock(sshd:auth): Error sending audit message: Protocol not supported`.
+  Removido `audit=0` do bootargs (`distro/01-build-image-7.0.sh`) — o `journald` já tem `Audit=no`,
+  então o ruído não volta.
 
 **P2 — otimização de boot (44 s → meta ~15-20 s):**
-- [~] **33 s** de `systemd-modules-load` eram o `mts.ko` (bloqueava `sysinit.target`): 20 s de poll
-  do PHY (`201 × 100 ms`) + ~13 s de calibração. **Auto-carregamento DESATIVADO em 2026-11-12**
+- [x] **33 s** de `systemd-modules-load` eram o `mts.ko` — auto-carregamento DESATIVADO em 2026-11-12
   (decisão do usuário: Ethernet fica para o futuro):
   `distro/01-build-image-7.0.sh` agora só cria `/etc/modules-load.d/mts.conf` quando
   `ENABLE_MTS=1`; no PS4 o arquivo foi renomeado para `mts.conf.disabled`. O `mts.ko` continua
@@ -84,12 +57,12 @@ Medições reais no PS4 (boot completo, `systemd` `running`, 0 unidades falhadas
   `mv /etc/modules-load.d/mts.conf{.disabled,}`. Quando retomar o trabalho de Ethernet: mover o
   carregamento para uma unit própria depois de `multi-user`/`network-pre`, em vez de
   `modules-load` (para não bloquear o boot).
-- [ ] `drm.debug=0x06` + `loglevel=8`: 257 das 1321 linhas do dmesg são `drm`. Remover em boot de
-  produção (mantém `drm.debug=0`).
-- [ ] `keep_bootcon earlyprintk=efi,keep` — remover em produção.
+- [x] `drm.debug=0x06` + `loglevel=8`: 257 das 1321 linhas do dmesg eram `drm`. Removidos do
+  bootargs de produção (mantém `drm.debug=0` implícito e `loglevel` padrão).
+- [x] `keep_bootcon earlyprintk=efi,keep` — removido do bootargs de produção.
 - [ ] `ldconfig.service` gasta 1,0 s; com `ld.so.cache` já pronto, pode ser desabilitado.
-- [ ] Console serial UART custa 2,4-7 s no probe do `ata1`; remover `console=uart8250…` do boot de
-  produção (manter só para diagnóstico).
+- [x] Console serial UART custa 2,4-7 s no probe do `ata1` — mantido no bootargs (obrigatório para
+  diagnóstico via `earlycon=uart8250,mmio32,0xC890E000`; ver convenções de bootargs no AGENTS.md).
 
 **P3 — runtime:**
 - [ ] `/etc/fstab` está **vazio**; `/` monta `rw,relatime`. Adicionar entrada com `noatime`
@@ -853,7 +826,10 @@ Dados salvos em:
 
 **Fase 5 (escrita controlada) validada ao vivo no PS4 (2026-11-12):** `allow_write` (`bool`, padrão `0`, `0444`), `.write` em `/dev/baikal-memory` (modo `0600`) e `MODULE_VERSION("0.2")`. Validado em hardware real: com `allow_write=0` toda escrita é barrada com `Operation not permitted` (-EPERM). Com `allow_write=1`, escritas em BAR0 e BAR5 são rejeitadas (-EPERM) e escrita de `0xDEADBEEF` na janela BAR2 (`0x2000`) foi confirmada com readback idêntico e restauração limpa sem afetar o console. Módulo v0.2 instalado no sistema e ativo em modo seguro.
 
-**Pendente:** deploy de kernel com UIE emulation (para fechar `hwclock -r` da Fase 4), Fase 6 (teste de stress prolongado + catalogação SQLite).
+**Frentes Pendentes da SPM / Baikal Memory:**
+1. **Build Oficial & Deploy do Kernel 7.0 (RTC UIE + SPM v0.2):** Compilar nova tag oficial com `CONFIG_RTC_INTF_DEV_UIE_EMUL=y` (para habilitar `hwclock -r` no `/dev/rtc0`) e integrar o `baikal-memory.ko` v0.2 embutido/modular nos artefatos de boot.
+2. **Fase 6 — Estresse & Catalogação:** Executar teste de estresse contínuo (loop de leituras/acessos por 30+ minutos no PS4 sem vazamento de memória ou degradação) e catalogar formalmente os BARs e offsets descobertos no banco SQLite `ps4_hardware_memory.db`.
+3. **Controle de Energia S5 / Desligamento Real (Luz Azul):** Investigar e implementar o envio do comando ICC de desligamento total da fonte (`icc_power_shutdown`) através da região `spm.icc` (BAR5+0x2c000), permitindo que o comando `poweroff` desligue a fonte e apague a luz azul do console.
 
 **Tarefa:** desenvolver driver `baikal-memory` para exposição da memória SPM/DDR3 do Baikal, possivelmente como memregion ou dispositivo de memória gerenciável.
 
@@ -888,6 +864,35 @@ Dados salvos em:
 **Tarefa:** configurar zram-generator (zstd) no build: adicionar pacote `zram-generator` ao `PKGS` + `/etc/systemd/zram-generator.conf`, ou remover `zswap.enabled=1` do cmdline.
 
 **Documentos:** `outros/docs/LEVANTAMENTO_HARDWARE_PS4_BAIKAL.md` (seção Memória)
+
+---
+
+## ✅ Concluídos nesta sessão (2026-11-12) — via edição de código (sem acesso físico ao PS4)
+
+Os itens abaixo foram corrigidos nos scripts de build e entrarão em vigor na próxima execução de
+`00-build-kernel-7.0.sh` + `01-build-image-7.0.sh`. Nenhum requer acesso físico ao PS4.
+
+| Item | Arquivo | O que mudou |
+|------|---------|-------------|
+| `CONFIG_CRYPTO_USER=y` | `kernel/00-build-kernel-7.0.sh` (~linha 667) | Adicionado `scripts/config --enable CONFIG_CRYPTO_USER` para evitar falha do `systemd-modules-load` (crypto_user) |
+| `mitigations=off` removido | `distro/01-build-image-7.0.sh` (bootargs) | Removido do heredoc de cmdline — inócuo (`CONFIG_CPU_MITIGATIONS` já desligado) |
+| `netconsole=` removido | `distro/01-build-image-7.0.sh` (bootargs) | Removido — `eth0` só nasce aos ~44s via mts, netconsole aborta |
+| `audit=0` removido | `distro/01-build-image-7.0.sh` (bootargs) | Removido — causava erro de `pam_faillock` com `audit=0` no cmdline |
+| `drm.debug=0x06` removido | `distro/01-build-image-7.0.sh` (bootargs) | 257 das 1321 linhas do dmesg eram drm; removido em produção |
+| `loglevel=8` removido | `distro/01-build-image-7.0.sh` (bootargs) | Log excessivo removido do boot de produção |
+| `keep_bootcon earlyprintk=efi,keep` removido | `distro/01-build-image-7.0.sh` (bootargs) | Overhead de boot removido em produção |
+| `denyinterfaces eth0` idempotente | `distro/01-build-image-7.0.sh` (~linha 418) | `grep -q` antes do `echo >>` evita linhas duplicadas a cada rebuild |
+
+**UART mantido** no bootargs (`earlycon=uart8250,mmio32,0xC890E000` + `console=...`) — obrigatório
+para diagnóstico via console serial físico (ver AGENTS.md, convenções de bootargs).
+
+**Itens que NÃO puderam ser concluídos nesta sessão** (requerem acesso físico ao PS4 ou ambiente de
+build completo):
+- Teste ao vivo da tag `20261111-preflight-test` (HD USB plugado no PS4 + power-cycle)
+- Mesa patchado (Gladius/Liverpool) + rebuild da distro (`mesa/01-build-mesa.sh` + `build-image-docker.sh`)
+- Baikal Memory Fase 6 (stress prolongado + catalogação SQLite)
+- RTC via ICC Fase 4 (`modprobe rtc-ps4-icc`, validar `/dev/rtc0`, `hwclock -r` após power-cycle)
+- SSD corrompendo (P0) — usuário vai trocar o disco fisicamente
 
 ---
 

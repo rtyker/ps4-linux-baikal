@@ -413,7 +413,11 @@ ln -sf /usr/lib/systemd/system/dhcpcd.service \
   "$ROOTFS_DIR/etc/systemd/system/multi-user.target.wants/dhcpcd.service"
 # eth0 já é estático via systemd-networkd (20-ethernet.network acima) -
 # dhcpcd só deve gerenciar wlan0, senão os dois disputam a interface eth0
-echo "denyinterfaces eth0" >> "$ROOTFS_DIR/etc/dhcpcd.conf"
+# Append idempotente: evita linhas duplicadas de denyinterfaces eth0
+# (o modelo antigo fazia echo >> sem checar, gerando duplicatas a cada rebuild).
+if ! grep -q '^denyinterfaces eth0' "$ROOTFS_DIR/etc/dhcpcd.conf"; then
+  echo "denyinterfaces eth0" >> "$ROOTFS_DIR/etc/dhcpcd.conf"
+fi
 
 # CORREÇÃO 2026-07-23: Habilitar systemd-networkd para carregar config de rede estática (eth0)
 mkdir -p "$ROOTFS_DIR/etc/systemd/system/multi-user.target.wants"
@@ -678,7 +682,7 @@ echo "=== Criando bootargs-7.0-$TAG.txt ==="
 # tinha console=tty0 sem UART e rootdelay=10 -- 02-burn-image-7.0.sh grava
 # esse bootargs.txt direto, sem passar pela tag validada em boot_referencia/.
 cat > "$BOOTARGS_OUT" << 'CMDLINEEOF'
-panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0 drm.debug=0x06 earlycon=uart8250,mmio32,0xC890E000 console=uart8250,mmio32,0xC890E000 console=tty0 keep_bootcon earlyprintk=efi,keep loglevel=8 root=LABEL=psxitarch rw rootwait systemd.unified_cgroup_hierarchy=0 systemd.legacy_systemd_cgroup_controller=yes audit=0 amdgpu.audio=1 usbcore.autosuspend=-1 video=HDMI-A-1:1920x1080@60 mitigations=off zswap.enabled=1 log_buf_len=4M libata.force=1.00:3.0Gbps,noncq ahci.mobile_lpm_policy=1 netconsole=@192.168.0.2/eth0,6666@192.168.0.1/ff:ff:ff:ff:ff:ff
+panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0 earlycon=uart8250,mmio32,0xC890E000 console=uart8250,mmio32,0xC890E000 console=tty0 root=LABEL=psxitarch rw rootwait systemd.unified_cgroup_hierarchy=0 systemd.legacy_systemd_cgroup_controller=yes amdgpu.audio=1 usbcore.autosuspend=-1 video=HDMI-A-1:1920x1080@60 zswap.enabled=1 log_buf_len=4M libata.force=1.00:3.0Gbps,noncq ahci.mobile_lpm_policy=1
 CMDLINEEOF
 
 echo "=== Gerando /etc/fstab (raiz + share CIFS do adsv2) ==="

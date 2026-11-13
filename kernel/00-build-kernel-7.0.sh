@@ -664,6 +664,7 @@ scripts/config --enable  CONFIG_CRYPTO_AES_NI_INTEL
 scripts/config --enable  CONFIG_CRYPTO_GHASH_CLMUL_NI_INTEL
 scripts/config --enable  CONFIG_CRYPTO_POLYVAL_CLMUL_NI
 scripts/config --enable  CONFIG_CRYPTO_LIB_SHA256
+scripts/config --enable  CONFIG_CRYPTO_USER   # evita falha do systemd-modules-load (crypto_user)
 
 # Futex / NTSYNC (Proton/Wine)
 scripts/config --enable  CONFIG_FUTEX
