@@ -59,6 +59,22 @@ Resultado da primeira limpeza: **454 KB → 173 MB livres** (13% de uso).
 
 **Inconsistência pré-existente detectada (não corrigida, só registrada):** em `boot_referencia/`, `bzImage-7.0-20260720-gbe-bpcie-init` e `bzImage-7.0-20260720-sky2len-fix` são **byte a byte idênticos**. Ou seja, o kernel do teste M4 — o que causou tela preta — **não está preservado**; aquele nome guarda o kernel do `sky2len-fix`. Se algum dia for preciso reexaminar o binário do M4, ele não existe mais.
 
+## INCIDENTE: o HD USB caiu no meio do deploy e deixou o `bzImage` com 0 byte (2026-11-13)
+
+Deploy da tag `20261113-dmaengine`. O script passou pela sanidade da origem, guardou o `bootargs` anterior e começou a copiar o `bzImage`; então o Kingston (ponte USB, `uas`) **sumiu do barramento**: no `dmesg` do host, `hostbyte=DID_NO_CONNECT`, `I/O error ... WRITE` e `lost async page write` em `sda1`. A cópia seguinte falhou com `cp: ... Arquivo ou diretório inexistente`. A causa física (cabo, hub, alimentação) não foi identificada.
+
+**O que ficou no disco:** FAT suja (`Volume was not properly unmounted`), FATs divergentes, e **`bzImage` com 0 byte** (SHA-256 `e3b0c442…`, o hash do arquivo vazio). `initramfs` e `bootargs` intactos. O `active-tag.txt` seguia dizendo a tag anterior. Ligar o PS4 assim não teria kernel para carregar.
+
+**O que funcionou (regras que se confirmaram):**
+- Parar e **não remendar à mão** ao ver o erro; esperar o disco voltar.
+- `fsck.fat -n` **antes** de qualquer reparo, depois comparar o conteúdo real com as tags por SHA-256. Foi o SHA-256 que mostrou o arquivo vazio.
+- Rollback exato garantido: antes do deploy, os 3 arquivos ativos batiam por SHA-256 com a tag anterior, e a tag anterior tinha os 4 artefatos em `boot_referencia/`.
+- `fsck.fat -a` (flag de sujo e sincronia das FATs), depois o deploy oficial de novo.
+
+**Lição nova:** a "Conferência MD5 origem → destino" do `deploy-boot-7.0.sh` pode ler do **cache de página**, não do disco, e por isso não prova que o dado chegou. **Depois do deploy, remonte a BOOT em somente leitura e recalcule o SHA-256 a partir do dispositivo** (e rode `fsck.fat -n`). Foi o que fechou este deploy: os três arquivos bateram com a tag, `active-tag.txt` correto, FAT limpa.
+
+Mitigações práticas: HD direto numa porta do host (sem hub), cabo firme, e olhar `dmesg -T | tail` do host logo após o deploy.
+
 ## INCIDENTE: "testar" um script de deploy destruiu o boot do HD (2026-07-21)
 
 **O que aconteceu:** para validar mensagens de erro do `deploy-boot-7.0.sh`, foram criados arquivos de tag falsos com `touch` (0 byte) e o script foi executado **sem passar destino explícito**. O HD estava conectado e montado, o script auto-detectou a partição BOOT real e sobrescreveu `bzImage`, `bootargs.txt` e `initramfs.cpio.gz` com os arquivos vazios — deixando o HD não-bootável.
