@@ -826,8 +826,10 @@ Dados salvos em:
 
 **Fase 5 (escrita controlada) validada ao vivo no PS4 (2026-11-12):** `allow_write` (`bool`, padrão `0`, `0444`), `.write` em `/dev/baikal-memory` (modo `0600`) e `MODULE_VERSION("0.2")`. Validado em hardware real: com `allow_write=0` toda escrita é barrada com `Operation not permitted` (-EPERM). Com `allow_write=1`, escritas em BAR0 e BAR5 são rejeitadas (-EPERM) e escrita de `0xDEADBEEF` na janela BAR2 (`0x2000`) foi confirmada com readback idêntico e restauração limpa sem afetar o console. Módulo v0.2 instalado no sistema e ativo em modo seguro.
 
+**Build oficial validado (2026-11-13):** tag `20261113-baikal-memory-fase5`, exit 0 — compilado com `CONFIG_RTC_INTF_DEV_UIE_EMUL=y`, `CONFIG_CRYPTO_USER=y` e `CONFIG_BAIKAL_MEMORY=m` (v0.2 com escrita controlada na BAR2). Gerados `bzImage-7.0-20261113-baikal-memory-fase5` (16 MB), `config-7.0-20261113-baikal-memory-fase5`, `bootargs-7.0-20261113-baikal-memory-fase5.txt` e `initramfs-7.0-20261113-baikal-memory-fase5.cpio.gz`. Snapshot salvo em `kernel/snapshots/` (559 MB).
+
 **Frentes Pendentes da SPM / Baikal Memory:**
-1. **Build Oficial & Deploy do Kernel 7.0 (RTC UIE + SPM v0.2):** Compilar nova tag oficial com `CONFIG_RTC_INTF_DEV_UIE_EMUL=y` (para habilitar `hwclock -r` no `/dev/rtc0`) e integrar o `baikal-memory.ko` v0.2 embutido/modular nos artefatos de boot.
+1. **Deploy do Kernel 7.0 no PS4:** Gravar os artefatos da tag `20261113-baikal-memory-fase5` no HD/SSD de boot e ligar o console para validar `hwclock -r` e o carregamento do `baikal-memory.ko` v0.2 oficial.
 2. **Fase 6 — Estresse & Catalogação:** Executar teste de estresse contínuo (loop de leituras/acessos por 30+ minutos no PS4 sem vazamento de memória ou degradação) e catalogar formalmente os BARs e offsets descobertos no banco SQLite `ps4_hardware_memory.db`.
 3. **Controle de Energia S5 / Desligamento Real (Luz Azul):** Investigar e implementar o envio do comando ICC de desligamento total da fonte (`icc_power_shutdown`) através da região `spm.icc` (BAR5+0x2c000), permitindo que o comando `poweroff` desligue a fonte e apague a luz azul do console.
 

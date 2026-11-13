@@ -247,7 +247,7 @@ Antes do fix o kernel registrava `setting system clock to 1970-01-01` (zerava o 
 3. Módulo v0.2 instalado em `/usr/lib/modules/...` e recarregado em modo seguro padrão (`allow_write=0`).
 
 **Frentes Pendentes da SPM:**
-1. **Build oficial & deploy de kernel com UIE emulation:** Tag nova com `CONFIG_RTC_INTF_DEV_UIE_EMUL=y` para fechar o `hwclock -r` da Fase 4 e trazer o `baikal-memory.ko` v0.2 compilado pelo pipeline oficial.
+1. **Deploy de kernel no PS4:** Tag oficial `20261113-baikal-memory-fase5` gerada com sucesso com `CONFIG_RTC_INTF_DEV_UIE_EMUL=y` e `baikal-memory` v0.2. Falta gravar no HD de boot para validar `hwclock -r`.
 2. **Fase 6 — Estresse & Catalogação:** Teste de estresse contínuo por 30+ minutos via script no PS4 e inserção dos registros no banco SQLite `ps4_hardware_memory.db`.
 3. **Controle de Energia S5 / Desligamento da Luz Azul:** Investigar envio de comando `icc_power_shutdown` via `spm.icc` (BAR5 `0x2c000`) para corte total da fonte de alimentação.
 
@@ -259,8 +259,8 @@ Antes do fix o kernel registrava `setting system clock to 1970-01-01` (zerava o 
 | Aplicação | `00-build-kernel-7.0.sh` — preflight + bloco próprio com `git apply --check` e `exit 1` |
 | Validação (2026-11-12) | `git diff HEAD` regenerado, árvore resetada e `git apply --check` OK |
 | Compilação isolada (2026-11-12) | `make ... CC="ccache clang" LLVM=1 ARCH=x86_64 drivers/misc/baikal-memory.o`: OK |
-| Binário testado Fase 1–3 | `outros/rea/spm/dumps/baikal-memory-fase2.ko` (build oficial tag `20261112-baikal-memory-fase3`, 502.144 bytes) — **não inclui Fase 5** |
-| Build oficial | tag `20261112-baikal-memory-fase3`, exit 0 (patch aplicado pós-`git reset`) — Fase 5 entrará no próximo build que usar este patch |
+| Binário testado Fase 1–5 | `outros/rea/spm/dumps/baikal-memory-fase5.ko` (build oficial tag `20261113-baikal-memory-fase5`, 514.344 bytes) |
+| Build oficial | tag `20261113-baikal-memory-fase5`, exit 0 (patch aplicado pós-`git reset`, UIE emulado e Fase 5 integrada) |
 
 > O patch cobre `drivers/misc/baikal-memory.c` **e** `drivers/misc/Kconfig` + `drivers/misc/Makefile` (símbolo `CONFIG_BAIKAL_MEMORY`). O `config` rastreado não tem o símbolo do driver: o build o habilita com `scripts/config --module CONFIG_BAIKAL_MEMORY` antes do `olddefconfig`.
 
