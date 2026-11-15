@@ -12,6 +12,33 @@ Convenção: `[ ]` pendente · `[~]` em andamento · `[x]` concluído (mover par
 
 O trabalho **ativo no momento** (investigação detalhada, passo a passo) fica nos documentos próprios linkados em cada item — aqui fica só o resumo do estado e o próximo passo objetivo.
 
+### 🎯 Plano de correção da falha de clock recovery no link DP (PS4 → MN864729)
+
+**Objetivo:** o link DP interno (GPU UNIPHY → ponte Panasonic MN864729) deve treinar e travar em 1,62 Gbps (ou 2,7 Gbps) de forma determinística em todo modeset, sem falhar o `clock recovery`.
+
+**Blocos de causa identificados:**
+1. **Init do lado DP da ponte MN864729 ausente no Linux** — o bloco que configura os registradores DP do lado sink da ponte está em `#if 0` (`ps4_bridge.c:520-600`), comentário "No idea. DP stuff probably. This borks for some reason". O Orbis o fazia antes do kexec.
+2. **Voltage/pre-emphasis fixos sem adaptação** — em todas as 5 tentativas de treino o driver usa `voltage 0.4V pre_emph 0dB` sem ler o `DPCD 0x00206/0x00207` (link status) do sink e sem ajustar via `amdgpu_atombios_dp_get_adjust_train`.
+3. **Link DP não testado ao vivo antes do kexec** — o treino já falha no boot (2,4 s), mas a imagem funciona porque o Orbis já configurou a ponte. O Linux não reconfigura, só tenta travar um link que o Orbis deixou pronto.
+4. **`ps4_bridge_post_disable` zera o estado** — reseta a ponte (`TSRST` completo) e apaga `mn_bridge->mode`. O próximo enable não retoma do estado anterior; começa do zero sem o init do lado DP.
+5. **DP sink informa 5,4 Gbps / 4 lanes; o driver treina a 1,62 Gbps** — o DPCD lido é `12 14 c4 41` (DP 1.2, 5,4 Gbps, 4 lanes). O driver pede `clock=162000` (1,62 Gbps). Não há tentativa de 2,7 Gbps.
+
+**Passos do plano (ordem de execução, cada um validado antes do próximo):**
+
+| Passo | Ação | Validação | Artefato |
+|---|---|---|---|
+| 1 | **Ativar o init do lado DP da ponte** (remover `#if 0` do `ps4_bridge_pre_enable` ou mover para `ps4_bridge_enable` antes do retreino). O bloco contém `cq_writereg` nos registradores 0x7657/0x76a5/0x76a6/0x7601/0x7602/0x7603/0x76a8/0x76ae/0x76af/0x76b0/0x76b1/0x76b2/0x76db/0x76dc/0x76dd/0x76e4/0x76e6. | Build passa; `drm.debug` mostra sequência executada; após enable inicial, link treina sem falha. | Patch `ps4-bridge-dp-init.patch` |
+| 2 | **Ajustar taxa do link para 2,7 Gbps** se o sink suportar (DPCD `MAX_LINK_RATE=0x0A`). Em `ps4_bridge_get_modes` ou no enable, checar `DPCD 0x00001` (MAX_LINK_RATE) e usar `clock=270000` (ou 5,4 Gbps se o cabo/ponte aguentar) antes do treino. | DPCD lido mostra `MAX_LINK_RATE ≥ 0x0A`; treino inicia em 2,7 Gbps; zero falhas de clock recovery em 10 cycles de modo. | Patch `ps4-bridge-link-rate.patch` |
+| 3 | **Voltage/pre-emphasis adaptativos** — após cada falha de CR, ler `DPCD 0x00202-0x00205` (lane status) e chamar `amdgpu_atombios_dp_get_adjust_train` com os valores lidos, em vez de usar 0.4V/0dB fixo. Se o `dce_v8_0` já fizer isso, conferir por que o `adjust_train` retorna o mesmo valor. | `drm.debug` mostra voltage/pre-emph mudando entre tentativas; contagem de falhas de CR cai a 0 em modoset. | Patch `ps4-bridge-adaptive-train.patch` |
+| 4 | **Não resetar a ponte no `post_disable`** — remover o `TSRST` completo do `ps4_bridge_post_disable` (ou torná-lo condicional a `mn_bridge->mode==0`). Manter `mn_bridge->mode` vivo entre ciclos de disable/enable. | Modo persiste entre `status=off/on`; `chvt` não re-inicializa a ponte; zero falhas de CR em `chvt 1`→`7`. | Patch `ps4-bridge-keep-state.patch` |
+| 5 | **Teste de estresse** — script que faz 50 ciclos `chvt 1`/`chvt 7` + `xrandr --off/--mode` aleatórios sem `drm.debug`, monitorando falhas de CR via `dmesg -w`. Zero falhas em 50 ciclos = PASS. | Log de 50 ciclos sem `clock recovery failed`. | `ps4_link_stress.sh` |
+
+**Critério de aceite único:** 50 trocas de modo consecutivas (qualquer combinação de `chvt`, `xrandr --off`, `xrandr --mode`, hotplug) com **zero** `clock recovery failed` no `dmesg`. A imagem não some.
+
+**Ordem de execução:** 1 → 2 → 3 → 4 → 5. Cada passo é um patch independente, aplicado pelo `00-build-kernel-7.0.sh` com `--check`, testado em build separado antes do próximo. Não fazer "mega-patch" único.
+
+**Estado atual:** nenhum patch escrito. Nenhum push. Aguardando sua decisão sobre a ordem ou se quer pular algum passo.
+
 ### 🔬 Análise de causa raiz da perda de vídeo (2026-11-15 20:10) — ligando `drm.debug=0x16` em runtime
 **Linha do tempo medida:** o vídeo funcionou do boot até ~19:56 (X no ar desde 18:31, ~85 min estável). Às **19:56:28** ocorrem 2 modesets seguidos (4× `clock recovery failed` no mesmo segundo) e às 19:56:59 o `cinnamon-screensaver-pam-helper` tenta autenticar → a tela apagou por inatividade (`idle-delay=900`) e voltou quando houve entrada no teclado. Desde então nenhum modeset recupera a imagem.
 **Sequência do kernel num modeset (capturada com `drm.debug`):** `ps4_bridge_disable` → `amdgpu_atombios_encoder_dpms ... mode 3` (TX off) → `ps4_bridge_post_disable` (**`TSRST` reseta a ponte e zera `mn_bridge->mode`**) … religamento: `dce_v8_0_crtc_mode_set` → `ps4_bridge_mode_set` (vic 16) → `ps4_bridge_pre_enable` (reset HDCP; o bloco de init do lado DP está **`#if 0`** no código, comentário "No idea. DP stuff probably. This borks for some reason") → `encoder dpms mode 0` + **link_train FALHA** → `ps4_bridge_enable` (tentativa Belize 1/3 sem erro) → **retreino FALHA de novo**. O sink (DPCD `12 14 c4 41`: DP 1.2, 5,4 Gbps, 4 lanes) nunca pede ajuste (`voltage 0.4V pre_emph 0dB` fixo nas 5 tentativas) e o driver treina a `clock=162000` (1,62 Gbps).
