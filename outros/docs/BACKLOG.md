@@ -12,13 +12,9 @@ Convenção: `[ ]` pendente · `[~]` em andamento · `[x]` concluído (mover par
 
 O trabalho **ativo no momento** (investigação detalhada, passo a passo) fica nos documentos próprios linkados em cada item — aqui fica só o resumo do estado e o próximo passo objetivo.
 
-## 🔴 Novo (2026-11-15) — PS4 congela quando ocioso (gerenciamento de energia)
+## 🔴 Novo (2026-11-15) — PS4 congela quando ocioso — EM TESTE
+**Teste iniciado 2026-11-15:** keep-alive parado às **19:43:24** (host 19:45:13 para a UART). Tag `20261115-hwclock-min`, sem carga, `cpuidle` com estados POLL/C1/C2 (C2 com ~1,5 M usos no início). UART gravando por 30 min em `outros/tests/uart_logs/idle-freeze_*.log`. Critério: se o `ping 192.168.6.128` ou o SSH param de responder, o congelamento está confirmado; a hora do último contato fica no log do keep-alive e a UART mostra a última mensagem do kernel.
 
-**Sintoma (relato do usuário):** com o Linux parado/ocioso o console "dorme" e fica congelado (SSH e vídeo mortos).
-**Medido ao vivo na tag `20261113-full-rebuild`:** `/sys/power/state` NÃO existe (kernel sem suspend/PM de sistema), `consoleblank=0`, `logind.conf` sem `IdleAction`, `cpuidle` driver = `acpi_idle`, sem `cpufreq` em `cpu0` — ou seja **não é suspend do userspace**; a suspeita é C-state profundo (acpi_idle/HLT) ou o firmware/ICC cortando energia.
-**Contorno:** keep-alive por SSH (`/tmp/ps4ssh.sh 'date'` a cada 20 s) durante builds/testes.
-**Hipóteses a testar (uma por boot, com UART ligada):** `processor.max_cstate=1`; `idle=halt`; `idle=poll` (só diagnóstico); `nohz=off`; verificar se o freeze ocorre sem rede ociosa.
-- [ ] Reproduzir deixando ocioso sem keep-alive e capturar UART; depois testar as hipóteses.
 
 
 ### Achado (2026-11-15) — sysfs do baikal-memory zerado: causa REAL
