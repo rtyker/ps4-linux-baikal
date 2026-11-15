@@ -58,6 +58,9 @@ Boot completo (tty1, SSH). Evidência:
 | Módulos | `baikal_dmac virt_dma mts baikal_memory rtc_ps4_icc` |
 | SSD `sdb` (rootfs USB) | 🔴 ainda 1 erro de leitura CRC (`ASC=0x47`) aos 97 s — trocar o SSD/cabo (P0) |
 
+### ✅ virt-manager instalado (2026-11-15)
+`pacman -S virt-manager` (libvirt 12.9.0, `virsh` e `virt-manager` em `/usr/bin`). `libvirtd` ativo e habilitado; `virsh -c qemu:///system` responde com `Running hypervisor: QEMU 11.1.3` e capacidade `domain type='kvm'`. Usuário `anderson` adicionado aos grupos `libvirt` e `kvm`. Persistido em `distro/01-build-image-7.0.sh` (pacote `virt-manager`, `systemctl enable libvirtd`). Pendente: abrir a GUI na sessão Cinnamon e criar uma VM de teste.
+
 ### ✅ KVM validado ao vivo (2026-11-15)
 `/dev/kvm` presente (`crw-rw-rw- root kvm`), `kvm_amd` com SVM, NPT, nested e TSC scaling. O README afirmava que o QEMU estava no rootfs, mas **não estava**: instalado agora com `pacman -S qemu-base` (11.1.3, `qemu-system-x86_64`). Teste: boot sector de 512 bytes que escreve `K` na serial (porta 0x3f8) e executa `hlt`, rodado com `qemu-system-x86_64 -accel kvm -cpu host -M pc -m 64`. Resultado: saída `K` capturada (entrada de VM, execução no guest e I/O exit tratado pelo QEMU); QEMU encerrou só pelo `timeout` de 30 s, como esperado para um guest parado em `hlt`. Persistido em `distro/01-build-image-7.0.sh` (`qemu-base` no `PKGS`).
 

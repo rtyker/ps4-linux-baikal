@@ -257,6 +257,7 @@ PKGS=(
   xorg-server
   lightdm
   qemu-base
+  virt-manager
   lightdm-gtk-greeter
   xorg-xinit
   xf86-video-amdgpu
@@ -518,6 +519,8 @@ arch-chroot "$ROOTFS_DIR" systemctl enable chronyd.service
 # Display manager: lightdm precisa do greeter (sem ele falha com 'Failed to find
 # session configuration lightdm-gtk-greeter' e cai no start-limit-hit).
 arch-chroot "$ROOTFS_DIR" systemctl enable lightdm.service
+# libvirt: daemon do virt-manager. Grupo libvirt/kvm para o usuário da sessão gráfica.
+arch-chroot "$ROOTFS_DIR" systemctl enable libvirtd.service
 
 # paccache.timer — limpar cache do pacman (767 MB / 413 pacotes num SSD de 120 GB falhando)
 arch-chroot "$ROOTFS_DIR" systemctl enable paccache.timer
