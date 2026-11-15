@@ -12,6 +12,8 @@ Convenção: `[ ]` pendente · `[~]` em andamento · `[x]` concluído (mover par
 
 O trabalho **ativo no momento** (investigação detalhada, passo a passo) fica nos documentos próprios linkados em cada item — aqui fica só o resumo do estado e o próximo passo objetivo.
 
+### 🔴 Incidente 2026-11-15 ~19:56 — sem vídeo com teclado vivo (NumLock responde)
+Sessão Cinnamon ativa em `tty7` (lightdm + Xorg `:0` no `vt7`), `card0-HDMI-A-1` `connected`/`enabled`/`dpms On`. O log mostra falha de treinamento de link DP (`clock recovery tried 5 times` / `failed`) quatro vezes em 0,5 s em `5852 s` de uptime, sem nova tentativa depois. Hipóteses: monitor/cabo HDMI perdeu sinal ou o link caiu durante o período ocioso (mesmo horário do teste de ociosidade). Pendente: confirmar no monitor (cabo, entrada, ligado) e, se persistir, reiniciar o lightdm (derruba a sessão do usuário).
 ## 🔴 Novo (2026-11-15) — PS4 congela/desliga quando ocioso — EM TESTE
 **Keep-alive descartado como mitigação:** o ping SSH a cada 20 s **não impediu** o sistema de desligar (observado pelo usuário em 2026-11-15). Não usar keep-alive como solução; ele só mascara o problema e polui os testes.
 **Estado do teste (19:58):** keep-alive parado desde 19:43; `ping 192.168.6.128` responde (`LINUX_UP`). UART sem bytes em runtime (console só imprime no boot), então não há evidência de queda nesta janela ainda.
