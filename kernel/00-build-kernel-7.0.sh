@@ -485,6 +485,24 @@ fi
 git apply "$PATCH_BAIKAL_DMAC"
 echo "✓ Patch baikal-dmac aplicado com sucesso (git apply, validado com --check)"
 
+# HPET clocksource + watchdog do Baikal: os dois patches existiam em patches/ mas
+# NUNCA eram aplicados por este script — o código só entrava na árvore porque
+# estava commitado nela (commits locais), o que quebra a idempotência: uma
+# árvore recém resetada ficava sem os drivers. Agora aplicados aqui, mesmo
+# padrão: `--check` antes, `exit 1` se falhar, nunca `|| echo AVISO`.
+for P in clocksource-baikal-hpet.patch baikal-wdt.patch; do
+  PATCH="$SCRIPT_DIR/patches/$P"
+  [ -f "$PATCH" ] || { echo "❌ ERRO FATAL: $PATCH não encontrado"; exit 1; }
+  if ! git apply --check "$PATCH" 2>/tmp/baikal_hpet_wdt_patch_check.log; then
+    echo "❌ ERRO FATAL: patch $P não aplica contra o kernel atual:"
+    cat /tmp/baikal_hpet_wdt_patch_check.log
+    echo "  Regenere o patch a partir de uma árvore limpa (ver AGENTS.md)."
+    exit 1
+  fi
+  git apply "$PATCH"
+  echo "✓ Patch $P aplicado com sucesso (git apply, validado com --check)"
+done
+
 # build.sh (upstream rmuxnet/linux) NÃO é mais usado — em 2026-07-22 seu perfil
 # "General/ThinLTO/Baikal" (--option 3 use=General lto=ThinLTO southbridge=Baikal)
 # foi incorporado diretamente neste script, para haver um único lugar decidindo a

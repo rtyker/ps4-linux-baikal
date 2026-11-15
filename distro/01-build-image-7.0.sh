@@ -239,6 +239,7 @@ PKGS=(
   xz
   zstd
   zram-generator
+  chrony
   jq
   alsa-utils
   ccache
@@ -487,12 +488,30 @@ mkdir -p "$ROOTFS_DIR/etc/sudoers.d"
 echo "%wheel ALL=(ALL:ALL) ALL" > "$ROOTFS_DIR/etc/sudoers.d/wheel"
 chmod 440 "$ROOTFS_DIR/etc/sudoers.d/wheel"
 
-# smartd — monitorar o SSD que está falhando (P0)
-# SMART funciona pelo bridge USB JMicron (driver usb-storage). -d sat é o tipo correto.
+# smartd — monitora o HDD interno do PS4 (sda, SATA). O SSD USB de boot (sdb)
+# NAO entra: o bridge USB nao expoe SMART e o smartd saia com status 16.
 cat > "$ROOTFS_DIR/etc/smartd.conf" << 'SMARTEOF'
-/dev/sdb -d sat -a -m root
+/dev/sda -a -m root
 SMARTEOF
 arch-chroot "$ROOTFS_DIR" systemctl enable smartd.service
+
+# NTP — chrony com servidores do NTP.br. O systemd-timesyncd NAO sincroniza aqui:
+# o wlan0 e gerido pelo dhcpcd, entao o networkd marca ONLINE_STATE=offline e o
+# timesyncd nunca consulta ninguem. O chrony independe do networkd. makestep -1
+# porque o RTC e semeado pelo relogio do sistema e o boot pode sair dias errado;
+# rtcsync mantem o /dev/rtc0 (rtc-ps4-icc) atualizado pelo kernel.
+cat > "$ROOTFS_DIR/etc/chrony.conf" << 'CHRONYEOF'
+server a.st1.ntp.br iburst
+server b.st1.ntp.br iburst
+server c.st1.ntp.br iburst
+server d.st1.ntp.br iburst
+pool br.pool.ntp.org iburst maxsources 2
+driftfile /var/lib/chrony/drift
+makestep 1.0 -1
+rtcsync
+CHRONYEOF
+arch-chroot "$ROOTFS_DIR" systemctl disable systemd-timesyncd.service 2>/dev/null || true
+arch-chroot "$ROOTFS_DIR" systemctl enable chronyd.service
 
 # paccache.timer — limpar cache do pacman (767 MB / 413 pacotes num SSD de 120 GB falhando)
 arch-chroot "$ROOTFS_DIR" systemctl enable paccache.timer

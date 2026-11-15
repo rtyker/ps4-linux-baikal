@@ -130,10 +130,10 @@ index 6cf7e0663..3c92a9b4e 100644
 +obj-$(CONFIG_RTC_DRV_PS4_ICC) += rtc-ps4-icc.o
 diff --git a/drivers/rtc/rtc-ps4-icc.c b/drivers/rtc/rtc-ps4-icc.c
 new file mode 100644
-index 000000000..53d95c1d5
+index 000000000..0d67b5c88
 --- /dev/null
 +++ b/drivers/rtc/rtc-ps4-icc.c
-@@ -0,0 +1,201 @@
+@@ -0,0 +1,210 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * PS4 RTC driver via ICC (Baikal/Aeolia/Belize)
@@ -283,6 +283,15 @@ index 000000000..53d95c1d5
 +	rtc = devm_rtc_device_register(dev, "ps4-rtc-icc", &ps4_rtc_ops, THIS_MODULE);
 +	if (IS_ERR(rtc))
 +		return PTR_ERR(rtc);
++
++	/*
++	 * Sem IRQ de alarme/update no hardware: se o core achar que ha
++	 * UPDATE_INTERRUPT, o RTC_UIE_ON usa o caminho de alarme por IRQ, que
++	 * nunca dispara, e o hwclock -r estoura "select() ... timed out".
++	 * Sem esse feature o core cai na emulacao de UIE por polling de
++	 * read_time (CONFIG_RTC_INTF_DEV_UIE_EMUL).
++	 */
++	clear_bit(RTC_FEATURE_UPDATE_INTERRUPT, rtc->features);
 +
 +	dev_info(dev, "PS4 RTC via ICC registered\n");
 +
