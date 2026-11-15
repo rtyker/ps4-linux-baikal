@@ -1,84 +1,84 @@
 # PS4 Linux — Baikal (CUH-2xxx)
 
-Linux rodando nativamente no hardware da PlayStation 4 Slim (SoC **Baikal**, CUH-2xxx),
-carregado por `kexec` a partir de payload de jailbreak (PSFree/GoldHEN) — sem depender de
-software da Sony depois do handoff.
+Linux running natively on PlayStation 4 Slim hardware (**Baikal** SoC, CUH-2xxx),
+loaded via `kexec` from a jailbreak payload (PSFree/GoldHEN) — with no dependency on
+Sony software after the handoff.
 
-> ⚠️ **Requer um PS4 já destravado (jailbreak) com firmware compatível.** O projeto não ensina
-> nem fornece jailbreak. Uso educacional / de pesquisa em engenharia reversa e sistemas embarcados.
+> ⚠️ **Requires an already jailbroken PS4 on a compatible firmware.** This project neither teaches
+> nor provides a jailbreak. For educational and research use in reverse engineering and embedded systems.
 
-## Duas frentes
+## Two tracks
 
-O repositório é dividido em duas frentes independentes, com uma única dependência explícita:
-a distro consome os artefatos de boot que o kernel produz.
+The repository is split into two independent tracks with a single explicit dependency:
+the distro consumes the boot artifacts that the kernel produces.
 
-| Frente | Pasta | O que faz | README |
+| Track | Folder | What it does | README |
 |---|---|---|---|
-| **1 — Kernel 7.0 Baikal** | [`kernel/`](kernel/) | Compila o kernel `7.0.8-Strawberry-ThinLTO-Baikal-+`, mantém os patches, o driver `mts.ko`, a árvore fonte, os diagnósticos (UART/netconsole) e **toda a engenharia reversa** (SQLite, decompilado, memórias, planos) | [`kernel/README.md`](kernel/README.md) |
-| **2 — Distro Linux Baikal** | [`distro/`](distro/) | Gera o rootfs Arch mínimo + initramfs, grava no HD, faz deploy do boot, firmware/Mesa patchado, montagem das partições PFS e releases | [`distro/README.md`](distro/README.md) |
+| **1 — Baikal Kernel 7.0** | [`kernel/`](kernel/) | Builds the `7.0.8-Strawberry-ThinLTO-Baikal-+` kernel and maintains the patches, the `mts.ko` driver, the source tree, the diagnostics (UART/netconsole) and **all of the reverse engineering** (SQLite, decompiled code, notes, plans) | [`kernel/README.md`](kernel/README.md) |
+| **2 — Baikal Linux Distro** | [`distro/`](distro/) | Builds the minimal Arch rootfs + initramfs, writes it to the drive, deploys the boot files, handles firmware/patched Mesa, PFS partition mounting, and releases | [`distro/README.md`](distro/README.md) |
 
 ```
-kernel/00-build-kernel-7.0.sh  ──(bzImage, config por tag)──►  distro/boot_referencia/  ──►  distro/deploy-boot-7.0.sh
+kernel/00-build-kernel-7.0.sh  ──(bzImage, per-tag config)──►  distro/boot_referencia/  ──►  distro/deploy-boot-7.0.sh
 ```
 
-Nenhuma outra dependência cruza as frentes: a distro nunca compila kernel e o kernel não
-conhece rootfs. `PS4_BOOT_REF` permite apontar a distro para outro conjunto de artefatos.
+No other dependency crosses the tracks: the distro never builds a kernel, and the kernel knows
+nothing about the rootfs. `PS4_BOOT_REF` lets you point the distro at a different set of artifacts.
 
-## Status atual — o que funciona
+## Current status — what works
 
-| Subsistema | Status | Detalhes |
+| Subsystem | Status | Details |
 |---|---|---|
-| **Boot** | ✅ | `kexec` → kernel 7.0 → initramfs → rootfs Arch |
-| **Vídeo (HDMI)** | ✅ | 1080p@60, GPU Gladius via `amdgpu` (Mesa patchado para reconhecer o chip) |
-| **Áudio (HDMI)** | ✅ | `snd_hda_intel` |
-| **GPU 3D** | ✅ | OpenGL 4.5, Vulkan 1.3 (RADV) |
-| **SSH (WiFi admin)** | ✅ | `root@192.168.6.128`, sobe automático |
-| **SATA interno (HD real)** | ✅ | `ata1` estável via polling timer de 1 ms na function PCI `.7` (`xhci_aeolia`) — validado ao vivo na tag `20260730-sata-polling-fase-ab`; a build do `v1.0.0` contém o mecanismo mas não tem boot de validação registrado |
+| **Boot** | ✅ | `kexec` → kernel 7.0 → initramfs → Arch rootfs |
+| **Video (HDMI)** | ✅ | 1080p@60, Gladius GPU via `amdgpu` (Mesa patched to recognize the chip) |
+| **Audio (HDMI)** | ✅ | `snd_hda_intel` |
+| **3D GPU** | ✅ | OpenGL 4.5, Vulkan 1.3 (RADV) |
+| **SSH (WiFi admin)** | ✅ | `root@192.168.6.128`, starts automatically |
+| **Internal SATA (real HDD)** | ✅ | Stable `ata1` via a 1 ms polling timer on PCI function `.7` (`xhci_aeolia`) — validated live on tag `20260730-sata-polling-fase-ab`; the `v1.0.0` build contains the mechanism but has no recorded validation boot |
 | **USB 3.0 / SD-MMC** | ✅ | `xhci_aeolia` / `sdhci` |
-| **KVM-AMD** | ✅ | `/dev/kvm` responde a ioctls reais, QEMU no rootfs |
-| **Baikal Memory / SPM (`00:14.6`)** | ✅ | Driver próprio `baikal-memory.ko` v0.2 in-tree: expõe `/dev/baikal-memory` (0600) e sysfs, lê MAC real de fábrica (`2c:cc:44:3f:69:5f`), região de mailbox ICC, e escrita controlada com proteção por parâmetro (`allow_write=0`) na janela DDR3 (BAR2) |
-| **RTC via ICC** | ✅ | `/dev/rtc0` operacional via `rtc-ps4-icc`, sincronização em tempo real e NTP ativo (`timedatectl` synchronized: yes), sem reset para 1970 no boot |
-| **Bluetooth** | ✅ | `btmtksdio` (MediaTek MT7668, SDIO): funcionando perfeitamente. Teste do usuário em 2026-11-13 |
-| **Áudio via Bluetooth** | ✅ | Reprodução em caixa de som Bluetooth funcionando perfeitamente. Teste do usuário em 2026-11-13 |
-| **Joystick** | ✅ | Funcionando perfeitamente. Teste do usuário em 2026-11-13 (modelo e forma de conexão não registrados) |
-| **DMA do southbridge (`00:14.5`)** | ✅ | Driver `dmaengine` próprio `baikal-dmac` v0.1 (2 canais, memcpy por descritores encadeados): validado ao vivo com o `dmatest` do kernel, **3000 testes, 0 falhas**. Carrega como módulo (`virt-dma` + `baikal-dmac`); o canal 2 conclui por polling (a IRQ dele não chega). Utilidade prática ainda modesta, ver `BACKLOG.md` |
-| **Ethernet cabeada (`eth0`)** | ⚠️ parcial | Driver próprio `mts.ko` liga MAC e DMA, mas o PHY nunca sai de power-down (bloqueador de firmware, investigação encerrada) |
-| **Desligamento total (S5)** | ⚠️ parcial | `poweroff` encerra o SO; a luz azul não apaga sozinha |
+| **KVM-AMD** | ✅ | `/dev/kvm` answers real ioctls, QEMU in the rootfs |
+| **Baikal Memory / SPM (`00:14.6`)** | ✅ | In-house in-tree `baikal-memory.ko` v0.2 driver: exposes `/dev/baikal-memory` (0600) and sysfs, reads the real factory MAC (`2c:cc:44:3f:69:5f`) and the ICC mailbox region, and supports controlled writes guarded by a parameter (`allow_write=0`) in the DDR3 window (BAR2) |
+| **RTC via ICC** | ✅ | `/dev/rtc0` operational via `rtc-ps4-icc`, real-time synchronization and NTP active (`timedatectl` synchronized: yes), no reset to 1970 on boot |
+| **Bluetooth** | ✅ | `btmtksdio` (MediaTek MT7668, SDIO): working perfectly. User-tested on 2026-11-13 |
+| **Bluetooth audio** | ✅ | Playback on a Bluetooth speaker working perfectly. User-tested on 2026-11-13 |
+| **Gamepad** | ✅ | Working perfectly. User-tested on 2026-11-13 (model and connection method not recorded) |
+| **Southbridge DMA (`00:14.5`)** | ✅ | In-house `baikal-dmac` v0.1 `dmaengine` driver (2 channels, memcpy via chained descriptors): validated live with the kernel's `dmatest`, **3000 tests, 0 failures**. Loads as a module (`virt-dma` + `baikal-dmac`); channel 2 completes by polling (its IRQ never arrives). Practical usefulness is still modest, see `BACKLOG.md` |
+| **Wired Ethernet (`eth0`)** | ⚠️ partial | In-house `mts.ko` driver brings up the MAC and DMA, but the PHY never leaves power-down (firmware blocker, investigation closed) |
+| **Full power-off (S5)** | ⚠️ partial | `poweroff` shuts down the OS; the blue light does not turn off by itself |
 
-### 🌟 Destaque de Engenharia Reversa: Driver Baikal Memory (SPM/DDR3)
-O Southbridge Baikal (PS4 Slim) possui um chip de memória DDR3 auxiliar dedicado de 256 MB (Scratch Pad Memory - SPM, PCI `00:14.6`), anteriormente sem suporte algum no Linux. O projeto desenvolveu do zero o driver `baikal-memory`:
-* **Mapeamento de Hardware:** BAR0 (4 KiB MMIO), BAR2 (256 MB DDR3), BAR4 (1 MiB), BAR5 (256 KiB Mailbox/ICC/Bootparams).
-* **Identidade do Hardware:** Extração do endereço MAC de fábrica em tempo de execução (`BAR5+0x2f000`).
-* **Ponte Syscon/ICC:** Mapeamento seguro da área compartilhada de mensagens com o Syscon (`BAR5+0x2c000`).
-* **Segurança e Idempotência:** Módulo com escrita protegida (`allow_write=0`), whitelist estrita para a janela BAR2 e integração idempotente via patch no kernel 7.0.
+### 🌟 Reverse Engineering Highlight: Baikal Memory Driver (SPM/DDR3)
+The Baikal southbridge (PS4 Slim) has a dedicated auxiliary 256 MB DDR3 memory chip (Scratch Pad Memory, SPM, PCI `00:14.6`) that previously had no Linux support at all. The project built the `baikal-memory` driver from scratch:
+* **Hardware mapping:** BAR0 (4 KiB MMIO), BAR2 (256 MB DDR3), BAR4 (1 MiB), BAR5 (256 KiB Mailbox/ICC/Bootparams).
+* **Hardware identity:** Runtime extraction of the factory MAC address (`BAR5+0x2f000`).
+* **Syscon/ICC bridge:** Safe mapping of the message area shared with the Syscon (`BAR5+0x2c000`).
+* **Safety and idempotency:** Module with guarded writes (`allow_write=0`), a strict whitelist for the BAR2 window, and idempotent integration into kernel 7.0 via patch.
 
-Detalhamento, causa raiz e o que já foi descartado: [`outros/docs/BACKLOG.md`](outros/docs/BACKLOG.md).
+Details, root causes, and what has already been ruled out: [`outros/docs/BACKLOG.md`](outros/docs/BACKLOG.md).
 
 ## Release
 
-[`distro/RELEASE/`](distro/RELEASE/) traz a versão de distribuição **v1.0.0** (`bzImage`,
-`bootargs`, `initramfs`, `config` + README de deploy e MD5) e o histórico de tags promovidas.
+[`distro/RELEASE/`](distro/RELEASE/) holds the **v1.0.0** distribution release (`bzImage`,
+`bootargs`, `initramfs`, `config` + deploy README and MD5) and the history of promoted tags.
 
-## Começando
+## Getting started
 
 ```bash
-# 1) Kernel (frente 1)
+# 1) Kernel (track 1)
 cd kernel && sudo ./00-build-kernel-7.0.sh <TAG>
 
-# 2) Distro (frente 2)
+# 2) Distro (track 2)
 cd ../distro
-sudo ./01-build-image-7.0.sh          # rootfs Arch + initramfs
-sudo ./02-burn-image-7.0.sh /dev/sdX  # particiona e grava (label psxitarch!)
-sudo ./deploy-boot-7.0.sh <TAG>       # ou só troca o boot, mantendo o rootfs
-./scripts/promote-release.sh <TAG>    # promove tag testada ao vivo
+sudo ./01-build-image-7.0.sh          # Arch rootfs + initramfs
+sudo ./02-burn-image-7.0.sh /dev/sdX  # partitions and writes (label psxitarch!)
+sudo ./deploy-boot-7.0.sh <TAG>       # or just swap the boot files, keeping the rootfs
+./scripts/promote-release.sh <TAG>    # promotes a live-tested tag
 ```
 
-Regras completas (idempotência de patches, snapshot obrigatório, convenções de `bootargs`,
-procedimento de deploy, SSH, UART, banco de RE): [`AGENTS.md`](AGENTS.md) — fonte única, e o
-`CLAUDE.md` apenas importa esse arquivo.
+Full rules (patch idempotency, mandatory snapshots, `bootargs` conventions,
+deploy procedure, SSH, UART, RE database): [`AGENTS.md`](AGENTS.md) — the single source of truth;
+`CLAUDE.md` only imports that file.
 
-## Aviso legal
+## Legal notice
 
-Pesquisa/engenharia reversa em hardware próprio. O repositório não inclui nem distribui firmware,
-chaves ou binários proprietários da Sony — apenas artefatos originados aqui (kernel Linux, drivers
-próprios, scripts e documentação).
+Research/reverse engineering on hardware the author owns. The repository does not include or distribute
+firmware, keys, or proprietary binaries from Sony — only artifacts originated here (Linux kernel, in-house
+drivers, scripts, and documentation).
