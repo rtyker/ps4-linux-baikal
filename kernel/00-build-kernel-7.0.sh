@@ -872,15 +872,23 @@ scripts/config --module CONFIG_DMATEST
 # HPET/Clocksource do Baikal (glue 00:14.4, subfunção ICC 22): clocksource
 # baseado no contador principal de 64 bits do HPET. Habilitado como módulo
 # para iteração sem rebuild do kernel.
-scripts/config --module CONFIG_CLKSRC_BAIKAL_HPET
+# DESLIGADO por padrão (2026-11-15): CLKSRC_BAIKAL_HPET faz select de CLKSRC_MMIO=y
+# (embutido), o que altera o layout do bzImage; junto com o core do WATCHDOG
+# coincidiu com 2 boots mortos. Mantém o config idêntico ao do último boot bom
+# até o HPET ser testado isoladamente. O patch continua sendo aplicado.
+scripts/config --disable CONFIG_CLKSRC_BAIKAL_HPET
 
 # Watchdog do Baikal (Timer 0 do HPET, opcional): requer WATCHDOG_CORE.
 # Habilitado como módulo para iteração sem rebuild do kernel.
-# CONFIG_BAIKAL_WDT fica dentro do menu WATCHDOG: com CONFIG_WATCHDOG desligado
-# o símbolo some do .config sem erro e o módulo nunca é compilado.
-scripts/config --enable CONFIG_WATCHDOG
-scripts/config --enable CONFIG_WATCHDOG_CORE
-scripts/config --module CONFIG_BAIKAL_WDT
+# ATENÇÃO (2026-11-15): CONFIG_BAIKAL_WDT fica dentro do menu WATCHDOG. Habilitar
+# CONFIG_WATCHDOG=y (core embutido) coincidiu com 2 boots mortos no PS4: o log da UART
+# para em "kexec: About to relocate and jump to kernel", sem nenhum byte do kernel
+# (nem earlycon). Os cabeçalhos do bzImage (init_size/align/pref) eram idênticos aos
+# do build que boota; a diferença embutida era só WATCHDOG/WATCHDOG_CORE/CLKSRC_MMIO.
+# Por isso o WDT fica DESLIGADO por padrão: o patch ainda é aplicado (idempotência),
+# mas o símbolo permanece oculto e o módulo não é compilado até haver teste isolado.
+scripts/config --disable CONFIG_WATCHDOG
+scripts/config --disable CONFIG_WATCHDOG_CORE
 
 echo "=== Executando olddefconfig ==="
 make "${MAKE_OPTS[@]}" olddefconfig
