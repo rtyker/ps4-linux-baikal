@@ -876,6 +876,9 @@ scripts/config --module CONFIG_CLKSRC_BAIKAL_HPET
 
 # Watchdog do Baikal (Timer 0 do HPET, opcional): requer WATCHDOG_CORE.
 # Habilitado como módulo para iteração sem rebuild do kernel.
+# CONFIG_BAIKAL_WDT fica dentro do menu WATCHDOG: com CONFIG_WATCHDOG desligado
+# o símbolo some do .config sem erro e o módulo nunca é compilado.
+scripts/config --enable CONFIG_WATCHDOG
 scripts/config --enable CONFIG_WATCHDOG_CORE
 scripts/config --module CONFIG_BAIKAL_WDT
 
