@@ -149,7 +149,8 @@ preflight() {
   for p in ahci-baikal-polling-fallback.patch ps4-icc-rtc-wrapper.patch \
            ps4-icc-proc-debug.patch mts-baikal-gbe-driver.patch \
            baikal-memory-fase2.patch baikal-dmac.patch \
-           clocksource-baikal-hpet.patch baikal-wdt.patch; do
+           clocksource-baikal-hpet.patch baikal-wdt.patch \
+           ps4-bridge-dp-init.patch; do
     [ -f "$SCRIPT_DIR/patches/$p" ] || die "patch ausente: $SCRIPT_DIR/patches/$p"
   done
 
