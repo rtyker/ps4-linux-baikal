@@ -58,6 +58,18 @@ Boot completo (tty1, SSH). Evidência:
 | Módulos | `baikal_dmac virt_dma mts baikal_memory rtc_ps4_icc` |
 | SSD `sdb` (rootfs USB) | 🔴 ainda 1 erro de leitura CRC (`ASC=0x47`) aos 97 s — trocar o SSD/cabo (P0) |
 
+### ✅ Mesa/Xorg validados ao vivo 2026-11-15 (tag `20261115-hwclock-min`)
+Xorg 21.1.26 (`Xorg :0 vt2`, driver `amdgpu` + glamor) subiu sem erro de GPU. O Mesa 26.2.7 instalado **é o patchado** (reconhece `gladius`; o `pacman -Qi` só mostra o Packager do pacote original).
+| Teste | Resultado |
+|---|---|
+| `glxinfo -B` | ✅ `AMD DG1501SML87LB (radeonsi, gladius, ACO, DRM 3.64)`, direct rendering: Yes, OpenGL 4.5 core/compat, GLES 3.2, VRAM 1024 MB |
+| Xorg glamor | ✅ `glamor X acceleration enabled`, OpenGL 4.5 context |
+| `vulkaninfo` | ✅ `AMD DG1501SML87LB (RADV GLADIUS)`, Vulkan 1.3.354, RADV, Mesa 26.2.7 |
+| `eglinfo` | ✅ EGL 1.5, core profile 4.5 |
+| `glxgears` | ✅ ~57-58 FPS (vsync 60 Hz) |
+| dmesg | sem GPU hang/reset; só os `dp_link_train` do boot (já conhecidos) e `edid/my_edid.bin` ausente (inofensivo) |
+Pendente: sem gerenciador de login (sddm/lightdm inativos) — Xorg sobe manualmente; `xrandr` não instalado; teste de `vkcube`/carga longa.
+
 ### 🔴 Incidente 2026-11-15: tela preta em 2 boots — tag `20261115-ntp-hwclock-fix`
 UART parou em `kexec: About to relocate and jump to kernel`, sem nenhum byte do kernel (nem earlycon). Diferenças de config vs. o último boot bom (`20261115-rtc-mem-restore`): `CONFIG_WATCHDOG=y`/`WATCHDOG_CORE=y` (embutidos), `CLKSRC_MMIO=y` (embutido, `select` do driver HPET), `CLKSRC_BAIKAL_HPET=m`, `BAIKAL_WDT=m`; bzImage +8 KB. Cabeçalhos do bzImage (`init_size`, align, pref) idênticos → não é formato. **Causa não confirmada.** Mitigação: WATCHDOG e CLKSRC_BAIKAL_HPET desligados por padrão no `00-build-kernel-7.0.sh` (patches continuam aplicados); tag `20261115-hwclock-min` tem config **idêntico** ao boot bom (diff vazio) e bzImage do mesmo tamanho (16135168). HPET e WDT precisam de teste isolado, um por vez.
 
