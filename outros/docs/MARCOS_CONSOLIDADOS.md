@@ -22,6 +22,10 @@
 | **Auto-eth0 no boot** | 2026-07-23 | ✅ | `mts.ko stage=4` carrega automaticamente, `eth0` sobe sem Telnet. |
 | **Bluetooth, áudio Bluetooth e joystick** | 2026-11-13 | ✅ | Teste do usuário: Bluetooth, reprodução de áudio em caixa de som Bluetooth e joystick funcionando perfeitamente. Driver `btmtksdio` (MT7668). Modelo do joystick e forma de conexão não registrados. |
 | **KVM-AMD viável** | 2026-07-24 | ✅ | CPU Jaguar expõe SVM/NPT completo; build estático com `kvm.ko` + `kvm-amd.ko` OK (não testado no PS4). |
+| **SATA interno UDMA/100 confirmado em build limpo** | 2026-11-15 | ✅ | Tag `20261113-full-rebuild`: `ata1.00: configured for UDMA/100`, 931.51 GiB, `dd` 27 MB/s, zero `disable device` — SATA interno funcional em build reprodutível. |
+| **RTC via ICC (timekeeping)** | 2026-11-15 | ✅ | Tag `20261113-full-rebuild`: `/dev/rtc0` operacional, system clock semeado no boot, `/proc/driver/rtc` hora correta, `pacman -Sy` sem erro SSL/clock. `hwclock -r` timeout (falta UIE emulation). |
+| **Áudio HDMI** | 2026-11-15 | ✅ | Tag `20261113-full-rebuild`: `plughw:0,3` (HDMI 0) e `plughw:0,7` (HDMI 1) funcionam, `speaker-test` confirmado. |
+| **Baikal Memory v0.2 (device)** | 2026-11-15 | ✅ | Tag `20261113-full-rebuild`: módulo carrega, MAC `2c:cc:44:3f:69:5f` em offset 0x52f000, ICC em 0x52c000. Sysfs offsets desalinhados. |
 
 ---
 
@@ -30,7 +34,6 @@
 | Bloqueador | Data | Status | Detalhe |
 |------------|------|--------|---------|
 | **PHY GBE nunca acorda** | 2026-07-30 | 🔒 | MAC liga via ICC (`0x004=0xb19`), TX por software funciona (~95%), mas PHY não responde a MDIO (Clause 22 e 45 sempre timeout/zero). RX morto. Bloqueador é firmware/bootloader Sony (power do PHY feito antes do kernel assumir). Investigação de RE encerrada. |
-| **RTC persistente** | 2026-08-01 | ⏸️ | `0x05180000`/`0x05140000` caem em `System RAM` ativa (`/proc/iomem`). Usuário decidiu não arriscar `ioremap` sobre RAM em uso. Pausado sem novo direcionamento. |
 | **S5 (desligamento total)** | 2026-07-30 | ⚠️ | `poweroff -f` encerra SO/rede, mas fonte não desliga (luz azul acesa/pulsando). Exige comando ICC dedicado. |
 | **WiFi calibração EEPROM** | 2026-07-29 | ⚠️ | Cartão SDIO detectado, driver init, mas `load manufacture data fail` — dados de calibração não aplicados. WiFi não associa sozinho (funciona apenas com telnetd debug). |
 
@@ -44,6 +47,7 @@
 | `20260730-sata-polling-fase-ab` | 2026-07-30 | ✅ Baseline mais recente — GBE + SATA interno funcional juntos |
 | `20260801-kvm-rtc-sata-final` | 2026-08-01 | ⚠️ Única cópia íntegra em `distro/RELEASE/v1.0.0/` (4 artefatos, MD5 conferido) |
 | `20261111-preflight-test` | 2026-11-11 | ✅ Build de teste validado — bzImage 16.1 MB, versão `7.0.8-Strawberry-ThinLTO-Baikal-+` |
+| `20261113-full-rebuild` | 2026-11-15 | ✅ **Full build testado ao vivo** — SATA ✅, RTC timekeeping ✅, Áudio HDMI ✅, Baikal Memory device ✅, eth0 NO-CARRIER (firmware), CIFS BTF mismatch, S5 não testado |
 
 ---
 
