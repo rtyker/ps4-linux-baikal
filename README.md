@@ -37,13 +37,16 @@ nothing about the rootfs. `PS4_BOOT_REF` lets you point the distro at a differen
 | **USB 3.0 / SD-MMC** | ✅ | `xhci_aeolia` / `sdhci` |
 | **KVM-AMD** | ✅ | `/dev/kvm` answers real ioctls, QEMU in the rootfs |
 | **Baikal Memory / SPM (`00:14.6`)** | ✅ | In-house in-tree `baikal-memory.ko` v0.2 driver: exposes `/dev/baikal-memory` (0600) and sysfs, reads the real factory MAC (`2c:cc:44:3f:69:5f`) and the ICC mailbox region, and supports controlled writes guarded by a parameter (`allow_write=0`) in the DDR3 window (BAR2) |
-| **RTC via ICC** | ✅ | `/dev/rtc0` operational via `rtc-ps4-icc`, real-time synchronization and NTP active (`timedatectl` synchronized: yes), no reset to 1970 on boot |
+| **RTC via ICC** | ✅ | `/dev/rtc0` via `rtc-ps4-icc`; `hwclock -r` works (validated live on tag `20261115-hwclock-min`). The hardware exposes no readable time source, so the RTC is seeded from the system clock and kept in sync by NTP; no reset to 1970 on boot |
+| **NTP time sync** | ✅ | `chrony` against NTP.br (`a/b/c/d.st1.ntp.br`), offset < 1 ms, clock correct at boot. `systemd-timesyncd` is not used: `wlan0` is managed by dhcpcd, so networkd reports `ONLINE_STATE=offline` and timesyncd never queries a server |
 | **Bluetooth** | ✅ | `btmtksdio` (MediaTek MT7668, SDIO): working perfectly. User-tested on 2026-11-13 |
 | **Bluetooth audio** | ✅ | Playback on a Bluetooth speaker working perfectly. User-tested on 2026-11-13 |
 | **Gamepad** | ✅ | Working perfectly. User-tested on 2026-11-13 (model and connection method not recorded) |
 | **Southbridge DMA (`00:14.5`)** | ✅ | In-house `baikal-dmac` v0.1 `dmaengine` driver (2 channels, memcpy via chained descriptors): validated live with the kernel's `dmatest`, **3000 tests, 0 failures**. Loads as a module (`virt-dma` + `baikal-dmac`); channel 2 completes by polling (its IRQ never arrives). Practical usefulness is still modest, see `BACKLOG.md` |
 | **Wired Ethernet (`eth0`)** | ⚠️ partial | In-house `mts.ko` driver brings up the MAC and DMA, but the PHY never leaves power-down (firmware blocker, investigation closed) |
 | **Full power-off (S5)** | ⚠️ partial | `poweroff` shuts down the OS; the blue light does not turn off by itself |
+| **Baikal HPET clocksource / watchdog** | ⏸️ disabled | Patches are applied by the build but `CONFIG_CLKSRC_BAIKAL_HPET` and `CONFIG_WATCHDOG` are off by default: a build with both enabled gave a black screen twice (UART stops at `kexec: About to relocate and jump to kernel`; root cause unconfirmed). Pending isolated tests, see `BACKLOG.md` |
+| **Rootfs boot SSD (USB)** | 🔴 failing | Intermittent CRC read errors (`ASC=0x47`) on the USB SSD: replace the drive/cable before long tests |
 
 ### 🌟 Reverse Engineering Highlight: Baikal Memory Driver (SPM/DDR3)
 The Baikal southbridge (PS4 Slim) has a dedicated auxiliary 256 MB DDR3 memory chip (Scratch Pad Memory, SPM, PCI `00:14.6`) that previously had no Linux support at all. The project built the `baikal-memory` driver from scratch:
