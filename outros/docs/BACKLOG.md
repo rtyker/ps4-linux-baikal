@@ -12,7 +12,9 @@ Convenção: `[ ]` pendente · `[~]` em andamento · `[x]` concluído (mover par
 
 O trabalho **ativo no momento** (investigação detalhada, passo a passo) fica nos documentos próprios linkados em cada item — aqui fica só o resumo do estado e o próximo passo objetivo.
 
-## 🔴 Novo (2026-11-15) — PS4 congela quando ocioso — EM TESTE
+## 🔴 Novo (2026-11-15) — PS4 congela/desliga quando ocioso — EM TESTE
+**Keep-alive descartado como mitigação:** o ping SSH a cada 20 s **não impediu** o sistema de desligar (observado pelo usuário em 2026-11-15). Não usar keep-alive como solução; ele só mascara o problema e polui os testes.
+**Estado do teste (19:58):** keep-alive parado desde 19:43; `ping 192.168.6.128` responde (`LINUX_UP`). UART sem bytes em runtime (console só imprime no boot), então não há evidência de queda nesta janela ainda.
 **Teste iniciado 2026-11-15:** keep-alive parado às **19:43:24** (host 19:45:13 para a UART). Tag `20261115-hwclock-min`, sem carga, `cpuidle` com estados POLL/C1/C2 (C2 com ~1,5 M usos no início). UART gravando por 30 min em `outros/tests/uart_logs/idle-freeze_*.log`. Critério: se o `ping 192.168.6.128` ou o SSH param de responder, o congelamento está confirmado; a hora do último contato fica no log do keep-alive e a UART mostra a última mensagem do kernel.
 
 
