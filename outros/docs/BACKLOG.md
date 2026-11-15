@@ -58,6 +58,9 @@ Boot completo (tty1, SSH). Evidência:
 | Módulos | `baikal_dmac virt_dma mts baikal_memory rtc_ps4_icc` |
 | SSD `sdb` (rootfs USB) | 🔴 ainda 1 erro de leitura CRC (`ASC=0x47`) aos 97 s — trocar o SSD/cabo (P0) |
 
+### ✅ lightdm ativo ao vivo (2026-11-15)
+Causa da falha: o pacote `lightdm` estava instalado sem greeter (`Failed to find session configuration lightdm-gtk-greeter`), então o serviço caía e atingia `start-limit-hit`. Correção: `pacman -S lightdm-gtk-greeter` (2.0.9-2), `systemctl reset-failed` e `enable --now`. Estado: `lightdm` active, Xorg em `vt7` e `lightdm-gtk-greeter` rodando. Persistido em `distro/01-build-image-7.0.sh` (pacotes `lightdm`, `lightdm-gtk-greeter` e `systemctl enable lightdm`). Obs.: os `(EE)` de DEGAMMA_LUT/CTM/GAMMA_LUT nos CRTCs são só de color management, não impedem o uso. Pendente: login de usuário e validação de glamor no display do greeter.
+
 ### ✅ Mesa/Xorg validados ao vivo 2026-11-15 (tag `20261115-hwclock-min`)
 Xorg 21.1.26 (`Xorg :0 vt2`, driver `amdgpu` + glamor) subiu sem erro de GPU. O Mesa 26.2.7 instalado **é o patchado** (reconhece `gladius`; o `pacman -Qi` só mostra o Packager do pacote original).
 | Teste | Resultado |

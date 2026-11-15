@@ -255,6 +255,8 @@ PKGS=(
   vulkan-tools
   mesa-utils
   xorg-server
+  lightdm
+  lightdm-gtk-greeter
   xorg-xinit
   xf86-video-amdgpu
   openbox
@@ -512,6 +514,9 @@ rtcsync
 CHRONYEOF
 arch-chroot "$ROOTFS_DIR" systemctl disable systemd-timesyncd.service 2>/dev/null || true
 arch-chroot "$ROOTFS_DIR" systemctl enable chronyd.service
+# Display manager: lightdm precisa do greeter (sem ele falha com 'Failed to find
+# session configuration lightdm-gtk-greeter' e cai no start-limit-hit).
+arch-chroot "$ROOTFS_DIR" systemctl enable lightdm.service
 
 # paccache.timer — limpar cache do pacman (767 MB / 413 pacotes num SSD de 120 GB falhando)
 arch-chroot "$ROOTFS_DIR" systemctl enable paccache.timer
