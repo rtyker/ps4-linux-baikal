@@ -58,6 +58,9 @@ Boot completo (tty1, SSH). Evidência:
 | Módulos | `baikal_dmac virt_dma mts baikal_memory rtc_ps4_icc` |
 | SSD `sdb` (rootfs USB) | 🔴 ainda 1 erro de leitura CRC (`ASC=0x47`) aos 97 s — trocar o SSD/cabo (P0) |
 
+### ✅ KVM validado ao vivo (2026-11-15)
+`/dev/kvm` presente (`crw-rw-rw- root kvm`), `kvm_amd` com SVM, NPT, nested e TSC scaling. O README afirmava que o QEMU estava no rootfs, mas **não estava**: instalado agora com `pacman -S qemu-base` (11.1.3, `qemu-system-x86_64`). Teste: boot sector de 512 bytes que escreve `K` na serial (porta 0x3f8) e executa `hlt`, rodado com `qemu-system-x86_64 -accel kvm -cpu host -M pc -m 64`. Resultado: saída `K` capturada (entrada de VM, execução no guest e I/O exit tratado pelo QEMU); QEMU encerrou só pelo `timeout` de 30 s, como esperado para um guest parado em `hlt`. Persistido em `distro/01-build-image-7.0.sh` (`qemu-base` no `PKGS`).
+
 ### ✅ lightdm ativo ao vivo (2026-11-15)
 Causa da falha: o pacote `lightdm` estava instalado sem greeter (`Failed to find session configuration lightdm-gtk-greeter`), então o serviço caía e atingia `start-limit-hit`. Correção: `pacman -S lightdm-gtk-greeter` (2.0.9-2), `systemctl reset-failed` e `enable --now`. Estado: `lightdm` active, Xorg em `vt7` e `lightdm-gtk-greeter` rodando. Persistido em `distro/01-build-image-7.0.sh` (pacotes `lightdm`, `lightdm-gtk-greeter` e `systemctl enable lightdm`). Obs.: os `(EE)` de DEGAMMA_LUT/CTM/GAMMA_LUT nos CRTCs são só de color management, não impedem o uso. Pendente: login de usuário e validação de glamor no display do greeter.
 

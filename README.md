@@ -35,7 +35,7 @@ nothing about the rootfs. `PS4_BOOT_REF` lets you point the distro at a differen
 | **SSH (WiFi admin)** | ✅ | `root@192.168.6.128`, starts automatically |
 | **Internal SATA (real HDD)** | ✅ | Stable `ata1` via a 1 ms polling timer on PCI function `.7` (`xhci_aeolia`) — validated live on tag `20260730-sata-polling-fase-ab`; the `v1.0.0` build contains the mechanism but has no recorded validation boot |
 | **USB 3.0 / SD-MMC** | ✅ | `xhci_aeolia` / `sdhci` |
-| **KVM-AMD** | ✅ | `/dev/kvm` answers real ioctls, QEMU in the rootfs |
+| **KVM-AMD** | ✅ | `/dev/kvm` answers real ioctls (SVM, NPT, nested). QEMU 11.1.3 (`qemu-base`) in the rootfs; a 512-byte guest running under `-accel kvm` writes to the serial port and halts correctly |
 | **Baikal Memory / SPM (`00:14.6`)** | ✅ | In-house in-tree `baikal-memory.ko` v0.2 driver: exposes `/dev/baikal-memory` (0600) and sysfs, reads the real factory MAC (`2c:cc:44:3f:69:5f`) and the ICC mailbox region, and supports controlled writes guarded by a parameter (`allow_write=0`) in the DDR3 window (BAR2) |
 | **RTC via ICC** | ✅ | `/dev/rtc0` via `rtc-ps4-icc`; `hwclock -r` works (validated live on tag `20261115-hwclock-min`). The hardware exposes no readable time source, so the RTC is seeded from the system clock and kept in sync by NTP; no reset to 1970 on boot |
 | **NTP time sync** | ✅ | `chrony` against NTP.br (`a/b/c/d.st1.ntp.br`), offset < 1 ms, clock correct at boot. `systemd-timesyncd` is not used: `wlan0` is managed by dhcpcd, so networkd reports `ONLINE_STATE=offline` and timesyncd never queries a server |

@@ -256,6 +256,7 @@ PKGS=(
   mesa-utils
   xorg-server
   lightdm
+  qemu-base
   lightdm-gtk-greeter
   xorg-xinit
   xf86-video-amdgpu
