@@ -72,6 +72,7 @@ initramfs/
 kernel-framework-local/
 kernel/kernel_build_7.0/
 kernel/.ccache/
+kernel/.thinlto-cache/
 kernel/snapshots/
 distro/Steam4PS/
 distro/winesapos/

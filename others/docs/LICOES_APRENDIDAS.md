@@ -63,6 +63,13 @@ Resultado da primeira limpeza: **454 KB → 173 MB livres** (13% de uso).
 
 Deploy da tag `20261113-dmaengine`. O script passou pela sanidade da origem, guardou o `bootargs` anterior e começou a copiar o `bzImage`; então o Kingston (ponte USB, `uas`) **sumiu do barramento**: no `dmesg` do host, `hostbyte=DID_NO_CONNECT`, `I/O error ... WRITE` e `lost async page write` em `sda1`. A cópia seguinte falhou com `cp: ... Arquivo ou diretório inexistente`. A causa física (cabo, hub, alimentação) não foi identificada.
 
+**Atualização 2026-11-16 — causa provável: ponte JMicron `152d:0578` em modo UAS.** Ao só plugar o Kingston (sem nenhum comando), as leituras automáticas de reconhecimento do udev/kernel falharam (`Aborted Command / Data phase error`, `I/O error` nos setores 2592 e 412192), dois comandos UAS ficaram 30 s sem resposta (`uas_eh_abort_handler`) e o kernel resetou o USB. **Correção, antes de qualquer deploy:** forçar `usb-storage` em vez de `uas` para essa ponte e reenumerar (não precisa replugar se o disco não estiver montado):
+```bash
+echo 152d:0578:u | sudo tee /sys/module/usb_storage/parameters/quirks
+echo 0 | sudo tee /sys/bus/usb/devices/<porta>/authorized; echo 1 | sudo tee /sys/bus/usb/devices/<porta>/authorized   # porta: ver dmesg ("usb 4-2")
+```
+O dmesg confirma com `UAS is ignored for this device, using usb-storage instead`. Depois disso, `BOOT` (vfat) e `psxitarch` (ext4) foram reconhecidos sem nenhum erro. Vale até o host reiniciar; para tornar permanente, `usb-storage.quirks=152d:0578:u` no cmdline do host ou em `/etc/modprobe.d/`.
+
 **O que ficou no disco:** FAT suja (`Volume was not properly unmounted`), FATs divergentes, e **`bzImage` com 0 byte** (SHA-256 `e3b0c442…`, o hash do arquivo vazio). `initramfs` e `bootargs` intactos. O `active-tag.txt` seguia dizendo a tag anterior. Ligar o PS4 assim não teria kernel para carregar.
 
 **O que funcionou (regras que se confirmaram):**

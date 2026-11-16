@@ -173,7 +173,7 @@ O build `20261113-full-rebuild` final saiu SEM `rtc-ps4-icc` e SEM `baikal-memor
 | 7 | **SATA interno a 6 Gbps** | ✅ **PASS** | `ata1.00: configured for UDMA/100`, 931.51 GiB, `dd` 27 MB/s, **zero `disable device`** |
 | 8 | **CIFS mount** | ⚠️ **PARCIAL** | cifs.ko no rootfs tem BTF mismatch. Após strip BTF, falha symbols desconhecidos. Precisa rebuild do módulo contra kernel atual. Autofs configurado mas mountpoint some. |
 | 9 | **pacman (SSL/clock)** | ✅ **PASS** | `pacman -Sy` sincroniza sem erro de certificado/clock |
-| 10 | **S5 power-off (luz azul)** | 🟡 **CAUSA RAIZ ACHADA** — 4/1 via ioctl desliga (2026-11-16); falta patch Fase 2A. Antes: ❌ | 2026-11-16, tag `20261116-btf-disabled-s5`: luz azul e fan ligados; sem log UART do Linux. Ver `PLANO_S5_POWEROFF_ICC.md` §9 |
+| 10 | **S5 power-off (luz azul)** | ✅ **PASS** — `poweroff -f` desliga tudo (tag `20261116-s5-dma`, 2026-11-16) | 2026-11-16, tag `20261116-btf-disabled-s5`: luz azul e fan ligados; sem log UART do Linux. Ver `PLANO_S5_POWEROFF_ICC.md` §9 |
 
 ### Checksums confirmados (tag `20261113-full-rebuild`)
 ```
@@ -256,7 +256,7 @@ Medições reais no PS4 (boot completo, `systemd` `running`, 0 unidades falhadas
 
 ---
 
-### [~] S5 incompleto no `poweroff -f` (luz azul não apaga)
+### [x] ✅ S5 no `poweroff -f` — RESOLVIDO 2026-11-16 (tag `20261116-s5-dma`)
 
 **Contexto:** `sync && poweroff -f` encerra o SO e derruba a rede, mas o console fica com a luz azul acesa/pulsando — desligamento total da fonte (S5) não ocorre.
 
@@ -270,6 +270,8 @@ Medições reais no PS4 (boot completo, `systemd` `running`, 0 unidades falhadas
 - dmesg pós-boot não mostrou log do ICC S5 shutdown (verificar se payload foi enviado)
 
 **Correção 2026-11-16:** o item 2 de "Já feito" **não vale para a árvore atual**: o patch de julho nunca virou `.patch` e foi perdido; `icc_shutdown` voltou ao código original de 6 bytes (que já é enviado com 20 bytes por causa do padding `ICC_MIN_PAYLOAD`). A fonte RE `0x1d8a3c` **não existe no repo**. Ver `others/docs/PLANO_S5_POWEROFF_ICC.md` §0.
+
+**✅✅ 2026-11-16 — RESOLVIDO:** `poweroff -f` com o kernel `20261116-s5-dma` (patch `ps4-icc-s5-poweroff-prepare.patch`) desliga o console por completo, luz e fan. `test_history` id 91; detalhes em `PLANO_S5_POWEROFF_ICC.md` §12. Pendente: `shutdown -h now`, `reboot` e promover a tag.
 
 **✅ 2026-11-16 — CAUSA RAIZ CONFIRMADA (Fase 1):** o 4/1 original `{0,0,2,0,1,0}` enviado pelo ioctl `/dev/icc` (`others/tools/icc_cmd`) com o Linux rodando **desliga o console por completo** (luz apaga, fan para). O payload está certo; o problema é que o `icc_shutdown` roda no `pm_power_off` com LAPIC desligado e em contexto atômico. **Próximo:** Fase 2A, mandar o mesmo 4/1 num handler `SYS_OFF_MODE_POWER_OFF_PREPARE` (ver `PLANO_S5_POWEROFF_ICC.md` §10). `test_history` id 86.
 

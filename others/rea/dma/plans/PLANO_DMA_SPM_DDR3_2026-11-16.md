@@ -237,3 +237,38 @@ Arquivo gerado: `others/rea/dma/docs/WRITEUP_DEBARSHI_DDR3_2026-11.md`
 | **Harness existente** | `baikal_dmac_test_spm.c` (OBSOLETO) | **Novo harness necessário** para Aeolia |
 | **Driver dmaengine** | `baikal-dmac.patch` (para standalone) | **Novo driver ou estender** para Aeolia |
 | **Conflito de driver** | `rmmod baikal_dmac` | `rmmod xhci_aeolia ahci` (derruba USB/SATA!) |
+
+---
+
+## 8. Resultados ao vivo — 2026-11-16 (kernel `20261116-s5-dma`)
+
+Harness: `others/rea/dma/harness/baikal_dmac_test/baikal_dmac_test_spm.c` (somente leitura da SPM, polling, DMAC1/BAR0), com `baikal_dmac` descarregado.
+
+| Teste | `spm_base` | Resultado | `test_history` |
+|---|---|---|---|
+| H1 | `0x80000000` (endereço PCI do BAR2) | **FALHOU**: erro imediato do DMAC (`INT_FLAG=0x2`, `DEBUG_ST=0x13`) na 1ª transferência de 256 B. PS4 estável. **H1 refutada** | 87 |
+| H2 | `0xC0000000` (endereço do writeup) | **PARCIAL**: 4/4 transferências sem erro e iguais à leitura da CPU. 256 B 53 MB/s, 4 KiB 660 MB/s, 64 KiB 1426 MB/s, **1 MiB 1514 MB/s**. CPU `memcpy_fromio`: **~4 MB/s**. Mas o trecho (0–1 MiB) é todo `0x00`, então a igualdade não prova o mapeamento | 88 |
+
+**Observações:**
+- A vazão do H2 (~1,5 GB/s) bate com o teto de ~1,4 GB/s do Debarshi (Belize). A CPU (~4 MB/s) é da mesma ordem dos 10,6 MB/s dele.
+- Depois do reset `RST=2→0`, o DMAC volta a `DST=0x00100000` e `LEN=0xffffffff`, os mesmos valores do "estado inicial". Os "resíduos do Orbis" da leitura de 2026-11-13 podem ser **valores de reset**.
+
+**Próximo (em execução):** provar o mapeamento do H2 com dados não nulos. Gravar um padrão aleatório de 4 KiB via `baikal-memory` com `allow_write=1` (janela BAR2 já validada na Fase 5), ler pelo DMA em `0xC0000000 + offset`, comparar, e restaurar o conteúdo original.
+
+### 8.1 Prova do H2 e escrita (Passo 3) — 2026-11-16
+
+| Teste | Resultado | `test_history` |
+|---|---|---|
+| H2 com dados reais: 4 KiB aleatórios gravados em BAR2+0x200000 (via `baikal-memory allow_write=1`), lidos pelo DMA em `0xC0000000+0x200000` | **SUCESSO**: 2/2 PASS, dump DMA = padrão (`36 fd 20 86…`). **Mapeamento provado: o DMAC vê a SPM em `0xC0000000` = BAR2 PCI + `0x40000000`** | 89 |
+| Passo 3: DMA host → SPM (`write=1`, só em `0x200000`, até 64 KiB) | **SUCESSO**: 3/3 PASS, guarda intacta. DMA 64 KiB **912 MB/s**; CPU `memcpy_toio` ~81 MB/s | 90 |
+
+**Vazão consolidada (64 KiB–1 MiB):**
+
+| | Leitura da SPM | Escrita na SPM |
+|---|---|---|
+| CPU (caminho atual do `baikal-memory`) | ~4 MB/s | ~81 MB/s |
+| DMAC1 por polling | **~1,5 GB/s** | **~0,9 GB/s** |
+
+Estado deixado: janela restaurada a zero (conferida), `baikal-memory` de volta a `allow_write=N`, `baikal_dmac` recarregado.
+
+**Decisão do Passo 4:** DMA é ~375× (leitura) e ~11× (escrita) mais rápido que a CPU → **integrar no `baikal-memory`** (leitura/escrita em bloco via DMAC usando `0xC0000000 + off`, com fallback para `memcpy_fromio`). Fica para um plano próprio, via patch idempotente.

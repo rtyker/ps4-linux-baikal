@@ -107,8 +107,36 @@ Nunca "adivinhar" o ambiente: se `pacman` não existir no host, o build da distr
 **Regra na prática:**
 - Alterações **podem ser commitadas** no repositório (git commit + push), OU
 - Alterações **devem ser integradas via patches `.patch` confiáveis** aplicados **após** o `git reset --hard`.
+
+### 🔴 REGRA CRÍTICA — Builds SOMENTE via Scripts Oficiais (2026-11-16)
+
+**PROIBIDO rodar `make`, `make modules`, `make bzImage`, ou qualquer comando de build manual fora dos scripts oficiais.**
+
+| Script Oficial | Função |
+|----------------|--------|
+| `kernel/00-build-kernel-7.0.sh [TAG]` | Compila kernel (ThinLTO, profile General, Baikal), aplica patches, gera `bzImage`, `config`, `modules`, snapshots |
+| `distro/01-build-image-7.0.sh <TAG> [--incremental]` | Cria rootfs Arch + initramfs via pacstrap/mkinitcpio |
+| `distro/02-burn-image-7.0.sh /dev/sda "" <TAG>` | Particiona + grava rootfs (label `psxitarch`) + boot |
+| `distro/deploy-boot-7.0.sh <TAG> [MNT]` | Reescreve apenas boot no HD já particionado |
+| `distro/rebuild-initramfs-7.0.sh <TAG>` | Reconstrói initramfs detectando versão do kernel no rootfs |
+| `distro/scripts/build-image-docker.sh <TAG>` | Wrapper Docker para `01-build-image` em hosts sem Arch |
+
+**Por que isso é regra absoluta:**
+1. **Reprodutibilidade:** Scripts capturam TODOS os parâmetros (ThinLTO, LLVM, config options, patches). Um `make` manual perde contexto e não é reproduzível.
+2. **Idempotência:** `00-build-kernel` faz `git reset --hard` + aplica patches na ordem correta. Build manual deixa working directory contaminado.
+3. **Artefatos completos:** Só o script oficial gera os 4 arquivos obrigatórios em `distro/boot_referencia/` + sentinela `.build-complete-<TAG>` + snapshot em `kernel/snapshots/`.
+4. **Limite de bzImage:** Script mantém kernel < 10 MB (limite kexec PS4). `make` manual pode inflar sem perceber.
+5. **Module.symvers:** Script gera `Module.symvers` correto para compilação de módulos out-of-tree. Build manual falha nisso (já causou erro "undefined symbol" em 2026-11-16).
+6. **Histórico de falhas:** 2026-07-25 `make bzImage` direto → boot falhou (label errada). 2026-11-16 `make modules` manual → símbolos indefinidos. **Toda vez que alguém foge do script, quebra.**
+
+**Exceção ZERO:** Para validação rápida de compilação de um `.c` isolado, use:
+```bash
+make -C kernel/kernel_build_7.0 M=$(pwd) CC="ccache clang" LLVM=1 ARCH=x86_64 arquivo.o
+```
+**NUNCA** `make modules` ou `make` na raiz do kernel.
 - **PROIBIDO usar heredocs (`cat << 'EOF'`), `sed` ou `echo >>` inline no script de build** para injetar código ou modificar `Makefile`/`Kconfig` do kernel. Toda modificação deve estar encapsulada em um arquivo `.patch` limpo em `patches/`.
   - Motivo: injeções inline (heredocs/sed) alteram o contexto dos arquivos do kernel e fazem com que patches subsequentes falhem silenciosamente ao tentar aplicar no mesmo arquivo.
+  - **Prefira `awk` sobre `sed`** para manipulação de arquivos em scripts de build/patch: `awk` é mais robusto para parsing estruturado, lida melhor com múltiplas linhas, variáveis e contextos complexos; `sed` é frágil com escapes, quebras de linha e estado. Use `awk` para qualquer transformação não-trivial (ex: inserir blocos, substituir padrões multi-linha, condicionais).
   - Exemplo: `patches/ps4-icc-rtc-wrapper.patch` contém 100% da implementação do RTC (`rtc-ps4-icc.c`, `Kconfig`, `Makefile` e wrappers) de forma autocontida.
   - Exemplo: `patches/ahci-baikal-polling-fallback.patch` (SATA polling) é aplicado via `git apply --check` + `exit 1` em caso de falha (falha alta é obrigatória).
 

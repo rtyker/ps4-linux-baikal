@@ -1,7 +1,7 @@
 # Plano — S5 Power-Off via ICC (PS4 Baikal)
 
 **Data:** 2026-11-16 (revisado em 2026-11-16, contra o código-fonte e o acervo de RE)
-**Status:** 🟢 **Causa raiz confirmada ao vivo (2026-11-16, Fase 1):** o 4/1 original `{0,0,2,0,1,0}`, enviado pelo ioctl `/dev/icc` com o Linux rodando, **desliga o console por completo** (luz apaga, fan para). O payload está certo; o problema é o **contexto** do `pm_power_off` (H1). Próximo: Fase 2A (ver §10).
+**Status:** ✅ **RESOLVIDO (2026-11-16):** `sync && poweroff -f` com o kernel `20261116-s5-dma` desliga o console por completo (luz azul apaga, fan para). Patch `kernel/patches/ps4-icc-s5-poweroff-prepare.patch` (§11), validação em §12.
 **Tag alvo (só se a Fase 2 for necessária):** `20261116-s5-poweroff-fix`
 **Critério de aceite final:** depois de `sync && poweroff -f`, a luz azul **apaga** e o fan **para**. Precisa haver também evidência no log UART do que o kernel/MCU fez.
 
@@ -196,13 +196,13 @@ sshpass -p ps4 ssh root@192.168.6.128 "echo 8 > /proc/sys/kernel/printk; sync &&
 1. **Fase 0 sem dado:** `others/tests/uart_logs/s5-fase0_20261116_145019.bin` = 296.137 bytes `0x20` + 1 `0x00`. É a UART censurada do Orbis, **nenhuma linha do Linux**. A captura `s5-test-btf-disabled_20261116_162844` tem **0 bytes**. Sem log, não dá para saber se o `icc_shutdown` rodou, travou ou retornou cedo.
 2. **O patch implementou a versão refutada na §0:** campos em `payload[0x0E..0x10]` (= `msg+0x1A`), deixando zerados `payload[2..4]`, onde o código original punha `cause=2, depth=0, hand=1`. `depth` mudou de 0 para 1 sem fonte. Adicionou o 4/4 "pré-sync" e um 4/1 "ack" (`payload[0]=1`) sem evidência. Também mexeu no apcie.
 3. **Possível regressão de envio:** o patch faz `return` se o 4/4 falhar. No contexto do `pm_power_off` (LAPIC desligado, cadeia atômica, ver H1), o 4/4 tende a dar timeout ou travar, e então **o 4/1 nem chega a ser enviado**. O código antigo sempre tocava o doorbell do 4/1. Ainda adicionou `msleep()` em contexto atômico.
-4. **Duas variáveis na mesma tag:** além do S5, o config tem `CONFIG_DEBUG_INFO_BTF` desligado e `SCHED_CLASS_EXT`/`EXT_GROUP_SCHED` removidos, em relação ao `keep-mode-aplicado`. O script oficial não desliga o BTF, então o config veio de fora dele (**não reproduzível**). Também **não há snapshot** em `kernel/snapshots/` para essa tag.
+4. ~~Config fora do script / sem snapshot~~ — **CORREÇÃO:** essa afirmação estava errada. O `00-build-kernel-7.0.sh` **desliga o BTF** (`scripts/config --disable CONFIG_DEBUG_INFO_BTF`/`_MODULES`, linhas ~804-805; o comentário acima delas, que diz "BTF LIGADO", está desatualizado). O config da tag é reproduzível e o snapshot existe (`kernel/snapshots/kernel-src-20261116-20261116-btf-disabled-s5.tar.zst`). **BTF desligado é o estado atual do projeto.**
 5. Os comentários do patch afirmam "per Orbis RE (2026-07-30)" e "6 bytes truncated". **Ambos não se sustentam** pelo repo (ver §0).
 
 **Decisões:**
 - **Não promover** `20261116-btf-disabled-s5`. **Não commitar** o patch como está. Remover o bloco `PATCH_ICC_S5` do `00-build-kernel-7.0.sh` (ou trocá-lo por um patch da Fase 2A) antes do próximo build oficial.
 - **Próximo teste:**
-  1. Fase 0 refeita: iniciar a captura UART **já no Linux**, depois do SSH subir, com uns 60 s. Antes, conferir que a UART mostra o Linux (`echo s5-teste > /dev/kmsg` precisa aparecer no log). Rodar com o kernel **original** (6 bytes), para ter a linha de base.
+  1. Fase 0 refeita: iniciar a captura UART **já no Linux**, depois do SSH subir, com uns 60 s. Antes, conferir que a UART mostra o Linux (`echo s5-teste > /dev/kmsg` precisa aparecer no log).
   2. Fase 1: 4/1 com `{0,0,2,0,1,0}` pelo ioctl do `/dev/icc`, com IRQs vivas. É o teste que separa H1 (contexto) de H2 (payload).
 
 ---
@@ -239,5 +239,16 @@ sshpass -p ps4 ssh root@192.168.6.128 "echo 8 > /proc/sys/kernel/printk; sync &&
 
 **Pendente:**
 1. Incluir o patch no `00-build-kernel-7.0.sh` (lista do preflight + bloco `git apply --check`/`exit 1`, **depois** do `PATCH_RTC`). Adiado porque havia um build oficial (`20261116-dma-test`) rodando: editar um script bash em execução pode corromper o run.
-2. Build oficial com BTF **ligado** → tag `20261116-s5-poweroff-fix`. Deploy, UART conferida (`echo s5-teste > /dev/kmsg` visível), `sync && poweroff -f`, `shutdown -h now` e `reboot`.
+2. Build oficial pelo `00-build-kernel-7.0.sh` (BTF **desligado**, como o script já faz) → tag única `20261116-s5-dma`, junto com o harness DMA→SPM. Deploy, UART conferida (`echo s5-teste > /dev/kmsg` visível), `sync && poweroff -f`, `shutdown -h now` e `reboot`.
 3. Aceite: luz apaga e fan para, e a UART mostra `icc: S5 (power-off prepare): enviando ICC 4/1`.
+
+---
+
+## 12. Validação da Fase 2A — 2026-11-16: ✅ SUCESSO
+
+- **Kernel:** `20261116-s5-dma` (build oficial pelo `00-build-kernel-7.0.sh`, com o patch `ps4-icc-s5-poweroff-prepare.patch`). Módulos instalados por `install-modules-7.0.sh`, initramfs por `rebuild-initramfs-7.0.sh`, deploy por `deploy-boot-7.0.sh`.
+- **Teste:** `sync; poweroff -f` via SSH às 17:56:57. `Powering off.`, SSH caiu em ~7 s, ping parou.
+- **Resultado (confirmado pelo usuário):** **desligamento total**: luz azul apagada e fan parado. Primeiro S5 completo do Linux no PS4 Baikal. `test_history` id 91.
+- **Causa raiz, para registro:** o comando ICC 4/1 `{0,0,2,0,1,0}` sempre esteve certo. O `icc_shutdown` original rodava no `pm_power_off`, depois do `lapic_shutdown()` e numa cadeia atômica, onde o `bpcie_icc_cmd()` (mutex + espera por IRQ) não funciona. Enviar o mesmo comando em `SYS_OFF_MODE_POWER_OFF_PREPARE` resolve.
+- **Não verificado:** a UART não mostrou as linhas `pr_emerg` do handler. O console serial do Linux se desliga com 0,63 s de boot (só o `tty0` fica como console), problema anterior e independente deste.
+- **Pendente:** testar `shutdown -h now` (systemd) e `reboot`; promover a tag.

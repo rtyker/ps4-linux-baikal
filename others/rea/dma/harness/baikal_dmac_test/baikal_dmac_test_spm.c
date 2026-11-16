@@ -1,27 +1,32 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * baikal_dmac_test_spm — Extensão do harness para testar DMAC lendo/escrita da SPM (00:14.6 BAR2).
- * CÓPIA SEPARADA do baikal_dmac_test.c original (não altera o original).
+ * baikal_dmac_test_spm — harness de RE: o DMAC do Baikal (00:14.5, 104d:90dc)
+ * consegue LER a SPM/DDR3 (00:14.6, 104d:90dd, BAR2)?
  *
- * Objetivo (Passo 2 do PLANO_DMA_SPM_DDR3_2026-11-16.md):
- * - Testar se o DMAC (00:14.5, 104d:90dc) consegue ter o BAR2 da SPM (00:14.6, 0x80000000) como origem/destino
- * - Modo src_bar2=1: descritor com origem = 0x80000000 + off (candidato H1), destino = buffer coerente do host (< 4 GiB)
- * - Tamanhos crescentes: 256 B → 4 KiB → 64 KiB → 1 MiB, sempre dentro dos primeiros 4 MiB
- * - Comparar byte a byte com leitura de CPU do mesmo trecho (via baikal-memory)
+ * Passo 2 de others/rea/dma/plans/PLANO_DMA_SPM_DDR3_2026-11-16.md.
+ * Cópia separada do baikal_dmac_test.c (o original não muda).
  *
- * Pré-condições (do plano):
- * - rmmod baikal_dmac antes (disputam o 90dc)
- * - Usar controlador BAR0 (MSI funciona no BAR0; teste vai por polling)
- * - Parar na primeira falha
- * - Salvaguardas herdadas: controlador ocioso, LEN/SRC/DST zerados e relidos, buffers mantidos se erro, reset RST=2→0
+ * SOMENTE LEITURA da SPM: o DMAC copia SPM -> buffer coerente do host.
+ * Nada é escrito na SPM (o modo de escrita é o Passo 3 e só vem se este passar).
  *
- * Candidatos de endereço para testar (H1 e H2):
- * H1: 0x80000000 + off  (janela PCI do BAR2 da SPM)
- * H2: 0xC0000000 + off  (endereço interno citado no writeup do Debarshi)
- * H2b: 0x10040000       (resíduo Orbis lido no DMAC BAR2 SRC)
- * H2c: 0xCBC00000       (resíduo Orbis lido no DMAC BAR2 DST)
+ * O que o teste faz, por tamanho (256 B, 4 KiB, 64 KiB, 1 MiB; para na 1a falha):
+ *   1. CPU lê o trecho da SPM com memcpy_fromio (referência + vazão CPU);
+ *   2. DMAC copia o mesmo trecho para o buffer B (por polling, timeout 2 s);
+ *   3. compara B com a leitura da CPU e confere a guarda de 4 KiB depois de B;
+ *   4. CPU lê o trecho de novo: se mudou entre 1 e 4, a SPM está viva
+ *      (outro agente escreve nela) e a comparação é marcada como inconclusiva.
  *
- * NUNCA varrer endereços às cegas — só testar candidatos do Passo 0.
+ * Endereço que o DMAC usa para a SPM (spm_base), só candidatos do plano:
+ *   0x80000000 (H1: endereço PCI do BAR2, padrão) ou 0xC0000000 (H2: writeup
+ *   do Debarshi). Qualquer outro valor é recusado. O BAR2 da SPM é mapeado
+ *   para a leitura de referência da CPU e TEM que estar em 0x80000000, senão
+ *   nada é armado.
+ *
+ * Pré-condições: rmmod baikal_dmac (disputam o 90dc). baikal-memory pode ficar
+ * carregado (o harness só faz ioremap do BAR2, sem request_mem_region).
+ *
+ * Uso: insmod baikal_dmac_test_spm.ko run=1 [bar=0] [spm_base=0x80000000]
+ *      [spm_offset=0] [maxkb=1024]
  */
 
 #include <linux/module.h>
@@ -30,9 +35,9 @@
 #include <linux/delay.h>
 #include <linux/io.h>
 #include <linux/ktime.h>
-#include <linux/interrupt.h>
-#include <linux/completion.h>
-#include <asm/ps4.h>
+#include <linux/sizes.h>
+#include <linux/slab.h>
+#include <linux/vmalloc.h>
 
 #define DMAC_UNK70     0x70
 #define DMAC_INT_FLAG  0x80
@@ -48,37 +53,35 @@
 #define DMAC_DESC_EN   0xa8
 #define DMAC_DEBUG_ST  0xac
 
-/* Parâmetros do módulo */
+#define SPM_VENDOR     0x104d
+#define SPM_DEVICE     0x90dd
+#define SPM_PCI_BAR2   0x80000000UL
+#define SPM_WINDOW     SZ_4M		/* mesma janela do baikal-memory */
+#define GUARD          4096
+#define FILL_B         0xee
+
 static int run;
 module_param(run, int, 0444);
+MODULE_PARM_DESC(run, "1 = executa o teste (0 = só imprime registradores)");
 static int bar;
 module_param(bar, int, 0444);
-static unsigned int tests = 1;
-module_param(tests, uint, 0444);
-static unsigned int bigkb = 64;
-module_param(bigkb, uint, 0444);
-static int inten;
-module_param(inten, int, 0444);
-static int irqmode;
-module_param(irqmode, int, 0444);
-static int nvec = 1;
-module_param(nvec, int, 0444);
-
-/* NOVO: modo SPM — origem/destino no BAR2 da SPM (0x80000000) */
-static int src_bar2;
-module_param(src_bar2, int, 0444);
-static int dst_bar2;
-module_param(dst_bar2, int, 0444);
-
-/* NOVO: endereço base candidato para a SPM no DMAC */
-static unsigned long spm_base = 0x80000000UL;  /* H1: janela PCI BAR2 SPM */
+MODULE_PARM_DESC(bar, "controlador do DMAC: 0 (DMAC1, padrão) ou 2 (DMAC2)");
+static unsigned long spm_base = SPM_PCI_BAR2;
 module_param(spm_base, ulong, 0444);
-
-/* NOVO: offset dentro da janela (deve ser < 4 MiB = 0x400000) */
+MODULE_PARM_DESC(spm_base, "endereço da SPM visto pelo DMAC: 0x80000000 (H1) ou 0xC0000000 (H2)");
 static unsigned long spm_offset;
 module_param(spm_offset, ulong, 0444);
+MODULE_PARM_DESC(spm_offset, "offset na SPM (múltiplo de 64, dentro de 4 MiB)");
+static unsigned int maxkb = 1024;
+module_param(maxkb, uint, 0444);
+MODULE_PARM_DESC(maxkb, "maior tamanho testado em KiB (até 1024)");
+static int write;
+module_param(write, int, 0444);
+MODULE_PARM_DESC(write, "1 = DMA host->SPM (Passo 3). Só em spm_offset=0x200000, maxkb<=64");
 
-#define GUARD 4096
+/* Janela única onde o modo write pode escrever (validada em 2026-11-16). */
+#define WR_OFF		0x200000UL
+#define WR_MAX		SZ_64K
 
 struct dmac_desc {
 	__le32 src;
@@ -89,44 +92,16 @@ struct dmac_desc {
 
 struct ctx {
 	struct device *dev;
-	void __iomem *r;
-	bool leak;
-	u8 *a, *b;
-	dma_addr_t dma_a, dma_b;
-	size_t sz;
+	void __iomem *r;		/* registradores do DMAC */
+	void __iomem *spm;		/* BAR2 da SPM (4 MiB) */
+	u8 *b;				/* destino do DMA (coerente) */
+	dma_addr_t dma_b;
 	struct dmac_desc *d;
 	dma_addr_t dma_d;
-	int pass, fail;
-
-	/* interrupção */
-	bool irq_ok;
-	int irq;
-	int irqs[2];
-	int nirq;
-	unsigned int hits[2];
-	struct completion done;
-	u32 irq_flag;
-	unsigned int irq_count, irq_missed;
+	size_t sz;
+	bool leak;
+	int pass, fail, inconcl;
 };
-
-static irqreturn_t dmac_irq(int irq, void *data)
-{
-	struct ctx *c = data;
-	u32 f;
-
-	if (c->nirq > 1 && irq == c->irqs[1])
-		c->hits[1]++;
-	else
-		c->hits[0]++;
-	f = readl(c->r + DMAC_INT_FLAG);
-	if (!(f & 0x1f))
-		return IRQ_NONE;
-	c->irq_flag = f;
-	c->irq_count++;
-	writel(f & ~0x1u, c->r + DMAC_INT_FLAG);
-	complete(&c->done);
-	return IRQ_HANDLED;
-}
 
 static void dump_regs(struct device *dev, void __iomem *r, const char *tag)
 {
@@ -135,9 +110,9 @@ static void dump_regs(struct device *dev, void __iomem *r, const char *tag)
 		DMAC_DST, DMAC_LEN, DMAC_DESC_EN, DMAC_DEBUG_ST };
 	int i;
 
-	dev_info(dev, "%s:", tag);
+	dev_info(dev, "%s:\n", tag);
 	for (i = 0; i < ARRAY_SIZE(offs); i++)
-		dev_info(dev, "  +0x%02x = 0x%08x", offs[i], readl(r + offs[i]));
+		dev_info(dev, "  +0x%02x = 0x%08x\n", offs[i], readl(r + offs[i]));
 }
 
 static int con_for(u32 or_all, u32 *con)
@@ -151,459 +126,334 @@ static int con_for(u32 or_all, u32 *con)
 	return 0;
 }
 
-/* NOVO: validação de offset SPM (deve estar dentro dos primeiros 4 MiB) */
-static bool spm_offset_valid(unsigned long off)
-{
-	return off < 0x400000UL;  /* 4 MiB = janela mapeada pelo baikal-memory */
-}
-
+/* Mesma sequência validada em 2026-11-13 (baikal_dmac_test.c), só polling. */
 static int hw_xfer(struct ctx *c, u32 con, u64 *ns)
 {
 	void __iomem *r = c->r;
-	struct device *dev = c->dev;
 	unsigned long to;
 	ktime_t t0;
 	u32 f = 0;
-	bool acked = false;
 
 	if (readl(r + DMAC_INT_FLAG) || readl(r + DMAC_INT) || readl(r + DMAC_DESC_EN) ||
 	    readl(r + DMAC_EN) || readl(r + DMAC_DESC_ADDR)) {
-		dev_err(dev, "controlador NAO ocioso; nada escrito\n");
+		dev_err(c->dev, "controlador NAO ocioso; nada escrito\n");
 		return -EBUSY;
 	}
 	writel(0, r + DMAC_LEN);
 	writel(0, r + DMAC_SRC);
 	writel(0, r + DMAC_DST);
 	if (readl(r + DMAC_LEN) || readl(r + DMAC_SRC) || readl(r + DMAC_DST)) {
-		dev_err(dev, "LEN/SRC/DST nao zeraram; abortando antes de armar\n");
+		dev_err(c->dev, "LEN/SRC/DST nao zeraram; abortando antes de armar\n");
 		return -EIO;
 	}
 	writel(lower_32_bits(c->dma_d), r + DMAC_DESC_ADDR);
 	writel(0, r + DMAC_INT_FLAG);
 	writel(con, r + DMAC_CON);
-	writel((inten || c->irq_ok) ? 3 : 0, r + DMAC_INT);
-	if (c->irq_ok) {
-		reinit_completion(&c->done);
-		c->irq_flag = 0;
-	}
+	writel(0, r + DMAC_INT);
 	wmb();
 	t0 = ktime_get();
 	writel(1, r + DMAC_DESC_EN);
 
-	if (c->irq_ok) {
-		if (wait_for_completion_timeout(&c->done, msecs_to_jiffies(2000))) {
-			f = c->irq_flag;
-			acked = true;
-		} else {
-			f = readl(r + DMAC_INT_FLAG);
-			if (f & 0x1f) {
-				c->irq_missed++;
-				dev_warn(dev, "IRQ NAO entregue, mas INT_FLAG=0x%x (so por polling)\n", f);
-			}
-		}
-	} else {
-		to = jiffies + msecs_to_jiffies(2000);
-		while (time_before(jiffies, to)) {
-			f = readl(r + DMAC_INT_FLAG);
-			if (f & 0x1f)
-				break;
-			cpu_relax();
-		}
+	to = jiffies + msecs_to_jiffies(2000);
+	while (time_before(jiffies, to)) {
+		f = readl(r + DMAC_INT_FLAG);
+		if (f & 0x1f)
+			break;
+		cpu_relax();
 	}
 	*ns = ktime_to_ns(ktime_sub(ktime_get(), t0));
 	if (!(f & 0x1f)) {
-		dev_err(dev, "TIMEOUT (INT_FLAG=0x%x); reset e buffers mantidos\n", f);
-		writel(2, r + DMAC_RST);
-		udelay(50);
-		writel(0, r + DMAC_RST);
-		c->leak = true;
-		return -ETIMEDOUT;
+		dev_err(c->dev, "TIMEOUT (INT_FLAG=0x%x DEBUG_ST=0x%x); reset e buffers mantidos\n",
+			f, readl(r + DMAC_DEBUG_ST));
+		goto reset;
 	}
 	if (f & 0x1e) {
-		dev_err(dev, "ERRO do DMAC: INT_FLAG=0x%x DEBUG_ST=0x%x; buffers mantidos\n",
+		dev_err(c->dev, "ERRO do DMAC: INT_FLAG=0x%x DEBUG_ST=0x%x; buffers mantidos\n",
 			f, readl(r + DMAC_DEBUG_ST));
-		writel(2, r + DMAC_RST);
-		udelay(50);
-		writel(0, r + DMAC_RST);
-		c->leak = true;
-		return -EIO;
+		goto reset;
 	}
-	if (!acked)
-		writel(f & ~0x1u, r + DMAC_INT_FLAG);
-	writel(0, r + DMAC_INT);
+	writel(f & ~0x1u, r + DMAC_INT_FLAG);
 	return 0;
+reset:
+	writel(2, r + DMAC_RST);
+	udelay(50);
+	writel(0, r + DMAC_RST);
+	c->leak = true;
+	return (f & 0x1f) ? -EIO : -ETIMEDOUT;
 }
 
-static void fill(struct ctx *c, u32 salt)
+static u64 mbps(size_t bytes, u64 ns)
 {
-	size_t i;
-
-	for (i = 0; i < c->sz + GUARD; i++) {
-		c->a[i] = (u8)((i * 7 + salt) ^ 0x5a);
-		c->b[i] = 0xee;
-	}
+	return ns ? div64_u64((u64)bytes * 1000, ns) : 0;	/* bytes/ns*1000 = MB/s */
 }
 
-static bool verify(struct ctx *c, u32 salt, struct dmac_desc *seg, int nseg)
+/* Retorna 0 = PASS, 1 = inconclusivo, <0 = FAIL. */
+static int test_read(struct ctx *c, u32 len)
 {
-	size_t i;
-	int s;
-	bool ok = true;
-	u8 *exp = kmalloc(c->sz + GUARD, GFP_KERNEL);
-
-	if (!exp)
-		return false;
-	memset(exp, 0xee, c->sz + GUARD);
-	for (s = 0; s < nseg; s++) {
-		u32 so = le32_to_cpu(seg[s].src) - lower_32_bits(c->dma_a);
-		u32 dof = le32_to_cpu(seg[s].dst) - lower_32_bits(c->dma_b);
-		u32 l = le32_to_cpu(seg[s].len);
-
-		for (i = 0; i < l; i++)
-			exp[dof + i] = (u8)(((so + i) * 7 + salt) ^ 0x5a);
-	}
-	for (i = 0; i < c->sz + GUARD; i++) {
-		if (c->b[i] != exp[i]) {
-			dev_err(c->dev, "  B[%zu]=0x%02x esperado 0x%02x%s\n", i, c->b[i], exp[i],
-				i >= c->sz ? " (GUARDA violada!)" : "");
-			ok = false;
-			break;
-		}
-		if (c->a[i] != (u8)((i * 7 + salt) ^ 0x5a)) {
-			dev_err(c->dev, "  A[%zu] foi alterado\n", i);
-			ok = false;
-			break;
-		}
-	}
-	kfree(exp);
-	return ok;
-}
-
-/* NOVO: verificação contra leitura CPU (via memcpy_fromio do mesmo endereço SPM) */
-static bool verify_against_cpu_read(struct ctx *c, void __iomem *spm_virt, u32 salt,
-				    struct dmac_desc *seg, int nseg)
-{
-	size_t i;
-	int s;
-	bool ok = true;
-	u8 *exp = kmalloc(c->sz + GUARD, GFP_KERNEL);
-	u8 *cpu_read = kmalloc(c->sz + GUARD, GFP_KERNEL);
-
-	if (!exp || !cpu_read) {
-		kfree(exp);
-		kfree(cpu_read);
-		return false;
-	}
-
-	/* Preenche expected com o padrão conhecido */
-	memset(exp, 0xee, c->sz + GUARD);
-	for (s = 0; s < nseg; s++) {
-		u32 so = le32_to_cpu(seg[s].src) - lower_32_bits(c->dma_a);
-		u32 dof = le32_to_cpu(seg[s].dst) - lower_32_bits(c->dma_b);
-		u32 l = le32_to_cpu(seg[s].len);
-
-		for (i = 0; i < l; i++)
-			exp[dof + i] = (u8)(((so + i) * 7 + salt) ^ 0x5a);
-	}
-
-	/* Lê via CPU do mesmo endereço SPM que o DMAC usou como origem */
-	for (s = 0; s < nseg; s++) {
-		u32 spm_phys = le32_to_cpu(seg[s].src);
-		u32 dof = le32_to_cpu(seg[s].dst) - lower_32_bits(c->dma_b);
-		u32 l = le32_to_cpu(seg[s].len);
-		void __iomem *spm_src = spm_virt + (spm_phys - spm_base);
-
-		memcpy_fromio(cpu_read + dof, spm_src, l);
-	}
-
-	/* Compara B (resultado DMAC) com cpu_read (leitura CPU) */
-	for (i = 0; i < c->sz + GUARD; i++) {
-		if (c->b[i] != cpu_read[i]) {
-			dev_err(c->dev, "  DMAC B[%zu]=0x%02x != CPU read 0x%02x%s\n", i, c->b[i], cpu_read[i],
-				i >= c->sz ? " (GUARDA violada!)" : "");
-			ok = false;
-			break;
-		}
-		if (c->b[i] != exp[i]) {
-			dev_err(c->dev, "  B[%zu]=0x%02x != expected 0x%02x\n", i, c->b[i], exp[i]);
-			ok = false;
-			break;
-		}
-	}
-
-	kfree(exp);
-	kfree(cpu_read);
-	return ok;
-}
-
-static void result(struct ctx *c, const char *name, int rc, bool ok, u64 ns, size_t bytes)
-{
-	if (rc == 0 && ok) {
-		c->pass++;
-		dev_info(c->dev, "TESTE %-28s PASS  (%llu ns, %zu B)\n", name, ns, bytes);
-	} else {
-		c->fail++;
-		dev_err(c->dev, "TESTE %-28s FAIL  (rc=%d ok=%d)\n", name, rc, ok);
-	}
-}
-
-static int single_desc_spm(struct ctx *c, void __iomem *spm_virt, u32 spm_off,
-			   u32 host_off, u32 len, u32 salt,
-			   const char *name, u32 *con_out)
-{
+	u32 off = spm_offset;
 	u32 con;
-	u64 ns = 0;
-	int rc;
-	bool ok;
+	u64 ns_dma = 0, ns_cpu;
+	u8 *ref, *ref2;
+	ktime_t t0;
+	size_t i;
+	int rc, ret;
 
-	if (!spm_offset_valid(spm_off)) {
-		dev_err(c->dev, "%s: spm_offset 0x%x fora da janela 4 MiB\n", name, spm_off);
-		c->fail++;
+	if (con_for((u32)(spm_base + off) | lower_32_bits(c->dma_b) | len, &con)) {
+		dev_err(c->dev, "%u B: alinhamento invalido\n", len);
 		return -EINVAL;
 	}
-
-	if (con_for(lower_32_bits(c->dma_a + host_off) | spm_base + spm_off | len, &con)) {
-		dev_err(c->dev, "%s: alinhamento invalido\n", name);
-		c->fail++;
-		return -EINVAL;
+	ref = vmalloc(len);
+	ref2 = vmalloc(len);
+	if (!ref || !ref2) {
+		vfree(ref);
+		vfree(ref2);
+		return -ENOMEM;
 	}
 
-	fill(c, salt);
+	/* 1. referência pela CPU (e vazão do caminho atual) */
+	t0 = ktime_get();
+	memcpy_fromio(ref, c->spm + off, len);
+	ns_cpu = ktime_to_ns(ktime_sub(ktime_get(), t0));
 
-	if (src_bar2) {
-		/* DMAC lê da SPM, escreve no host buffer */
-		c->d[0].src = cpu_to_le32(spm_base + spm_off);
-		c->d[0].dst = cpu_to_le32(lower_32_bits(c->dma_b + host_off));
-	} else if (dst_bar2) {
-		/* DMAC lê do host buffer, escreve na SPM */
-		c->d[0].src = cpu_to_le32(lower_32_bits(c->dma_a + host_off));
-		c->d[0].dst = cpu_to_le32(spm_base + spm_off);
-	} else {
-		dev_err(c->dev, "%s: nem src_bar2 nem dst_bar2 habilitado\n", name);
-		c->fail++;
-		return -EINVAL;
-	}
+	/* 2. DMA SPM -> B */
+	memset(c->b, FILL_B, c->sz + GUARD);
+	c->d[0].src = cpu_to_le32((u32)(spm_base + off));
+	c->d[0].dst = cpu_to_le32(lower_32_bits(c->dma_b));
 	c->d[0].len = cpu_to_le32(len);
 	c->d[0].next = 0;
-
-	rc = hw_xfer(c, con, &ns);
-
-	if (src_bar2) {
-		ok = rc ? false : verify_against_cpu_read(c, spm_virt, salt, c->d, 1);
-	} else {
-		/* Para escrita na SPM: readback via CPU e comparação */
-		if (rc == 0) {
-			u8 *cpu_read = kmalloc(len, GFP_KERNEL);
-			if (cpu_read) {
-				void __iomem *spm_dst = spm_virt + spm_off;
-				memcpy_fromio(cpu_read, spm_dst, len);
-				ok = true;
-				for (i = 0; i < len; i++) {
-					u8 expected = (u8)((i * 7 + salt) ^ 0x5a);
-					if (cpu_read[i] != expected) {
-						dev_err(c->dev, "  SPM write readback[%u]=0x%02x expected 0x%02x\n",
-							i, cpu_read[i], expected);
-						ok = false;
-						break;
-					}
-				}
-				kfree(cpu_read);
-			} else {
-				ok = false;
-			}
-		} else {
-			ok = false;
-		}
+	rc = hw_xfer(c, con, &ns_dma);
+	if (rc) {
+		dev_err(c->dev, "TESTE read %7u B  FAIL  (hw_xfer rc=%d)\n", len, rc);
+		ret = rc;
+		goto out;
 	}
 
-	if (con_out)
-		*con_out = con;
-	result(c, name, rc, ok, ns, len);
-	return rc;
+	/* 4. segunda leitura da CPU, para detectar SPM mudando sozinha */
+	memcpy_fromio(ref2, c->spm + off, len);
+
+	/* 3. comparação + guarda */
+	ret = 0;
+	for (i = len; i < len + GUARD; i++) {
+		if (c->b[i] != FILL_B) {
+			dev_err(c->dev, "  GUARDA violada: B[%zu]=0x%02x\n", i, c->b[i]);
+			ret = -EFAULT;
+			goto report;
+		}
+	}
+	for (i = 0; i < len; i++) {
+		if (c->b[i] != ref[i]) {
+			if (memcmp(ref, ref2, len)) {
+				dev_warn(c->dev, "  B[%zu]=0x%02x != CPU 0x%02x, mas a SPM mudou entre as leituras da CPU\n",
+					 i, c->b[i], ref[i]);
+				ret = 1;
+			} else {
+				dev_err(c->dev, "  B[%zu]=0x%02x != CPU 0x%02x (SPM estável)\n",
+					i, c->b[i], ref[i]);
+				ret = -EIO;
+			}
+			goto report;
+		}
+	}
+	/* Leitura de zeros nos dois lados não prova nada sobre o endereço. */
+	if (!memchr_inv(ref, 0, len) && !memchr_inv(c->b, 0, len))
+		dev_warn(c->dev, "  aviso: trecho todo 0x00 (igualdade fraca: use um spm_offset com dados)\n");
+	if (!memchr_inv(c->b, 0xff, len))
+		dev_warn(c->dev, "  aviso: DMA leu tudo 0xff (padrão de leitura sem resposta)\n");
+report:
+	dev_info(c->dev, "TESTE read %7u B  %s  DMA %llu ns (%llu MB/s) | CPU %llu ns (%llu MB/s)\n",
+		 len, ret == 0 ? "PASS " : ret == 1 ? "INCON" : "FAIL ",
+		 ns_dma, mbps(len, ns_dma), ns_cpu, mbps(len, ns_cpu));
+	print_hex_dump(KERN_INFO, "  spm[0..63] ", DUMP_PREFIX_OFFSET, 16, 1, ref,
+		       min_t(u32, len, 64), false);
+out:
+	vfree(ref);
+	vfree(ref2);
+	return ret;
+}
+
+/*
+ * Passo 3: DMA host (A) -> SPM. Retorna 0 = PASS, <0 = FAIL.
+ * Verifica pela CPU: o trecho escrito == A, e a guarda de 4 KiB depois dele
+ * na SPM não mudou (snapshot antes x depois).
+ */
+static int test_write(struct ctx *c, u8 *a, dma_addr_t dma_a, u32 len, u32 salt)
+{
+	u32 off = spm_offset;
+	u32 con, i;
+	u64 ns_dma = 0, ns_cpu;
+	u8 *rb, *g0, *g1;
+	ktime_t t0;
+	int rc, ret = 0;
+
+	if (con_for(lower_32_bits(dma_a) | (u32)(spm_base + off) | len, &con))
+		return -EINVAL;
+	rb = vmalloc(len);
+	g0 = vmalloc(GUARD);
+	g1 = vmalloc(GUARD);
+	if (!rb || !g0 || !g1) {
+		ret = -ENOMEM;
+		goto out;
+	}
+	for (i = 0; i < len; i++)
+		a[i] = (u8)((i * 13 + salt) ^ 0xa5);
+	memcpy_fromio(g0, c->spm + off + len, GUARD);
+
+	/* referência de vazão da CPU para escrita no mesmo trecho */
+	t0 = ktime_get();
+	memcpy_toio(c->spm + off, a, len);
+	ns_cpu = ktime_to_ns(ktime_sub(ktime_get(), t0));
+	memset_io(c->spm + off, 0, len);	/* zera antes do DMA */
+
+	c->d[0].src = cpu_to_le32(lower_32_bits(dma_a));
+	c->d[0].dst = cpu_to_le32((u32)(spm_base + off));
+	c->d[0].len = cpu_to_le32(len);
+	c->d[0].next = 0;
+	rc = hw_xfer(c, con, &ns_dma);
+	if (rc) {
+		dev_err(c->dev, "TESTE write %7u B  FAIL  (hw_xfer rc=%d)\n", len, rc);
+		ret = rc;
+		goto out;
+	}
+	memcpy_fromio(rb, c->spm + off, len);
+	memcpy_fromio(g1, c->spm + off + len, GUARD);
+	if (memcmp(rb, a, len)) {
+		for (i = 0; i < len && rb[i] == a[i]; i++)
+			;
+		dev_err(c->dev, "  SPM[%u]=0x%02x != escrito 0x%02x\n", i, rb[i], a[i]);
+		ret = -EIO;
+	} else if (memcmp(g0, g1, GUARD)) {
+		dev_err(c->dev, "  GUARDA da SPM alterada depois do trecho escrito\n");
+		ret = -EFAULT;
+	}
+	dev_info(c->dev, "TESTE write %7u B  %s  DMA %llu ns (%llu MB/s) | CPU %llu ns (%llu MB/s)\n",
+		 len, ret ? "FAIL " : "PASS ", ns_dma, mbps(len, ns_dma), ns_cpu, mbps(len, ns_cpu));
+out:
+	vfree(rb);
+	vfree(g0);
+	vfree(g1);
+	return ret;
 }
 
 static void run_tests(struct pci_dev *pdev, void __iomem *r)
 {
+	static const u32 sizes[] = { 256, SZ_4K, SZ_64K, SZ_1M };
 	struct device *dev = &pdev->dev;
 	struct ctx c = { .dev = dev, .r = r };
-	size_t big = (size_t)clamp(bigkb, 4u, 1024u) * 1024;
-	int i;
+	struct pci_dev *spm_pdev;
+	resource_size_t spm_start;
+	u32 maxb = min_t(u32, maxkb, 1024) * 1024;
+	int i, rc;
 
-	/* NOVO: mapear a SPM BAR2 (0x80000000) para readback CPU */
-	void __iomem *spm_virt = NULL;
-	resource_size_t spm_phys = 0x80000000ULL;
+	if (spm_base != 0x80000000UL && spm_base != 0xC0000000UL) {
+		dev_err(dev, "spm_base=0x%lx recusado: so 0x80000000 (H1) ou 0xC0000000 (H2)\n", spm_base);
+		return;
+	}
+	if (write && (spm_base != 0xC0000000UL || spm_offset != WR_OFF || maxb > WR_MAX)) {
+		dev_err(dev, "write=1 recusado: exige spm_base=0xC0000000, spm_offset=0x%lx, maxkb<=%u\n",
+			WR_OFF, WR_MAX / 1024);
+		return;
+	}
+	if (spm_offset % 64 || spm_offset + maxb > SPM_WINDOW) {
+		dev_err(dev, "spm_offset=0x%lx invalido (multiplo de 64 e offset+%u <= 4 MiB)\n",
+			spm_offset, maxb);
+		return;
+	}
 
-	/* A SPM é device 00:14.6, mas o DMAC é 00:14.5.
-	 * Para readback CPU, precisamos mapear a SPM BAR2.
-	 * Isso seria feito idealmente via pci_get_device + ioremap,
-	 * mas como este é um harness de teste, assumimos que a SPM
-	 * já está mapeada pelo baikal-memory ou mapeamos aqui.
-	 * NOTA: Em produção, o harness deveria receber o ponteiro
-	 * da SPM via parâmetro ou achar o device 00:14.6. */
+	spm_pdev = pci_get_device(SPM_VENDOR, SPM_DEVICE, NULL);
+	if (!spm_pdev) {
+		dev_err(dev, "SPM 104d:90dd nao encontrada\n");
+		return;
+	}
+	spm_start = pci_resource_start(spm_pdev, 2);
+	if (spm_start != SPM_PCI_BAR2 || pci_resource_len(spm_pdev, 2) < SPM_WINDOW) {
+		dev_err(dev, "BAR2 da SPM em %pa (esperado 0x80000000); nada armado\n", &spm_start);
+		goto put_spm;
+	}
+	c.spm = ioremap(spm_start, SPM_WINDOW);
+	if (!c.spm) {
+		dev_err(dev, "ioremap do BAR2 da SPM falhou\n");
+		goto put_spm;
+	}
 
-	c.sz = big;
+	c.sz = maxb;
 	if (dma_set_mask_and_coherent(dev, DMA_BIT_MASK(32))) {
 		dev_err(dev, "mascara DMA de 32 bits indisponivel\n");
-		return;
+		goto unmap;
 	}
 	pci_set_master(pdev);
-	c.a = dma_alloc_coherent(dev, c.sz + GUARD, &c.dma_a, GFP_KERNEL);
 	c.b = dma_alloc_coherent(dev, c.sz + GUARD, &c.dma_b, GFP_KERNEL);
 	c.d = dma_alloc_coherent(dev, 4096, &c.dma_d, GFP_KERNEL);
-	if (!c.a || !c.b || !c.d) {
-		dev_err(dev, "falha ao alocar buffers (nada programado)\n");
-		return;
+	if (!c.b || !c.d || upper_32_bits(c.dma_b + c.sz + GUARD) || upper_32_bits(c.dma_d)) {
+		dev_err(dev, "buffers indisponiveis ou fora de 32 bits; nada armado\n");
+		goto free;
 	}
-	if (upper_32_bits(c.dma_a + c.sz + GUARD) || upper_32_bits(c.dma_b + c.sz + GUARD) ||
-	    upper_32_bits(c.dma_d)) {
-		dev_err(dev, "buffers fora de 32 bits; abortando\n");
-		return;
-	}
-	dev_info(dev, "buffers: A=%pad B=%pad desc=%pad util=%zu B (+%d guarda)\n",
-		 &c.dma_a, &c.dma_b, &c.dma_d, c.sz, GUARD);
+	dev_info(dev, "=== DMAC%d le SPM: spm_base=0x%lx (%s) offset=0x%lx | B=%pad desc=%pad ===\n",
+		 bar == 0 ? 1 : 2, spm_base, spm_base == SPM_PCI_BAR2 ? "H1" : "H2",
+		 spm_offset, &c.dma_b, &c.dma_d);
 
-	init_completion(&c.done);
-	if (irqmode) {
-		int n = nvec > 1 ? pci_alloc_irq_vectors(pdev, nvec, nvec, PCI_IRQ_MSI)
-				: bpcie_assign_irqs(pdev, 1);
+	if (write) {
+		static const u32 wsizes[] = { 256, SZ_4K, SZ_64K };
+		dma_addr_t dma_a;
+		u8 *a = dma_alloc_coherent(dev, WR_MAX, &dma_a, GFP_KERNEL);
 
-		if (n <= 0) {
-			dev_err(dev, "alocacao de IRQ falhou: n=%d\n", n);
-		} else {
-			int k, ok = 0;
-
-			c.nirq = min(n, 2);
-			for (k = 0; k < c.nirq; k++) {
-				c.irqs[k] = nvec > 1 ? pci_irq_vector(pdev, k) : pdev->irq;
-				if (request_irq(c.irqs[k], dmac_irq, IRQF_SHARED, "baikal_dmac_test_spm", &c))
-					break;
-				ok++;
-			}
-			if (ok != c.nirq) {
-				dev_err(dev, "request_irq falhou no vetor %d\n", ok);
-				while (ok--)
-					free_irq(c.irqs[ok], &c);
-				pci_free_irq_vectors(pdev);
-			} else {
-				c.irq = c.irqs[0];
-				c.irq_ok = true;
-				dev_info(dev, "IRQs registradas: %d%s%d (vetores=%d)\n", c.irqs[0],
-					 c.nirq > 1 ? " e " : " / -", c.nirq > 1 ? c.irqs[1] : 0, n);
-			}
+		if (!a || upper_32_bits(dma_a + WR_MAX)) {
+			dev_err(dev, "buffer A indisponivel ou fora de 32 bits; nada armado\n");
+			if (a)
+				dma_free_coherent(dev, WR_MAX, a, dma_a);
+			goto free;
 		}
-		if (!c.irq_ok) {
-			dev_err(dev, "modo IRQ indisponivel; abortando sem armar o DMAC\n");
-			dma_free_coherent(dev, 4096, c.d, c.dma_d);
-			dma_free_coherent(dev, c.sz + GUARD, c.b, c.dma_b);
-			dma_free_coherent(dev, c.sz + GUARD, c.a, c.dma_a);
-			return;
-		}
-	}
-
-	/* Testes SPM (src_bar2 ou dst_bar2) */
-	if (src_bar2 || dst_bar2) {
-		dev_info(dev, "=== TESTES SPM (src_bar2=%d dst_bar2=%d spm_base=0x%lx spm_offset=0x%lx) ===\n",
-			 src_bar2, dst_bar2, spm_base, spm_offset);
-
-		if (tests & 1) {
-			char nm[40];
-			snprintf(nm, sizeof(nm), "SPM %s 256B", src_bar2 ? "read" : "write");
-			single_desc_spm(&c, spm_virt, spm_offset, 0, 256, 0x11, nm, NULL);
-		}
-
-		if ((tests & 4) && !c.leak) {
-			char nm[40];
-			snprintf(nm, sizeof(nm), "SPM %s %zu KiB", src_bar2 ? "read" : "write", c.sz / 1024);
-			single_desc_spm(&c, spm_virt, spm_offset, 0, c.sz, 0x33, nm, NULL);
-		}
-
-		/* Alinhamentos */
-		if ((tests & 8) && !c.leak) {
-			static const unsigned int tz[] = { 2, 3, 4, 5, 6 };
-			char nm[40];
-
-			for (i = 0; i < ARRAY_SIZE(tz) && !c.leak; i++) {
-				u32 unit = 1u << tz[i];
-				u32 off = spm_offset + unit;  /* offset alinhado */
-
-				if (!spm_offset_valid(off))
-					break;
-
-				snprintf(nm, sizeof(nm), "SPM %s alinh %u B", src_bar2 ? "read" : "write", unit);
-				single_desc_spm(&c, spm_virt, off, unit, unit * 3, 0x44 + i, nm, NULL);
-			}
-		}
-	} else {
-		/* Testes originais (host-to-host) */
-		if (tests & 1)
-			single_desc(&c, 0, 0, 256, 0x11, "simples 256B", NULL);
-
-		if ((tests & 2) && !c.leak) {
-			static const u32 so[3] = { 0, 1024, 4096 };
-			static const u32 dof[3] = { 0, 512, 2048 };
-			static const u32 ln[3] = { 128, 256, 64 };
-			u32 con, orv = 0, salt = 0x22;
-			u64 ns = 0;
-			int rc;
-			bool ok;
-
-			fill(&c, salt);
-			for (i = 0; i < 3; i++) {
-				c.d[i].src = cpu_to_le32(lower_32_bits(c.dma_a + so[i]));
-				c.d[i].dst = cpu_to_le32(lower_32_bits(c.dma_b + dof[i]));
-				c.d[i].len = cpu_to_le32(ln[i]);
-				c.d[i].next = i == 2 ? 0 : cpu_to_le32(lower_32_bits(c.dma_d + 16 * (i + 1)));
-				orv |= lower_32_bits(c.dma_a + so[i]) | lower_32_bits(c.dma_b + dof[i]) | ln[i];
-			}
-			if (con_for(orv, &con)) {
+		dev_info(dev, "=== DMAC%d ESCREVE na SPM: 0x%lx + 0x%lx | A=%pad ===\n",
+			 bar == 0 ? 1 : 2, spm_base, spm_offset, &dma_a);
+		for (i = 0; i < ARRAY_SIZE(wsizes) && wsizes[i] <= maxb; i++) {
+			rc = test_write(&c, a, dma_a, wsizes[i], 0x60 + i);
+			if (rc) {
 				c.fail++;
-			} else {
-				rc = hw_xfer(&c, con, &ns);
-				ok = rc ? false : verify(&c, salt, c.d, 3);
-				result(&c, "encadeamento 3 descritores", rc, ok, ns, 128 + 256 + 64);
+				break;
 			}
+			c.pass++;
+			if (c.leak)
+				break;
 		}
-
-		if ((tests & 4) && !c.leak) {
-			char nm[40];
-			u32 con = 0;
-
-			snprintf(nm, sizeof(nm), "grande %zu KiB", c.sz / 1024);
-			single_desc(&c, 0, 0, c.sz, 0x33, nm, &con);
-		}
-
-		if ((tests & 8) && !c.leak) {
-			static const unsigned int tz[] = { 2, 3, 4, 5, 6 };
-			char nm[40];
-
-			for (i = 0; i < ARRAY_SIZE(tz) && !c.leak; i++) {
-				u32 unit = 1u << tz[i];
-
-				snprintf(nm, sizeof(nm), "alinhamento %u B (CON)", unit);
-				single_desc(&c, unit, unit, unit * 3, 0x44 + i, nm, NULL);
-			}
-		}
+		/* devolve o trecho a zero (conteúdo original antes dos testes) */
+		if (!c.leak)
+			memset_io(c.spm + spm_offset, 0, maxb);
+		if (c.leak)
+			dev_warn(dev, "buffer A MANTIDO (vazamento deliberado)\n");
+		else
+			dma_free_coherent(dev, WR_MAX, a, dma_a);
+		goto summary;
 	}
 
-	if (c.irq_ok) {
-		int k;
-
-		writel(0, r + DMAC_INT);
-		for (k = 0; k < c.nirq; k++)
-			free_irq(c.irqs[k], &c);
-		pci_free_irq_vectors(pdev);
+	for (i = 0; i < ARRAY_SIZE(sizes) && sizes[i] <= maxb; i++) {
+		rc = test_read(&c, sizes[i]);
+		if (rc == 0)
+			c.pass++;
+		else if (rc == 1)
+			c.inconcl++;
+		else {
+			c.fail++;
+			break;		/* para na primeira falha */
+		}
+		if (c.leak)
+			break;
 	}
-	dev_info(dev, "RESUMO: %d PASS, %d FAIL%s | irq: entregues=%u perdidas=%u | chamadas vetor0=%u vetor1=%u\n",
-		 c.pass, c.fail, c.leak ? " (buffers mantidos: controlador pode estar ativo)" : "",
-		 c.irq_count, c.irq_missed, c.hits[0], c.hits[1]);
+summary:
+	dev_info(dev, "RESUMO: %d PASS, %d INCONCLUSIVO, %d FAIL%s\n", c.pass, c.inconcl, c.fail,
+		 c.leak ? " (buffers mantidos: controlador pode estar ativo)" : "");
 	dump_regs(dev, r, "estado final");
+free:
 	if (!c.leak) {
-		dma_free_coherent(dev, 4096, c.d, c.dma_d);
-		dma_free_coherent(dev, c.sz + GUARD, c.b, c.dma_b);
-		dma_free_coherent(dev, c.sz + GUARD, c.a, c.dma_a);
+		if (c.d)
+			dma_free_coherent(dev, 4096, c.d, c.dma_d);
+		if (c.b)
+			dma_free_coherent(dev, c.sz + GUARD, c.b, c.dma_b);
 	} else {
 		dev_warn(dev, "buffers MANTIDOS (vazamento deliberado)\n");
 	}
+unmap:
+	iounmap(c.spm);
+put_spm:
+	pci_dev_put(spm_pdev);
 }
 
 static int dmac_probe(struct pci_dev *pdev, const struct pci_device_id *id)
@@ -620,8 +470,8 @@ static int dmac_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 	if (ret)
 		return ret;
 	r = pcim_iomap_table(pdev)[bar];
-	dev_info(&pdev->dev, "baikal_dmac_test_spm: BAR%d mapeado, run=%d tests=0x%x src_bar2=%d dst_bar2=%d spm_base=0x%lx\n",
-		 bar, run, tests, src_bar2, dst_bar2, spm_base);
+	dev_info(&pdev->dev, "baikal_dmac_test_spm: BAR%d, run=%d spm_base=0x%lx spm_offset=0x%lx maxkb=%u\n",
+		 bar, run, spm_base, spm_offset, maxkb);
 	dump_regs(&pdev->dev, r, "estado inicial");
 	if (run)
 		run_tests(pdev, r);
@@ -642,4 +492,4 @@ static struct pci_driver dmac_driver = {
 module_pci_driver(dmac_driver);
 
 MODULE_LICENSE("GPL");
-MODULE_DESCRIPTION("Harness de RE do DMAC Baikal com SPM (00:14.5 -> 00:14.6 BAR2)");
+MODULE_DESCRIPTION("Harness de RE: DMAC Baikal (00:14.5) lendo a SPM (00:14.6 BAR2), somente leitura");

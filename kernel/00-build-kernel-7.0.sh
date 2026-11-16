@@ -67,8 +67,8 @@ export HOSTCFLAGS="-Wno-error=incompatible-pointer-types-discards-qualifiers"
 # ou seja o pahole herda o -j do build inteiro (-j8) — e foi assim que ele
 # chegou a 9,4 GB de RSS e causou o OOM de 2026-07-22. Como `JOBS :=` é
 # atribuição simples no makefile, uma atribuição na linha de comando tem
-# precedência. Isso mantém o build rápido e o pahole contido, sem precisar
-# desabilitar o BTF (o que quebrou o boot — ver comentário na seção DEBUG_INFO).
+# precedência. (Desde 2026-11-16 o BTF está desligado e o pahole nem roda;
+# o JOBS=2 ficou como proteção caso o BTF seja religado.)
 export CCACHE_DIR="${PS4_CCACHE_DIR:-$KERNEL_BUILD_ROOT/.ccache}"
 MAKE_OPTS=(-j"$(nproc)" JOBS=2 LLVM=1 CC="ccache clang" ARCH=x86_64 HOSTCFLAGS="${HOSTCFLAGS}")
 
@@ -151,7 +151,7 @@ preflight() {
            baikal-memory-fase2.patch baikal-dmac.patch \
            clocksource-baikal-hpet.patch baikal-wdt.patch \
            ps4-bridge-dp-init.patch ps4-bridge-link-rate.patch \
-           ps4-bridge-keep-mode.patch; do
+           ps4-bridge-keep-mode.patch ps4-icc-s5-poweroff-prepare.patch; do
     [ -f "$SCRIPT_DIR/patches/$p" ] || die "patch ausente: $SCRIPT_DIR/patches/$p"
   done
 
@@ -433,6 +433,25 @@ fi
 
 git apply "$PATCH_RTC"
 echo "✓ Patch RTC wrapper aplicado com sucesso (git apply, validado com --check)"
+
+# S5 (power-off) via ICC: envia o 4/1 {0,0,2,0,1,0} num sys-off handler
+# POWER_OFF_PREPARE (IRQs e LAPIC vivos), em vez de só no pm_power_off, onde o
+# ICC não funciona (LAPIC já desligado). Payload validado ao vivo em 2026-11-16
+# pelo ioctl /dev/icc. Toca ps4-bpcie-icc.c: TEM que vir depois do PATCH_RTC.
+# Ver others/docs/PLANO_S5_POWEROFF_ICC.md §10-11.
+PATCH_S5="$SCRIPT_DIR/patches/ps4-icc-s5-poweroff-prepare.patch"
+if [ ! -f "$PATCH_S5" ]; then
+  echo "❌ ERRO FATAL: $PATCH_S5 não encontrado"
+  exit 1
+fi
+if ! git apply --check "$PATCH_S5" 2>/tmp/s5_patch_check.log; then
+  echo "❌ ERRO FATAL: patch S5 power-off não aplica contra o kernel atual:"
+  cat /tmp/s5_patch_check.log
+  echo "  Regenere a partir de HEAD + ps4-icc-rtc-wrapper.patch (ver AGENTS.md)."
+  exit 1
+fi
+git apply "$PATCH_S5"
+echo "✓ Patch S5 power-off (POWER_OFF_PREPARE) aplicado com sucesso (git apply, validado com --check)"
 
 # Memória Baikal (SPM/DDR3, 00:14.6): o patch traz o driver inteiro
 # (`drivers/misc/baikal-memory.c`: probe com logging da Fase 1, layout de
@@ -747,43 +766,91 @@ scripts/config --enable  CONFIG_NTSYNC
 # Scheduler
 #
 # CONFIG_SCHED_CLASS_EXT depende de DEBUG_INFO_BTF
-# (kernel/Kconfig.preempt: "depends on BPF_SYSCALL && BPF_JIT && DEBUG_INFO_BTF"),
-# que mantemos LIGADO — então estes --enable pegam de verdade. Ambos estão
-# ativos nos kernels que comprovadamente bootam. Se algum dia o BTF for
-# desligado, o sched_ext cai junto silenciosamente; é mais um motivo para não
-# desligá-lo (ver seção DEBUG_INFO).
+# (kernel/Kconfig.preempt: "depends on BPF_SYSCALL && BPF_JIT && DEBUG_INFO_BTF").
+# Com o BTF desligado (estado atual, ver seção DEBUG_INFO), o olddefconfig
+# derruba o sched_ext apesar destes --enable. Ficam aqui para quando o BTF
+# for religado.
 scripts/config --enable  CONFIG_SCHED_CLASS_EXT
 scripts/config --enable  CONFIG_SCHED_EXT
 scripts/config --enable  CONFIG_SCHED_AUTOGROUP
 
-# BPF (JIT sempre ligado; BTF ligado na seção DEBUG_INFO, então CO-RE disponível)
+# BPF (JIT sempre ligado; sem BTF, então sem CO-RE — não usamos bpftrace/BCC)
 scripts/config --enable  CONFIG_BPF_SYSCALL
 scripts/config --enable  CONFIG_BPF_JIT
 scripts/config --enable  CONFIG_BPF_JIT_ALWAYS_ON
 scripts/config --enable  CONFIG_BPF_JIT_DEFAULT_ON
 scripts/config --disable CONFIG_BPF_UNPRIV_DEFAULT_OFF
 
-# DEBUG_INFO: BTF LIGADO — obrigatório para o kernel bootar neste console.
+# DEBUG_INFO: DESLIGADO (BTF e DWARF).
 #
-# HISTÓRICO (2026-07-22): o BTF foi desabilitado aqui para evitar um OOM do
-# pahole. Isso QUEBROU O BOOT: dois builds limpos, sem nenhum código de risco
-# (`20260722-gbe-revertido` e `20260722-mts-clean`), deram TELA PRETA, enquanto
-# todo build com BTF ligado e sem código arriscado boota normalmente. A seção
-# `.BTF` responde por 9,2 MB do vmlinux (medido com readelf), e desabilitá-la
-# também derruba CONFIG_SCHED_CLASS_EXT/EXT_GROUP_SCHED por dependência
-# (kernel/Kconfig.preempt) — ~60 KB de .text a menos. NÃO DESABILITAR DE NOVO.
+# BTF: desligado desde 2026-11-16 (estado oficial do projeto; tags como
+# `20261116-btf-disabled-s5` bootam sem ele). O histórico de 2026-07-22 em que
+# "desligar o BTF quebrou o boot" não se confirmou. Efeito colateral conhecido:
+# CONFIG_SCHED_CLASS_EXT/EXT_GROUP_SCHED caem por dependência (Kconfig.preempt).
 #
-# O OOM que motivou a remoção era circunstancial: o pahole rodava com -j8 (herda
-# o -j do make) enquanto uma VM libvirt ocupava 6 GB da máquina. A solução certa
-# é limitar o paralelismo do pahole (JOBS=2 em MAKE_OPTS abaixo), não remover o
-# BTF. Ver memory/regressao-build-kernel-desde-2026-07-20.md.
-scripts/config --enable  CONFIG_DEBUG_INFO
-scripts/config --enable  CONFIG_DEBUG_INFO_DWARF4
+# DWARF: desligado em 2026-11-16 para acelerar o build. Com ThinLTO o link do
+# vmlinux.o carrega toda a informação de debug (a maior parte dos ~3,6 GB de .o)
+# e era a etapa dominante dos ~41 min de build. O boot não depende disso; perde-se
+# só o número de linha em addr2line/decode_stacktrace (kallsyms continua).
+# Para religar numa investigação pontual: trocar DEBUG_INFO_NONE por DWARF4.
+scripts/config --enable  CONFIG_DEBUG_INFO_NONE
+scripts/config --disable CONFIG_DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT
+scripts/config --disable CONFIG_DEBUG_INFO_DWARF4
 scripts/config --disable CONFIG_DEBUG_INFO_DWARF5
+scripts/config --disable CONFIG_DEBUG_INFO
 scripts/config --disable CONFIG_DEBUG_INFO_REDUCED
 scripts/config --disable CONFIG_DEBUG_INFO_SPLIT
 scripts/config --disable CONFIG_DEBUG_INFO_BTF
 scripts/config --disable CONFIG_DEBUG_INFO_BTF_MODULES
+
+# --- Enxugamento Baikal (2026-11-16): código que o PS4 Baikal não usa ---
+# Cada item abaixo foi conferido contra o hardware/uso real. Ver
+# others/docs/OTIMIZACAO_BUILD_2026-11-16.md para a medição e o motivo de cada um.
+#
+# AMD Display Core (470 objetos, ~11% do build): Liverpool/Gladius usam o caminho
+# legado dce_v8 (amdgpu_device.c: DC só com amdgpu.dc=1, que não usamos).
+scripts/config --disable CONFIG_DRM_AMD_DC
+# WiFi de outras famílias. O MT7668 do Baikal é o driver MT76X8 (depende só de
+# CFG80211, não da família mt76). Marvell (mwifiex/mwl8k) é Aeolia/Belize.
+# MT76_CORE/USB/SDIO/CONNAC são "select" dos drivers abaixo: só caem quando
+# todos estes saem (conferido com olddefconfig numa cópia do .config).
+scripts/config --disable CONFIG_MT7603E
+scripts/config --disable CONFIG_MT7615E
+scripts/config --disable CONFIG_MT7663U
+scripts/config --disable CONFIG_MT7663S
+scripts/config --disable CONFIG_MT7915E
+scripts/config --disable CONFIG_MT7921E
+scripts/config --keep-case --disable CONFIG_MT76x0U
+scripts/config --keep-case --disable CONFIG_MT76x0E
+scripts/config --keep-case --disable CONFIG_MT76x2E
+scripts/config --keep-case --disable CONFIG_MT76x2U
+scripts/config --disable CONFIG_MT76_CORE
+scripts/config --disable CONFIG_MT7601U
+scripts/config --disable CONFIG_MWIFIEX
+scripts/config --disable CONFIG_MWL8K
+# Sistemas de arquivos sem uso (rootfs ext4; NFS foi trocado por CIFS em
+# 2026-11-12). Ficam: ext4, vfat/exfat, ntfs3, UFS (sda27), iso9660/udf (disco).
+scripts/config --disable CONFIG_BTRFS_FS
+scripts/config --disable CONFIG_NFS_FS
+scripts/config --disable CONFIG_NFSD
+# Protocolos de rede sem uso.
+scripts/config --disable CONFIG_BATMAN_ADV
+scripts/config --disable CONFIG_X25
+scripts/config --disable CONFIG_IEEE802154
+scripts/config --disable CONFIG_MPTCP
+scripts/config --disable CONFIG_WIREGUARD
+# Drivers de máquina virtual CONVIDADA (o PS4 roda em bare metal). Ficam
+# KVM/vhost/vfio, que são do lado HOST (qemu/virt-manager estão no rootfs).
+scripts/config --disable CONFIG_VIRTIO_PCI
+scripts/config --disable CONFIG_VIRTIO_BALLOON
+scripts/config --disable CONFIG_VIRTIO_INPUT
+scripts/config --disable CONFIG_VIRTIO_BLK
+scripts/config --disable CONFIG_VIRTIO_NET
+scripts/config --disable CONFIG_VIRTIO_CONSOLE
+scripts/config --disable CONFIG_SCSI_VIRTIO
+scripts/config --disable CONFIG_DRM_VIRTIO_GPU
+scripts/config --disable CONFIG_HW_RANDOM_VIRTIO
+scripts/config --disable CONFIG_VIRTIO_VSOCKETS
 
 # Debug/tracing em runtime — fora (custo de performance/tamanho, não usamos)
 scripts/config --disable CONFIG_DEBUG_KERNEL
@@ -949,7 +1016,17 @@ echo "=== Compilando kernel (ThinLTO, General profile, Baikal) ==="
 # Limita threads do link ThinLTO (ld.lld sem --thinlto-jobs usa todos os
 # núcleos e cada thread segura estado do módulo -> OOM real já visto no
 # passo LD vmlinux.o, 2026-07-21).
-export MAKEFLAGS="${MAKEFLAGS:-} vmlinux-o-ld-args-y=--thinlto-jobs=2"
+#
+# Cache do ThinLTO (2026-11-16): sem ele o link refaz a geração de código de
+# TODO o kernel a cada build (era ~35 dos ~41 min). O kernel 7.0 não passa
+# --thinlto-cache-dir, e um cache dentro da árvore seria apagado pelo
+# `git clean -fdx`; por isso fica em $KERNEL_BUILD_ROOT/.thinlto-cache
+# (gitignored). O cache é indexado pelo hash do bitcode + opções, então só o
+# que mudou é recompilado. Política: até 20 GB, entradas sem uso há 30 dias saem.
+# Os espaços vão escapados (\ ) para o valor chegar inteiro ao sub-make.
+THINLTO_CACHE_DIR="${PS4_THINLTO_CACHE_DIR:-$KERNEL_BUILD_ROOT/.thinlto-cache}"
+mkdir -p "$THINLTO_CACHE_DIR"
+export MAKEFLAGS="${MAKEFLAGS:-} vmlinux-o-ld-args-y=--thinlto-jobs=2\\ --thinlto-cache-dir=${THINLTO_CACHE_DIR}\\ --thinlto-cache-policy=cache_size_bytes=20g:prune_after=720h"
 time make "${MAKE_OPTS[@]}" bzImage
 
 echo "=== Compilando módulos ==="
