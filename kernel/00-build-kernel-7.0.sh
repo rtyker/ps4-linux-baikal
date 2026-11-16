@@ -148,7 +148,7 @@ preflight() {
   # Patches que o build aplica (os 'git apply --check' reais rodam pós-reset).
   for p in ahci-baikal-polling-fallback.patch ps4-icc-rtc-wrapper.patch \
            ps4-icc-proc-debug.patch mts-baikal-gbe-driver.patch \
-           baikal-memory-fase2.patch baikal-dmac.patch \
+           baikal-memory-fase2.patch baikal-dmac.patch baikal-memory-dma.patch \
            clocksource-baikal-hpet.patch baikal-wdt.patch \
            ps4-bridge-dp-init.patch ps4-bridge-link-rate.patch \
            ps4-bridge-keep-mode.patch ps4-icc-s5-poweroff-prepare.patch; do
@@ -505,6 +505,30 @@ fi
 
 git apply "$PATCH_BAIKAL_DMAC"
 echo "✓ Patch baikal-dmac aplicado com sucesso (git apply, validado com --check)"
+
+# DMA para baikal-memory (00:14.6): usa o dmaengine do baikal-dmac (00:14.5)
+# para acelerar leitura/escrita na janela BAR2 (SPM/DDR3). O patch adiciona
+# parâmetros use_dma/dma_min, bounce buffer, sysfs de estatísticas e fallback
+# automático para CPU em caso de erro. Aplicado DEPOIS do baikal-dmac pois
+# depende do driver dmaengine estar presente na árvore.
+PATCH_BAIKAL_MEM_DMA="$SCRIPT_DIR/patches/baikal-memory-dma.patch"
+if [ ! -f "$PATCH_BAIKAL_MEM_DMA" ]; then
+  echo "❌ ERRO FATAL: $PATCH_BAIKAL_MEM_DMA não encontrado"
+  echo "  Sem ele o build perde o suporte DMA no baikal-memory."
+  exit 1
+fi
+
+if ! git apply --check "$PATCH_BAIKAL_MEM_DMA" 2>/tmp/baikal_mem_dma_patch_check.log; then
+  echo "❌ ERRO FATAL: patch baikal-memory-dma não aplica contra o kernel atual:"
+  cat /tmp/baikal_mem_dma_patch_check.log
+  echo ""
+  echo "  Regenere o patch a partir de uma árvore limpa (ver AGENTS.md,"
+  echo "  seção 'Idempotência de Alterações no Kernel') e substitua $PATCH_BAIKAL_MEM_DMA."
+  exit 1
+fi
+
+git apply "$PATCH_BAIKAL_MEM_DMA"
+echo "✓ Patch baikal-memory-dma aplicado com sucesso (git apply, validado com --check)"
 
 # HPET clocksource + watchdog do Baikal: os dois patches existiam em patches/ mas
 # NUNCA eram aplicados por este script — o código só entrava na árvore porque
