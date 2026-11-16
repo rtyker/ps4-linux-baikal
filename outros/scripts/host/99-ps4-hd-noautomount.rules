@@ -1,0 +1,7 @@
+# HD USB do PS4 (frente distro): o automount do desktop (udisks2/csd-automount)
+# remontava a partição BOOT no meio do deploy-boot-7.0.sh e o fazia falhar
+# ("partição BOOT não encontrada montada", 2026-11-16). Desliga só o AUTOMOUNT;
+# as partições continuam visíveis e montáveis à mão.
+# Instalação: sudo cp este arquivo /etc/udev/rules.d/ && sudo udevadm control --reload
+SUBSYSTEM=="block", ENV{ID_USB_DRIVER}=="uas|usb-storage", ENV{ID_FS_LABEL}=="psxitarch", ENV{UDISKS_AUTO}="0"
+SUBSYSTEM=="block", ENV{ID_USB_DRIVER}=="uas|usb-storage", ENV{ID_FS_LABEL}=="BOOT", ENV{ID_FS_TYPE}=="vfat", ENV{UDISKS_AUTO}="0"
