@@ -198,3 +198,4 @@ sceRemoteplayInitialize: 0x80fc0003
 SetDeviceIndexBehavior: mode=SpecificUser, param=0x1b6ebedc
 [Theme/I] : Apply [BLUE] : [Option:111111]: with preloaded user
 [SceShellUI] I/PSM.UI : SceneQ : Loaded[0.01msec] Layout[0.00msec/0widgets] : id_goldhen_menu : SettingPage
+[SceShellCore] Libc Heap Status: free 37%, in-use 3809.8 KB, trend -46.2 KB/min, peak 4210.5 KB, when 93 [sec]
