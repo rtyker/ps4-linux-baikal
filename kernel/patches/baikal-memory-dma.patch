@@ -1,6 +1,8 @@
---- kernel_build_7.0.base/drivers/misc/Kconfig	2026-11-16 18:34:27.980302837 -0300
-+++ kernel_build_7.0/drivers/misc/Kconfig	2026-11-16 18:40:56.164307576 -0300
-@@ -663,7 +663,7 @@
+diff --git a/drivers/misc/Kconfig b/drivers/misc/Kconfig
+index 816b99d..69ee044 100644
+--- a/drivers/misc/Kconfig
++++ b/drivers/misc/Kconfig
+@@ -663,7 +663,7 @@ source "drivers/misc/rp1/Kconfig"
  
  config BAIKAL_MEMORY
  	tristate "Sony Baikal Memory (SPM/DDR3, 00:14.6)"
@@ -9,8 +11,10 @@
  	help
  	  Driver de memória para o Southbridge Baikal (Sony/AMD),
  	  dispositivo PCI 00:14.6 (Vendor 0x104d, Device 0x90dd).
---- a/drivers/misc/baikal-memory.c	2026-11-16 18:34:27.984302837 -0300
-+++ b/drivers/misc/baikal-memory.c	2026-11-16 18:42:36.468308800 -0300
+diff --git a/drivers/misc/baikal-memory.c b/drivers/misc/baikal-memory.c
+index 77bd934..7039dec 100644
+--- a/drivers/misc/baikal-memory.c
++++ b/drivers/misc/baikal-memory.c
 @@ -35,6 +35,9 @@
  #include <linux/device.h>
  #include <linux/etherdevice.h>
@@ -21,7 +25,7 @@
  
  #define DRIVER_NAME		"baikal-memory"
  #define DRIVER_DESC		"Sony Baikal Memory (SPM/DDR3) driver"
-@@ -50,6 +53,21 @@
+@@ -50,6 +53,21 @@ module_param(allow_write, bool, 0444);
  MODULE_PARM_DESC(allow_write,
  	"Permitir escrita controlada na janela BAR2 da SPM (padrao: 0/desligado)");
  
@@ -43,7 +47,7 @@
  #define BAIKAL_VENDOR_ID	0x104d
  #define BAIKAL_DEVICE_ID	0x90dd
  
-@@ -66,10 +84,13 @@
+@@ -66,10 +84,13 @@ MODULE_PARM_DESC(allow_write,
   * caractere expõe janelas de BARs diferentes em offsets próprios:
   *
   *   0x000000-0x000fff  BAR0 (4 KiB, MMIO de controle)
@@ -58,7 +62,7 @@
   */
  #define BAIKAL_DEV_BAR0_OFF	0x000000ULL
  #define BAIKAL_DEV_BAR2_OFF	0x001000ULL
-@@ -77,6 +98,19 @@
+@@ -77,6 +98,19 @@ MODULE_PARM_DESC(allow_write,
  #define BAIKAL_DEV_BAR5_OFF	0x00500000ULL
  #define BAIKAL_DEV_SIZE		(BAIKAL_DEV_BAR5_OFF + BAR5_SIZE)
  
@@ -78,7 +82,7 @@
  struct baikal_mem_dev {
  	struct pci_dev		*pdev;
  	struct miscdevice	misc;
-@@ -96,6 +130,21 @@
+@@ -96,6 +130,21 @@ struct baikal_mem_dev {
  	bool			bar2_mapped;
  	bool			bar4_mapped;
  	bool			bar5_mapped;
@@ -100,10 +104,11 @@
  };
  
  static struct baikal_mem_dev *g_bm_dev;
-@@ -110,6 +159,177 @@
+@@ -109,6 +158,177 @@ static u32 baikal_mem_read32(void __iomem *addr)
+ 	return ioread32(addr);
  }
  
- /* ------------------------------------------------------------------------- */
++/* ------------------------------------------------------------------------- */
 +/* Helpers de DMA                                                            */
 +/* ------------------------------------------------------------------------- */
 +
@@ -274,11 +279,10 @@
 +	return 0;
 +}
 +
-+/* ------------------------------------------------------------------------- */
+ /* ------------------------------------------------------------------------- */
  /* Operações de arquivo de caractere                                         */
  /* ------------------------------------------------------------------------- */
- 
-@@ -117,7 +337,7 @@
+@@ -117,7 +337,7 @@ static u32 baikal_mem_read32(void __iomem *addr)
   * Resolve um offset de /dev/baikal-memory para o BAR correspondente.
   * Retorna o ponteiro virtual e, em *avail, quantos bytes ainda são legíveis
   * (ou graváveis, se writable_only) de forma contígua a partir dele.
@@ -287,7 +291,7 @@
   */
  static void __iomem *baikal_mem_resolve(struct baikal_mem_dev *dev, loff_t pos,
  					size_t *avail, bool writable_only)
-@@ -136,6 +356,11 @@
+@@ -136,6 +356,11 @@ static void __iomem *baikal_mem_resolve(struct baikal_mem_dev *dev, loff_t pos,
  		return dev->bar2 + (pos - BAIKAL_DEV_BAR2_OFF);
  	}
  
@@ -299,7 +303,7 @@
  	if (pos < BAIKAL_DEV_SIZE) {
  		if (writable_only || !dev->bar5_mapped)
  			return NULL;
-@@ -146,6 +371,14 @@
+@@ -146,6 +371,14 @@ static void __iomem *baikal_mem_resolve(struct baikal_mem_dev *dev, loff_t pos,
  	return NULL;
  }
  
@@ -314,7 +318,7 @@
  static ssize_t baikal_memory_read(struct file *filp, char __user *buf,
  				  size_t count, loff_t *ppos)
  {
-@@ -170,8 +403,55 @@
+@@ -170,8 +403,57 @@ static ssize_t baikal_memory_read(struct file *filp, char __user *buf,
  		}
  
  		chunk = min_t(size_t, count - total_read, avail);
@@ -328,7 +332,7 @@
 +
 +		if (can_dma && chunk > sizeof(bounce)) {
 +			/* Usar DMA com bounce buffer para trechos grandes alinhados */
-+			size_t dma_chunk = min_t(size_t, chunk, dev->dma_bounce_size);
++			size_t dma_chunk;
 +			dma_addr_t spm_dma = SPM_DMA_BASE + (*ppos - BAIKAL_DEV_BAR2_OFF);
 +			int ret;
 +
@@ -341,6 +345,8 @@
 +			}
 +
 +			if (can_dma) {
++				/* dma_bounce_size is only set once the bounce buffer above is allocated */
++				dma_chunk = min_t(size_t, chunk, dev->dma_bounce_size);
 +				ret = baikal_dma_do_transfer(dev, dev->dma_bounce_phys, spm_dma,
 +							    dma_chunk, DMA_DEV_TO_MEM);
 +				if (ret == 0) {
@@ -371,7 +377,7 @@
  		memcpy_fromio(bounce, src, chunk);
  
  		if (copy_to_user(buf + total_read, bounce, chunk)) {
-@@ -181,6 +461,7 @@
+@@ -181,6 +463,7 @@ static ssize_t baikal_memory_read(struct file *filp, char __user *buf,
  
  		*ppos += chunk;
  		total_read += chunk;
@@ -379,7 +385,7 @@
  	}
  
  	mutex_unlock(&dev->lock);
-@@ -213,6 +494,55 @@
+@@ -213,6 +496,57 @@ static ssize_t baikal_memory_write(struct file *filp, const char __user *buf,
  		}
  
  		chunk = min_t(size_t, count - total_written, avail);
@@ -392,7 +398,7 @@
 +
 +		if (can_dma && chunk > sizeof(bounce)) {
 +			/* Usar DMA com bounce buffer para trechos grandes alinhados */
-+			size_t dma_chunk = min_t(size_t, chunk, dev->dma_bounce_size);
++			size_t dma_chunk;
 +			dma_addr_t spm_dma = SPM_DMA_BASE + (*ppos - BAIKAL_DEV_BAR2_OFF);
 +			int ret;
 +
@@ -405,6 +411,8 @@
 +			}
 +
 +			if (can_dma) {
++				/* dma_bounce_size is only set once the bounce buffer above is allocated */
++				dma_chunk = min_t(size_t, chunk, dev->dma_bounce_size);
 +				/* Copiar de userspace para bounce buffer */
 +				if (copy_from_user(dev->dma_bounce_virt, buf + total_written, dma_chunk)) {
 +					mutex_unlock(&dev->lock);
@@ -435,7 +443,7 @@
  		chunk = min_t(size_t, chunk, sizeof(bounce));
  
  		if (copy_from_user(bounce, buf + total_written, chunk)) {
-@@ -224,6 +554,7 @@
+@@ -224,6 +558,7 @@ static ssize_t baikal_memory_write(struct file *filp, const char __user *buf,
  
  		*ppos += chunk;
  		total_written += chunk;
@@ -443,10 +451,11 @@
  	}
  
  	mutex_unlock(&dev->lock);
-@@ -434,6 +765,164 @@
+@@ -433,6 +768,164 @@ static const struct attribute_group baikal_memory_attr_group = {
+ 	.attrs = baikal_memory_attrs,
  };
  
- /* ------------------------------------------------------------------------- */
++/* ------------------------------------------------------------------------- */
 +/* Sysfs — atributos de DMA                                                  */
 +/* ------------------------------------------------------------------------- */
 +
@@ -604,11 +613,10 @@
 +	.attrs = baikal_dma_attrs,
 +};
 +
-+/* ------------------------------------------------------------------------- */
+ /* ------------------------------------------------------------------------- */
  /* Probe e Remove                                                            */
  /* ------------------------------------------------------------------------- */
- 
-@@ -586,6 +1075,29 @@
+@@ -586,6 +1079,29 @@ static int baikal_memory_probe(struct pci_dev *pdev,
  		}
  	}
  
@@ -638,7 +646,7 @@
  	/* Registrar dispositivo de caractere */
  	dev_info(&pdev->dev, "[BAIKAL] Registrando misc device...\n");
  	ret = misc_register(&baikal_memory_miscdev);
-@@ -596,7 +1108,7 @@
+@@ -596,7 +1112,7 @@ static int baikal_memory_probe(struct pci_dev *pdev,
  	}
  	dev_info(&pdev->dev, "[BAIKAL] misc device OK: /dev/%s\n", DRIVER_NAME);
  
@@ -647,7 +655,7 @@
  	dev_info(&pdev->dev, "[BAIKAL] Criando sysfs group...\n");
  	ret = sysfs_create_group(&pdev->dev.kobj, &baikal_memory_attr_group);
  	if (ret) {
-@@ -607,6 +1119,14 @@
+@@ -607,6 +1123,14 @@ static int baikal_memory_probe(struct pci_dev *pdev,
  	}
  	dev_info(&pdev->dev, "[BAIKAL] sysfs group OK\n");
  
@@ -662,7 +670,7 @@
  	pci_set_drvdata(pdev, dev);
  	g_bm_dev = dev;
  
-@@ -626,8 +1146,13 @@
+@@ -626,8 +1150,13 @@ static void baikal_memory_remove(struct pci_dev *pdev)
  
  	dev_info(&pdev->dev, "[BAIKAL] Removendo driver...\n");
  
@@ -676,10 +684,10 @@
  	pci_disable_device(pdev);
  
  	g_bm_dev = NULL;
-@@ -679,4 +1204,4 @@
+@@ -679,4 +1208,4 @@ module_exit(baikal_memory_exit);
  MODULE_LICENSE("GPL v2");
  MODULE_AUTHOR("Projeto PS4 Linux Baikal");
  MODULE_DESCRIPTION(DRIVER_DESC);
 -MODULE_VERSION("0.2");
-\ Nenhum caractere de nova linha no final do arquivo
+\ No newline at end of file
 +MODULE_VERSION("0.2");
