@@ -1,6 +1,6 @@
 # Backlog do Projeto — Fonte Única de Pendências
 
-**Última atualização:** 2026-11-16 (varredura completa do projeto: kernel config, build scripts, patches, artifacts em `distro/boot_referencia/`, git log. Estado real do código vs documentação anterior reconciliado.)
+**Última atualização:** 2026-11-16 (noite — reconciliação após a sessão da tag `20261116-s5-dma`: S5 resolvido, DMA→SPM provado, build otimizado. Itens obsoletos fechados, novos acrescentados na seção "Pendências abertas em 2026-11-16".)
 
 > ℹ️ **Como ler este arquivo:** itens `[x]` fechados guardam o histórico da solução; itens dentro de
 > `<details>` com o título "Histórico da investigação" são **registro do que foi refutado**, não
@@ -206,10 +206,8 @@ Medições reais no PS4 (boot completo, `systemd` `running`, 0 unidades falhadas
 - [ ] **Persistir o acesso do usuário `anderson` no build** (hoje é tudo alteração viva no PS4, some num rebuild do rootfs): criar o usuário (uid 1001), `/etc/sudoers.d/zz-anderson` (`NOPASSWD`, nome com `zz-` porque o sudo aplica a última regra que casa e `%wheel` ordena depois), `/home/anderson/.bashrc` com `PATH` do OpenCode e as chaves autorizadas. Decidir se a chave pública do host vai no build (aceitável) e **não** embutir chave privada. O `opencode` em si (247 MB) deve continuar sendo instalado em runtime, não no rootfs.
 - [x] `PermitEmptyPasswords yes` no `sshd_config` (em duplicidade): cada conexão SSH gerava uma falha no `pam_faillock` e travava a conta em 3 logins. Corrigido em 2026-11-12 — `PermitEmptyPasswords no` no PS4 e o build agora usa o drop-in `/etc/ssh/sshd_config.d/00-ps4-baikal.conf` (idempotente) em vez de reescrever o `sshd_config`.
 - [x] `pam_faillock` × `audit=0`: o cmdline tem `audit=0`, mas o kernel tem `CONFIG_AUDIT=y` e o `pam_faillock.so` está no `system-auth`; cada login SSH gerava `pam_faillock(sshd:auth): Error sending audit message: Protocol not supported`. Removido `audit=0` do bootargs (`distro/01-build-image-7.0.sh`) — o `journald` já tem `Audit=no`, então o ruído não volta.
-- [ ] **Fix módulos com BTF mismatch + módulos faltando no rootfs** — **ALTA PRIORIDADE**: 
-  - **BTF mismatch**: `mts.ko`, `cifs.ko`, `baikal-dmac.ko`, `rtc-ps4-icc.ko` no rootfs têm BTF do build anterior → `failed to validate module BTF: -22` (carregam mas com warning).
-  - **MÓDULOS FALTANDO**: `baikal_wdt.ko`, `baikal-hpet.ko` **não existem** no `/lib/modules/.../` (modprobe: FATAL: Module not found).
-  - Solução única no `01-build-image-7.0.sh`: após `modules_install`, `objcopy --remove-section=.BTF --remove-section=.BTF.base` em **todos** os `.ko` + verificar se `CONFIG_BAIKAL_WDT`/`CONFIG_BAIKAL_HPET` estão habilitados no build kernel para que os módulos sejam gerados.
+- [x] ✅ **BTF mismatch dos módulos** — OBSOLETO desde 2026-11-16: o BTF está **desligado** no kernel e o `distro/scripts/install-modules-7.0.sh` ainda faz o strip. Os módulos do rootfs foram reinstalados por ele (todos com `srcversion` igual ao do build `20261116-s5-dma`).
+- [ ] **Módulos faltando no rootfs:** `baikal_wdt.ko` e `baikal-hpet.ko` não são gerados (o `install-modules` avisa "não encontrado") porque `CONFIG_BAIKAL_WDT`/`CONFIG_BAIKAL_HPET` estão desligados desde uma tela preta antiga. Precisam de teste isolado (ver seção ACPI/HPET/WDT abaixo).
 
 **P2 — otimização de boot (44 s → meta ~15-20 s):**
 - [x] **33 s** de `systemd-modules-load` eram o `mts.ko` — auto-carregamento DESATIVADO em 2026-11-12 (decisão do usuário: Ethernet fica para o futuro): `distro/01-build-image-7.0.sh` agora só cria `/etc/modules-load.d/mts.conf` quando `ENABLE_MTS=1`; no PS4 o arquivo foi renomeado para `mts.conf.disabled`. O `mts.ko` continua instalado e pode ser carregado à mão (`modprobe mts`, usa `stage=4` do `modprobe.d`). **Reativar:** `ENABLE_MTS=1 sudo ./01-build-image-7.0.sh <TAG>`, ou no rootfs vivo `mv /etc/modules-load.d/mts.conf{.disabled,}`. Quando retomar o trabalho de Ethernet: mover o carregamento para uma unit própria depois de `multi-user`/`network-pre`, em vez de `modules-load` (para não bloquear o boot).
@@ -232,8 +230,8 @@ Medições reais no PS4 (boot completo, `systemd` `running`, 0 unidades falhadas
 - [ ] **Baikal Memory: ajustar offsets sysfs** — offsets no device file (`/dev/baikal-memory`: MAC em 0x52f000, ICC em 0x52c000) divergem dos atributos sysfs (`bar5_0x2f000`, `bar5_0x2c000`). Corrigir driver para expor offsets corretos.
 - [x] ✅ **RTC: `hwclock -r` FUNCIONA** — validado ao vivo na tag `20261115-hwclock-min` (retorna `2026-11-15 18:20:34.848988-03:00`). Fix `clear_bit(RTC_FEATURE_UPDATE_INTERRUPT)` + `CONFIG_RTC_INTF_DEV_UIE_EMUL=y` confirmados no build atual.
 - [x] **Adicionar `alsa-utils` ao `PKGS`** — **JÁ PRESENTE** em `distro/01-build-image-7.0.sh` linha 244.
-- [ ] **S5 power-off (luz azul)**: 🟡 causa raiz confirmada (4/1 via ioctl desliga; falta patch `POWER_OFF_PREPARE`). Teste anterior de 2026-11-16 falhou e foi inconclusivo (ver `PLANO_S5_POWEROFF_ICC.md` §9). **Próximo:** Fase 0 com UART do Linux confirmada → Fase 1 (4/1 original via ioctl `/dev/icc`, sem build).
-- [ ] **Mesa patchado (Gladius/Liverpool)**: o tar `mesa-ps4-gladius-liverpool-latest.tar.xz` existe (build 2026-11-13) e o script de build o referencia. **Pendente:** confirmar se o full-rebuild `20261113-full-rebuild` o incluiu (o script copia se o arquivo existe), e rodar `mesa/01-build-mesa.sh` se precisar atualizar.
+- [x] ✅ **S5 power-off (luz azul)** — RESOLVIDO 2026-11-16: `poweroff -f` desliga o console por completo na tag `20261116-s5-dma` (patch `ps4-icc-s5-poweroff-prepare.patch`). Ver o item `[x]` mais abaixo e `PLANO_S5_POWEROFF_ICC.md` §12. Pendente só `shutdown -h now`/`reboot` (seção nova).
+- [x] ✅ **Mesa patchado (Gladius/Liverpool)** — confirmado incluído no full-rebuild `20261113-full-rebuild` (o dmesg do teste ao vivo mostrou `gladius`). Reabrir só se for atualizar o Mesa (`distro/mesa/01-build-mesa.sh`).
 - [ ] **Adicionar `cpupower` ao `PKGS` + rebuild distro + deploy** para validar `cpufreq` (`CONFIG_X86_ACPI_CPUFREQ=y` já no kernel).
 - [x] ✅ **SATA a 6 Gbps — LIMITE DE HARDWARE (3.0 Gbps)** — não é bug; controlador PS4 negocia 3.0 Gbps. `ata1.00: configured for UDMA/100` funcional.
 - [ ] **Confirmar cgroup v1 sem warnings no próximo rebuild distro** (bootargs legacy removidos; ao vivo hierarquias v1 ativas).
@@ -295,14 +293,15 @@ Medições reais no PS4 (boot completo, `systemd` `running`, 0 unidades falhadas
 
 ---
 
-### [ ] 🔴 Teste ao vivo da tag `20261111-preflight-test`
+### [x] 🔴 Teste ao vivo da tag `20261111-preflight-test` — SUPERADO (2026-11-16)
+**Superado:** esta tag foi substituída por todas as de 2026-11-13 a 2026-11-16, que já foram testadas ao vivo (vídeo, SSH, SATA, áudio HDMI, S5). Mantido só como histórico; o texto abaixo é do estado de 2026-11-11.
 **Estado:** build + deploy testados em loopback; falta o teste no console real.
 **Próximo passo exato:** `cd distro && sudo ./deploy-boot-7.0.sh 20261111-preflight-test` (HD USB plugado, partição BOOT montada), plugar o HD no PS4, power-cycle, e conferir: vídeo HDMI, SSH em `192.168.6.128`, `eth0` com MAC real em `192.168.0.2/24` (ping do host `192.168.0.1` **na subnet cabeada**, nunca `192.168.6.x`), e `dmesg | grep -i 'ata1\|disable'` (SATA interno).
 **Atenção:** a imagem foi gerada **sem o Mesa patchado** (Gladius/Liverpool) — a corrupção visual conhecida continua valendo até rodar `distro/mesa/01-build-mesa.sh` e refazer o build.
 
 ---
 
-### [ ] 🔴 Gerar/atualizar o Mesa patchado (Gladius/Liverpool) e refazer o build da distro
+### [x] 🔴 Gerar/atualizar o Mesa patchado (Gladius/Liverpool) e refazer o build da distro — CONFIRMADO INCLUÍDO (2026-11-16)
 **Estado:** `distro/mesa/mesa-ps4-gladius-liverpool-latest.tar.xz` existe (build 2026-11-13, 11.3 MB). O script `distro/01-build-image-7.0.sh` o referencia (linha 679) e extrai se presente.
 **Próximo passo exato:** confirmar se o full-rebuild `20261113-full-rebuild` o incluiu (verificar `glxinfo -B` no dmesg do teste ao vivo mostrou `gladius` → **sim, incluiu**). Se precisar atualizar: `cd distro/mesa && ./01-build-mesa.sh` (produz o tar), depois refazer `./scripts/build-image-docker.sh <TAG>` e só então promote-release. A chave do patch está em `distro/mesa/`; ver `others/docs/MESA_GLADIUS_LIVERPOOL_FIX.md`.
 
@@ -347,14 +346,14 @@ Chave EAP canônica obtida ao vivo (5 dumps, 3 boots): sha256 `990c1aa3…c8bf` 
 
 ## Prioridade baixa
 
-### [ ] Enxugar o kernel: remover tudo que não é específico do PS4 nem tem uso prático
+### [~] Enxugar o kernel: remover tudo que não é específico do PS4 nem tem uso prático — **1ª RODADA FEITA 2026-11-16**
 **Objetivo:** reduzir o `.config` ao que o console realmente usa. Ganhos: builds mais rápidos, menor pico de memória, `bzImage` menor.
 **Caso exemplar — `CONFIG_DEBUG_INFO_BTF`:**
 - Gera metadados para **BPF CO-RE** (bpftrace, BCC, libbpf). Nada disso é usado aqui.
 - Custo medido 2026-07-21: `pahole` consome **10,9 GB de RSS** (maior consumidor do build).
 - Desabilitar **não desabilita BPF** (`CONFIG_BPF_SYSCALL` continua); só remove metadados.
 - Projeto roda cgroup v1 (`systemd.unified_cgroup_hierarchy=0`), então nem usos de BPF do systemd pesam.
-- **STATUS ATUAL:** `CONFIG_DEBUG_INFO_BTF=y` e `CONFIG_DEBUG_INFO_BTF_MODULES=y` **ESTÃO HABILITADOS** no `00-build-kernel-7.0.sh` (linhas 753-754). **Ação pendente:** decidir se desabilita (economia de RAM/build) ou mantém (útil para inspecionar binário).
+- **STATUS ATUAL (2026-11-16):** `DEBUG_INFO_BTF` e `DEBUG_INFO` (DWARF) **desligados**. **1ª rodada de enxugamento aplicada** em `00-build-kernel-7.0.sh`: 96 símbolos a menos (AMD Display Core, WiFi mt76/Marvell, btrfs, NFS, batman-adv, x25, ieee802154, mptcp, wireguard, virtio convidado). Medição, motivo de cada item e tempos em `OTIMIZACAO_BUILD_2026-11-16.md`. Boot validado ao vivo na tag `20261116-s5-dma`. **Falta:** uma 2ª rodada (candidatos: som USB, joystick/HID de fabricantes, SCSI/MD/RAID não usados, tty/serial legados, DRM de GPUs não-AMD) — só depois de congelar o config, para o ccache valer.
 **Outros candidatos a avaliar** (não verificados ainda): drivers de hardware inexistente no console, FS não usados (só ext4, vfat, initramfs), subsistemas de virtualização já parcialmente desligados. `CONFIG_DEBUG_INFO` em si: avaliar caso a caso.
 **Cuidado:** mudar o `.config` dispara recompilação ampla (~40 min). Agrupar todas as remoções em **uma única** rodada e testar o boot depois. Manter tag anterior em `boot_referencia/` para rollback.
 
@@ -375,20 +374,16 @@ Pendência e plano de correção (NVRAM `/data/nvram/APCFG/APRDEB/WIFI`, país B
 ### [x] ✅ **Passo 1 do plano DP: aplicar `ps4-bridge-dp-init.patch` no build** — CONCLUÍDO 2026-11-16
 O patch **existe** (`kernel/patches/ps4-bridge-dp-init.patch`), **bloco de aplicação adicionado** no `00-build-kernel-7.0.sh` (linhas 511-520). **Aplicado e validado ao vivo** na tag `20261116-keep-mode-aplicado`: init do lado DP da ponte MN864729 ativo, DP link training funcionando. Juntamente com `ps4-bridge-keep-mode.patch` (keep-mode), console puro estável 1h45m+ idle.
 
-### [ ] **BTF mismatch dos módulos no rootfs + módulos faltando (baikal_wdt, baikal-hpet)**
-O `distro/01-build-image-7.0.sh` copia os módulos do kernel build **sem strip de BTF**. Resultado: 
-- **BTF mismatch**: `mts.ko`, `cifs.ko`, `baikal-dmac.ko`, `rtc-ps4-icc.ko` carregam mas com erro `failed to validate module BTF: -22`.
-- **MÓDULOS AUSENTES**: `baikal_wdt.ko`, `baikal-hpet.ko` **não são gerados** (modprobe: FATAL: Module not found) — provável que `CONFIG_BAIKAL_WDT`/`CONFIG_BAIKAL_HPET` não estejam habilitados no build kernel.
-
-**Solução única no `01-build-image-7.0.sh`:**
-1. Após `modules_install`, rodar `objcopy --remove-section=.BTF --remove-section=.BTF.base` em **todos** os `.ko` do rootfs.
-2. Verificar no `00-build-kernel-7.0.sh` se `CONFIG_BAIKAL_WDT=m` e `CONFIG_BAIKAL_HPET=m` estão habilitados (hoje desligados por causar tela preta em boot anterior — precisam teste isolado).
+### [~] **Módulos do rootfs: BTF resolvido; `baikal_wdt` e `baikal-hpet` ainda faltam**
+- **BTF mismatch: RESOLVIDO** (2026-11-16). O kernel não tem BTF e o `install-modules-7.0.sh` faz o strip. Módulos reinstalados e conferidos por `srcversion`.
+- **[ ] Faltam `baikal_wdt.ko` e `baikal-hpet.ko`:** os patches `baikal-wdt.patch` e `clocksource-baikal-hpet.patch` são aplicados, mas `CONFIG_BAIKAL_WDT`/`CONFIG_BAIKAL_HPET` estão desligados por causa de uma tela preta antiga. **Próximo:** build de teste isolado com cada um como `=m` (nunca `=y`), carregar ao vivo e conferir o boot.
 
 ### [ ] **Baikal Memory sysfs offsets desalinhados**
 Device file `/dev/baikal-memory` expõe MAC em offset `0x52f000` e ICC em `0x52c000`, mas atributos sysfs (`bar5_0x2f000`, `bar5_0x2c000`) não mostram dados. Driver `drivers/ps4/baikal-memory.c` precisa ajustar os offsets dos atributos para bater com o mapeamento real do device file.
 
-### [ ] **S5 power-off: tag de teste não existe em `distro/boot_referencia/`**
-Tag `20260730-s5-poweroff-fix` **não está presente** nos artifacts (listagem confirma). O código do driver ICC (`ps4-bpcie-icc.c`, `ps4-apcie-icc.c`) já tem o payload corrigido (20 bytes + sequência pré-sync major=4/minor=4 + final major=4/minor=1), mas precisa **rebuild da tag, deploy, captura UART, power-cycle, teste `sync && poweroff -f`**.
+### [x] ✅ **S5 power-off** — RESOLVIDO 2026-11-16 (tag `20261116-s5-dma`)
+`sync && poweroff -f` desliga o console por completo (luz azul e fan). Causa raiz: o `icc_shutdown` rodava no `pm_power_off`, depois do `lapic_shutdown()`; o 4/1 `{0,0,2,0,1,0}` sempre esteve certo. Correção: enviá-lo em `SYS_OFF_MODE_POWER_OFF_PREPARE`. `test_history` ids 86 e 91.
+
 
 ### [ ] **DMAC2 (BAR2) sem IRQ — investigação pendente**
 Driver `baikal-dmac` v0.1 carrega (visto no `lsmod`), `dmatest` **não rodou neste boot**. IRQ do DMAC2 (BAR2) não chega — DMAC1 (BAR0) tem IRQ MSI funcional; DMAC2 completa por polling (`hrtimer`). **Próximo:** rodar `dmatest` ao vivo + RE estática do `bpcie_handle_edge_irq` / `dmac_mtk.c` no Orbis para confirmar mapeamento BAR0↔DMAC1 / BAR2↔DMAC2.
@@ -444,7 +439,7 @@ Leitura pontual (2026-11-13): `BAR2(00:14.4) + 0x109000` = `0xc8909000`, valor `
 Dispositivo `104d:90dc`, dois controladores: BAR0 `ca000000` (DMAC1?) e BAR2 `ca800000` (DMAC2?), 4K cada. **Memcpy por descritor validado nos dois** (cadeia de descritores, até 1 MiB, alinhamentos 4–64 B, ~900 MB/s). **Interrupção MSI funciona no BAR0 e NÃO chega no BAR2.** Decisão: driver começa com IRQ no DMAC1 e **polling no DMAC2**.
 **Concluído:** driver escrito (`drivers/dma/baikal-dmac.c`, v0.1), patch `baikal-dmac.patch` aplicado no build (`git apply --check` + `exit 1`), `CONFIG_DMA_ENGINE=y`, `CONFIG_DMA_VIRTUAL_CHANNELS`, `CONFIG_BAIKAL_DMAC=m`, `CONFIG_DMATEST=m`. Build tag `20261113-dmaengine` concluído e deployado no PS4 (2026-11-13). `baikal-dmac` carregou: `virt-dma` → `baikal-dmac`; `dma0chan0` e `dma0chan1`; IRQ 37 (DMAC1); sem erro. `dmatest`: 3000 testes, 0 falhas (canal 0 IRQ 200/200; canal 1 polling 200/200; 2 canais simultâneos 2400/2400). 3 ciclos `rmmod`/`insmod` sem problema.
 **Falta:** persistir módulos no rootfs (item BTF mismatch), `CON` fora do alinhamento, `len=0`, erro induzido, e **IRQ do DMAC2** — `dmatest` não rodou neste boot; DMAC1 com IRQ, DMAC2 por polling.
-**⏸️ FRENTE PAUSADA em 2026-11-13 (decisão do usuário).** Estado de retomada: driver v0.1 validado ao vivo; falta persistir módulos no rootfs e itens acima.
+**▶️ FRENTE REABERTA em 2026-11-16 (DMA → SPM):** o DMAC vê a SPM em `0xC0000000` (= BAR2 PCI + `0x40000000`; `0x80000000` dá erro). Leitura ~1,5 GB/s e escrita ~0,9 GB/s por DMA, contra ~4 MB/s e ~81 MB/s pela CPU. Provado com padrão aleatório gravado e relido, e escrita por DMA com guarda intacta (`test_history` 87–90; `PLANO_DMA_SPM_DDR3_2026-11-16.md` §8). **Próximo:** integrar no `baikal-memory` (ver seção nova). Pendências antigas desta frente continuam: IRQ do DMAC2, `CON` fora do alinhamento, `len=0`, erro induzido.
 
 ### [x] 💾 Baikal Memory (00:14.6) — Fases 1–5 **VALIDADAS AO VIVO** (2026-11-15); Fase 6 pendente
 Módulo carrega (v0.2, vermagic OK). BARs mapeados: BAR0 (4 KiB), BAR2 (1 GiB endereçado, 256 MB real), BAR4 (1 MiB), BAR5 (256 KiB). `/dev/baikal-memory` expõe BAR0 @ 0x0, BAR2 (4 MiB) @ 0x1000, BAR5 @ 0x500000. **MAC real lido em offset 0x52f000**: `2c:cc:44:3f:69:5f` ✅. **Região ICC (spm.icc) em offset 0x52c000**: dados válidos ✅. Escrita controlada (`allow_write=0`) ativa por padrão.
@@ -487,16 +482,34 @@ Implementado no build: `zram-generator` no `PKGS`; `/etc/systemd/zram-generator.
 
 ### Itens pendentes para próximos builds/testes (consolidados das pendências críticas acima):
 1. [x] ✅ **Aplicar `ps4-bridge-dp-init.patch` no build** — CONCLUÍDO 2026-11-16 (bloco de aplicação adicionado, validado ao vivo tag `20261116-keep-mode-aplicado`)
-2. [ ] **BTF mismatch + módulos faltando (baikal_wdt, baikal-hpet)** — `objcopy --remove-section=.BTF` em todos `.ko` no `01-build-image-7.0.sh` + habilitar `CONFIG_BAIKAL_WDT`/`CONFIG_BAIKAL_HPET` no build kernel
+2. [~] **Módulos faltando (baikal_wdt, baikal-hpet)** — o BTF mismatch está resolvido (BTF desligado + strip no `install-modules`); falta gerar esses dois módulos (teste isolado, `=m`)
 3. [ ] **Baikal Memory sysfs offsets** — device file: MAC `0x52f000`, ICC `0x52c000`; sysfs `bar5_0x2f000`/`bar5_0x2c000` vazios → ajustar `drivers/ps4/baikal-memory.c`
 4. [x] ✅ **RTC: `hwclock -r` FUNCIONA** — validado ao vivo na tag `20261115-hwclock-min` e build atual; fix confirmado.
-5. [ ] **S5 power-off (luz azul)** — rebuild tag S5 a partir do código atual (payload 20 bytes no driver ICC) → deploy → **captura UART** → `sync && poweroff -f` → confirmar luz apaga
-6. [ ] **Mesa patchado** — confirmar se full-rebuild incluiu (gladius visto no dmesg → provável que sim); se precisar atualizar, rodar `mesa/01-build-mesa.sh` + rebuild distro
+5. [x] ✅ **S5 power-off (luz azul)** — RESOLVIDO 2026-11-16 (tag `20261116-s5-dma`)
+6. [x] ✅ **Mesa patchado** — confirmado incluído no full-rebuild (gladius no dmesg)
 7. [ ] **Adicionar `cpupower` ao `PKGS` + rebuild distro + deploy** para validar `cpufreq` (`CONFIG_X86_ACPI_CPUFREQ=y` já no kernel)
 9. [x] ✅ **SATA a 6 Gbps — LIMITE DE HARDWARE (3.0 Gbps)** — não é bug; `ata1.00: configured for UDMA/100` funcional.
 10. [ ] **Confirmar cgroup v1 sem warnings no próximo rebuild distro** (hierarquias v1 ativas ao vivo)
 
 ---
+
+## 🆕 Pendências abertas em 2026-11-16 (sessão da tag `20261116-s5-dma`)
+
+1. [ ] **Testar `shutdown -h now` (systemd) e `reboot`** com o kernel novo. Só o `poweroff -f` foi validado. O `reboot` do Baikal nunca teve um `icc_reboot` no `bpcie`; registrar o comportamento atual.
+2. [ ] **Promover a tag `20261116-s5-dma`** para `distro/RELEASE/` (`distro/scripts/promote-release.sh 20261116-s5-dma`) depois do item 1.
+3. [ ] **Integrar o DMA no `baikal-memory`:** leitura e escrita em bloco pelo DMAC1 usando `0xC0000000 + off`, com fallback para `memcpy_fromio`/`memcpy_toio`. Plano próprio, via patch idempotente (regra do AGENTS.md). Conflito a resolver: `baikal-dmac` e o harness disputam o mesmo `104d:90dc`. DMAC2 só por polling.
+4. [ ] **Console serial do Linux some com 0,63 s de boot:** `console=uart8250,…` é substituído por `tty0` (`/proc/consoles` só lista `tty0`), então nenhuma captura UART mostra o Linux. Já era assim antes do build novo. Sem isso, o S5 foi validado sem o log `pr_emerg` do handler.
+5. [ ] **Ponte USB JMicron `152d:0578` do HD do PS4:** o modo UAS gerou erros de leitura e reset no host. O quirk `usb-storage` (`152d:0578:u`) vale só até reiniciar o PC; falta torná-lo permanente (`/etc/modprobe.d/`) e decidir o que fazer no PS4 (lição #79 já descreve o HD como instável).
+6. [ ] **Áudio HDMI com som de verdade:** com o Display Core removido, os dispositivos HDMI aparecem (`HDMI 0`, `HDMI 1`, codec ATI R6xx), mas não foi tocado som depois do build novo (`speaker-test -D plughw:0,3`). `SND_HDA_COMPONENT` saiu junto com o DC.
+7. [ ] **Limpeza no rootfs do PS4** (`psxitarch`): a pasta `/lib/modules/backup-7.0.8-…-pre-20261116-s5-dma` e os arquivos de teste em `/root` (`baikal_dmac_test_spm.ko`, `icc_cmd`) — remover quando não forem mais necessários.
+8. [ ] **`config` na partição BOOT fica desatualizado:** o `deploy-boot-7.0.sh` não copia o `config` da tag (só `bzImage`, `initramfs`, `bootargs`). Só informativo, mas confunde a conferência.
+9. [ ] **Congelar o config do kernel:** o ccache só acerta com o mesmo config (`OTIMIZACAO_BUILD_2026-11-16.md`). Medir o próximo build com o config igual (esperado: ~1 min de compilação + link com o cache do ThinLTO).
+10. [ ] **Segunda rodada de enxugamento** (ver item "Enxugar o kernel").
+
+Fora desta lista, por decisão do usuário: **`eth0`/GBE** (PHY mudo, bloqueador de firmware).
+
+---
+
 
 ## Critério de aceite geral (hardware)
 - Cada item `[ ]` acima só fecha quando o driver está carregado **e** o dispositivo é utilizável ao vivo no PS4 (não apenas "compila").
