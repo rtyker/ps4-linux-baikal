@@ -150,7 +150,7 @@ preflight() {
            ps4-icc-proc-debug.patch mts-baikal-gbe-driver.patch \
            baikal-memory-fase2.patch baikal-dmac.patch \
            clocksource-baikal-hpet.patch baikal-wdt.patch \
-           ps4-bridge-dp-init.patch; do
+           ps4-bridge-dp-init.patch ps4-bridge-keep-mode.patch; do
     [ -f "$SCRIPT_DIR/patches/$p" ] || die "patch ausente: $SCRIPT_DIR/patches/$p"
   done
 
@@ -503,6 +503,37 @@ for P in clocksource-baikal-hpet.patch baikal-wdt.patch; do
   git apply "$PATCH"
   echo "✓ Patch $P aplicado com sucesso (git apply, validado com --check)"
 done
+
+# Ponte de vídeo Panasonic MN864729 (ps4_bridge.c): init do lado DP (MN864729 sink side).
+# O bloco estava em #if 0 com comentário "No idea. DP stuff probably. This borks for some reason".
+# Habilitando para configurar os registradores DP da ponte ANTES do link training.
+# Mesmo padrão: --check antes, exit 1 se falhar.
+PATCH_BRIDGE_DP_INIT="$SCRIPT_DIR/patches/ps4-bridge-dp-init.patch"
+[ -f "$PATCH_BRIDGE_DP_INIT" ] || { echo "❌ ERRO FATAL: $PATCH_BRIDGE_DP_INIT não encontrado"; exit 1; }
+if ! git apply --check "$PATCH_BRIDGE_DP_INIT" 2>/tmp/bridge_dp_init_patch_check.log; then
+  echo "❌ ERRO FATAL: patch ps4-bridge-dp-init não aplica contra o kernel atual:"
+  cat /tmp/bridge_dp_init_patch_check.log
+  echo "  Regenere o patch a partir de uma árvore limpa (ver AGENTS.md)."
+  exit 1
+fi
+git apply "$PATCH_BRIDGE_DP_INIT"
+echo "✓ Patch ps4-bridge-dp-init aplicado com sucesso (git apply, validado com --check)"
+
+# Ponte de vídeo Panasonic MN864729 (ps4_bridge.c): não zerar mn_bridge->mode no
+# post_disable. Um DPMS off->on (screensaver) religa o encoder sem novo modeset,
+# então ps4_bridge_mode_set não roda e ps4_bridge_enable falhava com
+# "mode not available", deixando a ponte resetada e a tela preta (reproduzido
+# ao vivo em 2026-11-16, 3/3 ciclos). Mesmo padrão: --check antes, exit 1 se falhar.
+PATCH_BRIDGE_KEEP="$SCRIPT_DIR/patches/ps4-bridge-keep-mode.patch"
+[ -f "$PATCH_BRIDGE_KEEP" ] || { echo "❌ ERRO FATAL: $PATCH_BRIDGE_KEEP não encontrado"; exit 1; }
+if ! git apply --check "$PATCH_BRIDGE_KEEP" 2>/tmp/bridge_keep_patch_check.log; then
+  echo "❌ ERRO FATAL: patch ps4-bridge-keep-mode não aplica contra o kernel atual:"
+  cat /tmp/bridge_keep_patch_check.log
+  echo "  Regenere o patch a partir de uma árvore limpa (ver AGENTS.md)."
+  exit 1
+fi
+git apply "$PATCH_BRIDGE_KEEP"
+echo "✓ Patch ps4-bridge-keep-mode aplicado com sucesso (git apply, validado com --check)"
 
 # build.sh (upstream rmuxnet/linux) NÃO é mais usado — em 2026-07-22 seu perfil
 # "General/ThinLTO/Baikal" (--option 3 use=General lto=ThinLTO southbridge=Baikal)

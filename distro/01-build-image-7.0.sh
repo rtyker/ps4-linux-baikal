@@ -580,85 +580,33 @@ ln -sf /usr/lib/systemd/system/systemd-resolved.service \
   "$ROOTFS_DIR/etc/systemd/system/multi-user.target.wants/systemd-resolved.service"
 
 echo "=== Instalando módulos do kernel 7.0 ==="
-# Copiar módulos compilados do kernel build
-if [ -d "$KERNEL_BUILD_DIR" ]; then
-  echo "Copiando módulos pré-compilados de $KERNEL_BUILD_DIR..."
-  make -C "$KERNEL_BUILD_DIR" INSTALL_MOD_PATH="$ROOTFS_DIR" INSTALL_MOD_STRIP=1 modules_install
+# Delegar para script dedicado que faz modules_install + strip BTF + módulos PS4-specific
+INSTALL_MODULES_SCRIPT="$SCRIPT_DIR/scripts/install-modules-7.0.sh"
+if [ -f "$INSTALL_MODULES_SCRIPT" ] && [ -d "$KERNEL_BUILD_DIR" ]; then
+    echo "Chamando $INSTALL_MODULES_SCRIPT..."
+    "$INSTALL_MODULES_SCRIPT" "$ROOTFS_DIR" "$KERNEL_BUILD_DIR" "$KVER_FULL"
 else
-  echo "AVISO: Diretório de build do kernel não encontrado. Módulos não instalados."
+    echo "AVISO: Script de instalação de módulos não encontrado ou kernel build dir ausente. Fallback para modules_install básico."
+    if [ -d "$KERNEL_BUILD_DIR" ]; then
+        make -C "$KERNEL_BUILD_DIR" INSTALL_MOD_PATH="$ROOTFS_DIR" INSTALL_MOD_STRIP=1 modules_install
+        arch-chroot "$ROOTFS_DIR" depmod -a "$KVER_FULL"
+    else
+        echo "AVISO: Diretório de build do kernel não encontrado. Módulos não instalados."
+    fi
 fi
-
-# ============================================================
-# Copiar módulos já compilados do kernel build (sem rebuild)
-# Os módulos já foram compilados durante o kernel build (ETAPA 1)
-# com BTF/vermagic consistentes. Apenas copiar para o rootfs.
-# ============================================================
-echo "=== Copiando módulos já compilados do kernel build (sem rebuild) ==="
-if [ -d "$KERNEL_BUILD_DIR" ]; then
-  # MTS (Ethernet GBE) - já compilado no kernel build
-  if [ -f "$KERNEL_BUILD_DIR/drivers/net/ethernet/sony/mts.ko" ]; then
-    echo "Copiando MTS (mts.ko)..."
-    MTS_DEST_DIR="$MODULES_DIR/kernel/drivers/net/ethernet/sony"
-    mkdir -p "$MTS_DEST_DIR"
-    cp -v "$KERNEL_BUILD_DIR/drivers/net/ethernet/sony/mts.ko" "$MTS_DEST_DIR/mts.ko"
-  fi
-
-  # CIFS (SMB client) - já compilado no kernel build
-  if [ -f "$KERNEL_BUILD_DIR/fs/smb/client/cifs.ko" ]; then
-    echo "Copiando CIFS (cifs.ko)..."
-    CIFS_DEST_DIR="$MODULES_DIR/kernel/fs/smb/client"
-    mkdir -p "$CIFS_DEST_DIR"
-    cp -v "$KERNEL_BUILD_DIR/fs/smb/client/cifs.ko" "$CIFS_DEST_DIR/cifs.ko"
-  fi
-
-  # Baikal DMA (dmaengine) - já compilado no kernel build
-  if [ -f "$KERNEL_BUILD_DIR/drivers/dma/baikal-dmac.ko" ]; then
-    echo "Copiando Baikal DMA (baikal-dmac.ko, virt-dma.ko, dmatest.ko)..."
-    DMA_DEST_DIR="$MODULES_DIR/kernel/drivers/dma"
-    mkdir -p "$DMA_DEST_DIR"
-    cp -v "$KERNEL_BUILD_DIR/drivers/dma/baikal-dmac.ko" "$DMA_DEST_DIR/" 2>/dev/null || true
-    cp -v "$KERNEL_BUILD_DIR/drivers/dma/virt-dma.ko" "$DMA_DEST_DIR/" 2>/dev/null || true
-    cp -v "$KERNEL_BUILD_DIR/drivers/dma/dmatest.ko" "$DMA_DEST_DIR/" 2>/dev/null || true
-  fi
-
-  # Baikal WDT (watchdog) - já compilado no kernel build
-  if [ -f "$KERNEL_BUILD_DIR/drivers/watchdog/baikal_wdt.ko" ]; then
-    echo "Copiando Baikal WDT (baikal_wdt.ko)..."
-    WDT_DEST_DIR="$MODULES_DIR/kernel/drivers/watchdog"
-    mkdir -p "$WDT_DEST_DIR"
-    cp -v "$KERNEL_BUILD_DIR/drivers/watchdog/baikal_wdt.ko" "$WDT_DEST_DIR/" 2>/dev/null || true
-  fi
-
-  # Baikal HPET (clocksource) - já compilado no kernel build
-  if [ -f "$KERNEL_BUILD_DIR/drivers/clocksource/baikal-hpet.ko" ]; then
-    echo "Copiando Baikal HPET (baikal-hpet.ko)..."
-    HPET_DEST_DIR="$MODULES_DIR/kernel/drivers/clocksource"
-    mkdir -p "$HPET_DEST_DIR"
-    cp -v "$KERNEL_BUILD_DIR/drivers/clocksource/baikal-hpet.ko" "$HPET_DEST_DIR/" 2>/dev/null || true
-  fi
-
-  # RTC via ICC - já compilado no kernel build
-  if [ -f "$KERNEL_BUILD_DIR/drivers/rtc/rtc-ps4-icc.ko" ]; then
-    echo "Copiando RTC ICC (rtc-ps4-icc.ko)..."
-    RTC_DEST_DIR="$MODULES_DIR/kernel/drivers/rtc"
-    mkdir -p "$RTC_DEST_DIR"
-    cp -v "$KERNEL_BUILD_DIR/drivers/rtc/rtc-ps4-icc.ko" "$RTC_DEST_DIR/" 2>/dev/null || true
-  fi
-
-  echo "Atualizando dependências de módulos (depmod)..."
-  arch-chroot "$ROOTFS_DIR" depmod -a "$KVER_FULL"
-else
-  echo "AVISO: Diretório de build do kernel não encontrado. Cópia de módulos pulada."
-fi
-# ============================================================
 
 # Copiar opcionalmente o mts.ko compilado separadamente (em drivers_mts/build/mts.ko)
+# Nota: install-modules-7.0.sh já faz isso, mas mantemos aqui como fallback/garantia extra
 MTS_LOCAL_KO="$SCRIPT_DIR/../kernel/drivers_mts/build/mts.ko"
 if [ -f "$MTS_LOCAL_KO" ]; then
   MTS_DEST_DIR="$MODULES_DIR/kernel/drivers/net/ethernet/sony"
   echo "=== Sobrescrevendo/Garantindo mts.ko local mais recente de drivers_mts/build/mts.ko ==="
   mkdir -p "$MTS_DEST_DIR"
   cp -v "$MTS_LOCAL_KO" "$MTS_DEST_DIR/mts.ko"
+  # Strip BTF se presente
+  if objdump -h "$MTS_DEST_DIR/mts.ko" 2>/dev/null | grep -q '\.BTF'; then
+      objcopy --remove-section=.BTF --remove-section=.BTF.base "$MTS_DEST_DIR/mts.ko" "$MTS_DEST_DIR/mts.ko.strip" && mv "$MTS_DEST_DIR/mts.ko.strip" "$MTS_DEST_DIR/mts.ko"
+  fi
   echo "Executando depmod para atualizar dependências de módulos..."
   arch-chroot "$ROOTFS_DIR" depmod -a "$KVER_FULL"
 else
