@@ -579,6 +579,10 @@ dd if=/dev/baikal-memory of=/dev/null bs=1M count=100
 2. O driver **não** impõe janela de escrita dentro da BAR2 (só barra fora dela). A janela validada (SPM `0x200000`, até 64 KiB, harness `test_history` 90) tem de ser imposta por quem testa. Offset do arquivo = `0x1000` (início da BAR2) + offset da SPM.
 3. **Não restaurar zeros com `head -c 65536 /dev/zero | dd bs=64k count=1`:** o `dd` lê do pipe uma vez só e escreveu parte, deixando 24 469 bytes do padrão na SPM. Usar um arquivo de zeros (`dd if=zero.bin ... oflag=seek_bytes seek=<offset> conv=notrunc`) e **conferir lendo de volta**.
 4. Antes de escrever, ler a janela e as guardas e abortar se não forem zero; restaurar e recarregar o módulo sem `allow_write` no final.
+5. **`dd of=-` NÃO escreve na saída padrão:** cria um arquivo chamado `-` no diretório atual. Para calcular hash de uma leitura, omita o `of=` (`dd if=... | sha256sum`). Um teste de "antes/depois" feito com `of=-` comparou entradas vazias e não valia nada.
+6. **A BAR5 (`/dev/baikal-memory` em `0x500000`) tem dados vivos que mudam sozinhos** (5 leituras seguidas sem escrita deram 5 hashes distintos). Não use o hash da BAR5 como prova de que "nada mudou".
+
+**Fechamento do plano (2026-11-16, build `20261116-dma-final`):** além da correção do `dma_chunk`, o `baikal-memory-dma.patch` passou a (a) dividir cabeça e cauda desalinhadas (CPU) do miolo múltiplo de 4 e ≥ `dma_min` (DMA); (b) devolver 0 bytes (fim de dados) na lacuna `0x401000`–`0x4fffff`; (c) pedir o canal DMA sob demanda, com tentativa a cada 1 s, quando o `baikal_dmac` sobe depois; (d) mostrar `ativo DMAC1`/`DMAC2` no `dma_state`; (e) ter `use_dma` ligado por padrão. A bateria de 10 testes do plano passou ao vivo (`test_history` 94–97; resultados em `others/rea/spm/plans/PLANO_BAIKAL_MEMORY_DMA_2026-11-16.md` §5.1) e o módulo compila com `W=1` sem avisos. **Pendente:** gravar no HD (item 3c do `BACKLOG.md`); o `bzImage` dessa tag tem 11 MiB, acima do limite de ~10 MB de alguns loaders `kexec`. "Nada além do limite muda" na escrita parcial só foi verificado por leitura do código. O fallback por erro do DMAC nunca foi exercitado ao vivo.
 
 ---
 

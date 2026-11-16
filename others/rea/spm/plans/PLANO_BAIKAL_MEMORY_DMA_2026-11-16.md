@@ -1,6 +1,6 @@
 # Plano — `baikal-memory` lendo e escrevendo a SPM pelo DMAC
 
-**Data:** 2026-11-16 · **Status:** 🟡 Parcialmente implementado — build OK, mas **bug no DMA (`len=0`)** impede funcionamento. Tag `20261116-dma-test` buildada mas DMA não funcional.
+**Data:** 2026-11-16 · **Status:** ✅ Implementado e validado ao vivo (testes 1 a 10, `test_history` 94–97). **Falta só gravar no HD** (kernel da tag `20261116-dma-final` + `install-modules` + `bootargs`/`initramfs` + `deploy-boot`), que exige o HD plugado no PC. Resultados na §5.1.
 **Base provada ao vivo** (`others/rea/dma/plans/PLANO_DMA_SPM_DDR3_2026-11-16.md` §8, `test_history` 87–90): o DMAC do Baikal (`00:14.5`) enxerga a SPM (`00:14.6`) em **`0xC0000000 + off`** (= BAR2 PCI `0x80000000` + `0x40000000`). Por DMA: leitura ~1,5 GB/s, escrita ~0,9 GB/s. Pela CPU, o caminho atual do `baikal-memory`: ~4 MB/s e ~81 MB/s.
 
 **Objetivo:** `read()`/`write()` em `/dev/baikal-memory` na janela do BAR2 passam a usar o DMAC, com fallback automático para a CPU. Fora do BAR2 (BAR0, BAR5) nada muda.
@@ -123,6 +123,32 @@ Todos com o `baikal_dmac` carregado, salvo onde indicado. Escrita **só** na jan
 
 Resultados no `test_history`, nesta seção e no BACKLOG.
 
+### 5.1 Resultados ao vivo (2026-11-16, `test_history` 94–97)
+
+Módulo da tag `20261116-dma-split` carregado de `/tmp` sobre o kernel do HD (a tag final `20261116-dma-final` só difere no padrão de `use_dma` e nos comentários; foi recarregada sem parâmetros e passou numa regressão curta). Todos os `dd` sem `iflag=direct`.
+
+| # | Resultado | Veredito |
+|---|---|---|
+| 1 | CPU, 1 MiB: 0,258 s, **4,1 MB/s** | ✅ |
+| 2 | DMA, 1 MiB: `cmp` == CPU; **547 a 624 MB/s** a quente (10 medidas, mediana ~617); a 1ª leitura após recarregar deu 402 MB/s (inclui alocar o bounce); 4 MiB: 887 a 924 MB/s; `dma_state = ativo DMAC1` | ✅ (≥ 500 MB/s a quente). O trecho é todo zero, então a igualdade é fraca; o conteúdo real foi provado no teste 4 |
+| 3 | 13 leituras desalinhadas (+1, +3, +0x1ffd × 1, 3, 255, 4097 B, e +1 × 65535 B) idênticas ao padrão conhecido; contadores: cabeça/cauda pela CPU, miolo pelo DMA (+1 × 4097: cpu 5 / dma 4092) | ✅ — **exigiu código novo** (divisão do §2.3): antes tudo desalinhado ia inteiro pela CPU |
+| 4 | 64 KiB aleatórios por DMA em `0x201000`; readback CPU == DMA == padrão; `dma_w+65536`. Escrita desalinhada (4097 B em +1) também correta, bytes vizinhos preservados | ✅ |
+| 5 | `allow_write=0`: `dd: Operation not permitted`; janela com hash idêntico antes/depois, com o DMA ativo | ✅ |
+| 6 | 4096 B a partir de `0x400800`: gravou **2048 B** (escrita parcial, EPERM no resto), conteúdo conferido | ✅ parcial. "Nada além do limite muda" **não foi provado por medição**: o SHA da BAR5 mudou, mas a BAR5 tem dados vivos (5 leituras sem escrita, 5 hashes distintos). Vale pelo código: `baikal_mem_resolve(writable_only)` devolve NULL fora do BAR2 |
+| 6b | Leitura na lacuna: **0 bytes, sem oops**; leitura de 8192 B a partir de `0x400800` devolve só 2048 B | ✅ — a versão antiga devolvia `-ENODEV`; agora a lacuna lê como fim de dados (código novo) |
+| 7 | `rmmod baikal_dmac` com canal: "in use"; `echo 0 > dma/use_dma` devolve o canal (`sem canal`, refcnt 0); `rmmod` passa; leitura segue pela CPU (4 MB/s) | ✅ (o canal é devolvido pelo atributo sysfs `dma/use_dma`, não pelo parâmetro de módulo) |
+| 8 | `baikal_memory` antes do `baikal_dmac`: funciona pela CPU sem erro (**aceite 3**); após o `baikal_dmac` subir, passa ao DMA sozinho em até ~1 s (backoff de 1 s) | ✅ — **exigiu código novo** (`baikal_dma_try_enable`): antes `echo 1 > use_dma` não fazia nada se `use_dma` já fosse 1 |
+| 9 | 2 leitores por 30 s: 8094 leituras de 64 KiB (530 448 384 B por DMA), 0 divergentes, `err=0` | ✅ |
+| 10 | Janela (64 KiB) e fim de janela (2 KiB) restaurados e conferidos == originais (que eram todo zero) | ✅ |
+
+**Critérios de aceite (§ topo):** 1 ✅ (≥ 500 MB/s a quente, idêntico à CPU), 2 ✅ (`-EPERM` também no caminho DMA), 3 ✅ (funciona sem o `baikal_dmac`), 4 ✅ (nenhum oops nem erro do DMAC no `dmesg` em toda a bateria).
+
+**Mudanças feitas no patch durante o fechamento** (`kernel/patches/baikal-memory-dma.patch`): `dma_chunk` calculado só depois de alocar o bounce (causa do `len=0`); divisão cabeça/miolo/cauda; leitura na lacuna devolve fim de dados; reaquisição do canal sob demanda; `dma_state` mostra `ativo DMAC1`/`DMAC2`; `use_dma` padrão `1`. Compila com `W=1` sem avisos.
+
+**Desvios que continuam em relação ao desenho:** (a) o erro de DMA desliga o DMA até recarregar o módulo e o `dma_state` mostra `desligado: erro anterior` (sem o motivo detalhado do §2.6); (b) o tempo de espera no `baikal_dma_do_transfer` é de 3 s como no §2.4, mas **não há teste de erro induzido** do DMAC (o fallback por erro nunca foi exercitado ao vivo); (c) o `baikal-memory-dma-v2.patch` é uma alternativa **abandonada** (não entra no build e ainda tem o bug do `dma_chunk`).
+
+**Armadilhas de teste:** `dd of=-` NÃO escreve na saída padrão (cria um arquivo chamado `-`); para hash, omita `of=`. Restaurar zeros com `head | dd bs=64k count=1` grava só parte (o `dd` lê o pipe uma vez): use arquivo. `allow_write` é `0444` (só muda recarregando o módulo).
+
 ---
 
 ## 6. Fora de escopo
@@ -133,20 +159,10 @@ Resultados no `test_history`, nesta seção e no BACKLOG.
 
 ---
 
-## 🐛 Bug Conhecido — `prep_dma_memcpy falhou (len=0)`
+## 🐛 Bug `prep_dma_memcpy falhou (len=0)` — ✅ RESOLVIDO (2026-11-16)
 
-**Sintoma:** Ao tentar usar DMA na janela BAR2, `dmaengine_prep_dma_memcpy` falha com `len=0`. O bounce buffer é alocado corretamente (1 MiB), mas o chunk de DMA calculado é zero.
+**Sintoma:** no primeiro uso de DMA, `dmaengine_prep_dma_memcpy` falhava com `len=0` logo depois de o bounce de 1 MiB ser alocado, e o erro desligava o DMA para sempre.
 
-**Causa provável:** Bug no cálculo de `chunk`/`dma_chunk` no loop de leitura/escrita. O código limita `chunk` a 64 bytes (`sizeof(bounce)`) **antes** da verificação de DMA no caminho CPU, mas a verificação de DMA usa o `chunk` original. No entanto, a transição BAR0→BAR2 pode deixar `total_read` em um estado onde `count - total_read` ou `avail` resulta em zero.
+**Causa (confirmada em hardware):** `dma_chunk = min_t(size_t, chunk, dev->dma_bounce_size)` era calculado **antes** de `baikal_dma_alloc_bounce()`, e `dma_bounce_size` só recebe valor dentro dessa função (0 até lá). A hipótese antiga desta seção (transição BAR0→BAR2, `total_read`) estava errada: o cálculo não depende de BAR.
 
-**Localização do bug:** `drivers/misc/baikal-memory.c` nas funções `baikal_memory_read()` e `baikal_memory_write()`, especificamente no cálculo de `chunk` e `dma_chunk` (linhas ~405-415).
-
-**Workaround temporário:** Remover a desativação permanente de DMA em erro (já preparado em patch não-aplicado) para que o driver caia para CPU e tente DMA novamente no próximo chunk.
-
-**Próximos passos para corrigir:**
-1. Adicionar `dev_info` debug no cálculo de `chunk`, `avail`, `dma_chunk` antes da chamada `baikal_dma_do_transfer`
-2. Verificar se `baikal_is_bar2_window()` retorna true nos offsets corretos
-3. Garantir que `dma_chunk = min(chunk, bounce_size)` não resulte em zero
-4. Testar com offset explícito na BAR2 (ex: `dd skip=256 bs=4K` para pular BAR0)
-
-**Status:** Patch para remover desativação permanente criado (`/tmp/fix_dma_permanent.patch`) mas não aplicado por falhas de edição no arquivo C.
+**Correção:** `dma_chunk` é calculado depois da alocação, nas duas funções (commit `c5074ad`). Detalhes e medidas: `AGENTS.md` (seção do bug `len=0`) e §5.1 acima.

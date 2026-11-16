@@ -139,3 +139,15 @@
 - `others/rea/decompiled/` — saídas do Ghidra
 - `others/docs/PLANO_DRIVER_MEMORIA_BAIKAL.md` — plano de desenvolvimento
 - `others/docs/ACHADOS_MEMORIA_BAIKAL_FASE1.md` — achados da Fase 1 (BARs)
+
+## 9. Resultado: DMA para a SPM (2026-11-16)
+
+O DMAC do Baikal (`00:14.5`, `104d:90dc`, DMAC1 no BAR0) enxerga a SPM (`00:14.6`) em **`0xC0000000 + off`** (= BAR2 PCI `0x80000000` + `0x40000000`). O endereço PCI `0x80000000` dá erro imediato do DMAC (`INT_FLAG=0x2`). Provado com padrão aleatório gravado e relido (`test_history` 87–90) e depois pelo `/dev/baikal-memory` (94–97).
+
+| | Leitura da SPM | Escrita na SPM |
+|---|---|---|
+| CPU (`memcpy_fromio`/`memcpy_toio`) | ~4,1 MB/s | ~81 MB/s |
+| DMAC1 puro (harness, polling) | ~1,5 GB/s | ~0,9 GB/s |
+| `/dev/baikal-memory` com DMA (inclui `dd` e `copy_to_user`) | 547 a 624 MB/s (1 MiB), 887 a 924 MB/s (4 MiB) | 146 MB/s medidos em 64 KiB (1 medida) |
+
+Integração: `kernel/patches/baikal-memory-dma.patch` (usa o `dmaengine` do `baikal-dmac`). Plano e resultados completos em `others/rea/spm/plans/PLANO_BAIKAL_MEMORY_DMA_2026-11-16.md` (§5.1). A janela da SPM lida pelo driver tem 4 MiB; a BAR5 (`/dev/baikal-memory` em `0x500000`) tem dados vivos que mudam sozinhos.

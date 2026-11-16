@@ -1,6 +1,6 @@
 # Plano — Usar o **Aeolia DMAC (`00:14.7`)** para acessar a SPM/DDR3 (`00:14.6`)
 
-**Data:** 2026-11-16 · **Status:** 🔴 **PIVOT NECESSÁRIO** — Alvo original (DMAC 00:14.5) **ERRADO**  
+**Data:** 2026-11-16 · **Status:** ✅ **CONCLUÍDO em 2026-11-16** — o DMAC do Baikal (`00:14.5`) lê e escreve a SPM em `0xC0000000 + off` e já está integrado no `baikal-memory` (ver §8 e §9). O "pivot" para o Aeolia DMAC descrito abaixo foi **superado** pelos resultados e não foi executado. Texto histórico das seções 1 a 7 e 11 a 14 mantido sem alteração.  
 **Descoberta Crítica (2026-11-16):** O kernel Orbis usa o **Aeolia DMAC** (device composto xHCI+AHCI em `00:14.7`, device ID `0x90ce` ou `0x90a3`), **NÃO** o DMAC standalone `00:14.5` (`104d:90dc`). Ver `others/rea/dma/docs/CRITICAL_FINDING_AEOLIA_DMAC_2026-11-16.md`.
 
 **Origem da ideia:** writeup do Debarshi para o PS4 Pro/Belize. Lá, mover a leitura da DDR3 do southbridge de CPU-PIO para DMA subiu a vazão de ~10,6 MB/s para ~504 MB/s. O writeup cita device `104d:90cd` — no Baikal, o equivalente é o **Aeolia DMAC**.
@@ -272,3 +272,22 @@ Harness: `others/rea/dma/harness/baikal_dmac_test/baikal_dmac_test_spm.c` (somen
 Estado deixado: janela restaurada a zero (conferida), `baikal-memory` de volta a `allow_write=N`, `baikal_dmac` recarregado.
 
 **Decisão do Passo 4:** DMA é ~375× (leitura) e ~11× (escrita) mais rápido que a CPU → **integrar no `baikal-memory`** (leitura/escrita em bloco via DMAC usando `0xC0000000 + off`, com fallback para `memcpy_fromio`). Fica para um plano próprio, via patch idempotente.
+
+---
+
+## 9. Fechamento do plano (2026-11-16)
+
+| Passo | Estado | Evidência |
+|---|---|---|
+| 0 — fonte e banco | ✅ | writeup lido, banco consultado |
+| 0.4 — RE do Aeolia DMAC (`00:14.7`) | ⏹ **não executado e não necessário** | os passos 2 e 3 passaram com o DMAC do Baikal (`00:14.5`); o "pivot" do cabeçalho antigo foi superado. Nada foi medido no Aeolia DMAC; fica como pesquisa opcional |
+| 1 — baseline da CPU | ✅ | `test_history` 94: leitura da CPU a 4,1 MB/s (1 MiB). Não entrou em `readonly_verification`, que guarda valores de registradores, não vazão |
+| 2 — DMAC lendo a SPM | ✅ | `test_history` 87–89: H1 (`0x80000000`) refutada; H2 (`0xC0000000`) provada com padrão aleatório |
+| 3 — escrita pela SPM | ✅ | `test_history` 90 (e 95 já pelo `baikal-memory`) |
+| 4 — decisão | ✅ integrar | feita em `others/rea/spm/plans/PLANO_BAIKAL_MEMORY_DMA_2026-11-16.md`, resultados na §5.1 (`test_history` 94–97) |
+
+**Critérios de aceite (§6):** cópia de ≥ 64 KiB idêntica à da CPU ✅ (padrão aleatório, mesmo SHA-256, sem erro no `dmesg`); resultado registrado em `test_history` ✅ (87–97), `ACHADOS_MEMORIA_BAIKAL_FASE2.md` ✅ (§9 novo) e no `BACKLOG.md` ✅.
+
+**Vazão final integrada no `/dev/baikal-memory`** (inclui `dd` e `copy_to_user`; o DMAC puro do harness mede ~1,5 GB/s): leitura de 1 MiB 547 a 624 MB/s, de 4 MiB 887 a 924 MB/s, contra ~4,1 MB/s pela CPU (~130× a ~220×).
+
+**Única pendência:** gravar a tag `20261116-dma-final` no HD (HD plugado no PC: `distro/scripts/install-modules-7.0.sh`, `bootargs`/`initramfs` da tag, `distro/deploy-boot-7.0.sh`). Cuidado: o `bzImage` da tag tem 11 MiB, acima do limite de ~10 MB de alguns loaders `kexec`. Até lá, o kernel do HD continua com o módulo antigo (com o bug do `len=0`).
