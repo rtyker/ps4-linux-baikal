@@ -495,7 +495,7 @@ Implementado no build: `zram-generator` no `PKGS`; `/etc/systemd/zram-generator.
 
 ## 🆕 Pendências abertas em 2026-11-16 (sessão da tag `20261116-s5-dma`)
 
-1. [ ] **Testar `shutdown -h now` (systemd) e `reboot`** com o kernel novo. Só o `poweroff -f` foi validado. O `reboot` do Baikal nunca teve um `icc_reboot` no `bpcie`; registrar o comportamento atual.
+1. [~] **`shutdown -h now` (systemd) e `reboot`** com o kernel novo. **`reboot`: ✅ validado pelo usuário em 2026-11-16** (o console reinicia corretamente; `test_history` id 92; sem log, pois a UART do Linux segue muda). **Falta só `shutdown -h now`.** Obs.: o `bpcie` não tem `icc_reboot`; o reboot funciona pelo caminho padrão do kernel.
 2. [ ] **Promover a tag `20261116-s5-dma`** para `distro/RELEASE/` (`distro/scripts/promote-release.sh 20261116-s5-dma`) depois do item 1.
 3. [ ] **Integrar o DMA no `baikal-memory`:** leitura e escrita em bloco pelo DMAC1 usando `0xC0000000 + off`, com fallback para `memcpy_fromio`/`memcpy_toio`. Plano próprio, via patch idempotente (regra do AGENTS.md). Conflito a resolver: `baikal-dmac` e o harness disputam o mesmo `104d:90dc`. DMAC2 só por polling.
 4. [ ] **Console serial do Linux some com 0,63 s de boot:** `console=uart8250,…` é substituído por `tty0` (`/proc/consoles` só lista `tty0`), então nenhuma captura UART mostra o Linux. Já era assim antes do build novo. Sem isso, o S5 foi validado sem o log `pr_emerg` do handler.
