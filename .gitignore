@@ -46,6 +46,10 @@ opencode.json
 *.swp
 *.swo
 
+# --- Roteiros/auxiliares de teste locais (não versionar) ---
+outros/scripts/host/ROTEIRO_VM_WINDOWS_10.md
+outros/scripts/host/99-ps4-hd-noautomount.rules
+
 # ============================================================
 # PROJETOS IGNORADOS (não são do Baikal)
 # ============================================================
