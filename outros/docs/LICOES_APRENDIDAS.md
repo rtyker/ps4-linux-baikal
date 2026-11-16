@@ -662,3 +662,89 @@ Regras que saem disso:
    **pública**; a árvore foi limpa e o segredo passou a viver só em `.env.keys` +
    `~/ps4-keys/`. Consequência assumida: não publicar imagens/backups do disco interno e
    apagar/reformatar o HD antes de vender/descartar o console.
+
+## Lição Aprendida #78 (2026-11-16) — "Boot não apareceu" não é kernel corrompido: checar o FAT da BOOT primeiro
+
+Sintoma: depois de deployar a tag `20261116-keep-mode-aplicado`, o PS4 não deu **nenhum**
+sinal de boot Linux ("nem chegou a aparecer o boot"). A suspeita imediata foi de arquivo
+corrompido no HD. **Era falsa** — os artefatos estavam íntegros; o problema real era o
+**filesystem FAT (vfat) da partição BOOT sujo** (`Dirty bit is set`, "data may be corrupt").
+
+Por que isso derruba o boot: o loader do lado Orbis lê o `bzImage`/`initramfs` da BOOT com
+**parser FAT próprio**, menos tolerante que o `vfat` do Linux. Um FAT inconsistente (boot
+sector ≠ backup, dirty bit) pode fazer o loader ler lixo e nunca carregar o kernel — sem
+nenhuma mensagem, porque o kernel nem chega a iniciar.
+
+### Procedimento de verificação (rodar tudo no PC, com o HD plugado — sem gastar power cycle)
+```bash
+# 1. MD5 destino vs origem (prova que a cópia está certa)
+md5sum /mnt/ps4_boot_check/bzImage /mnt/ps4_boot_check/initramfs.cpio.gz /mnt/ps4_boot_check/bootargs.txt
+md5sum distro/boot_referencia/bzImage-7.0-<TAG> distro/boot_referencia/initramfs-7.0-<TAG>.cpio.gz distro/boot_referencia/bootargs-7.0-<TAG>.txt
+
+# 2. bzImage é kernel válido? (deve imprimir "Linux kernel x86 boot executable, bzImage ... ZST compressed")
+file distro/boot_referencia/bzImage-7.0-<TAG>
+#    prova definitiva: descomprimir em vmlinux ELF (exit 0 + ELF 64-bit)
+kernel/kernel_build_7.0/scripts/extract-vmlinux distro/boot_referencia/bzImage-7.0-<TAG> > /tmp/vmlinux && file /tmp/vmlinux
+
+# 3. initramfs: é cpio concatenado (early cpio + main gzip a partir de 0x2800). Testar o gzip:
+tail -c +10241 distro/boot_referencia/initramfs-7.0-<TAG>.cpio.gz > /tmp/main.gz
+gzip -t /tmp/main.gz && echo OK        # "OK" = não truncado
+gzip -dc /tmp/main.gz | cpio -it 2>/dev/null | wc -l   # ~343 arquivos
+
+# 4. Filesystem da BOOT (o ponto que realmente falhou): desmontar e verificar
+sudo umount /mnt/ps4_boot_check
+sudo fsck.vfat -n /dev/sda1     # -n = só verifica. Se "Dirty bit is set", reparar:
+sudo fsck.vfat -a /dev/sda1     # -a = repara (remove dirty bit)
+sudo fsck.ext4 -n /dev/sda2     # rootfs deve dizer "clean"
+```
+
+### Regra
+- **"Não bootou" ≠ "kernel corrompido".** Antes de recompilar ou trocar tag, rodar os 4
+  checks acima. Recompilar por suspeita de corrupção é desperdício de horas.
+- **Sempre desmontar a BOOT de forma limpa** ao tirar o HD. Desligar o PS4 no botão / puxar
+  o HD com a partição montada rw suja o vfat e pode impedir o próximo boot mesmo com
+  arquivos perfeitos.
+- O `deploy-boot-7.0.sh` já desmonta as duas partições no fim; o problema aparece quando o
+  **PS4** monta a BOOT rw (grava `bootlog.txt`) e é desligado sem unmount limpo.
+
+## Lição Aprendida #79 (2026-11-16) — Ejecão correta do HD USB do PS4 (HD/controlador instável)
+
+Contexto: o HD USB deste console (ou o controlador da case) é **problemático** — já apresentou
+`Synchronize Cache failed`, `DID_ERROR`, dirty bit no vfat e travadas no power-off. O dono vai
+trocar o HD futuramente. Enquanto isso, ejetar com cuidado para não corromper o boot.
+
+### Procedimento (ordem importa)
+```bash
+# 1. Garantir que NADA está montado do disco
+mount | grep sda || echo "(ok, nada montado)"
+
+# 2. Confirmar que nenhum processo usa o disco
+sudo fuser -v /dev/sda /dev/sda1 /dev/sda2 2>/dev/null || echo "(livre)"
+
+# 3. Flush de cache (rodar sync 2-3x, esperando cada um terminar)
+sync; sync; sync
+
+# 4. Desligar o dispositivo (spins down + USB disconnect)
+#    ATENÇÃO: pode demorar e PARECER travado. NÃO mate o processo no meio.
+sudo udisksctl power-off -b /dev/sda
+#    (alternativa: sudo eject /dev/sda  — mas udisksctl é mais limpo para USB)
+
+# 5. Esperar o disco desaparecer de verdade
+lsblk -o NAME,SIZE,LABEL | grep sda || echo "sda sumiu -> seguro puxar"
+#    e conferir no dmesg: deve aparecer "usb X-X: USB disconnect"
+sudo dmesg | tail -5
+```
+
+### Regras que evitam corrupção
+1. **Nunca puxar com partição montada rw.** Foi isso que sujou o vfat da BOOT (Lição #78) e
+   deu "no boot". Sempre: desmontar → sync → power-off → conferir que sumiu.
+2. **`udisksctl power-off` "travar" é normal neste HD/controlador.** Ele pode ficar ~30-60 s
+   piscando rápido; geralmente conclui sozinho (o `USB disconnect` aparece no dmesg). Não puxar
+   antes do disconnect, não matar o processo.
+3. **`eject` sem sudo → "Permissão negada".** Usar `sudo`.
+4. **`Synchronize Cache(10) failed: DID_ERROR` no fim é esperado neste hardware.** Se os `sync`
+   anteriores retornaram OK e os arquivos foram verificados por MD5 no disco, o risco é mínimo.
+5. **Sempre ter os artefatos de boot preservados em `distro/boot_referencia/`** — se o HD corromper,
+   é só re-deployar (`deploy-boot-7.0.sh <TAG>`), não recompilar.
+6. Sinais de controle/HD ruim a monitorar: blinking rápido anormal, `DID_ERROR`, `reset` do USB,
+   dirty bit recorrente no vfat. São motivos para priorizar a troca.
