@@ -1,0 +1,45 @@
+diff --git a/drivers/gpu/drm/amd/amdgpu/ps4_bridge.c b/drivers/gpu/drm/amd/amdgpu/ps4_bridge.c
+index ac30fbf42..f4841e5d1 100644
+--- a/drivers/gpu/drm/amd/amdgpu/ps4_bridge.c
++++ b/drivers/gpu/drm/amd/amdgpu/ps4_bridge.c
+@@ -171,6 +171,8 @@ struct ps4_bridge {
+ 	int mode;
+ 	bool enabled;
+ 	bool enabling;
++	/* ponte ja resetada pelo post_disable; limpo no proximo enable */
++	bool idle;
+ };
+ 
+ /* this should really be taken care of by the connector, but that is currently
+@@ -669,6 +671,7 @@ static void ps4_bridge_enable(struct drm_bridge *bridge)
+ 		return;
+ 	}
+ 	mn_bridge->enabling = true;
++	mn_bridge->idle = false;
+ 	mutex_unlock(&mn_bridge->mutex);
+ 
+ 	if (!mn_bridge->mode) {
+@@ -878,7 +881,7 @@ static void ps4_bridge_post_disable(struct drm_bridge *bridge)
+ 	mutex_lock(&mn_bridge->mutex);
+ 	mn_bridge->enabled = false;
+ 	mn_bridge->enabling = false;
+-	if (!mn_bridge->mode) {
++	if (!mn_bridge->mode || mn_bridge->idle) {
+ 		mutex_unlock(&mn_bridge->mutex);
+ 		return;
+ 	}
+@@ -895,7 +898,13 @@ static void ps4_bridge_post_disable(struct drm_bridge *bridge)
+ 	if (cq_exec(&mn_bridge->cq) < 0)
+ 		DRM_ERROR("Failed to reset bridge in post_disable\n");
+ 
+-	mn_bridge->mode = 0;
++	/*
++	 * NAO zerar mn_bridge->mode: um DPMS off->on (screensaver) religa o
++	 * encoder sem novo modeset, entao ps4_bridge_mode_set nao roda e o
++	 * ps4_bridge_enable falhava com "mode not available", deixando a ponte
++	 * resetada e a tela preta. O flag idle evita resetar a ponte 2x.
++	 */
++	mn_bridge->idle = true;
+ 	mutex_unlock(&mn_bridge->mutex);
+ }
+ 

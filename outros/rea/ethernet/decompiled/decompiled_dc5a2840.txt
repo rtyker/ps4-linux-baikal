@@ -1,0 +1,69 @@
+// Extraido por Ghidra PyGhidra (consolidate_decompiled_lacunas.py)
+// addr: 0xffffffffdc5a2840  name: FUN_ffffffffdc5a2840  size: 253
+// escopo: lacuna MTS/GBE/ICC/glue identificada em testes ao vivo
+// chamadores (4):
+//   FUN_ffffffffdc5a65e0 @ 0x-000000023a59a20
+//   FUN_ffffffffdc5a0ba0 @ 0x-000000023a5f460
+//   FUN_ffffffffdc5a3810 @ 0x-000000023a5c7f0
+//   FUN_ffffffffdc5a44c0 @ 0x-000000023a5bb40
+// chamadas (4):
+//   FUN_ffffffffdc6c8300 @ 0x-000000023937d00
+//   FUN_ffffffffdc6c85b0 @ 0x-000000023937a50
+//   FUN_ffffffffdc4afb10 @ 0x-000000023b504f0
+//   FUN_ffffffffdc630420 @ 0x-0000000239cfbe0
+
+
+undefined8 FUN_ffffffffdc5a2840(long param_1,uint param_2,undefined2 *param_3)
+
+{
+  undefined4 *puVar1;
+  uint *puVar2;
+  short sVar3;
+  undefined4 uVar4;
+  int iVar5;
+  uint uVar6;
+  
+  FUN_ffffffffdc6c8300
+            (param_1 + 0x3180,0,"W:\\Build\\J02690760\\sys\\freebsd\\sys\\dev\\mts\\if_mts.c",0x571)
+  ;
+  puVar1 = *(undefined4 **)(*(long *)(param_1 + 0x3068) + 0x10);
+  if (*(long *)(*(long *)(param_1 + 0x3068) + 8) == 0) {
+    out((short)puVar1,0x8000);
+  }
+  else {
+    *puVar1 = 0x8000;
+  }
+  uVar6 = (param_2 & 0x1f) << 8 | 0x4000;
+  puVar2 = *(uint **)(*(long *)(param_1 + 0x3068) + 0x10);
+  if (*(long *)(*(long *)(param_1 + 0x3068) + 8) == 0) {
+    out((short)puVar2,uVar6);
+  }
+  else {
+    *puVar2 = uVar6;
+  }
+  iVar5 = 10000;
+  while( true ) {
+    puVar1 = *(undefined4 **)(*(long *)(param_1 + 0x3068) + 0x10);
+    if (*(long *)(*(long *)(param_1 + 0x3068) + 8) == 0) {
+      uVar4 = in((short)puVar1);
+      sVar3 = (short)uVar4;
+    }
+    else {
+      uVar4 = *puVar1;
+      sVar3 = (short)uVar4;
+    }
+    if (sVar3 < 0) break;
+    FUN_ffffffffdc4afb10(1);
+    iVar5 = iVar5 + -1;
+    if (iVar5 == 0) {
+                    /* WARNING: Subroutine does not return */
+      FUN_ffffffffdc630420("phy read timeout.\n");
+    }
+  }
+  *param_3 = (short)((uint)uVar4 >> 0x10);
+  FUN_ffffffffdc6c85b0
+            (param_1 + 0x3180,0,"W:\\Build\\J02690760\\sys\\freebsd\\sys\\dev\\mts\\if_mts.c",0x584)
+  ;
+  return 0;
+}
+

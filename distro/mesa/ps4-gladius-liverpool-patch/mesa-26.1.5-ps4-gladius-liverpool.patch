@@ -1,0 +1,120 @@
+--- a/include/pci_ids/radeonsi_pci_ids.h	2026-07-15 17:03:19.000000000 -0300
++++ b/include/pci_ids/radeonsi_pci_ids.h	2026-07-24 17:33:10.382199410 -0300
+@@ -122,6 +122,11 @@
+ CHIPSET(0x985E, KABINI)
+ CHIPSET(0x985F, KABINI)
+ 
++CHIPSET(0x9920, LIVERPOOL)
++CHIPSET(0x9922, LIVERPOOL)
++CHIPSET(0x9923, LIVERPOOL)
++CHIPSET(0x9924, GLADIUS)
++
+ CHIPSET(0x1304, KAVERI)
+ CHIPSET(0x1305, KAVERI)
+ CHIPSET(0x1306, KAVERI)
+--- a/src/amd/addrlib/src/amdgpu_asic_addr.h	2026-07-15 17:03:19.000000000 -0300
++++ b/src/amd/addrlib/src/amdgpu_asic_addr.h	2026-07-24 17:33:16.309188180 -0300
+@@ -62,7 +62,9 @@
+ #define AMDGPU_HAWAII_RANGE     0x28, 0x3C //# 40 <= x < 60
+ 
+ #define AMDGPU_SPECTRE_RANGE    0x01, 0x41 //#   1 <= x < 65
+-#define AMDGPU_SPOOKY_RANGE     0x41, 0x81 //#  65 <= x < 129
++#define AMDGPU_SPOOKY_RANGE     0x41, 0x61 //#  65 <= x < 97
++#define AMDGPU_STARSHA_RANGE    0x61, 0x71 //#  97 <= x < 113 (PS4 "Liverpool")
++#define AMDGPU_STARSHP_RANGE    0x71, 0x81 //# 113 <= x < 129 (PS4 Pro "Gladius")
+ #define AMDGPU_KALINDI_RANGE    0x81, 0xA1 //# 129 <= x < 161
+ #define AMDGPU_GODAVARI_RANGE   0xA1, 0xFF //# 161 <= x < max
+ 
+--- a/src/amd/common/ac_gpu_info.c	2026-07-15 17:03:19.000000000 -0300
++++ b/src/amd/common/ac_gpu_info.c	2026-07-24 17:34:07.834090365 -0300
+@@ -636,6 +636,8 @@
+       case FAMILY_KV:
+          identify_chip2(SPECTRE, KAVERI);
+          identify_chip2(SPOOKY, KAVERI);
++         identify_chip2(STARSHA, LIVERPOOL);
++         identify_chip2(STARSHP, GLADIUS);
+          identify_chip2(KALINDI, KABINI);
+          identify_chip2(GODAVARI, KABINI);
+          break;
+@@ -1143,7 +1145,7 @@
+    info->pa_sc_tile_steering_override = device_info->pa_sc_tile_steering_override;
+    info->max_render_backends = device_info->num_rb_pipes;
+    /* The value returned by the kernel driver was wrong. */
+-   if (info->family == CHIP_KAVERI)
++   if (info->family == CHIP_KAVERI || info->family == CHIP_LIVERPOOL)
+       info->max_render_backends = 2;
+ 
+    info->clock_crystal_freq = device_info->gpu_counter_freq;
+@@ -2211,6 +2213,8 @@
+    case CHIP_PITCAIRN:
+    case CHIP_VERDE:
+    case CHIP_BONAIRE:
++   case CHIP_LIVERPOOL:
++   case CHIP_GLADIUS:
+    case CHIP_HAWAII:
+    case CHIP_TONGA:
+    case CHIP_FIJI:
+@@ -2267,6 +2271,18 @@
+       raster_config = 0x2a00126a;
+       raster_config_1 = 0x00000000;
+       break;
++   /* PlayStation 4 (Liverpool): 2 SEs, custom RB layout reverse-engineered
++    * by the ps4-linux community (fail0verflow et al.) */
++   case CHIP_LIVERPOOL:
++      raster_config = 0x2a00161a;
++      raster_config_1 = 0x00000000;
++      break;
++   /* PlayStation 4 Pro (Gladius): 4 SEs, custom RB layout reverse-engineered
++    * by the ps4-linux community. */
++   case CHIP_GLADIUS:
++      raster_config = 0x2a00161a;
++      raster_config_1 = 0x0000002e;
++      break;
+    /* 4 SEs / 8 RBs */
+    case CHIP_TONGA:
+    case CHIP_POLARIS10:
+--- a/src/amd/common/amd_family.h	2026-07-15 17:03:19.000000000 -0300
++++ b/src/amd/common/amd_family.h	2026-07-24 17:33:23.740174093 -0300
+@@ -81,6 +81,8 @@
+    /* GFX7 (Sea Islands) */
+    CHIP_BONAIRE,
+    CHIP_KAVERI,
++   CHIP_LIVERPOOL,      /* PlayStation 4 (Liverpool APU) */
++   CHIP_GLADIUS,        /* PlayStation 4 Pro (Gladius APU) */
+    CHIP_KABINI,
+    CHIP_HAWAII,         /* Radeon 290, 390 */
+    /* GFX8 (Volcanic Islands & Polaris) */
+--- a/src/amd/common/amd_family.c	2026-07-15 17:03:19.000000000 -0300
++++ b/src/amd/common/amd_family.c	2026-07-24 17:33:38.765145590 -0300
+@@ -21,6 +21,8 @@
+    CASE(BONAIRE);
+    CASE(KABINI);
+    CASE(KAVERI);
++   CASE(LIVERPOOL);
++   CASE(GLADIUS);
+    CASE(HAWAII);
+    CASE(TONGA);
+    CASE(ICELAND);
+@@ -109,6 +111,11 @@
+       return "kabini";
+    case CHIP_KAVERI:
+       return "kaveri";
++   case CHIP_LIVERPOOL:
++   case CHIP_GLADIUS:
++      /* Not a real LLVM target; LLVM has no idea what a PS4/PS4 Pro is.
++       * Bonaire is the closest same-generation (GFX7/CIK) match. */
++      return "bonaire";
+    case CHIP_HAWAII:
+       return "hawaii";
+    case CHIP_TONGA:
+--- a/src/gallium/winsys/radeon/drm/radeon_surface.c
++++ b/src/gallium/winsys/radeon/drm/radeon_surface.c
+@@ -78,6 +78,8 @@
+     CHIP_HAINAN,
+     CHIP_BONAIRE,
+     CHIP_KAVERI,
++    CHIP_LIVERPOOL,
++    CHIP_GLADIUS,
+     CHIP_KABINI,
+     CHIP_HAWAII,
+     CHIP_MULLINS,

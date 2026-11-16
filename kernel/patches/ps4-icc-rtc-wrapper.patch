@@ -1,0 +1,346 @@
+diff --git a/drivers/ps4/aeolia.h b/drivers/ps4/aeolia.h
+index a4262732d..c65ccd1cd 100644
+--- a/drivers/ps4/aeolia.h
++++ b/drivers/ps4/aeolia.h
+@@ -113,6 +113,13 @@ static inline int apcie_irqnum(struct apcie_dev *sc, int index)
+ 
+ int apcie_icc_cmd(u8 major, u16 minor, const void *data, u16 length,
+ 	    void *reply, u16 reply_length);
++
++/* Wrapper de retry para ICC lento (RTC), transparente de console.
++ * Veja comentario completo em baikal.h — definido em ps4-bpcie-icc.c. */
++#define PS4_ICC_RTC_RETRIES		100
++#define PS4_ICC_RTC_RETRY_DELAY_MS	50
++int ps4_icc_rtc_cmd(u8 major, u16 minor, const void *data, u16 length,
++		    void *reply, u16 reply_length);
+ int apcie_uart_init(struct apcie_dev *sc);
+ void apcie_uart_remove(struct apcie_dev *sc);
+ int apcie_icc_init(struct apcie_dev *sc);
+diff --git a/drivers/ps4/baikal.h b/drivers/ps4/baikal.h
+index 91f13d14c..49f0923fe 100644
+--- a/drivers/ps4/baikal.h
++++ b/drivers/ps4/baikal.h
+@@ -144,6 +144,27 @@ static inline int bpcie_irqnum(struct bpcie_dev *sc, int index)
+ int bpcie_icc_cmd(u8 major, u16 minor, const void *data, u16 length,
+ 	    void *reply, u16 reply_length);
+ 
++/*
++ * ps4_icc_rtc_cmd — conveniencia para o driver rtc-ps4-icc (e outros
++ * consumidores que precisem de retry lógico em ICC lento). Encapsula
++ * ate PS4_ICC_RTC_RETRIES tentativas com PS4_ICC_RTC_RETRY_DELAY_MS ms
++ * de gap entre elas, como recomendado em AGENTS.md (mesmo padrao usado
++ * no power-on da GBE).
++ *
++ * Em PS4 Baikal despacha para bpcie_icc_cmd; em Aeolia/Belize para
++ * apcie_icc_cmd. Sempre retorna true-zero em sucesso (>=0 = bytes
++ * reply recebidos) ou errno negativo.
++ *
++ * Veja consolidado/plans/rtc_via_icc_plan.md (RE 2026-07-25 valida
++ * ICC major=2 minor=0x0b/0x0c sub=0x81/1 = save/load context, e
++ * ICC major=4 minor=0x50 = bitmask de alarmes).
++ */
++#define PS4_ICC_RTC_RETRIES		100
++#define PS4_ICC_RTC_RETRY_DELAY_MS	50
++
++int ps4_icc_rtc_cmd(u8 major, u16 minor, const void *data, u16 length,
++		    void *reply, u16 reply_length);
++
+ #define CHAR_BIT 8	/* Normally in <limits.h> */
+ static inline u32 rol (u32 n, unsigned int c) {
+ 	const unsigned int mask = (CHAR_BIT*sizeof(n) - 1);  // assumes width is a power of 2.
+diff --git a/drivers/ps4/ps4-bpcie-icc.c b/drivers/ps4/ps4-bpcie-icc.c
+index 5aba26a42..7c486fce2 100644
+--- a/drivers/ps4/ps4-bpcie-icc.c
++++ b/drivers/ps4/ps4-bpcie-icc.c
+@@ -610,3 +610,51 @@ void bpcie_icc_resume(struct bpcie_dev *sc)
+ {
+ }
+ #endif
++
++/*
++ * ps4_icc_rtc_cmd — wrapper agnostico de console para comandos ICC do RTC.
++ *
++ * Encapsula o padrao de retry (ate PS4_ICC_RTC_RETRIES x 50 ms) recomendado
++ * pelo AGENTS.md para todo ICC lento (mesmo padrão ja usado no power-on da
++ * GBE). Em PS4 Baikal despacha direto para bpcie_icc_cmd; em Aeolia/Belize
++ * despacha para apcie_icc_cmd (que por sua vez despacha para bpcie_icc_cmd
++ * se CONFIG_X86_PS4_BAIKAL estiver ligado — veja apcie_icc_cmd).
++ *
++ * Retorno: igual ao bpcie_icc_cmd/apcie_icc_cmd:
++ *   >0 = numero de bytes recebidos em reply
++ *   <0 = errno negativo (-EAGAIN, -ETIMEDOUT, -EIO, etc.)
++ *
++ * Use para os comandos do driver rtc-ps4-icc:
++ *   ps4_icc_rtc_cmd(2, 0x0c, &flag, 1, &flag_reply, 1)  // load context
++ *   ps4_icc_rtc_cmd(2, 0x0b, &flag, 1, &flag_reply, 1)  // save context
++ *   ps4_icc_rtc_cmd(4, 0x50, &byte, 1, &byte_reply, 1)  // alarm bitmask
++ *
++ * Veja consolidado/plans/rtc_via_icc_plan.md (RE 2026-07-25).
++ */
++int ps4_icc_rtc_cmd(u8 major, u16 minor, const void *data, u16 length,
++		    void *reply, u16 reply_length)
++{
++	int ret, i;
++
++	for (i = 0; i < PS4_ICC_RTC_RETRIES; i++) {
++#ifdef CONFIG_X86_PS4_BAIKAL
++		ret = bpcie_icc_cmd(major, minor, data, length, reply, reply_length);
++#else
++		ret = apcie_icc_cmd(major, minor, data, length, reply, reply_length);
++#endif
++		if (ret >= 0)
++			return ret;
++		/* -EAGAIN = "ICC nao inicializado"; nao adianta retry imediato —
++		 * aguarda 50 ms e tenta de novo. -EINTR/-ETIMEDOUT tambem podem
++		 * ser transitórios (SC sob carga) — idem.
++		 */
++		if (ret != -EAGAIN && ret != -EINTR && ret != -ETIMEDOUT)
++			return ret;
++		msleep(PS4_ICC_RTC_RETRY_DELAY_MS);
++	}
++
++	pr_err("ps4-icc-rtc: deu timeout apos %d tentativas (major=%u minor=%u)\n",
++	       PS4_ICC_RTC_RETRIES, major, minor);
++	return ret;
++}
++EXPORT_SYMBOL_GPL(ps4_icc_rtc_cmd);
+diff --git a/drivers/rtc/Kconfig b/drivers/rtc/Kconfig
+index b46ac73a2..7665aaf63 100644
+--- a/drivers/rtc/Kconfig
++++ b/drivers/rtc/Kconfig
+@@ -2179,4 +2179,10 @@ config RTC_DRV_HID_SENSOR_TIME
+ 	  If this driver is compiled as a module, it will be named
+ 	  rtc-hid-sensor-time.
+ 
++config RTC_DRV_PS4_ICC
++	tristate "PS4 RTC driver via ICC"
++	depends on X86_PS4
++	help
++	  Real Time Clock driver for PS4 (Aeolia/Belize/Baikal) via ICC commands.
++
+ endif # RTC_CLASS
+diff --git a/drivers/rtc/Makefile b/drivers/rtc/Makefile
+index 6cf7e0663..3c92a9b4e 100644
+--- a/drivers/rtc/Makefile
++++ b/drivers/rtc/Makefile
+@@ -200,3 +200,4 @@ obj-$(CONFIG_RTC_DRV_WM8350)	+= rtc-wm8350.o
+ obj-$(CONFIG_RTC_DRV_X1205)	+= rtc-x1205.o
+ obj-$(CONFIG_RTC_DRV_XGENE)	+= rtc-xgene.o
+ obj-$(CONFIG_RTC_DRV_ZYNQMP)	+= rtc-zynqmp.o
++obj-$(CONFIG_RTC_DRV_PS4_ICC) += rtc-ps4-icc.o
+diff --git a/drivers/rtc/rtc-ps4-icc.c b/drivers/rtc/rtc-ps4-icc.c
+new file mode 100644
+index 000000000..0d67b5c88
+--- /dev/null
++++ b/drivers/rtc/rtc-ps4-icc.c
+@@ -0,0 +1,210 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * PS4 RTC driver via ICC (Baikal/Aeolia/Belize)
++ *
++ * Based on RE of Orbis 12.52 kernel (rtc.c / rtc_mvl.c)
++ * Validated 2026-07-25: ICC major=2 minor=0x0b/0x0c (save/load context),
++ * major=4 minor=0x50 (alarm bitmask).
++ *
++ * Fase 4 (2026-11-12): o contexto ICC save/load NAO devolve tempo (o reply
++ * vem 02 02 00...) e os registradores do RTC Marvell descritos em
++ * outros/rea/spm/decompiled/baikal_rtc_mvl.txt (STATUS +0x100, TIME
++ * 0x130..0x13c) estao zerados no BAR5 da memoria Baikal — ou seja, nao ha
++ * fonte de tempo legivel pelo nosso mapeamento atual. Por isso o RTC e
++ * semeado com o relogio do sistema no probe e passa a andar por jiffies;
++ * deixa de reportar 1970 (que fazia o hctosys zerar o relogio no boot).
++ *
++ * O driver tambem nao expoe IRQ de update: para o hwclock(-r) nao travar em
++ * "select() ... timed out" o kernel precisa de CONFIG_RTC_INTF_DEV_UIE_EMUL=y
++ * (habilitado no kernel/00-build-kernel-7.0.sh).
++ */
++
++#include <linux/module.h>
++#include <linux/platform_device.h>
++#include <linux/mod_devicetable.h>
++#include <linux/rtc.h>
++#include <linux/jiffies.h>
++#include <linux/delay.h>
++#include <linux/err.h>
++#include <linux/ktime.h>
++
++extern int ps4_icc_rtc_cmd(u8 major, u16 minor, const void *data, u16 length,
++			    void *reply, u16 reply_length);
++
++struct ps4_rtc_softc {
++	u64 base_time;
++	unsigned long base_jiffies;
++	spinlock_t lock;
++};
++
++static int ps4_rtc_read_time(struct device *dev, struct rtc_time *tm)
++{
++	struct ps4_rtc_softc *sc = dev_get_drvdata(dev);
++	u8 ctx_loaded = 0;
++	unsigned long flags;
++	u64 now;
++	int rc;
++
++	rc = ps4_icc_rtc_cmd(2, 0x0c, &ctx_loaded, 1, &ctx_loaded, 1);
++	if (rc < 0)
++		dev_warn_ratelimited(dev, "RTC: icc load context fail %d\n", rc);
++
++	spin_lock_irqsave(&sc->lock, flags);
++	if (sc->base_time == 0) {
++		/* Sem base do ICC: usa o relogio do sistema em vez de 1970. */
++		now = ktime_get_real_seconds();
++	} else {
++		now = sc->base_time + (jiffies - sc->base_jiffies) / HZ;
++	}
++	spin_unlock_irqrestore(&sc->lock, flags);
++
++	rtc_time64_to_tm(now, tm);
++	return 0;
++}
++
++static int ps4_rtc_set_time(struct device *dev, struct rtc_time *tm)
++{
++	struct ps4_rtc_softc *sc = dev_get_drvdata(dev);
++	u64 t = rtc_tm_to_time64(tm);
++	unsigned long flags;
++	u8 flag = 1;
++	int rc;
++
++	spin_lock_irqsave(&sc->lock, flags);
++	sc->base_time = t;
++	sc->base_jiffies = jiffies;
++	spin_unlock_irqrestore(&sc->lock, flags);
++
++	rc = ps4_icc_rtc_cmd(2, 0x0b, &flag, 1, &flag, 1);
++	if (rc < 0)
++		dev_warn(dev, "RTC: icc save context fail %d\n", rc);
++
++	return 0;
++}
++
++static int ps4_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alrm)
++{
++	u8 bitmask = 0;
++	int rc;
++
++	rc = ps4_icc_rtc_cmd(4, 0x50, &bitmask, 1, &bitmask, 1);
++	if (rc < 0)
++		return rc;
++
++	if (bitmask == 0xff) {
++		alrm->enabled = 0;
++	} else {
++		alrm->enabled = !!(bitmask & 0x7);
++		alrm->time.tm_sec = 0;
++		alrm->time.tm_min = 0;
++		alrm->time.tm_hour = 0;
++		alrm->time.tm_mday = 1;
++		alrm->time.tm_mon = 0;
++		alrm->time.tm_year = 70;
++	}
++	return 0;
++}
++
++static int ps4_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alrm)
++{
++	u8 new_val = alrm->enabled ? 0x7 : 0x00;
++	int rc;
++
++	rc = ps4_icc_rtc_cmd(4, 0x50, &new_val, 1, &new_val, 1);
++	return rc;
++}
++
++static int ps4_rtc_alarm_irq_enable(struct device *dev, unsigned int enabled)
++{
++	return 0;
++}
++
++static const struct rtc_class_ops ps4_rtc_ops = {
++	.read_time		= ps4_rtc_read_time,
++	.set_time		= ps4_rtc_set_time,
++	.read_alarm		= ps4_rtc_read_alarm,
++	.set_alarm		= ps4_rtc_set_alarm,
++	.alarm_irq_enable	= ps4_rtc_alarm_irq_enable,
++};
++
++static int ps4_rtc_probe(struct platform_device *pdev)
++{
++	struct device *dev = &pdev->dev;
++	struct ps4_rtc_softc *sc;
++	struct rtc_device *rtc;
++
++	sc = devm_kzalloc(dev, sizeof(*sc), GFP_KERNEL);
++	if (!sc)
++		return -ENOMEM;
++
++	spin_lock_init(&sc->lock);
++	/* Semeia com o relogio do sistema: o ICC nao expoe tempo legivel. */
++	sc->base_time = ktime_get_real_seconds();
++	sc->base_jiffies = jiffies;
++
++	platform_set_drvdata(pdev, sc);
++
++	rtc = devm_rtc_device_register(dev, "ps4-rtc-icc", &ps4_rtc_ops, THIS_MODULE);
++	if (IS_ERR(rtc))
++		return PTR_ERR(rtc);
++
++	/*
++	 * Sem IRQ de alarme/update no hardware: se o core achar que ha
++	 * UPDATE_INTERRUPT, o RTC_UIE_ON usa o caminho de alarme por IRQ, que
++	 * nunca dispara, e o hwclock -r estoura "select() ... timed out".
++	 * Sem esse feature o core cai na emulacao de UIE por polling de
++	 * read_time (CONFIG_RTC_INTF_DEV_UIE_EMUL).
++	 */
++	clear_bit(RTC_FEATURE_UPDATE_INTERRUPT, rtc->features);
++
++	dev_info(dev, "PS4 RTC via ICC registered\n");
++
++	return 0;
++}
++
++static const struct platform_device_id ps4_rtc_id_table[] = {
++	{ "ps4-rtc-icc", 0 },
++	{ },
++};
++MODULE_DEVICE_TABLE(platform, ps4_rtc_id_table);
++
++static struct platform_driver ps4_rtc_driver = {
++	.driver = {
++		.name = "ps4-rtc-icc",
++	},
++	.probe = ps4_rtc_probe,
++	.id_table = ps4_rtc_id_table,
++};
++
++static struct platform_device *ps4_rtc_pdev;
++
++static int __init ps4_rtc_init(void)
++{
++	int ret;
++
++	ps4_rtc_pdev = platform_device_register_simple("ps4-rtc-icc", -1, NULL, 0);
++	if (IS_ERR(ps4_rtc_pdev))
++		return PTR_ERR(ps4_rtc_pdev);
++
++	ret = platform_driver_register(&ps4_rtc_driver);
++	if (ret) {
++		platform_device_unregister(ps4_rtc_pdev);
++		return ret;
++	}
++
++	return 0;
++}
++
++static void __exit ps4_rtc_exit(void)
++{
++	platform_driver_unregister(&ps4_rtc_driver);
++	platform_device_unregister(ps4_rtc_pdev);
++}
++
++module_init(ps4_rtc_init);
++module_exit(ps4_rtc_exit);
++
++MODULE_AUTHOR("PS4 Linux Baikal");
++MODULE_DESCRIPTION("PS4 RTC driver via ICC (Baikal/Aeolia/Belize)");
++MODULE_LICENSE("GPL");
++MODULE_ALIAS("platform:ps4-rtc-icc");

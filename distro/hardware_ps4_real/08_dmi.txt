@@ -1,0 +1,9 @@
+~ # for f in /sys/class/dmi/id/*; do [ -f $f ] || continue; echo -n "$f: "; cat 
+$f 2>/dev/null; done; echo DMI_END
+/sys/class/dmi/id/bios_date: Wed 09/22/2021 16:2
+/sys/class/dmi/id/bios_vendor: Sony Interactive Entertainment Inc.
+/sys/class/dmi/id/bios_version: unde
+/sys/class/dmi/id/modalias: dmi:bvnSonyInteractiveEntertainmentInc.:bvrunde:bdWed09/22/2021162:
+/sys/class/dmi/id/uevent: MODALIAS=dmi:bvnSonyInteractiveEntertainmentInc.:bvrunde:bdWed09/22/2021162:
+DMI_END
+~ # 

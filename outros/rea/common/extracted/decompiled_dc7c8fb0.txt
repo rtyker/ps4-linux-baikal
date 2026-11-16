@@ -1,0 +1,38 @@
+// Extraido por Ghidra PyGhidra headless
+// addr: 0xffffffffdc7c8fb0  name: FUN_ffffffffdc7c8fb0  size: 140
+// escopo: lacuna MTS/GBE/ICC/glue
+// chamadores (1):
+//   FUN_ffffffffdc7c8b80 @ 0x-000000023837480
+// chamadas (0):
+
+
+void FUN_ffffffffdc7c8fb0(undefined2 param_1,undefined1 *param_2)
+
+{
+  code *pcVar1;
+  int iVar2;
+  undefined1 uStack_820;
+  undefined1 uStack_81f;
+  undefined2 uStack_81e;
+  undefined2 uStack_818;
+  undefined1 uStack_812;
+  long lStack_30;
+  
+  lStack_30 = lRamffffffffdeaacea0;
+  func_0xffffffffdc60d400(&uStack_820,0x7f0);
+  uStack_81f = 5;
+  uStack_818 = 0x20;
+  uStack_81e = param_1;
+  iVar2 = func_0xffffffffdc797090(&uStack_820,&uStack_820);
+  if (iVar2 == 0) {
+    *param_2 = uStack_812;
+  }
+  if (lRamffffffffdeaacea0 == lStack_30) {
+    return;
+  }
+  func_0xffffffffdca17ba0();
+                    /* WARNING: Does not return */
+  pcVar1 = (code *)invalidInstructionException();
+  (*pcVar1)();
+}
+

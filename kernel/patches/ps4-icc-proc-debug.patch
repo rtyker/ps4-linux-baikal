@@ -1,0 +1,130 @@
+diff --git a/drivers/ps4/Makefile b/drivers/ps4/Makefile
+index 5060b2d11..f0605c62f 100644
+--- a/drivers/ps4/Makefile
++++ b/drivers/ps4/Makefile
+@@ -14,6 +14,7 @@ obj-y += ps4-led.o
+ obj-y += ps4-fan.o
+ obj-y += ps4-buzzer.o
+ obj-y += ps4-mesa-lock.o
++obj-y += ps4-icc-debug.o
+ 
+ ifneq ($(PS4_MESA_LOCK_TOKEN),)
+ CFLAGS_ps4-mesa-lock.o += -DPS4_MESA_LOCK_TOKEN=\"$(PS4_MESA_LOCK_TOKEN)\"
+diff --git a/drivers/ps4/ps4-icc-debug.c b/drivers/ps4/ps4-icc-debug.c
+new file mode 100644
+index 000000000..e88666f81
+--- /dev/null
++++ b/drivers/ps4/ps4-icc-debug.c
+@@ -0,0 +1,112 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * /proc/ps4_icc — interface de debug para enviar comandos ICC arbitrários
++ * ao EMC/Syscon a partir do userland (engenharia reversa ao vivo).
++ *
++ * Uso:
++ *   echo "5 0x41" > /proc/ps4_icc          # major 5, minor 0x41, sem payload
++ *   echo "5 0x40 01" > /proc/ps4_icc       # payload em bytes hex
++ *   cat /proc/ps4_icc                      # ret + reply do último comando
++ *
++ * Motivação (2026-07-17): o syscon mantém o domínio de energia da GBE
++ * Baikal DESLIGADO por padrão ("devpm: # gbe off" no psdevwiki), por isso
++ * o Yukon lê zeros e o sky2 falha com "unsupported chip type 0x0". O
++ * serviço ICC major 5 (device power: minor 0x00 wlan/bt, 0x10 usb, e por
++ * extrapolação 0x20 hdd, 0x30 bd, 0x40 gbe?) precisa ser mapeado ao vivo.
++ */
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/mutex.h>
++#include <linux/proc_fs.h>
++#include <linux/seq_file.h>
++#include <linux/uaccess.h>
++#include <asm/ps4.h>
++
++#define ICC_DBG_REPLY_MAX	0x30
++#define ICC_DBG_PAYLOAD_MAX	64
++
++static DEFINE_MUTEX(icc_dbg_lock);
++static u8 icc_dbg_reply[ICC_DBG_REPLY_MAX];
++static unsigned int icc_dbg_major, icc_dbg_minor, icc_dbg_paylen;
++static int icc_dbg_ret;
++static bool icc_dbg_ran;
++
++static ssize_t icc_dbg_write(struct file *file, const char __user *ubuf,
++			     size_t count, loff_t *ppos)
++{
++	char buf[256];
++	u8 payload[ICC_DBG_PAYLOAD_MAX];
++	unsigned int major, minor, byte;
++	int n = 0, pos, adv;
++
++	if (count >= sizeof(buf))
++		return -E2BIG;
++	if (copy_from_user(buf, ubuf, count))
++		return -EFAULT;
++	buf[count] = '\0';
++
++	if (sscanf(buf, "%i %i%n", &major, &minor, &adv) < 2)
++		return -EINVAL;
++	pos = adv;
++	while (n < ICC_DBG_PAYLOAD_MAX &&
++	       sscanf(buf + pos, " %x%n", &byte, &adv) == 1) {
++		payload[n++] = byte & 0xff;
++		pos += adv;
++	}
++
++	mutex_lock(&icc_dbg_lock);
++	memset(icc_dbg_reply, 0, sizeof(icc_dbg_reply));
++	icc_dbg_major = major;
++	icc_dbg_minor = minor;
++	icc_dbg_paylen = n;
++	pr_info("ps4_icc: enviando major=%#x minor=%#x len=%d\n",
++		major, minor, n);
++	icc_dbg_ret = apcie_icc_cmd(major, minor, payload, n,
++				    icc_dbg_reply, ICC_DBG_REPLY_MAX);
++	pr_info("ps4_icc: ret=%d\n", icc_dbg_ret);
++	icc_dbg_ran = true;
++	mutex_unlock(&icc_dbg_lock);
++
++	return count;
++}
++
++static int icc_dbg_show(struct seq_file *m, void *v)
++{
++	int i;
++
++	mutex_lock(&icc_dbg_lock);
++	if (!icc_dbg_ran) {
++		seq_puts(m, "nenhum comando enviado ainda\n");
++	} else {
++		seq_printf(m, "cmd major=%#x minor=%#x paylen=%u ret=%d\nreply:",
++			   icc_dbg_major, icc_dbg_minor, icc_dbg_paylen,
++			   icc_dbg_ret);
++		for (i = 0; i < ICC_DBG_REPLY_MAX; i++)
++			seq_printf(m, " %02x", icc_dbg_reply[i]);
++		seq_putc(m, '\n');
++	}
++	mutex_unlock(&icc_dbg_lock);
++	return 0;
++}
++
++static int icc_dbg_open(struct inode *inode, struct file *file)
++{
++	return single_open(file, icc_dbg_show, NULL);
++}
++
++static const struct proc_ops icc_dbg_proc_ops = {
++	.proc_open	= icc_dbg_open,
++	.proc_read	= seq_read,
++	.proc_write	= icc_dbg_write,
++	.proc_lseek	= seq_lseek,
++	.proc_release	= single_release,
++};
++
++static int __init icc_dbg_init(void)
++{
++	if (apcie_status() < 0)
++		return 0;	/* não é um PS4 */
++	proc_create("ps4_icc", 0600, NULL, &icc_dbg_proc_ops);
++	return 0;
++}
++late_initcall(icc_dbg_init);

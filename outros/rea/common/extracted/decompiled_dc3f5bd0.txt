@@ -1,0 +1,72 @@
+// Extraido por Ghidra PyGhidra (consolidate_decompiled_lacunas.py)
+// addr: 0xffffffffdc3f5bd0  name: FUN_ffffffffdc3f5bd0  size: 231
+// escopo: lacuna MTS/GBE/ICC/glue identificada em testes ao vivo
+// chamadores (34):
+//   FUN_ffffffffdc84e420 @ 0x-0000000237b1be0
+//   FUN_ffffffffdc913bb0 @ 0x-0000000236ec450
+//   FUN_ffffffffdc399110 @ 0x-000000023c66ef0
+//   FUN_ffffffffdc9882f0 @ 0x-000000023677d10
+//   FUN_ffffffffdc399380 @ 0x-000000023c66c80
+//   FUN_ffffffffdc799b80 @ 0x-000000023866480
+//   FUN_ffffffffdc84e250 @ 0x-0000000237b1db0
+//   FUN_ffffffffdc8f8470 @ 0x-000000023707b90
+//   FUN_ffffffffdc989df0 @ 0x-000000023676210
+//   FUN_ffffffffdc735080 @ 0x-0000000238caf80
+//   FUN_ffffffffdc988930 @ 0x-0000000236776d0
+//   FUN_ffffffffdc8c85a0 @ 0x-000000023737a60
+//   FUN_ffffffffdc8d1ea0 @ 0x-00000002372e160
+//   FUN_ffffffffdc9886b0 @ 0x-000000023677950
+//   FUN_ffffffffdc36c020 @ 0x-000000023c93fe0
+//   FUN_ffffffffdc99a6e0 @ 0x-000000023665920
+//   FUN_ffffffffdc84e460 @ 0x-0000000237b1ba0
+//   FUN_ffffffffdc8d2140 @ 0x-00000002372dec0
+//   FUN_ffffffffdc799ad0 @ 0x-000000023866530
+//   FUN_ffffffffdc36bb10 @ 0x-000000023c944f0
+//   ... +14 mais
+// chamadas (4):
+//   FUN_ffffffffdc797090 @ 0x-000000023868f70
+//   FUN_ffffffffdca17ba0 @ 0x-0000000235e8460
+//   FUN_ffffffffdc60d4c0 @ 0x-0000000239f2b40
+//   FUN_ffffffffdc60d400 @ 0x-0000000239f2c00
+
+
+undefined8 FUN_ffffffffdc3f5bd0(byte param_1,undefined2 param_2,ushort param_3,undefined8 param_4)
+
+{
+  undefined8 uVar1;
+  undefined1 local_828;
+  undefined1 local_827;
+  undefined2 local_826;
+  undefined2 local_820;
+  undefined1 local_81c;
+  byte local_81b;
+  undefined2 local_81a;
+  ushort local_818;
+  long local_38;
+  
+  local_38 = DAT_ffffffffdeaacea0;
+  uVar1 = 0x16;
+  if (param_1 < 5) {
+    if (param_3 < 0x401) {
+      FUN_ffffffffdc60d400(&local_828,0x7f0);
+      local_827 = 3;
+      local_826 = 1;
+      local_820 = 0x20;
+      local_81c = 0;
+      local_81b = param_1;
+      local_81a = param_2;
+      local_818 = param_3;
+      uVar1 = FUN_ffffffffdc797090(&local_828,&local_828);
+      if ((int)uVar1 == 0) {
+        FUN_ffffffffdc60d4c0(param_4,&local_81a,param_3);
+        uVar1 = 0;
+      }
+    }
+  }
+  if (DAT_ffffffffdeaacea0 == local_38) {
+    return uVar1;
+  }
+                    /* WARNING: Subroutine does not return */
+  FUN_ffffffffdca17ba0();
+}
+

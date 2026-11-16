@@ -1,0 +1,55 @@
+
+int fcn.ffffffffdc7c8860
+              (int64_t arg1,int64_t arg2,int64_t arg3,int64_t arg4,int64_t arg5,int64_t arg6,int64_t arg_10h,
+              int64_t arg_18h,int64_t arg_20h,int64_t arg_28h)
+
+{
+    code *pcVar1;
+    int iVar2;
+    ulong uVar3;
+    int64_t *in_GS_OFFSET;
+    int64_t var_40h;
+    int64_t var_38h;
+    int64_t var_30h;
+    
+    if (arg5 < arg4) {
+        func_0xffffffffdcabbf00();
+        func_0xffffffffdcabc690(0xffffffffdc7c89c1,0xffffffffdcb58577,arg5,arg4);
+        func_0xffffffffdc460780(0x13,0xffffffffdcb5854a,0xffffffffdcb58577,arg5,arg4);
+    //WARNING: Does not return
+        pcVar1 = invalidInstructionException();
+        (*pcVar1)();
+    }
+    if ((((*(arg2 + 0x8c) == '\x01') && (*(*(*in_GS_OFFSET + 8) + 0xaf4) == 0)) && (arg_18h != 0)) &&
+       (((*(*(*in_GS_OFFSET + 8) + 900) & 1) != 0 && (*0xffffffffde5462f8 != 0)))) {
+        func_0xffffffffdcabbf00();
+        func_0xffffffffdcabbe70(0xffffffffdc7c8a08);
+        func_0xffffffffdc460780(0x17,0xffffffffdcb5850e);
+    //WARNING: Does not return
+        pcVar1 = invalidInstructionException();
+        (*pcVar1)();
+    }
+    func_0xffffffffdc5ec8d0(arg2);
+    func_0xffffffffdc646fa0(arg1,0xffffffffdcb580a4,0x15f);
+    if (arg_18h != 0) {
+        func_0xffffffffdc649bf0(arg1,arg4,arg5);
+    }
+    uVar3 = 0x15;
+    if ((arg6 & 4U) == 0) {
+        uVar3 = 0x33;
+    }
+    iVar2 = func_0xffffffffdc6482f0(arg1,arg2,arg3,arg4,arg5,arg6 & 0xff,uVar3,arg_10h & 0xffffffff,0);
+    if (iVar2 == 0) {
+        func_0xffffffffdc651450(arg1,arg4,arg5,arg_28h);
+        if ((arg_20h != 0) && (*(arg2 + 0x8c) == '\x01')) {
+            func_0xffffffffdc652580(arg1,arg4,arg5);
+        }
+        func_0xffffffffdc647010(arg1,0xffffffffdcb580a4,0x172);
+    }
+    else {
+        func_0xffffffffdc647010(arg1,0xffffffffdcb580a4,0x172);
+        func_0xffffffffdc5ec950(arg2);
+    }
+    return iVar2;
+}
+

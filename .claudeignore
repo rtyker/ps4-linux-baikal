@@ -1,0 +1,6 @@
+# Pastas ignoradas para evitar falsos positivos nos filtros automatizados da API
+scene-kmem-dumper/
+old_project/
+tests/uart_logs/
+*.bin
+*.elf

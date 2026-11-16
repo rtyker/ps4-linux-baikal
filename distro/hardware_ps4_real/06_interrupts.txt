@@ -1,0 +1,24 @@
+~ # cat /proc/interrupts; echo INT_END
+           CPU0       CPU1       CPU2       CPU3       CPU4       CPU5       CPU6       CPU7       
+  3:         14          0          0          0          0          0          0          0 Baikal-MSI 5251-edge      icc
+ 32:     371187          0          0          0          0          0          0          0 Baikal-MSI 5344-edge      xhci_aeolia[0000:00:14.7], xhci-hcd:usb1, xhci-hcd:usb3
+ 33:          0      21428          0          0          0          0          0          0 Baikal-MSI 5216-edge      mmc0
+ 34:          0          0        129          0          0          0          0          0 PCI-MSI-0000:00:01.1   0-edge      snd_hda_intel:card0
+ 35:          0          0          0         21          0          0          0          0 Baikal-MSI 5184-edge      ahci[0000:00:14.2]
+NMI:          0          0          0          0          0          0          0          0   Non-maskable interrupts
+LOC:       6337       5588       4471       4058       4328       2575       4174       2272   Local timer interrupts
+SPU:          0          0          0          0          0          0          0          0   Spurious interrupts
+PMI:          0          0          0          0          0          0          0          0   Performance monitoring interrupts
+IWI:         55         11         57         20         27         79         32         40   IRQ work interrupts
+RTR:          0          0          0          0          0          0          0          0   APIC ICR read retries
+RES:        189        295        284        413        343        320        553        261   Rescheduling interrupts
+CAL:      40940     123969     112083      56541     172123      28920      18208       6236   Function call interrupts
+TLB:         40         13         40         16          6         19         24          7   TLB shootdowns
+THR:          0          0          0          0          0          0          0          0   Threshold APIC interrupts
+DFR:          0          0          0          0          0          0          0          0   Deferred Error APIC interrupts
+MCE:          0          0          0          0          0          0          0          0   Machine check exceptions
+MCP:          2          2          2          2          2          2          2          2   Machine check polls
+ERR:          0
+MIS:          0
+INT_END
+~ # 

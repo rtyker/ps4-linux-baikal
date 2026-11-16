@@ -1,0 +1,81 @@
+diff --git a/drivers/net/ethernet/marvell/sky2.c b/drivers/net/ethernet/marvell/sky2.c
+index 88dbd2c4f..a1b4c5f95 100644
+--- a/drivers/net/ethernet/marvell/sky2.c
++++ b/drivers/net/ethernet/marvell/sky2.c
+@@ -141,6 +141,7 @@ static const struct pci_device_id sky2_id_table[] = {
+ 	{ PCI_DEVICE(PCI_VENDOR_ID_MARVELL, 0x4382) }, /* 88E8079 */
+ 	{ PCI_DEVICE(PCI_VENDOR_ID_SONY, PCI_DEVICE_ID_SONY_AEOLIA_GBE) },
+ 	{ PCI_DEVICE(PCI_VENDOR_ID_SONY, PCI_DEVICE_ID_SONY_BELIZE_GBE) },
++	{ PCI_DEVICE(PCI_VENDOR_ID_SONY, PCI_DEVICE_ID_SONY_BAIKAL_GBE) },
+ 	{ 0 }
+ };
+ 
+@@ -4658,6 +4659,28 @@ static void aeolia_get_mac_address(struct sky2_hw *hw, unsigned char *addr) {
+ release_bp:
+ 	release_mem_region(bp_base, APCIE_SPM_BP_SIZE);
+ }
++
++static bool sky2_is_baikal_gbe(struct pci_dev *pdev)
++{
++	return pdev->vendor == PCI_VENDOR_ID_SONY &&
++	       pdev->device == PCI_DEVICE_ID_SONY_BAIKAL_GBE;
++}
++
++/* Baikal (PS4 Pro) routes subfunction MSIs through bpcie instead of apcie */
++static int sky2_ps4_assign_irqs(struct pci_dev *pdev, int nvec)
++{
++	if (sky2_is_baikal_gbe(pdev))
++		return bpcie_assign_irqs(pdev, nvec);
++	return apcie_assign_irqs(pdev, nvec);
++}
++
++static void sky2_ps4_free_irqs(struct pci_dev *pdev, unsigned int nr_irqs)
++{
++	if (sky2_is_baikal_gbe(pdev))
++		bpcie_free_irqs(pdev->irq, nr_irqs);
++	else
++		apcie_free_irqs(pdev->irq, nr_irqs);
++}
+ #endif
+ 
+ /* Initialize network device */
+@@ -4994,7 +5017,7 @@ static int sky2_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
+ 	hw->pdev = pdev;
+ 	sprintf(hw->irq_name, DRV_NAME "@pci:%s", pci_name(pdev));
+ 
+-	hw->regs = ioremap(pci_resource_start(pdev, 0), 0x4000);
++	hw->regs = ioremap(pci_resource_start(pdev, 0), pci_resource_len(pdev, 0));
+ 	if (!hw->regs) {
+ 		dev_err(&pdev->dev, "cannot map device registers\n");
+ 		goto err_out_free_hw;
+@@ -5040,10 +5063,10 @@ static int sky2_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
+ 
+ 	#ifdef CONFIG_X86_PS4
+ 	if (pdev->vendor == PCI_VENDOR_ID_SONY &&
+-	    apcie_assign_irqs(pdev, 1) > 0) {
++	    sky2_ps4_assign_irqs(pdev, 1) > 0) {
+ 		err = sky2_test_msi(hw);
+ 		if (err) {
+-			apcie_free_irqs(pdev->irq, 1);
++			sky2_ps4_free_irqs(pdev, 1);
+ 			/* PS4 requires MSI, so if it fails, bail out. */
+ 			goto err_out_free_netdev;
+ 		}
+@@ -5109,7 +5132,7 @@ static int sky2_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
+ err_out_free_netdev:
+ 	#ifdef CONFIG_X86_PS4
+ 	if (hw->flags & SKY2_HW_USE_AEOLIA_MSI)
+-		apcie_free_irqs(pdev->irq, 1);
++		sky2_ps4_free_irqs(pdev, 1);
+ 	else
+ 	#endif
+ 		if (hw->flags & SKY2_HW_USE_MSI)
+@@ -5163,7 +5186,7 @@ static void sky2_remove(struct pci_dev *pdev)
+ 
+ 	#ifdef CONFIG_X86_PS4
+ 	if (hw->flags & SKY2_HW_USE_AEOLIA_MSI)
+-		apcie_free_irqs(pdev->irq, 1);
++		sky2_ps4_free_irqs(pdev, 1);
+ 	else
+ 	#endif
+ 

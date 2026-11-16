@@ -1,0 +1,55 @@
+# Solução do monitor (PS4 Baikal) — teste manual validado 2026-11-16
+
+## Problema
+O vídeo HDMI (DP interno através da ponte Panasonic MN864729) some sem motivo
+aparente. O kernel continua vivo (SSH responde, teclado com NumLock funciona),
+mas a tela fica preta.
+
+## Gatilho identificado
+`dpms off -> on` (tela apagar/acender, ex.: screensaver, `setterm --blank=force`) ou
+qualquer mudança de modo de vídeo (`xrandr`, `chvt`). Isso faz o core DRM chamar
+`ps4_bridge_disable` + `ps4_bridge_post_disable`, que reseta a ponte e zera
+`mn_bridge->mode`. No religação não há novo modeset, então
+`ps4_bridge_enable` sai com `*ERROR* mode not available` sem reprogramar a ponte.
+
+## Recuperação manual (funcionou)
+Do console (sem Xorg), fazer um modo-set real:
+
+```bash
+# Ligar/desligar a saída e forçar detecção (modo-set real)
+echo off > /sys/class/drm/card0-HDMI-A-1/status
+sleep 2
+echo on > /sys/class/drm/card0-HDMI-A-1/status
+sleep 3
+echo detect > /sys/class/drm/card0-HDMI-A-1/status
+sleep 6
+```
+
+ou alternar VT:
+
+```bash
+chvt 1
+sleep 4
+chvt 7
+sleep 4
+```
+
+Após o modo-set real, `ps4_bridge_mode_set` é chamado, a ponte é reprogramada e
+a imagem volta.
+
+## O que NÃO serve
+- `setterm --blank=force` / `fb0/blank=0`: recai no mesmo caminho de `post_disable`
+  sem modeset, sem recuperar.
+- Esperar o screensaver timeout: desliga e não volta.
+
+## Correção permanente (pendente)
+Patch `ps4-bridge-keep-mode.patch`: não zerar `mn_bridge->mode` no
+`ps4_bridge_post_disable`, para que `ps4_bridge_enable` nunca saia com
+`mode not available`. Testado ao vivo: 3 ciclos blank/unblank + modeset
+com recuperação em todos.
+
+## Limitação
+A imagem volta com este procedimento, mas o treino de link DP continua falhando
+em todo modo-set (erro `clock recovery failed` no dmesg). Isso é intermitente
+e já existia no boot quando o vídeo funcionava. Não é comprovado que seja a
+causa da perda de vídeo sozinho.

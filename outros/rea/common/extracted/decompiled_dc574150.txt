@@ -1,0 +1,46 @@
+// Extraido por Ghidra PyGhidra (consolidate_decompiled_lacunas.py)
+// addr: 0xffffffffdc574150  name: FUN_ffffffffdc574150  size: 101
+// escopo: lacuna MTS/GBE/ICC/glue identificada em testes ao vivo
+// chamadores (94):
+//   FUN_ffffffffdc962750 @ 0x-00000002369d8b0
+//   FUN_ffffffffdc71d9d0 @ 0x-0000000238e2630
+//   FUN_ffffffffdc5bc880 @ 0x-000000023a43780
+//   FUN_ffffffffdc57f1c0 @ 0x-000000023a80e40
+//   FUN_ffffffffdc8a5a90 @ 0x-00000002375a570
+//   FUN_ffffffffdc7d7a10 @ 0x-0000000238285f0
+//   FUN_ffffffffdc579bf0 @ 0x-000000023a86410
+//   FUN_ffffffffdc3862d0 @ 0x-000000023c79d30
+//   FUN_ffffffffdc399380 @ 0x-000000023c66c80
+//   FUN_ffffffffdc9c3e70 @ 0x-00000002363c190
+//   FUN_ffffffffdc7b6a80 @ 0x-000000023849580
+//   FUN_ffffffffdc3cf960 @ 0x-000000023c306a0
+//   FUN_ffffffffdc8b6320 @ 0x-000000023749ce0
+//   FUN_ffffffffdc59ed80 @ 0x-000000023a61280
+//   FUN_ffffffffdc7ca8c0 @ 0x-000000023835740
+//   FUN_ffffffffdc7b5750 @ 0x-00000002384a8b0
+//   FUN_ffffffffdc832740 @ 0x-0000000237cd8c0
+//   FUN_ffffffffdca183f0 @ 0x-0000000235e7c10
+//   FUN_ffffffffdc7cfdb0 @ 0x-000000023830250
+//   FUN_ffffffffdc528600 @ 0x-000000023ad7a00
+//   ... +74 mais
+// chamadas (2):
+//   FUN_ffffffffdc5741c0 @ 0x-000000023a8be40
+//   FUN_ffffffffdc359520 @ 0x-000000023ca6ae0
+
+
+void FUN_ffffffffdc574150
+               (undefined8 param_1,undefined8 param_2,undefined8 param_3,undefined8 param_4,
+               undefined8 param_5,undefined4 param_6)
+
+{
+  long lVar1;
+  
+  lVar1 = FUN_ffffffffdc359520(0x30,&DAT_ffffffffddd9b4b0,0x102);
+  *(undefined8 *)(lVar1 + 0x28) = param_3;
+  *(undefined8 *)(lVar1 + 0x18) = param_5;
+  *(undefined4 *)(lVar1 + 0x10) = param_6;
+  *(undefined8 *)(lVar1 + 0x20) = param_4;
+  FUN_ffffffffdc5741c0(param_1,param_2,lVar1);
+  return;
+}
+

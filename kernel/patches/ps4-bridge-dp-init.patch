@@ -1,0 +1,18 @@
+diff --git a/drivers/gpu/drm/amd/amdgpu/ps4_bridge.c b/drivers/gpu/drm/amd/amdgpu/ps4_bridge.c
+index ac30fbf42..da3900dec 100644
+--- a/drivers/gpu/drm/amd/amdgpu/ps4_bridge.c
++++ b/drivers/gpu/drm/amd/amdgpu/ps4_bridge.c
+@@ -457,8 +457,11 @@ static void ps4_bridge_pre_enable(struct drm_bridge *bridge)
+ 
+ 	cq_init(&mn_bridge->cq, 4);
+ 
+-#if 0
+-	/* No idea. DP stuff probably. This borks for some reason. Meh. */
++#if 1
++	/* DP init sequence for MN864729 sink side.
++ 	 * Previously disabled with comment "No idea. DP stuff probably. This borks for some reason."
++ 	 * Enabling to configure the DP side of the Panasonic MN864729 bridge before link training.
++ 	 */
+ 	cq_writereg(&mn_bridge->cq, 0x7657,0xff);
+ 	cq_writereg(&mn_bridge->cq, 0x76a5,0x80);
+ 	cq_writereg(&mn_bridge->cq, 0x76a6,0x04);

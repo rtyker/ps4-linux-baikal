@@ -1,0 +1,13 @@
+
+[38;2;58;150;221mfloat8[0m [38;2;193;156;0mfcn.ffffffffdc3f5400[0m
+                 ([38;2;58;150;221mulong[0m [0mparam_1[0m,[38;2;58;150;221mfloat8[0m [0mparam_2[0m,[38;2;58;150;221mulong[0m [0mparam_3[0m,[38;2;58;150;221mfloat8[0m [0mparam_4[0m,[38;2;58;150;221mfloat8[0m [0mparam_5[0m,[38;2;58;150;221mulong[0m [0mparam_6[0m,
+                 [38;2;58;150;221mfloat8[0m [0mparam_7[0m)
+
+{
+    [38;2;58;150;221mchar[0m [0min_AH[0m;
+    [38;2;58;150;221mchar[0m [0min_CF[0m;
+    
+    *[38;2;19;161;14m0xffffffffdcada378[0m = *[38;2;19;161;14m0xffffffffdcada378[0m + [0min_AH[0m + [0min_CF[0m;
+    [38;2;136;23;152mreturn[0m ([0mparam_4[0m + [0mparam_5[0m) * ([0mparam_5[0m - [0mparam_4[0m) + [0mparam_7[0m * [0mparam_2[0m;
+}
+

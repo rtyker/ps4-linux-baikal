@@ -1,0 +1,6 @@
+~ # blkid; echo BLKID_END
+/dev/sdb2: LABEL="psxitarch" UUID="39890c13-2b7d-44c6-a36c-692f350b6057" TYPE="ext4"
+/dev/sdb1: LABEL="BOOT" UUID="89D0-46B2" TYPE="vfat"
+/dev/sr0: LABEL="HEN.AIO" TYPE="udf"
+BLKID_END
+~ # 

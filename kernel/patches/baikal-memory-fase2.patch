@@ -1,0 +1,646 @@
+diff --git a/drivers/misc/Kconfig b/drivers/misc/Kconfig
+index b44679308..816b99d54 100644
+--- a/drivers/misc/Kconfig
++++ b/drivers/misc/Kconfig
+@@ -661,7 +661,7 @@ source "drivers/misc/keba/Kconfig"
+ source "drivers/misc/amd-sbi/Kconfig"
+ source "drivers/misc/rp1/Kconfig"
+ 
+-config BAALAK_MEMORY
++config BAIKAL_MEMORY
+ 	tristate "Sony Baikal Memory (SPM/DDR3, 00:14.6)"
+ 	depends on PCI
+ 	help
+diff --git a/drivers/misc/Makefile b/drivers/misc/Makefile
+index a0d475004..dfaa9f502 100644
+--- a/drivers/misc/Makefile
++++ b/drivers/misc/Makefile
+@@ -75,4 +75,4 @@ obj-$(CONFIG_MCHP_LAN966X_PCI)	+= lan966x-pci.o
+ obj-y				+= keba/
+ obj-y				+= amd-sbi/
+ obj-$(CONFIG_MISC_RP1)		+= rp1/
+-obj-$(CONFIG_BAALAK_MEMORY)	+= baikal-memory.o
++obj-$(CONFIG_BAIKAL_MEMORY)	+= baikal-memory.o
+diff --git a/drivers/misc/baikal-memory.c b/drivers/misc/baikal-memory.c
+index 1504655e3..77bd93486 100644
+--- a/drivers/misc/baikal-memory.c
++++ b/drivers/misc/baikal-memory.c
+@@ -33,18 +33,50 @@
+ #include <linux/mutex.h>
+ #include <linux/sysfs.h>
+ #include <linux/device.h>
++#include <linux/etherdevice.h>
++#include <linux/moduleparam.h>
+ 
+ #define DRIVER_NAME		"baikal-memory"
+ #define DRIVER_DESC		"Sony Baikal Memory (SPM/DDR3) driver"
+ 
+-#define BAILAK_VENDOR_ID	0x104d
+-#define BAILAK_DEVICE_ID	0x90dd
++/*
++ * Escrita controlada (Fase 5): desligada por padrão. Mesmo com allow_write=1
++ * a escrita é restrita à janela BAR2 (DDR3/SPM) exposta em /dev, nunca em
++ * BAR0/BAR5 (MMIO/ICC/mailbox). Sem RE provando registradores MMIO seguros,
++ * não há whitelist de escrita fora da BAR2.
++ */
++static bool allow_write;
++module_param(allow_write, bool, 0444);
++MODULE_PARM_DESC(allow_write,
++	"Permitir escrita controlada na janela BAR2 da SPM (padrao: 0/desligado)");
++
++#define BAIKAL_VENDOR_ID	0x104d
++#define BAIKAL_DEVICE_ID	0x90dd
+ 
+ #define BAR0_SIZE		SZ_4K
+ #define BAR2_SIZE		SZ_256M
+ #define BAR4_SIZE		SZ_1M
+ #define BAR5_SIZE		SZ_256K
+ 
++/*
++ * Layout de /dev/baikal-memory (Fase 2).
++ *
++ * O offset 0 do BAR5 está zerado neste console; os dados reais (bootparams/MAC,
++ * região spm.icc) ficam em offsets altos do BAR5. Por isso o dispositivo de
++ * caractere expõe janelas de BARs diferentes em offsets próprios:
++ *
++ *   0x000000-0x000fff  BAR0 (4 KiB, MMIO de controle)
++ *   0x001000-0x003fff  BAR2 (primeiros 4 MiB da SPM DDR3)
++ *   0x500000-0x53ffff  BAR5 (256 KiB, tabela estruturada)
++ *
++ * BAR4 fica de fora por ora (todo zero ao vivo, sem dados úteis).
++ */
++#define BAIKAL_DEV_BAR0_OFF	0x000000ULL
++#define BAIKAL_DEV_BAR2_OFF	0x001000ULL
++#define BAIKAL_DEV_BAR2_WIN	SZ_4M
++#define BAIKAL_DEV_BAR5_OFF	0x00500000ULL
++#define BAIKAL_DEV_SIZE		(BAIKAL_DEV_BAR5_OFF + BAR5_SIZE)
++
+ struct baikal_mem_dev {
+ 	struct pci_dev		*pdev;
+ 	struct miscdevice	misc;
+@@ -77,53 +109,127 @@ static u32 baikal_mem_read32(void __iomem *addr)
+ 	return ioread32(addr);
+ }
+ 
+-static u16 baikal_mem_read16(void __iomem *addr)
+-{
+-	return ioread16(addr);
+-}
+-
+-static u8 baikal_mem_read8(void __iomem *addr)
+-{
+-	return ioread8(addr);
+-}
+-
+ /* ------------------------------------------------------------------------- */
+ /* Operações de arquivo de caractere                                         */
+ /* ------------------------------------------------------------------------- */
+ 
++/*
++ * Resolve um offset de /dev/baikal-memory para o BAR correspondente.
++ * Retorna o ponteiro virtual e, em *avail, quantos bytes ainda são legíveis
++ * (ou graváveis, se writable_only) de forma contígua a partir dele.
++ * Retorna NULL no fim do dispositivo.
++ */
++static void __iomem *baikal_mem_resolve(struct baikal_mem_dev *dev, loff_t pos,
++					size_t *avail, bool writable_only)
++{
++	if (pos < BAIKAL_DEV_BAR0_OFF + BAR0_SIZE) {
++		if (writable_only || !dev->bar0_mapped)
++			return NULL;
++		*avail = BAIKAL_DEV_BAR0_OFF + BAR0_SIZE - pos;
++		return dev->bar0 + (pos - BAIKAL_DEV_BAR0_OFF);
++	}
++
++	if (pos < BAIKAL_DEV_BAR2_OFF + BAIKAL_DEV_BAR2_WIN) {
++		if (!dev->bar2_mapped)
++			return NULL;
++		*avail = BAIKAL_DEV_BAR2_OFF + BAIKAL_DEV_BAR2_WIN - pos;
++		return dev->bar2 + (pos - BAIKAL_DEV_BAR2_OFF);
++	}
++
++	if (pos < BAIKAL_DEV_SIZE) {
++		if (writable_only || !dev->bar5_mapped)
++			return NULL;
++		*avail = BAIKAL_DEV_SIZE - pos;
++		return dev->bar5 + (pos - BAIKAL_DEV_BAR5_OFF);
++	}
++
++	return NULL;
++}
++
+ static ssize_t baikal_memory_read(struct file *filp, char __user *buf,
+ 				  size_t count, loff_t *ppos)
+ {
+ 	struct baikal_mem_dev *dev = filp->private_data;
+ 	size_t total_read = 0;
+-	u8 tmp;
+-	int i;
++	u8 bounce[64];
+ 
+ 	if (!dev)
+ 		return -ENODEV;
+ 
+ 	mutex_lock(&dev->lock);
+ 
+-	/* Ler do BAR5 (tabela de descritores estruturados) como padrão */
+-	if (!dev->bar5_mapped) {
+-		mutex_unlock(&dev->lock);
+-		return -ENODEV;
+-	}
++	while (total_read < count && *ppos < BAIKAL_DEV_SIZE) {
++		size_t avail = 0;
++		size_t chunk;
++		void __iomem *src;
++
++		src = baikal_mem_resolve(dev, *ppos, &avail, false);
++		if (!src) {
++			mutex_unlock(&dev->lock);
++			return total_read ? total_read : -ENODEV;
++		}
++
++		chunk = min_t(size_t, count - total_read, avail);
++		chunk = min_t(size_t, chunk, sizeof(bounce));
+ 
+-	while (total_read < count && *ppos < BAR5_SIZE) {
+-		tmp = baikal_mem_read8(dev->bar5 + *ppos);
+-		if (put_user(tmp, buf + total_read)) {
++		memcpy_fromio(bounce, src, chunk);
++
++		if (copy_to_user(buf + total_read, bounce, chunk)) {
+ 			mutex_unlock(&dev->lock);
+ 			return -EFAULT;
+ 		}
+-		(*ppos)++;
+-		total_read++;
++
++		*ppos += chunk;
++		total_read += chunk;
+ 	}
+ 
+ 	mutex_unlock(&dev->lock);
+ 	return total_read;
+ }
+ 
++static ssize_t baikal_memory_write(struct file *filp, const char __user *buf,
++				   size_t count, loff_t *ppos)
++{
++	struct baikal_mem_dev *dev = filp->private_data;
++	size_t total_written = 0;
++	u8 bounce[64];
++
++	if (!dev)
++		return -ENODEV;
++	if (!allow_write)
++		return -EPERM;
++
++	mutex_lock(&dev->lock);
++
++	while (total_written < count && *ppos < BAIKAL_DEV_SIZE) {
++		size_t avail = 0;
++		size_t chunk;
++		void __iomem *dst;
++
++		dst = baikal_mem_resolve(dev, *ppos, &avail, true);
++		if (!dst) {
++			mutex_unlock(&dev->lock);
++			return total_written ? total_written : -EPERM;
++		}
++
++		chunk = min_t(size_t, count - total_written, avail);
++		chunk = min_t(size_t, chunk, sizeof(bounce));
++
++		if (copy_from_user(bounce, buf + total_written, chunk)) {
++			mutex_unlock(&dev->lock);
++			return -EFAULT;
++		}
++
++		memcpy_toio(dst, bounce, chunk);
++
++		*ppos += chunk;
++		total_written += chunk;
++	}
++
++	mutex_unlock(&dev->lock);
++	return total_written;
++}
++
+ static loff_t baikal_memory_llseek(struct file *filp, loff_t off, int whence)
+ {
+ 	struct baikal_mem_dev *dev = filp->private_data;
+@@ -142,14 +248,14 @@ static loff_t baikal_memory_llseek(struct file *filp, loff_t off, int whence)
+ 		newpos = filp->f_pos + off;
+ 		break;
+ 	case SEEK_END:
+-		newpos = BAR5_SIZE + off;
++		newpos = BAIKAL_DEV_SIZE + off;
+ 		break;
+ 	default:
+ 		mutex_unlock(&dev->lock);
+ 		return -EINVAL;
+ 	}
+ 
+-	if (newpos < 0 || newpos > BAR5_SIZE) {
++	if (newpos < 0 || newpos > BAIKAL_DEV_SIZE) {
+ 		mutex_unlock(&dev->lock);
+ 		return -EINVAL;
+ 	}
+@@ -220,6 +326,7 @@ static int baikal_memory_release(struct inode *inode, struct file *filp)
+ static const struct file_operations baikal_memory_fops = {
+ 	.owner		= THIS_MODULE,
+ 	.read		= baikal_memory_read,
++	.write		= baikal_memory_write,
+ 	.llseek		= baikal_memory_llseek,
+ 	.mmap		= baikal_memory_mmap,
+ 	.open		= baikal_memory_open,
+@@ -230,57 +337,95 @@ static struct miscdevice baikal_memory_miscdev = {
+ 	.minor		= MISC_DYNAMIC_MINOR,
+ 	.name		= DRIVER_NAME,
+ 	.fops		= &baikal_memory_fops,
+-	.mode		= 0444, /* Somente leitura por padrão */
++	.mode		= 0600,
+ };
+ 
+ /* ------------------------------------------------------------------------- */
+ /* Sysfs — atributos só-leitura para registradores conhecidos                */
+ /* ------------------------------------------------------------------------- */
+ 
+-static ssize_t bar5_offset_show(struct device *dev,
+-				struct device_attribute *attr, char *buf)
++/*
++ * Cada atributo carrega o próprio offset/tamanho. Antes o offset era extraído
++ * do nome com simple_strtoul("bar5_0x00", ..., 16), que para em 'r' e devolve
++ * 0xba — os atributos liam o registrador errado (achado na Fase 3).
++ */
++struct baikal_sysfs_reg {
++	struct device_attribute	attr;
++	u32			offset;
++	u32			len;
++	bool			mac;
++};
++
++static ssize_t baikal_sysfs_reg_show(struct device *dev,
++				     struct device_attribute *attr, char *buf)
+ {
+ 	struct baikal_mem_dev *bm = dev_get_drvdata(dev);
+-	u32 offset;
+-	u32 val;
++	struct baikal_sysfs_reg *reg =
++		container_of(attr, struct baikal_sysfs_reg, attr);
++	u8 raw[16];
++	ssize_t n = 0;
++	u32 i;
+ 
+ 	if (!bm || !bm->bar5_mapped)
+ 		return -ENODEV;
+ 
++	if (!reg->len || reg->len > sizeof(raw) ||
++	    reg->offset > BAR5_SIZE - reg->len)
++		return -EINVAL;
++
+ 	mutex_lock(&bm->lock);
+-	offset = simple_strtoul(attr->attr.name, NULL, 16);
+-	if (offset > BAR5_SIZE - 4) {
++	if (reg->len == sizeof(u32)) {
++		u32 val = baikal_mem_read32(bm->bar5 + reg->offset);
++
+ 		mutex_unlock(&bm->lock);
+-		return -EINVAL;
++		return sysfs_emit(buf, "0x%08x\n", val);
+ 	}
+-	val = baikal_mem_read32(bm->bar5 + offset);
++	memcpy_fromio(raw, bm->bar5 + reg->offset, reg->len);
+ 	mutex_unlock(&bm->lock);
+ 
+-	return scnprintf(buf, PAGE_SIZE, "0x%08x\n", val);
++	/* MAC da SPM: 6 primeiros bytes do bootparams (BAR5+0x2f000) */
++	if (reg->mac && reg->len >= ETH_ALEN)
++		return sysfs_emit(buf, "%pM\n", raw);
++
++	for (i = 0; i < reg->len; i++)
++		n += sysfs_emit_at(buf, n, "%02x%s", raw[i],
++				   i + 1 == reg->len ? "\n" : " ");
++
++	return n;
+ }
+ 
+-#define BAILAK_SYSFS_ATTR(offset) \
+-	static struct device_attribute dev_attr_bar5_##offset = \
+-		__ATTR(bar5_##offset, 0444, bar5_offset_show, NULL);
++#define BAIKAL_SYSFS_REG(_name, _offset, _len, _mac) \
++	static struct baikal_sysfs_reg reg_##_name = { \
++		.attr = __ATTR(_name, 0444, baikal_sysfs_reg_show, NULL), \
++		.offset = (_offset), \
++		.len = (_len), \
++		.mac = (_mac), \
++	}
++
++BAIKAL_SYSFS_REG(bar5_0x00, 0x00, 4, false);
++BAIKAL_SYSFS_REG(bar5_0x04, 0x04, 4, false);
++BAIKAL_SYSFS_REG(bar5_0x08, 0x08, 4, false);
++BAIKAL_SYSFS_REG(bar5_0x0c, 0x0c, 4, false);
++BAIKAL_SYSFS_REG(bar5_0x10, 0x10, 4, false);
++BAIKAL_SYSFS_REG(bar5_0x14, 0x14, 4, false);
++BAIKAL_SYSFS_REG(bar5_0x18, 0x18, 4, false);
++BAIKAL_SYSFS_REG(bar5_0x1c, 0x1c, 4, false);
+ 
+-BAILAK_SYSFS_ATTR(0x00);
+-BAILAK_SYSFS_ATTR(0x04);
+-BAILAK_SYSFS_ATTR(0x08);
+-BAILAK_SYSFS_ATTR(0x0c);
+-BAILAK_SYSFS_ATTR(0x10);
+-BAILAK_SYSFS_ATTR(0x14);
+-BAILAK_SYSFS_ATTR(0x18);
+-BAILAK_SYSFS_ATTR(0x1c);
++/* Registradores do BAR5 que realmente têm dados neste console */
++BAIKAL_SYSFS_REG(bar5_0x2c000, 0x2c000, 16, false); /* região spm.icc */
++BAIKAL_SYSFS_REG(bar5_0x2f000, 0x2f000, 16, true);  /* bootparams/MAC */
+ 
+ static struct attribute *baikal_memory_attrs[] = {
+-	&dev_attr_bar5_0x00.attr,
+-	&dev_attr_bar5_0x04.attr,
+-	&dev_attr_bar5_0x08.attr,
+-	&dev_attr_bar5_0x0c.attr,
+-	&dev_attr_bar5_0x10.attr,
+-	&dev_attr_bar5_0x14.attr,
+-	&dev_attr_bar5_0x18.attr,
+-	&dev_attr_bar5_0x1c.attr,
++	&reg_bar5_0x00.attr.attr,
++	&reg_bar5_0x04.attr.attr,
++	&reg_bar5_0x08.attr.attr,
++	&reg_bar5_0x0c.attr.attr,
++	&reg_bar5_0x10.attr.attr,
++	&reg_bar5_0x14.attr.attr,
++	&reg_bar5_0x18.attr.attr,
++	&reg_bar5_0x1c.attr.attr,
++	&reg_bar5_0x2c000.attr.attr,
++	&reg_bar5_0x2f000.attr.attr,
+ 	NULL,
+ };
+ 
+@@ -297,6 +442,7 @@ static int baikal_memory_probe(struct pci_dev *pdev,
+ {
+ 	struct baikal_mem_dev *dev;
+ 	int ret;
++	int i;
+ 
+ 	dev = devm_kzalloc(&pdev->dev, sizeof(*dev), GFP_KERNEL);
+ 	if (!dev)
+@@ -305,101 +451,167 @@ static int baikal_memory_probe(struct pci_dev *pdev,
+ 	dev->pdev = pdev;
+ 	mutex_init(&dev->lock);
+ 
+-	/* Habilitar o dispositivo PCI */
+-	ret = pci_enable_device(pdev);
+-	if (ret) {
+-		dev_err(&pdev->dev, "Falha ao habilitar dispositivo PCI\n");
+-		return ret;
+-	}
++	dev_info(&pdev->dev, "[BAIKAL] === INICIANDO PROBE ===\n");
++	dev_info(&pdev->dev, "[BAIKAL] Vendor: 0x%04x, Device: 0x%04x\n",
++		 pdev->vendor, pdev->device);
+ 
+-	/* Solicitar regiões de memória */
+-	ret = pci_request_regions(pdev, DRIVER_NAME);
++	/* Habilitar o dispositivo PCI sem reservar BARs automaticamente */
++	dev_info(&pdev->dev, "[BAIKAL] Chamando pci_enable_device_mem...\n");
++	ret = pci_enable_device_mem(pdev);
+ 	if (ret) {
+-		dev_err(&pdev->dev, "Falha ao solicitar regiões PCI\n");
+-		pci_disable_device(pdev);
++		dev_err(&pdev->dev, "[BAIKAL] FALHA pci_enable_device_mem: %d\n", ret);
+ 		return ret;
+ 	}
++	dev_info(&pdev->dev, "[BAIKAL] pci_enable_device_mem OK\n");
+ 
+ 	/* Ler BARs */
++	dev_info(&pdev->dev, "[BAIKAL] Lendo recursos PCI...\n");
++	for (i = 0; i < 6; i++) {
++		resource_size_t start = pci_resource_start(pdev, i);
++		resource_size_t end = pci_resource_end(pdev, i);
++		resource_size_t flags = pci_resource_flags(pdev, i);
++		if (start || end) {
++			dev_info(&pdev->dev, "[BAIKAL] BAR%d: start=0x%llx end=0x%llx size=%llu flags=0x%llx\n",
++				 i, (unsigned long long)start, (unsigned long long)end,
++				 (unsigned long long)(end - start + 1), (unsigned long long)flags);
++		}
++	}
++
+ 	dev->bar0_start = pci_resource_start(pdev, 0);
+ 	dev->bar2_start = pci_resource_start(pdev, 2);
+ 	dev->bar4_start = pci_resource_start(pdev, 4);
+ 	dev->bar5_start = pci_resource_start(pdev, 5);
+ 
+-	dev_info(&pdev->dev,
+-		 "BAR0: %pad (4 KiB), BAR2: %pad (1 GiB), BAR4: %pad (1 MiB), BAR5: %pad (256 KiB)",
+-		 &dev->bar0_start, &dev->bar2_start, &dev->bar4_start,
+-		 &dev->bar5_start);
++	dev_info(&pdev->dev, "[BAIKAL] BAR0: 0x%llx (4 KiB), BAR2: 0x%llx (1 GiB), BAR4: 0x%llx (1 MiB), BAR5: 0x%llx (256 KiB)\n",
++		 (unsigned long long)dev->bar0_start, (unsigned long long)dev->bar2_start,
++		 (unsigned long long)dev->bar4_start, (unsigned long long)dev->bar5_start);
+ 
+ 	/* Mapear BAR0 (4 KiB) */
+ 	if (dev->bar0_start) {
++		dev_info(&pdev->dev, "[BAIKAL] Mapeando BAR0 (4 KiB) em 0x%llx...\n",
++			 (unsigned long long)dev->bar0_start);
+ 		dev->bar0 = devm_ioremap(&pdev->dev, dev->bar0_start, BAR0_SIZE);
+ 		if (dev->bar0) {
+ 			dev->bar0_mapped = true;
+-			dev_info(&pdev->dev, "BAR0 mapeado em %p\n", dev->bar0);
++			dev_info(&pdev->dev, "[BAIKAL] BAR0 OK: virt=%p\n", dev->bar0);
++			/* Dump primeiros 16 bytes */
++			dev_info(&pdev->dev, "[BAIKAL] BAR0 dump: %08x %08x %08x %08x\n",
++				 ioread32(dev->bar0), ioread32(dev->bar0 + 4),
++				 ioread32(dev->bar0 + 8), ioread32(dev->bar0 + 12));
+ 		} else {
+-			dev_warn(&pdev->dev, "Falha ao mapear BAR0\n");
++			dev_warn(&pdev->dev, "[BAIKAL] FALHA ao mapear BAR0\n");
+ 		}
+ 	}
+ 
+ 	/* Mapear BAR2 (256 MiB window, mapear apenas primeiros 4 MiB) */
+ 	if (dev->bar2_start) {
++		dev_info(&pdev->dev, "[BAIKAL] Mapeando BAR2 (primeiros 4 MiB) em 0x%llx...\n",
++			 (unsigned long long)dev->bar2_start);
+ 		dev->bar2 = devm_ioremap(&pdev->dev, dev->bar2_start, SZ_4M);
+ 		if (dev->bar2) {
+ 			dev->bar2_mapped = true;
+-			dev_info(&pdev->dev, "BAR2 mapeado em %p (primeiros 4 MiB)\n",
+-				 dev->bar2);
++			dev_info(&pdev->dev, "[BAIKAL] BAR2 OK: virt=%p\n", dev->bar2);
++			dev_info(&pdev->dev, "[BAIKAL] BAR2 dump: %08x %08x %08x %08x\n",
++				 ioread32(dev->bar2), ioread32(dev->bar2 + 4),
++				 ioread32(dev->bar2 + 8), ioread32(dev->bar2 + 12));
+ 		} else {
+-			dev_warn(&pdev->dev, "Falha ao mapear BAR2\n");
++			dev_warn(&pdev->dev, "[BAIKAL] FALHA ao mapear BAR2\n");
+ 		}
+ 	}
+ 
+ 	/* Mapear BAR4 (1 MiB) */
+ 	if (dev->bar4_start) {
++		dev_info(&pdev->dev, "[BAIKAL] Mapeando BAR4 (1 MiB) em 0x%llx...\n",
++			 (unsigned long long)dev->bar4_start);
+ 		dev->bar4 = devm_ioremap(&pdev->dev, dev->bar4_start, BAR4_SIZE);
+ 		if (dev->bar4) {
+ 			dev->bar4_mapped = true;
+-			dev_info(&pdev->dev, "BAR4 mapeado em %p\n", dev->bar4);
++			dev_info(&pdev->dev, "[BAIKAL] BAR4 OK: virt=%p\n", dev->bar4);
++			dev_info(&pdev->dev, "[BAIKAL] BAR4 dump: %08x %08x %08x %08x\n",
++				 ioread32(dev->bar4), ioread32(dev->bar4 + 4),
++				 ioread32(dev->bar4 + 8), ioread32(dev->bar4 + 12));
+ 		} else {
+-			dev_warn(&pdev->dev, "Falha ao mapear BAR4\n");
++			dev_warn(&pdev->dev, "[BAIKAL] FALHA ao mapear BAR4\n");
+ 		}
+ 	}
+ 
+-	/* Mapear BAR5 (256 KiB) */
++	/* Mapear BAR5 (256 KiB) - tentar reservar e mapear */
+ 	if (dev->bar5_start) {
+-		dev->bar5 = devm_ioremap(&pdev->dev, dev->bar5_start, BAR5_SIZE);
+-		if (dev->bar5) {
+-			dev->bar5_mapped = true;
+-			dev_info(&pdev->dev, "BAR5 mapeado em %p\n", dev->bar5);
++		dev_info(&pdev->dev, "[BAIKAL] === BAR5 (256 KiB) em 0x%llx ===\n",
++			 (unsigned long long)dev->bar5_start);
++		
++		/* Tentar 1: devm_request_mem_region + devm_ioremap */
++		dev_info(&pdev->dev, "[BAIKAL] Tentativa 1: devm_request_mem_region + devm_ioremap...\n");
++		if (devm_request_mem_region(&pdev->dev, dev->bar5_start, BAR5_SIZE, DRIVER_NAME)) {
++			dev_info(&pdev->dev, "[BAIKAL] Regiao reservada OK, mapeando...\n");
++			dev->bar5 = devm_ioremap(&pdev->dev, dev->bar5_start, BAR5_SIZE);
++			if (dev->bar5) {
++				dev->bar5_mapped = true;
++				dev_info(&pdev->dev, "[BAIKAL] BAR5 OK (tentativa 1): virt=%p\n", dev->bar5);
++				dev_info(&pdev->dev, "[BAIKAL] BAR5 dump: %08x %08x %08x %08x\n",
++					 ioread32(dev->bar5), ioread32(dev->bar5 + 4),
++					 ioread32(dev->bar5 + 8), ioread32(dev->bar5 + 12));
++			} else {
++				dev_warn(&pdev->dev, "[BAIKAL] FALHA ao mapear BAR5 apos reservar\n");
++			}
+ 		} else {
+-			dev_warn(&pdev->dev, "Falha ao mapear BAR5\n");
++			dev_warn(&pdev->dev, "[BAIKAL] FALHA ao reservar regiao BAR5 (EBUSY?)\n");
++			
++			/* Tentar 2: devm_ioremap com pci_resource_start/end */
++			dev_info(&pdev->dev, "[BAIKAL] Tentativa 2: devm_ioremap com pci_resource_start...\n");
++			dev->bar5 = devm_ioremap(&pdev->dev, dev->bar5_start, BAR5_SIZE);
++			if (dev->bar5) {
++				dev->bar5_mapped = true;
++				dev_info(&pdev->dev, "[BAIKAL] BAR5 OK (tentativa 2): virt=%p\n", dev->bar5);
++				dev_info(&pdev->dev, "[BAIKAL] BAR5 dump: %08x %08x %08x %08x\n",
++					 ioread32(dev->bar5), ioread32(dev->bar5 + 4),
++					 ioread32(dev->bar5 + 8), ioread32(dev->bar5 + 12));
++			} else {
++				dev_warn(&pdev->dev, "[BAIKAL] FALHA devm_ioremap\n");
++				
++				/* Tentar 3: ioremap direto sem reservar (perigoso mas para debug) */
++				dev_info(&pdev->dev, "[BAIKAL] Tentativa 3: ioremap direto (sem reservar)...\n");
++				dev->bar5 = ioremap(dev->bar5_start, BAR5_SIZE);
++				if (dev->bar5) {
++					dev->bar5_mapped = true;
++					dev_info(&pdev->dev, "[BAIKAL] BAR5 OK (tentativa 3 - SEM RESERVA): virt=%p\n", dev->bar5);
++					dev_info(&pdev->dev, "[BAIKAL] BAR5 dump: %08x %08x %08x %08x\n",
++						 ioread32(dev->bar5), ioread32(dev->bar5 + 4),
++						 ioread32(dev->bar5 + 8), ioread32(dev->bar5 + 12));
++					dev_warn(&pdev->dev, "[BAIKAL] ATENCAO: BAR5 mapeado SEM reserva de regiao!\n");
++				} else {
++					dev_err(&pdev->dev, "[BAIKAL] FALHA total: ioremap direto tambem falhou\n");
++				}
++			}
+ 		}
+ 	}
+ 
+ 	/* Registrar dispositivo de caractere */
++	dev_info(&pdev->dev, "[BAIKAL] Registrando misc device...\n");
+ 	ret = misc_register(&baikal_memory_miscdev);
+ 	if (ret) {
+-		dev_err(&pdev->dev, "Falha ao registrar dispositivo misc\n");
+-		pci_release_regions(pdev);
++		dev_err(&pdev->dev, "[BAIKAL] FALHA misc_register: %d\n", ret);
+ 		pci_disable_device(pdev);
+ 		return ret;
+ 	}
++	dev_info(&pdev->dev, "[BAIKAL] misc device OK: /dev/%s\n", DRIVER_NAME);
+ 
+ 	/* Registrar sysfs group */
++	dev_info(&pdev->dev, "[BAIKAL] Criando sysfs group...\n");
+ 	ret = sysfs_create_group(&pdev->dev.kobj, &baikal_memory_attr_group);
+ 	if (ret) {
+-		dev_err(&pdev->dev, "Falha ao criar grupo sysfs\n");
++		dev_err(&pdev->dev, "[BAIKAL] FALHA sysfs_create_group: %d\n", ret);
+ 		misc_deregister(&baikal_memory_miscdev);
+-		pci_release_regions(pdev);
+ 		pci_disable_device(pdev);
+ 		return ret;
+ 	}
++	dev_info(&pdev->dev, "[BAIKAL] sysfs group OK\n");
+ 
+ 	pci_set_drvdata(pdev, dev);
+ 	g_bm_dev = dev;
+ 
+-	dev_info(&pdev->dev,
+-		 "Driver Baikal Memory carregado. Dispositivo /dev/%s disponível.\n",
++	dev_info(&pdev->dev, "[BAIKAL] === PROBE CONCLUIDO COM SUCESSO ===\n");
++	dev_info(&pdev->dev, "[BAIKAL] Driver Baikal Memory carregado. Dispositivo /dev/%s disponivel.\n",
+ 		 DRIVER_NAME);
+ 
+ 	return 0;
+@@ -412,17 +624,18 @@ static void baikal_memory_remove(struct pci_dev *pdev)
+ 	if (!dev)
+ 		return;
+ 
++	dev_info(&pdev->dev, "[BAIKAL] Removendo driver...\n");
++
+ 	sysfs_remove_group(&pdev->dev.kobj, &baikal_memory_attr_group);
+ 	misc_deregister(&baikal_memory_miscdev);
+-	pci_release_regions(pdev);
+ 	pci_disable_device(pdev);
+ 
+ 	g_bm_dev = NULL;
+-	dev_info(&pdev->dev, "Driver Baikal Memory descarregado\n");
++	dev_info(&pdev->dev, "[BAIKAL] Driver Baikal Memory descarregado\n");
+ }
+ 
+ static const struct pci_device_id baikal_memory_id_table[] = {
+-	{ PCI_DEVICE(BAILAK_VENDOR_ID, BAILAK_DEVICE_ID) },
++	{ PCI_DEVICE(BAIKAL_VENDOR_ID, BAIKAL_DEVICE_ID) },
+ 	{ 0, }
+ };
+ MODULE_DEVICE_TABLE(pci, baikal_memory_id_table);
+@@ -442,22 +655,22 @@ static int __init baikal_memory_init(void)
+ {
+ 	int ret;
+ 
+-	pr_info("Carregando driver Baikal Memory (SPM/DDR3, 00:14.6)\n");
++	pr_info("[BAIKAL] Carregando driver Baikal Memory (SPM/DDR3, 00:14.6)\n");
+ 
+ 	ret = pci_register_driver(&baikal_memory_pci_driver);
+ 	if (ret < 0) {
+-		pr_err("Falha ao registrar driver PCI: %d\n", ret);
++		pr_err("[BAIKAL] FALHA ao registrar driver PCI: %d\n", ret);
+ 		return ret;
+ 	}
+ 
+-	pr_info("Driver Baikal Memory carregado com sucesso\n");
++	pr_info("[BAIKAL] Driver Baikal Memory carregado com sucesso\n");
+ 	return 0;
+ }
+ 
+ static void __exit baikal_memory_exit(void)
+ {
+ 	pci_unregister_driver(&baikal_memory_pci_driver);
+-	pr_info("Driver Baikal Memory descarregado\n");
++	pr_info("[BAIKAL] Driver Baikal Memory descarregado\n");
+ }
+ 
+ module_init(baikal_memory_init);
+@@ -466,5 +679,4 @@ module_exit(baikal_memory_exit);
+ MODULE_LICENSE("GPL v2");
+ MODULE_AUTHOR("Projeto PS4 Linux Baikal");
+ MODULE_DESCRIPTION(DRIVER_DESC);
+-MODULE_VERSION("0.1");
+-MODULE_DEVICE_TABLE(pci, baikal_memory_id_table);
++MODULE_VERSION("0.2");
+\ No newline at end of file

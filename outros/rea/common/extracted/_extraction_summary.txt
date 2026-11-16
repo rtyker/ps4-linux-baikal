@@ -1,0 +1,8 @@
+Resumo ExtractMtsNamespace (PyGhidra)
+==================================================
+Enderecos-alvo:           26
+Extraidos agora:          7
+Skipped (ja existiam):    19
+Falhas:                   0
+Fora da mem do program:   0
+Funcoes criadas:          0

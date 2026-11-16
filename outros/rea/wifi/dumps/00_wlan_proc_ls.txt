@@ -1,0 +1,21 @@
+~ # ls -la /proc/net/wlan/ 2>&1
+total 0
+dr-xr-xr-x    9 2000     1010             0 Jan  1 00:06 
+[1;34m.
+dr-xr-xr-x   65 0        0                0 Jan  1 00:06 
+[1;34m..
+-rw-rw-r--    1 2000     1010             0 Jan  1 00:06 
+[0;0mcfg
+-rw-rw-r--    1 2000     1010             0 Jan  1 00:06 
+[0;0mcsi_data
+-rw-rw-r--    1 2000     1010             0 Jan  1 00:06 
+[0;0mdbg_level
+-rw-rw-r--    1 2000     1010             0 Jan  1 00:06 
+[0;0mdriver
+-rw-rw-r--    1 2000     1010             0 Jan  1 00:06 
+[0;0mefuse_dump
+-rw-rw-r--    1 2000     1010             0 Jan  1 00:06 
+[0;0mget_txpwr_tbl
+-rw-rw-r--    1 2000     1010             0 Jan  1 00:06 
+[0;0mmcr
+~ # 

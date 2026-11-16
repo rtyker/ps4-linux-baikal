@@ -1,0 +1,5 @@
+~ # cat /sys/class/net/wlan0/address; echo; cat /sys/class/net/eth0/address 2>/d
+ev/null; echo MAC_END
+00:0c:43:26:60:48
+MAC_END
+~ # 

@@ -1,0 +1,83 @@
+
+void fcn.ffffffffdc5a3060(int64_t arg1)
+
+{
+    ulong *puVar1;
+    uint32_t uVar2;
+    uint *puVar3;
+    uint32_t *puVar4;
+    int iVar5;
+    int64_t iVar6;
+    
+    puVar3 = *(*(arg1 + 0x3068) + 0x10) + 0x54;
+    if (*(*(arg1 + 0x3068) + 8) == 0) {
+        out(puVar3,0x7ffffa);
+    }
+    else {
+        *puVar3 = 0x7ffffa;
+    }
+    puVar3 = *(*(arg1 + 0x3068) + 0x10) + 0x34;
+    if (*(*(arg1 + 0x3068) + 8) == 0) {
+        out(puVar3,2);
+    }
+    else {
+        *puVar3 = 2;
+    }
+    iVar5 = 1000000;
+    do {
+        puVar4 = *(*(arg1 + 0x3068) + 0x10) + 0x34;
+        if (*(*(arg1 + 0x3068) + 8) == 0) {
+            uVar2 = in(puVar4);
+        }
+        else {
+            uVar2 = *puVar4;
+        }
+        if ((uVar2 & 2) == 0) break;
+        func_0xffffffffdc4afb10(1);
+        iVar5 = iVar5 + -1;
+    } while (iVar5 != 0);
+    puVar3 = *(*(arg1 + 0x3068) + 0x10) + 0x38;
+    if (*(*(arg1 + 0x3068) + 8) == 0) {
+        out(puVar3,2);
+    }
+    else {
+        *puVar3 = 2;
+    }
+    iVar5 = 1000000;
+    do {
+        puVar4 = *(*(arg1 + 0x3068) + 0x10) + 0x38;
+        if (*(*(arg1 + 0x3068) + 8) == 0) {
+            uVar2 = in(puVar4);
+        }
+        else {
+            uVar2 = *puVar4;
+        }
+        if ((uVar2 & 2) == 0) break;
+        func_0xffffffffdc4afb10(1);
+        iVar5 = iVar5 + -1;
+    } while (iVar5 != 0);
+    iVar6 = -0x1800;
+    do {
+        if (*(arg1 + 0x1858 + iVar6) != 0) {
+            func_0xffffffffdc750770();
+            *(arg1 + 0x1858 + iVar6) = 0;
+        }
+        puVar1 = arg1 + 0x1868 + iVar6;
+        iVar6 = iVar6 + 0x18;
+        **puVar1 = 0x80000000;
+    } while (iVar6 != 0);
+    iVar6 = -0x1800;
+    do {
+        if (*(arg1 + 0x3058 + iVar6) != 0) {
+            func_0xffffffffdc750770();
+            *(arg1 + 0x3058 + iVar6) = 0;
+        }
+        puVar1 = arg1 + 0x3068 + iVar6;
+        iVar6 = iVar6 + 0x18;
+        **puVar1 = 0x80000000;
+    } while (iVar6 != 0);
+    puVar4 = **(arg1 + 0x30a0) + 0x1c8;
+    *puVar4 = *puVar4 & 0xfffffbbf;
+    return;
+}
+

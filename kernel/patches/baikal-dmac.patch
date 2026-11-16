@@ -1,0 +1,563 @@
+diff --git a/drivers/dma/Kconfig b/drivers/dma/Kconfig
+index 66cda7cc9..f2ff7e678 100644
+--- a/drivers/dma/Kconfig
++++ b/drivers/dma/Kconfig
+@@ -749,6 +749,21 @@ config XILINX_ZYNQMP_DPDMA
+ 	  driver provides the dmaengine required by the DisplayPort subsystem
+ 	  display driver.
+ 
++config BAIKAL_DMAC
++	tristate "Sony Baikal southbridge DMA controller (PS4 Slim/Pro)"
++	depends on X86_PS4_BAIKAL && PCI
++	select DMA_ENGINE
++	select DMA_VIRTUAL_CHANNELS
++	help
++	  Driver dmaengine dos dois controladores DMA do southbridge Baikal
++	  (dispositivo PCI 104d:90dc, funcao 00:14.5). Oferece copia
++	  memoria->memoria por descritores encadeados, com enderecos de 32 bits
++	  e alinhamento de 4 bytes.
++
++	  O DMAC1 conclui por interrupcao MSI e o DMAC2 por polling.
++
++	  Para compilar como modulo, escolha M: baikal-dmac.
++
+ # driver files
+ source "drivers/dma/amd/Kconfig"
+ 
+diff --git a/drivers/dma/Makefile b/drivers/dma/Makefile
+index a54d76883..9dbb74b95 100644
+--- a/drivers/dma/Makefile
++++ b/drivers/dma/Makefile
+@@ -21,6 +21,7 @@ obj-$(CONFIG_ARM_DMA350) += arm-dma350.o
+ obj-$(CONFIG_AT_HDMAC) += at_hdmac.o
+ obj-$(CONFIG_AT_XDMAC) += at_xdmac.o
+ obj-$(CONFIG_AXI_DMAC) += dma-axi-dmac.o
++obj-$(CONFIG_BAIKAL_DMAC) += baikal-dmac.o
+ obj-$(CONFIG_BCM_SBA_RAID) += bcm-sba-raid.o
+ obj-$(CONFIG_DMA_BCM2835) += bcm2835-dma.o
+ obj-$(CONFIG_DMA_JZ4780) += dma-jz4780.o
+diff --git a/drivers/dma/baikal-dmac.c b/drivers/dma/baikal-dmac.c
+new file mode 100644
+index 000000000..1e1ff18d5
+--- /dev/null
++++ b/drivers/dma/baikal-dmac.c
+@@ -0,0 +1,519 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * baikal-dmac — driver dmaengine dos controladores DMA do southbridge Baikal
++ * (PS4 Slim/Pro, PCI 104d:90dc, funcao 00:14.5).
++ *
++ * O dispositivo expoe dois controladores identicos (BAR0 e BAR2, 4 KiB cada)
++ * que executam copias memoria->memoria a partir de uma lista encadeada de
++ * descritores de 16 bytes. Mapa de registradores, sequencia de disparo e
++ * formato do descritor vem do RE do dmac_mtk.c do Orbis e foram validados ao
++ * vivo (outros/rea/dma/decompiled/baikal_dmac_mtk_registers_20261113.md).
++ *
++ *   +0x80 INT_FLAG   bit0 = concluida; bits 1..4 = erro
++ *   +0x84 INT        3 = habilita interrupcao
++ *   +0x8c RST        2 e depois 0 = reset
++ *   +0x90 DESC_ADDR  fisico (32 bits) do primeiro descritor
++ *   +0x98 CON        unidade de transferencia, conforme o alinhamento
++ *   +0x9c/a0/a4      SRC/DST/LEN (ponteiros correntes; zerados antes de armar)
++ *   +0xa8 DESC_EN    1 = dispara
++ *
++ * Descritor: { src, dst, len, next } (u32 cada; next = 0 encerra a cadeia).
++ *
++ * Limitacoes: enderecos de 32 bits, enderecos e tamanhos multiplos de 4 bytes.
++ *
++ * Conclusao: o DMAC1 (BAR0) interrompe por MSI; o DMAC2 (BAR2) NAO entrega
++ * interrupcao (pendencia de RE, ver BACKLOG), entao conclui por polling com
++ * hrtimer. Ambos tem um watchdog de timeout.
++ */
++#include <linux/delay.h>
++#include <linux/dma-mapping.h>
++#include <linux/dmaengine.h>
++#include <linux/dmapool.h>
++#include <linux/hrtimer.h>
++#include <linux/interrupt.h>
++#include <linux/io.h>
++#include <linux/ktime.h>
++#include <linux/module.h>
++#include <linux/pci.h>
++#include <linux/slab.h>
++#include <asm/ps4.h>
++
++#include "dmaengine.h"
++#include "virt-dma.h"
++
++#define DRIVER_NAME	"baikal-dmac"
++#define DRIVER_VERSION	"0.1"
++
++#define BDMAC_NCHANS		2
++#define BDMAC_BAR(i)		((i) ? 2 : 0)
++
++#define BDMAC_INT_FLAG		0x80
++#define BDMAC_INT		0x84
++#define BDMAC_RST		0x8c
++#define BDMAC_DESC_ADDR		0x90
++#define BDMAC_CON		0x98
++#define BDMAC_SRC		0x9c
++#define BDMAC_DST		0xa0
++#define BDMAC_LEN		0xa4
++#define BDMAC_DESC_EN		0xa8
++
++#define BDMAC_FLAG_DONE		BIT(0)
++#define BDMAC_FLAG_ERR		GENMASK(4, 1)
++#define BDMAC_FLAG_ANY		(BDMAC_FLAG_DONE | BDMAC_FLAG_ERR)
++
++#define BDMAC_MAX_SEG		SZ_1M		/* validado ao vivo ate 1 MiB */
++#define BDMAC_POOL_BLOCK	SZ_4K
++#define BDMAC_MAX_SEGS		(BDMAC_POOL_BLOCK / 16)
++#define BDMAC_MAX_LEN		((size_t)BDMAC_MAX_SEG * BDMAC_MAX_SEGS)
++
++#define BDMAC_POLL_NS		20000		/* DMAC2: intervalo de polling */
++#define BDMAC_WATCHDOG_NS	(100 * NSEC_PER_MSEC)	/* DMAC1: resgata IRQ perdida */
++#define BDMAC_TIMEOUT_MS	2000
++
++static bool poll_only;
++module_param(poll_only, bool, 0444);
++MODULE_PARM_DESC(poll_only,
++		 "Nao usar interrupcao em nenhum canal (padrao: 0, o DMAC1 usa MSI)");
++
++struct bdmac_hw_desc {
++	__le32 src;
++	__le32 dst;
++	__le32 len;
++	__le32 next;
++};
++
++struct bdmac_vdesc {
++	struct virt_dma_desc vd;
++	struct dma_pool *pool;
++	struct bdmac_hw_desc *hw;
++	dma_addr_t hw_dma;
++	u32 con;
++	size_t len;
++};
++
++struct bdmac_chan {
++	struct virt_dma_chan vc;
++	struct bdmac_dev *bd;
++	void __iomem *base;
++	int idx;
++	bool use_irq;
++	struct bdmac_vdesc *active;	/* protegido por vc.lock */
++	struct hrtimer poll;		/* polling (DMAC2) ou watchdog (DMAC1) */
++	ktime_t t_start;
++};
++
++struct bdmac_dev {
++	struct dma_device ddev;
++	struct pci_dev *pdev;
++	struct dma_pool *pool;
++	struct bdmac_chan chan[BDMAC_NCHANS];
++	bool irq_on;
++};
++
++static inline struct bdmac_chan *to_bdmac_chan(struct dma_chan *c)
++{
++	return container_of(c, struct bdmac_chan, vc.chan);
++}
++
++static inline struct bdmac_vdesc *to_bdmac_vdesc(struct virt_dma_desc *vd)
++{
++	return container_of(vd, struct bdmac_vdesc, vd);
++}
++
++/* CON conforme a tabela do Orbis (tzcnt do OR de enderecos e tamanho). */
++static int bdmac_con_for(u32 or_all, u32 *con)
++{
++	unsigned int tz = __ffs(or_all | 0x80);
++
++	if (tz < 2)
++		return -EINVAL;
++	*con = tz == 2 ? 0 : tz == 3 ? 0x10000 : tz == 4 ? 0x20000 :
++	       tz == 5 ? 0x30000 : 0x40000;
++	return 0;
++}
++
++static void bdmac_hw_reset(struct bdmac_chan *ch)
++{
++	writel(2, ch->base + BDMAC_RST);
++	udelay(50);
++	writel(0, ch->base + BDMAC_RST);
++}
++
++static void bdmac_arm(struct bdmac_chan *ch)
++{
++	hrtimer_start(&ch->poll,
++		      ns_to_ktime(ch->use_irq ? BDMAC_WATCHDOG_NS : BDMAC_POLL_NS),
++		      HRTIMER_MODE_REL);
++}
++
++/* vc.lock mantido. Dispara a proxima transferencia, se houver. */
++static void bdmac_start_next(struct bdmac_chan *ch)
++{
++	struct virt_dma_desc *vd = vchan_next_desc(&ch->vc);
++	struct bdmac_vdesc *d;
++	void __iomem *r = ch->base;
++
++	lockdep_assert_held(&ch->vc.lock);
++	if (!vd)
++		return;
++
++	list_del(&vd->node);
++	d = to_bdmac_vdesc(vd);
++	ch->active = d;
++
++	/* Sequencia do Orbis (validada ao vivo). */
++	writel(0, r + BDMAC_LEN);
++	writel(0, r + BDMAC_SRC);
++	writel(0, r + BDMAC_DST);
++	writel(lower_32_bits(d->hw_dma), r + BDMAC_DESC_ADDR);
++	writel(0, r + BDMAC_INT_FLAG);
++	writel(d->con, r + BDMAC_CON);
++	writel(ch->use_irq ? 3 : 0, r + BDMAC_INT);
++	wmb();
++	ch->t_start = ktime_get();
++	writel(1, r + BDMAC_DESC_EN);
++}
++
++/* vc.lock mantido. Conclui o descritor ativo. */
++static void bdmac_finish(struct bdmac_chan *ch, u32 flag, bool abort)
++{
++	struct bdmac_vdesc *d = ch->active;
++
++	lockdep_assert_held(&ch->vc.lock);
++	ch->active = NULL;
++	if (abort)
++		bdmac_hw_reset(ch);
++	else
++		writel(flag & ~BDMAC_FLAG_DONE, ch->base + BDMAC_INT_FLAG);
++	writel(0, ch->base + BDMAC_INT);
++
++	d->vd.tx_result.result = abort ? DMA_TRANS_ABORTED : DMA_TRANS_NOERROR;
++	d->vd.tx_result.residue = 0;
++	vchan_cookie_complete(&d->vd);
++}
++
++static irqreturn_t bdmac_irq(int irq, void *data)
++{
++	struct bdmac_chan *ch = data;
++	irqreturn_t ret = IRQ_NONE;
++	unsigned long flags;
++	u32 f;
++
++	spin_lock_irqsave(&ch->vc.lock, flags);
++	f = readl(ch->base + BDMAC_INT_FLAG);
++	if (f & BDMAC_FLAG_ANY) {
++		ret = IRQ_HANDLED;
++		if (ch->active) {
++			hrtimer_try_to_cancel(&ch->poll);
++			if (f & BDMAC_FLAG_ERR)
++				dev_err(&ch->bd->pdev->dev,
++					"canal %d: erro do DMAC (INT_FLAG=0x%x)\n", ch->idx, f);
++			bdmac_finish(ch, f, !!(f & BDMAC_FLAG_ERR));
++			bdmac_start_next(ch);
++			if (ch->active)
++				bdmac_arm(ch);
++		} else {
++			writel(f & ~BDMAC_FLAG_DONE, ch->base + BDMAC_INT_FLAG);
++		}
++	}
++	spin_unlock_irqrestore(&ch->vc.lock, flags);
++	return ret;
++}
++
++static enum hrtimer_restart bdmac_poll(struct hrtimer *t)
++{
++	struct bdmac_chan *ch = container_of(t, struct bdmac_chan, poll);
++	unsigned long flags;
++	bool restart = false;
++	u32 f;
++
++	spin_lock_irqsave(&ch->vc.lock, flags);
++	if (ch->active) {
++		f = readl(ch->base + BDMAC_INT_FLAG);
++		if (f & BDMAC_FLAG_ANY) {
++			if (f & BDMAC_FLAG_ERR)
++				dev_err(&ch->bd->pdev->dev,
++					"canal %d: erro do DMAC (INT_FLAG=0x%x)\n", ch->idx, f);
++			bdmac_finish(ch, f, !!(f & BDMAC_FLAG_ERR));
++			bdmac_start_next(ch);
++		} else if (ktime_ms_delta(ktime_get(), ch->t_start) > BDMAC_TIMEOUT_MS) {
++			dev_err(&ch->bd->pdev->dev,
++				"canal %d: TIMEOUT (INT_FLAG=0x%x); reset\n", ch->idx, f);
++			bdmac_finish(ch, 0, true);
++			bdmac_start_next(ch);
++		}
++		restart = ch->active;
++	}
++	spin_unlock_irqrestore(&ch->vc.lock, flags);
++
++	if (!restart)
++		return HRTIMER_NORESTART;
++	hrtimer_forward_now(t, ns_to_ktime(ch->use_irq ? BDMAC_WATCHDOG_NS : BDMAC_POLL_NS));
++	return HRTIMER_RESTART;
++}
++
++static void bdmac_vdesc_free(struct virt_dma_desc *vd)
++{
++	struct bdmac_vdesc *d = to_bdmac_vdesc(vd);
++
++	dma_pool_free(d->pool, d->hw, d->hw_dma);
++	kfree(d);
++}
++
++static struct dma_async_tx_descriptor *
++bdmac_prep_dma_memcpy(struct dma_chan *c, dma_addr_t dst, dma_addr_t src,
++		      size_t len, unsigned long flags)
++{
++	struct bdmac_chan *ch = to_bdmac_chan(c);
++	struct bdmac_vdesc *d;
++	size_t off = 0;
++	unsigned int nseg, i;
++	u32 con;
++
++	if (!len || len > BDMAC_MAX_LEN)
++		return NULL;
++	if ((u64)src + len > (1ULL << 32) || (u64)dst + len > (1ULL << 32))
++		return NULL;
++	if (bdmac_con_for(lower_32_bits(src) | lower_32_bits(dst) | (u32)len, &con))
++		return NULL;
++
++	nseg = DIV_ROUND_UP(len, BDMAC_MAX_SEG);
++	d = kzalloc_obj(*d, GFP_NOWAIT);
++	if (!d)
++		return NULL;
++	d->hw = dma_pool_zalloc(ch->bd->pool, GFP_NOWAIT, &d->hw_dma);
++	if (!d->hw) {
++		kfree(d);
++		return NULL;
++	}
++	d->pool = ch->bd->pool;
++	d->con = con;
++	d->len = len;
++
++	for (i = 0; i < nseg; i++) {
++		size_t l = min_t(size_t, len - off, BDMAC_MAX_SEG);
++
++		d->hw[i].src = cpu_to_le32(lower_32_bits(src + off));
++		d->hw[i].dst = cpu_to_le32(lower_32_bits(dst + off));
++		d->hw[i].len = cpu_to_le32(l);
++		d->hw[i].next = i + 1 < nseg ?
++			cpu_to_le32(lower_32_bits(d->hw_dma + 16 * (i + 1))) : 0;
++		off += l;
++	}
++
++	return vchan_tx_prep(&ch->vc, &d->vd, flags);
++}
++
++static void bdmac_issue_pending(struct dma_chan *c)
++{
++	struct bdmac_chan *ch = to_bdmac_chan(c);
++	unsigned long flags;
++
++	spin_lock_irqsave(&ch->vc.lock, flags);
++	if (vchan_issue_pending(&ch->vc) && !ch->active) {
++		bdmac_start_next(ch);
++		if (ch->active)
++			bdmac_arm(ch);
++	}
++	spin_unlock_irqrestore(&ch->vc.lock, flags);
++}
++
++static enum dma_status bdmac_tx_status(struct dma_chan *c, dma_cookie_t cookie,
++				       struct dma_tx_state *txstate)
++{
++	struct bdmac_chan *ch = to_bdmac_chan(c);
++	struct virt_dma_desc *vd;
++	enum dma_status ret;
++	unsigned long flags;
++	size_t bytes = 0;
++
++	ret = dma_cookie_status(c, cookie, txstate);
++	if (ret == DMA_COMPLETE || !txstate)
++		return ret;
++
++	spin_lock_irqsave(&ch->vc.lock, flags);
++	if (ch->active && ch->active->vd.tx.cookie == cookie) {
++		bytes = ch->active->len;
++	} else {
++		vd = vchan_find_desc(&ch->vc, cookie);
++		if (vd)
++			bytes = to_bdmac_vdesc(vd)->len;
++	}
++	spin_unlock_irqrestore(&ch->vc.lock, flags);
++
++	dma_set_residue(txstate, bytes);
++	return ret;
++}
++
++static int bdmac_terminate_all(struct dma_chan *c)
++{
++	struct bdmac_chan *ch = to_bdmac_chan(c);
++	unsigned long flags;
++	LIST_HEAD(head);
++
++	spin_lock_irqsave(&ch->vc.lock, flags);
++	if (ch->active) {
++		bdmac_hw_reset(ch);
++		writel(0, ch->base + BDMAC_INT);
++		vchan_terminate_vdesc(&ch->active->vd);
++		ch->active = NULL;
++	}
++	vchan_get_all_descriptors(&ch->vc, &head);
++	spin_unlock_irqrestore(&ch->vc.lock, flags);
++
++	vchan_dma_desc_free_list(&ch->vc, &head);
++	return 0;
++}
++
++static void bdmac_synchronize(struct dma_chan *c)
++{
++	struct bdmac_chan *ch = to_bdmac_chan(c);
++
++	vchan_synchronize(&ch->vc);
++	hrtimer_cancel(&ch->poll);
++}
++
++static int bdmac_alloc_chan_resources(struct dma_chan *c)
++{
++	return 0;
++}
++
++static void bdmac_free_chan_resources(struct dma_chan *c)
++{
++	vchan_free_chan_resources(to_virt_chan(c));
++}
++
++static int bdmac_probe(struct pci_dev *pdev, const struct pci_device_id *id)
++{
++	struct bdmac_dev *bd;
++	struct dma_device *dd;
++	int ret, i;
++
++	bd = devm_kzalloc(&pdev->dev, sizeof(*bd), GFP_KERNEL);
++	if (!bd)
++		return -ENOMEM;
++	bd->pdev = pdev;
++
++	ret = pcim_enable_device(pdev);
++	if (ret)
++		return ret;
++	ret = pcim_iomap_regions(pdev, BIT(0) | BIT(2), DRIVER_NAME);
++	if (ret)
++		return ret;
++	ret = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32));
++	if (ret) {
++		dev_err(&pdev->dev, "mascara de DMA de 32 bits indisponivel\n");
++		return ret;
++	}
++	pci_set_master(pdev);
++
++	/* Alinhamento do bloco de descritores: conservador (o validado ao vivo). */
++	bd->pool = dmam_pool_create(DRIVER_NAME, &pdev->dev, BDMAC_POOL_BLOCK,
++				    BDMAC_POOL_BLOCK, 0);
++	if (!bd->pool)
++		return -ENOMEM;
++
++	dd = &bd->ddev;
++	dma_cap_set(DMA_MEMCPY, dd->cap_mask);
++	dd->dev = &pdev->dev;
++	dd->copy_align = DMAENGINE_ALIGN_4_BYTES;
++	dd->device_alloc_chan_resources = bdmac_alloc_chan_resources;
++	dd->device_free_chan_resources = bdmac_free_chan_resources;
++	dd->device_prep_dma_memcpy = bdmac_prep_dma_memcpy;
++	dd->device_issue_pending = bdmac_issue_pending;
++	dd->device_tx_status = bdmac_tx_status;
++	dd->device_terminate_all = bdmac_terminate_all;
++	dd->device_synchronize = bdmac_synchronize;
++	dd->src_addr_widths = BIT(DMA_SLAVE_BUSWIDTH_4_BYTES);
++	dd->dst_addr_widths = BIT(DMA_SLAVE_BUSWIDTH_4_BYTES);
++	dd->directions = BIT(DMA_MEM_TO_MEM);
++	dd->residue_granularity = DMA_RESIDUE_GRANULARITY_DESCRIPTOR;
++	INIT_LIST_HEAD(&dd->channels);
++
++	for (i = 0; i < BDMAC_NCHANS; i++) {
++		struct bdmac_chan *ch = &bd->chan[i];
++
++		ch->bd = bd;
++		ch->idx = i;
++		ch->base = pcim_iomap_table(pdev)[BDMAC_BAR(i)];
++		ch->vc.desc_free = bdmac_vdesc_free;
++		hrtimer_setup(&ch->poll, bdmac_poll, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
++		vchan_init(&ch->vc, dd);
++	}
++
++	/* Interrupcao: so o DMAC1 (BAR0) entrega MSI; o DMAC2 usa polling. */
++	if (!poll_only) {
++		int n = bpcie_assign_irqs(pdev, 1);
++
++		if (n > 0) {
++			ret = request_irq(pdev->irq, bdmac_irq, IRQF_SHARED, DRIVER_NAME,
++					  &bd->chan[0]);
++			if (ret) {
++				dev_warn(&pdev->dev, "request_irq falhou (%d); usando polling\n", ret);
++				pci_free_irq_vectors(pdev);
++			} else {
++				bd->irq_on = true;
++				bd->chan[0].use_irq = true;
++			}
++		} else {
++			dev_warn(&pdev->dev, "sem MSI (%d); usando polling\n", n);
++		}
++	}
++
++	pci_set_drvdata(pdev, bd);
++	ret = dma_async_device_register(dd);
++	if (ret) {
++		dev_err(&pdev->dev, "dma_async_device_register falhou: %d\n", ret);
++		goto err_irq;
++	}
++
++	dev_info(&pdev->dev,
++		 "%s v%s: %d canais (DMAC1 %s, DMAC2 polling), memcpy, alinhamento 4 B, 32 bits\n",
++		 DRIVER_NAME, DRIVER_VERSION, BDMAC_NCHANS,
++		 bd->irq_on ? "IRQ" : "polling");
++	return 0;
++
++err_irq:
++	if (bd->irq_on) {
++		writel(0, bd->chan[0].base + BDMAC_INT);
++		free_irq(pdev->irq, &bd->chan[0]);
++		pci_free_irq_vectors(pdev);
++	}
++	return ret;
++}
++
++static void bdmac_remove(struct pci_dev *pdev)
++{
++	struct bdmac_dev *bd = pci_get_drvdata(pdev);
++	int i;
++
++	dma_async_device_unregister(&bd->ddev);
++	for (i = 0; i < BDMAC_NCHANS; i++) {
++		hrtimer_cancel(&bd->chan[i].poll);
++		writel(0, bd->chan[i].base + BDMAC_INT);
++		tasklet_kill(&bd->chan[i].vc.task);
++	}
++	if (bd->irq_on) {
++		free_irq(pdev->irq, &bd->chan[0]);
++		pci_free_irq_vectors(pdev);
++	}
++}
++
++static const struct pci_device_id bdmac_id_table[] = {
++	{ PCI_DEVICE(0x104d, 0x90dc) },	/* Sony Baikal DMA Controller */
++	{ }
++};
++MODULE_DEVICE_TABLE(pci, bdmac_id_table);
++
++static struct pci_driver bdmac_pci_driver = {
++	.name		= DRIVER_NAME,
++	.id_table	= bdmac_id_table,
++	.probe		= bdmac_probe,
++	.remove		= bdmac_remove,
++};
++module_pci_driver(bdmac_pci_driver);
++
++MODULE_LICENSE("GPL");
++MODULE_AUTHOR("Projeto PS4 Linux Baikal");
++MODULE_DESCRIPTION("Driver dmaengine do controlador DMA do southbridge Baikal (PS4)");
++MODULE_VERSION(DRIVER_VERSION);

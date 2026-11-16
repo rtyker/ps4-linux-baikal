@@ -1,0 +1,57 @@
+~ # cat /proc/meminfo; echo MEMINFO_END
+MemTotal:        7067048 kB
+MemFree:         6952168 kB
+MemAvailable:    6817992 kB
+Buffers:               0 kB
+Cached:            22584 kB
+SwapCached:            0 kB
+Active:             1820 kB
+Inactive:              0 kB
+Active(anon):       1820 kB
+Inactive(anon):        0 kB
+Active(file):          0 kB
+Inactive(file):        0 kB
+Unevictable:       22584 kB
+Mlocked:               0 kB
+SwapTotal:             0 kB
+SwapFree:              0 kB
+Zswap:                 0 kB
+Zswapped:              0 kB
+Dirty:                 0 kB
+Writeback:             0 kB
+AnonPages:          1868 kB
+Mapped:             6488 kB
+Shmem:                 0 kB
+KReclaimable:       2268 kB
+Slab:              22600 kB
+SReclaimable:       2268 kB
+SUnreclaim:        20332 kB
+KernelStack:        2160 kB
+PageTables:          612 kB
+SecPageTables:         0 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+CommitLimit:     3533524 kB
+Committed_AS:       2768 kB
+VmallocTotal:   34359738367 kB
+VmallocUsed:        3756 kB
+VmallocChunk:          0 kB
+Percpu:             1600 kB
+AnonHugePages:         0 kB
+ShmemHugePages:        0 kB
+ShmemPmdMapped:        0 kB
+FileHugePages:         0 kB
+FilePmdMapped:         0 kB
+Balloon:               0 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+Hugetlb:               0 kB
+DirectMap4k:       23456 kB
+DirectMap2M:     4153344 kB
+DirectMap1G:     3145728 kB
+MEMINFO_END
+~ # 

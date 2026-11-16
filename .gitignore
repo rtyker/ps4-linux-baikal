@@ -1,0 +1,115 @@
+# ============================================================
+# PS4 Linux Baikal — .gitignore
+# Duas frentes: kernel/ (kernel 7.0 + RE) e distro/ (Arch Linux)
+# ============================================================
+
+# --- Temporários ---
+*.log
+*.tmp
+__pycache__/
+.megatmp.*
+netconsole_ps4.log
+dmesg.log
+
+# --- Segredos e Chaves de Hardware (Não compartilhar) ---
+.env
+*.env
+.env.keys
+keys/
+kernel/keys/
+
+# --- Dumps/binários brutos ---
+*.tar
+*.tar.xz
+*.tar.gz
+*.tar.zst
+*.zip
+dummy_mem.bin
+fake_mem
+
+# --- Dumps de firmware proprietário (kernel Orbis/Ghidra) ---
+outros/rea/dumps/
+outros/consolidado/memoriateste.bin
+
+# --- Logs de hardware/capturas UART (grandes e efêmeros) ---
+outros/tests/
+dmesg_output/
+netconsole_ps4_captures/
+
+# --- IDE/ambiente ---
+.claude/
+.claude-memory.yml
+.opencode/
+opencode.json
+.vscode/
+.DS_Store
+*.swp
+*.swo
+
+# --- Roteiros/auxiliares de teste locais (não versionar) ---
+outros/scripts/host/ROTEIRO_VM_WINDOWS_10.md
+outros/scripts/host/99-ps4-hd-noautomount.rules
+
+# --- VM Windows 10 via NBD (local apenas) ---
+vm/
+
+# ============================================================
+# PROJETOS IGNORADOS (não são do Baikal)
+# ============================================================
+old_project/
+OpenOrbis/
+all-ps4-payloads/
+archive/
+gbe_hw_dumper/
+kmem_dumper_sources/
+orbis-hw-dumper/
+ps4-linux-payloads/
+ps4-payload-sdk/
+ps4-pup-unpacker/
+scene-kernel-dumper/
+scene-kmem-dumper/
+initramfs/
+kernel-framework-local/
+kernel/kernel_build_7.0/
+kernel/.ccache/
+kernel/snapshots/
+distro/Steam4PS/
+distro/winesapos/
+
+# ============================================================
+# BUILD ARTIFACTS (recuperáveis via build)
+# ============================================================
+
+# --- Frente 1: kernel/ ---
+# Artefatos de boot por tag (bzImage, config, bootargs, initramfs): a distro os
+# consome via distro/*.sh, mas eles NÃO são versionados (binários por build).
+distro/boot_referencia/
+kernel/extra_firmware/
+kernel/drivers_mts/build/
+outros/rea/tools/ghidra_project/
+outros/tools/ps4_hdd_tools/pkg_pfs_tool/build/
+
+# --- Frente 2: distro/ ---
+distro/arch_minimal_v2-7.0.tar
+distro/systemd_cache/
+distro/logs/
+# Áreas de trabalho do build de distro (rootfs + cache pacman), criadas pelo
+# 01-build-image/build-image-docker.sh na raiz do repo.
+arch_build_7.0/
+pacman-cache/
+
+# RELEASE — artefatos compilados.
+# v1.0.0 (versão de distribuição) é versionada; demais tags são build output local.
+distro/RELEASE/*
+!distro/RELEASE/README.md
+!distro/RELEASE/v1.0.0/
+
+# Mesa (build)
+distro/mesa/build_artifacts/
+distro/mesa/*.tar.xz
+distro/mesa/*.tar.gz
+distro/mesa/*.tar.zst
+distro/mesa/*.zip
+mesa-26.1.5/
+mesa-26.1.5.tar.xz
+*.bak

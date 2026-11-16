@@ -1,0 +1,49 @@
+
+[38;2;58;150;221mulong[0m [38;2;193;156;0mfcn.ffffffffdc95a780[0m([38;2;58;150;221mint64_t[0m [0marg1[0m)
+
+{
+    [38;2;58;150;221mcode[0m *[0mpcVar1[0m;
+    [38;2;58;150;221mint[0m [0miVar2[0m;
+    [38;2;58;150;221mint[0m [0miVar3[0m;
+    
+    [0miVar2[0m = [38;2;193;156;0mfunc_0xffffffffdc5242f0[0m(*([0marg1[0m + [38;2;19;161;14m0x138[0m));
+    [38;2;136;23;152mif[0m ([0miVar2[0m != [38;2;19;161;14m0[0m) {
+        [38;2;193;156;0mfunc_0xffffffffdcabbf00[0m();
+        [38;2;193;156;0mfunc_0xffffffffdcabc690[0m([38;2;19;161;14m0xffffffffdc95a8be[0m,[38;2;19;161;14m0xffffffffdce304cd[0m,[38;2;19;161;14m0x1f7[0m,[0miVar2[0m);
+        [38;2;193;156;0mfunc_0xffffffffdc460780[0m([38;2;19;161;14m3[0m,[38;2;19;161;14m0xffffffffdce2fca8[0m,[38;2;19;161;14m0xffffffffdce304cd[0m,[38;2;19;161;14m0x1f7[0m,[0miVar2[0m);
+    [38;2;197;15;31m//[0m[38;2;197;15;31mWARNING:[0m [38;2;197;15;31mDoes[0m [38;2;197;15;31mnot[0m [38;2;197;15;31mreturn[0m
+        [0mpcVar1[0m = [38;2;193;156;0minvalidInstructionException[0m();
+        (*[0mpcVar1[0m)();
+    }
+    [0miVar2[0m = [38;2;19;161;14m0[0m;
+    [38;2;136;23;152mwhile[0m( [38;2;19;161;14mtrue[0m ) {
+        [38;2;193;156;0mfunc_0xffffffffdc6c8300[0m([0marg1[0m + [38;2;19;161;14m0x38[0m,[38;2;19;161;14m0[0m,[38;2;19;161;14m0xffffffffdce2e960[0m,[38;2;19;161;14m0x1fc[0m);
+        [38;2;136;23;152mif[0m (*([0marg1[0m + [38;2;19;161;14m0x140[0m) != [38;2;19;161;14m0[0m) {
+            [38;2;193;156;0mfunc_0xffffffffdc4902b0[0m([0marg1[0m);
+        }
+        [38;2;193;156;0mfunc_0xffffffffdc6c85b0[0m([0marg1[0m + [38;2;19;161;14m0x38[0m,[38;2;19;161;14m0[0m,[38;2;19;161;14m0xffffffffdce2e960[0m,[38;2;19;161;14m0x200[0m);
+        [0miVar3[0m = [38;2;193;156;0mfunc_0xffffffffdc524390[0m(*([0marg1[0m + [38;2;19;161;14m0x138[0m),*[38;2;19;161;14m0xffffffffde61c420[0m << [38;2;19;161;14m2[0m);
+        [38;2;136;23;152mif[0m ([0miVar3[0m == [38;2;19;161;14m0[0m) [38;2;136;23;152mbreak[0m;
+        [38;2;193;156;0mfunc_0xffffffffdc630420[0m([38;2;19;161;14m0xffffffffdce2fcf4[0m,[38;2;19;161;14m0xffffffffdce304cd[0m,[38;2;19;161;14m0x204[0m,[0miVar3[0m,[0miVar2[0m);
+        [0miVar2[0m = [0miVar2[0m + [38;2;19;161;14m1[0m;
+        [38;2;136;23;152mif[0m ([0miVar2[0m == [38;2;19;161;14m0xf[0m) {
+            [38;2;193;156;0mfunc_0xffffffffdcabc1a0[0m(*([0marg1[0m + [38;2;19;161;14m0x138[0m));
+            [38;2;193;156;0mfunc_0xffffffffdcabbf00[0m();
+            [38;2;193;156;0mfunc_0xffffffffdcabc750[0m([38;2;19;161;14m0xffffffffdc95a857[0m,[38;2;19;161;14m0xffffffffdce304cd[0m,[38;2;19;161;14m0x20a[0m,*([0marg1[0m + [38;2;19;161;14m0x140[0m),[0miVar3[0m);
+            [38;2;193;156;0mfunc_0xffffffffdc460780[0m([38;2;19;161;14m7[0m,[38;2;19;161;14m0xffffffffdce2fd25[0m,[38;2;19;161;14m0xffffffffdce304cd[0m,[38;2;19;161;14m0x20a[0m,*([0marg1[0m + [38;2;19;161;14m0x140[0m),[0miVar3[0m);
+    [38;2;197;15;31m//[0m[38;2;197;15;31mWARNING:[0m [38;2;197;15;31mDoes[0m [38;2;197;15;31mnot[0m [38;2;197;15;31mreturn[0m
+            [0mpcVar1[0m = [38;2;193;156;0minvalidInstructionException[0m();
+            (*[0mpcVar1[0m)();
+        }
+    }
+    [38;2;136;23;152mif[0m (*([0marg1[0m + [38;2;19;161;14m0x140[0m) == [38;2;19;161;14m0[0m) {
+        [38;2;136;23;152mreturn[0m [38;2;19;161;14m0[0m;
+    }
+    [38;2;193;156;0mfunc_0xffffffffdcabbf00[0m();
+    [38;2;193;156;0mfunc_0xffffffffdcabc5e0[0m([38;2;19;161;14m0xffffffffdc95a904[0m,[38;2;19;161;14m0xffffffffdce304cd[0m,[38;2;19;161;14m0x20e[0m);
+    [38;2;193;156;0mfunc_0xffffffffdc460780[0m([38;2;19;161;14m0xb[0m,[38;2;19;161;14m0xffffffffdce2eaa7[0m,[38;2;19;161;14m0xffffffffdce304cd[0m,[38;2;19;161;14m0x20e[0m);
+    [38;2;197;15;31m//[0m[38;2;197;15;31mWARNING:[0m [38;2;197;15;31mDoes[0m [38;2;197;15;31mnot[0m [38;2;197;15;31mreturn[0m
+    [0mpcVar1[0m = [38;2;193;156;0minvalidInstructionException[0m();
+    (*[0mpcVar1[0m)();
+}
+

@@ -1,0 +1,95 @@
+// Extraido por Ghidra PyGhidra (consolidate_decompiled_lacunas.py)
+// addr: 0xffffffffdc5a4e90  name: FUN_ffffffffdc5a4e90  size: 434
+// escopo: lacuna MTS/GBE/ICC/glue identificada em testes ao vivo
+// chamadores (1):
+//   FUN_ffffffffdc5a3810 @ 0x-000000023a5c7f0
+// chamadas (3):
+//   FUN_ffffffffdc5a5570 @ 0x-000000023a5aa90
+//   FUN_ffffffffdc4afb10 @ 0x-000000023b504f0
+//   FUN_ffffffffdc5a5200 @ 0x-000000023a5ae00
+
+
+undefined8 FUN_ffffffffdc5a4e90(long param_1,ulong param_2,uint param_3)
+
+{
+  ushort uVar1;
+  short sVar2;
+  uint uVar3;
+  uint uVar4;
+  uint uVar5;
+  int iVar6;
+  uint uVar7;
+  undefined8 uVar8;
+  
+  uVar8 = 0;
+  if ((((uint)param_2 | 1) == 3) && (*(int *)(param_1 + 0x3290) == 0)) {
+    uVar3 = FUN_ffffffffdc5a5200(param_1,param_2,4);
+    uVar4 = FUN_ffffffffdc5a5200(param_1,param_2 & 0xffffffff,9);
+    uVar5 = 0x800;
+    if ((param_3 & 1) != 0) {
+      uVar4 = uVar4 & 0xfcff;
+      uVar8 = 0x16;
+      uVar5 = param_3 & 0xfffffffa;
+      uVar7 = uVar3 & 0xfe1f;
+      switch(uVar5) {
+      case 0x10:
+        uVar5 = 0;
+        uVar7 = uVar7 | param_3 * 8 & 0x20;
+        break;
+      case 0x12:
+        uVar5 = 0x100;
+        uVar7 = uVar7 | (param_3 & 4) << 4;
+        break;
+      case 0x14:
+      case 0x16:
+      case 0x18:
+      case 0x1a:
+      case 0x1c:
+      case 0x1e:
+        goto switchD_ffffffffdc5a4f22_caseD_14;
+      case 0x20:
+        uVar5 = 0x2000;
+        uVar7 = uVar7 | (param_3 & 4) << 5;
+        break;
+      case 0x22:
+        uVar5 = 0x2100;
+        uVar7 = uVar7 | (param_3 & 4) << 6;
+        break;
+      default:
+        if (uVar5 == 0x42) {
+          uVar4 = uVar4 | 0x200;
+          uVar5 = 0x1140;
+        }
+        else {
+          if (uVar5 != 0x72) {
+            return 0x16;
+          }
+          uVar7 = uVar3 | 0x1e0;
+          uVar4 = uVar4 | 0x200;
+          uVar5 = 0x140;
+        }
+      }
+      if ((param_3 & 4) != 0) {
+        uVar5 = uVar5 | 0x1000;
+        FUN_ffffffffdc5a5570(param_1,param_2 & 0xffffffff,4,uVar7 & 0xffff);
+        FUN_ffffffffdc5a5570(param_1,param_2 & 0xffffffff,9,uVar4);
+      }
+    }
+    uVar8 = 0;
+    FUN_ffffffffdc5a5570(param_1,param_2 & 0xffffffff,0,uVar5);
+    uVar1 = FUN_ffffffffdc5a5200(param_1,param_2 & 0xffffffff,0);
+    FUN_ffffffffdc5a5570(param_1,param_2 & 0xffffffff,0,uVar1 | 0x8000);
+    iVar6 = 100;
+    do {
+      sVar2 = FUN_ffffffffdc5a5200(param_1,param_2 & 0xffffffff,0);
+      if (-1 < sVar2) {
+        return 0;
+      }
+      FUN_ffffffffdc4afb10(1);
+      iVar6 = iVar6 + -1;
+    } while (iVar6 != 0);
+  }
+switchD_ffffffffdc5a4f22_caseD_14:
+  return uVar8;
+}
+

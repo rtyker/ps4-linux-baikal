@@ -1,0 +1,25 @@
+// Extraido por Ghidra PyGhidra (consolidate_decompiled_lacunas.py)
+// addr: 0xffffffffdc7187a0  name: FUN_ffffffffdc7187a0  size: 41
+// escopo: lacuna MTS/GBE/ICC/glue identificada em testes ao vivo
+// chamadores (3):
+//   FUN_ffffffffdc5a0ba0 @ 0x-000000023a5f460
+//   FUN_ffffffffdc7db0b0 @ 0x-000000023824f50
+//   FUN_ffffffffdc72bfb0 @ 0x-0000000238d4050
+// chamadas (0):
+
+
+undefined4 FUN_ffffffffdc7187a0(long param_1)
+
+{
+  undefined4 *puVar1;
+  undefined4 uVar2;
+  
+  puVar1 = (undefined4 *)
+           (param_1 + 0xc000 + *(long *)(*(long *)(DAT_ffffffffde614e78 + 0x10) + 0x10));
+  if (*(long *)(*(long *)(DAT_ffffffffde614e78 + 0x10) + 8) != 0) {
+    return *puVar1;
+  }
+  uVar2 = in((short)puVar1);
+  return uVar2;
+}
+

@@ -1,0 +1,84 @@
+# Metodologia de teste de vídeo — DP/link DP no PS4 Baikal
+# Testado e aprovado ao vivo em 2026-11-16
+
+## Objetivo
+Verificar que o vídeo HDMI do PS4 (via ponte Panasonic MN864729) apaga e volta
+corretamente sob acionamento de DPMS (desligar/ligar tela), sem reiniciar o
+sistema nem perder a sessão do usuário.
+
+## Pré-condições
+- PS4 ligado, Linux rodando, SSH acessível (`ssh root@192.168.6.128`).
+- UART armada (opcional, mas recomendada) para capturar qualquer erro do kernel.
+- Sessão gráfica ativa (Cinnamon ou outro) em `vt7` / `card0-HDMI-A-1`.
+
+## Passos do teste
+
+### 1. Estado inicial
+No PS4, via SSH:
+
+```bash
+echo "=== antes ==="
+date +%T
+cat /sys/class/graphics/fb0/blank
+cat /sys/class/drm/card0-HDMI-A-1/status
+```
+
+Esperado: `blank=0` (tela ligada), `status=connected`.
+
+### 2. Apagar a tela (blank)
+```bash
+echo "=== blank ==="
+date +%T
+echo 1 > /sys/class/graphics/fb0/blank
+sleep 2
+cat /sys/class/graphics/fb0/blank
+```
+
+Esperado: `blank=1`. A tela física deve apagar.
+Aguardar 15-20 s e observar a tela continuar preta.
+
+### 3. Ligar a tela (unblank)
+```bash
+echo "=== unblank ==="
+date +%T
+echo 0 > /sys/class/graphics/fb0/blank
+sleep 3
+cat /sys/class/graphics/fb0/blank
+```
+
+Esperado: `blank=0`. A tela física deve voltar a exibir a imagem.
+
+### 4. Se o unblank por fb0 não funcionar (fallback validado)
+Se a tela continuar preta após o `echo 0`, forçar um modoset real na saída:
+
+```bash
+c=/sys/class/drm/card0-HDMI-A-1
+echo off > $c/status
+sleep 3
+echo on > $c/status
+sleep 4
+echo detect > $c/status
+sleep 8
+```
+
+Esperado: a imagem volta. No dmesg aparecem `clock recovery failed` (já conhecidos,
+não são novos) e `ps4_bridge_mode_set` + `ps4_bridge_enable` com `mode not
+available` ausente.
+
+## Critérios de aprovação
+| Item | Resultado aprovado |
+|---|---|
+| `blank=1` apaga a tela | ✅ Tela física fica preta |
+| `blank=0` religar | ✅ Imagem volta na tela |
+| Sistema segue vivo | ✅ SSH responde durante e depois |
+| Nenhum erro novo no dmesg | ✅ Sem `Kernel panic`, `BUG`, `Oops` |
+
+## Observações
+- O procedimento `fb0/blank=0` sozinho funcionou no teste de aprovação (2026-11-16).
+- Se ele não funcionar, usar o fallback `off/on/detect` acima.
+- O treino de link DP (`clock recovery failed`) aparece em todo modo-set e não é
+  por si só prova de falha; já ocorria no boot com vídeo funcionando.
+
+## Arquivo relacionado
+`solucao-monitor-dp-link.txt` — mesma solução, focada na correção de código
+pendente (patch `ps4-bridge-keep-mode.patch`).

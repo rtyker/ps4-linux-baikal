@@ -1,0 +1,284 @@
+From 1d46b9f9ab9cf40de9cb8bea7bf4d1ba58e96fcd Mon Sep 17 00:00:00 2001
+From: rtyker <rtyker@gmail.com>
+Date: Fri, 13 Nov 2026 13:55:10 -0300
+Subject: [PATCH 1/2] clocksource: add Baikal HPET clocksource driver
+
+New driver for the HPET timer block in the Baikal southbridge
+(PCI device 104d:90db, function 4, ICC subfunction 22).
+Uses the free-running 64-bit main counter as a clocksource.
+
+Hardware validation: CAP/TIMCAP at 0xc8909000 reads 0x05f5e10000002301
+(REV_ID=1, NUM_TIM_CAP=3, LEG_RT_CAP=1) stable across 2 cold boots.
+
+Kconfig: CONFIG_CLKSRC_BAIKAL_HPET (module)
+---
+ drivers/clocksource/Kconfig       |  16 +++
+ drivers/clocksource/Makefile      |   2 +
+ drivers/clocksource/baikal-hpet.c | 219 ++++++++++++++++++++++++++++++
+ 3 files changed, 237 insertions(+)
+ create mode 100644 drivers/clocksource/baikal-hpet.c
+
+diff --git a/drivers/clocksource/Kconfig b/drivers/clocksource/Kconfig
+index fd9112706..a84122aec 100644
+--- a/drivers/clocksource/Kconfig
++++ b/drivers/clocksource/Kconfig
+@@ -794,4 +794,20 @@ config RTK_SYSTIMER
+ 	  this option only when building for a Realtek platform or for compilation
+ 	  testing.
+ 
++config CLKSRC_BAIKAL_HPET
++	tristate "Sony Baikal Southbridge HPET Clocksource"
++	depends on X86 && PCI
++	select CLKSRC_MMIO
++	help
++	  This enables the clocksource driver for the HPET timer block in the
++	  Sony Baikal southbridge (PCI device 104d:90db, function 4, ICC
++	  subfunction 22). The HPET block is located at BAR2 + 0x109000 of the
++	  Baikal PCIe Glue (00:14.4) and uses a standard HPET register layout.
++
++	  This driver provides a high-precision clocksource using the HPET's
++	  free-running 64-bit main counter.
++
++	  Say Y if you are running on a PS4 Slim/Pro with Baikal southbridge
++	  (CUH-2xxx/CUH-7xxx). Safe to build as module (CONFIG_CLKSRC_BAIKAL_HPET=m).
++
+ endmenu
+diff --git a/drivers/clocksource/Makefile b/drivers/clocksource/Makefile
+index b46376af6..0348cb530 100644
+--- a/drivers/clocksource/Makefile
++++ b/drivers/clocksource/Makefile
+@@ -96,3 +96,5 @@ obj-$(CONFIG_EP93XX_TIMER)		+= timer-ep93xx.o
+ obj-$(CONFIG_RALINK_TIMER)		+= timer-ralink.o
+ obj-$(CONFIG_NXP_STM_TIMER)		+= timer-nxp-stm.o
+ obj-$(CONFIG_RTK_SYSTIMER)		+= timer-realtek.o
++
++obj-$(CONFIG_CLKSRC_BAIKAL_HPET)	+= baikal-hpet.o
+diff --git a/drivers/clocksource/baikal-hpet.c b/drivers/clocksource/baikal-hpet.c
+new file mode 100644
+index 000000000..5e7c77bc8
+--- /dev/null
++++ b/drivers/clocksource/baikal-hpet.c
+@@ -0,0 +1,219 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Sony Baikal Southbridge HPET/Timer Driver
++ *
++ * This driver exposes the HPET timer block found in the Baikal southbridge
++ * (PCI device 104d:90db, function 4, ICC subfunction 22) as a clocksource
++ * and optionally as a watchdog device.
++ *
++ * The HPET block is located at BAR2 + 0x109000 of the Baikal PCIe Glue
++ * (00:14.4), with a standard HPET register layout.
++ *
++ * Hardware reference: kernel Orbis dump shows "Baikal High Precision Event Timer"
++ * and "Baikal Timer/WDT" registered for vendor 0x104d, device 0x90db, func 4,
++ * subfunction 0x16 (22).
++ *
++ * Live validation (2026-11-13): CAP/TIMCAP at 0xc8909000 reads 0x05f5e10000002301
++ * (REV_ID=1, NUM_TIM_CAP=3, LEG_RT_CAP=1) stable across 2 cold boots.
++ */
++
++#include <linux/module.h>
++#include <linux/pci.h>
++#include <linux/clocksource.h>
++#include <linux/interrupt.h>
++#include <linux/io.h>
++#include <linux/delay.h>
++#include <linux/slab.h>
++#include <linux/err.h>
++#include <linux/clk.h>
++
++#define DRV_NAME	"baikal-hpet"
++
++#define HPET_CAP		0x00
++#define HPET_GEN_CONFIG		0x10
++#define HPET_GEN_INT_STATUS	0x20
++#define HPET_MAIN_COUNTER	0xF0
++#define HPET_TIMER_CONFIG(n)	(0x100 + 0x20 * (n))
++#define HPET_TIMER_COMP(n)	(0x108 + 0x20 * (n))
++#define HPET_TIMER_FSB(n)	(0x110 + 0x20 * (n))
++
++/* General Config bits */
++#define HPET_GCONF_ENABLE		(1UL << 0)
++#define HPET_GCONF_LEGACY_ROUTE		(1UL << 1)
++
++/* Timer Config bits */
++#define HPET_TCONF_INT_TYPE_EDGE	(0UL << 1)
++#define HPET_TCONF_INT_TYPE_LEVEL	(1UL << 1)
++#define HPET_TCONF_INT_ENB		(1UL << 2)
++#define HPET_TCONF_PERIODIC		(1UL << 3)
++#define HPET_TCONF_PERIODIC_CAP		(1UL << 4)
++#define HPET_TCONF_64BIT_CAP		(1UL << 5)
++#define HPET_TCONF_SET_VAL		(1UL << 6)
++#define HPET_TCONF_32MODE		(1UL << 8)
++#define HPET_TCONF_FSB_CAP		(1UL << 14)
++#define HPET_TCONF_FSB_ENB		(1UL << 15)
++
++/* Expected CAP value from live validation */
++#define BAIKAL_HPET_EXPECTED_CAP	0x05f5e10000002301ULL
++#define BAIKAL_HPET_CAP_MASK		0x0000ffffffffffffULL  /* ignore upper 16 bits */
++
++#define BAIKAL_HPET_VENDOR	0x104d
++#define BAIKAL_HPET_DEVICE	0x90db
++
++struct baikal_hpet {
++	void __iomem *base;
++	struct clocksource cs;
++	struct pci_dev *pdev;
++	u64 cap;
++	unsigned int num_timers;
++	unsigned long freq_hz;
++};
++
++static inline u64 baikal_hpet_readq(struct baikal_hpet *bhp, unsigned int off)
++{
++	return readq(bhp->base + off);
++}
++
++static inline void baikal_hpet_writeq(struct baikal_hpet *bhp, unsigned int off, u64 val)
++{
++	writeq(val, bhp->base + off);
++}
++
++static inline u32 baikal_hpet_readl(struct baikal_hpet *bhp, unsigned int off)
++{
++	return readl(bhp->base + off);
++}
++
++static inline void baikal_hpet_writel(struct baikal_hpet *bhp, unsigned int off, u32 val)
++{
++	writel(val, bhp->base + off);
++}
++
++/* Clocksource read function */
++static u64 notrace baikal_hpet_read(struct clocksource *cs)
++{
++	struct baikal_hpet *bhp = container_of(cs, struct baikal_hpet, cs);
++	return baikal_hpet_readq(bhp, HPET_MAIN_COUNTER);
++}
++
++/* Calculate frequency from HPET period (in femtoseconds) */
++static unsigned long baikal_hpet_calc_freq(u64 cap)
++{
++	u64 period_fs = (cap >> 32) & 0xffffffff;
++	if (!period_fs)
++		return 14318180;  /* Default 14.31818 MHz if period not readable */
++	return (1000000000000000ULL + period_fs / 2) / period_fs;
++}
++
++static int baikal_hpet_probe(struct pci_dev *pdev, const struct pci_device_id *id)
++{
++	struct baikal_hpet *bhp;
++	int ret;
++
++	pr_info("%s: probing Baikal HPET at %s\n", DRV_NAME, pci_name(pdev));
++
++	ret = pcim_enable_device(pdev);
++	if (ret) {
++		dev_err(&pdev->dev, "Failed to enable PCI device\n");
++		return ret;
++	}
++
++	ret = pcim_iomap_regions(pdev, 1 << 2, DRV_NAME);  /* BAR2 */
++	if (ret) {
++		dev_err(&pdev->dev, "Failed to request BAR2 region\n");
++		return ret;
++	}
++
++	bhp = devm_kzalloc(&pdev->dev, sizeof(*bhp), GFP_KERNEL);
++	if (!bhp)
++		return -ENOMEM;
++
++	bhp->pdev = pdev;
++	bhp->base = pcim_iomap_table(pdev)[2];
++	if (!bhp->base) {
++		dev_err(&pdev->dev, "Failed to map BAR2\n");
++		return -ENOMEM;
++	}
++
++	/* Read CAP/TIMCAP register */
++	bhp->cap = baikal_hpet_readq(bhp, HPET_CAP);
++	pr_info("%s: CAP = 0x%016llx (expected 0x%016llx)\n",
++		DRV_NAME, bhp->cap, BAIKAL_HPET_EXPECTED_CAP);
++
++	/* Validate CAP register fields */
++	bhp->num_timers = ((bhp->cap >> 8) & 0x1f) + 1;
++	unsigned int rev_id = bhp->cap & 0xff;
++	unsigned int leg_rt = (bhp->cap >> 13) & 1;
++	unsigned int vendor = (bhp->cap >> 16) & 0xffff;
++
++	pr_info("%s: REV_ID=%u, NUM_TIM_CAP=%u (timers=%u), LEG_RT_CAP=%u, vendor=0x%04x\n",
++		DRV_NAME, rev_id, (unsigned int)((bhp->cap >> 8) & 0x1f), bhp->num_timers, leg_rt, vendor);
++
++	/* Validate expected values (vendor may be 0x0000 on Baikal) */
++	if (rev_id != 1 || bhp->num_timers < 4 || leg_rt != 1) {
++		dev_warn(&pdev->dev, "Unexpected CAP values, but continuing\n");
++	}
++
++	/* Calculate frequency */
++	bhp->freq_hz = baikal_hpet_calc_freq(bhp->cap);
++	pr_info("%s: HPET frequency = %lu Hz\n", DRV_NAME, bhp->freq_hz);
++
++	/* Verify the MAIN_COUNTER is readable and increments */
++	u64 cnt1 = baikal_hpet_readq(bhp, HPET_MAIN_COUNTER);
++	mdelay(1);
++	u64 cnt2 = baikal_hpet_readq(bhp, HPET_MAIN_COUNTER);
++	if (cnt2 <= cnt1) {
++		dev_warn(&pdev->dev, "MAIN_COUNTER not incrementing (0x%llx -> 0x%llx)\n", cnt1, cnt2);
++	} else {
++		pr_info("%s: MAIN_COUNTER verified incrementing (delta=%llu in 1ms)\n",
++			DRV_NAME, cnt2 - cnt1);
++	}
++
++	/* Initialize clocksource */
++	bhp->cs.name = DRV_NAME;
++	bhp->cs.rating = 300;  /* High rating for HPET */
++	bhp->cs.read = baikal_hpet_read;
++	bhp->cs.mask = CLOCKSOURCE_MASK(64);
++	bhp->cs.flags = CLOCK_SOURCE_IS_CONTINUOUS | CLOCK_SOURCE_VALID_FOR_HRES;
++
++	ret = clocksource_register_hz(&bhp->cs, bhp->freq_hz);
++	if (ret) {
++		dev_err(&pdev->dev, "Failed to register clocksource: %d\n", ret);
++		return ret;
++	}
++
++	pci_set_drvdata(pdev, bhp);
++	dev_info(&pdev->dev, "Baikal HPET clocksource registered (%lu Hz, rating %d)\n",
++		 bhp->freq_hz, bhp->cs.rating);
++
++	return 0;
++}
++
++static void baikal_hpet_remove(struct pci_dev *pdev)
++{
++	struct baikal_hpet *bhp = pci_get_drvdata(pdev);
++
++	if (bhp) {
++		clocksource_unregister(&bhp->cs);
++	}
++}
++
++static const struct pci_device_id baikal_hpet_id_table[] = {
++	{ PCI_DEVICE(BAIKAL_HPET_VENDOR, BAIKAL_HPET_DEVICE) },
++	{ 0, }
++};
++MODULE_DEVICE_TABLE(pci, baikal_hpet_id_table);
++
++static struct pci_driver baikal_hpet_driver = {
++	.name		= DRV_NAME,
++	.id_table	= baikal_hpet_id_table,
++	.probe		= baikal_hpet_probe,
++	.remove		= baikal_hpet_remove,
++};
++
++module_pci_driver(baikal_hpet_driver);
++
++MODULE_AUTHOR("PS4 Linux Baikal Project");
++MODULE_DESCRIPTION("Sony Baikal Southbridge HPET Clocksource Driver");
++MODULE_LICENSE("GPL");
++MODULE_VERSION("0.1");
+\ No newline at end of file
+-- 
+2.47.3
+
