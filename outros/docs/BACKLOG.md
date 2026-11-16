@@ -365,8 +365,8 @@ Pendência e plano de correção (NVRAM `/data/nvram/APCFG/APRDEB/WIFI`, país B
 
 ## 🔴 Pendências CRÍTICAS identificadas na varredura 2026-11-16 (não estavam no BACKLOG ou estavam desatualizadas)
 
-### [ ] **Passo 1 do plano DP: aplicar `ps4-bridge-dp-init.patch` no build**
-O patch **existe** (`kernel/patches/ps4-bridge-dp-init.patch`), está no **preflight** do `00-build-kernel-7.0.sh` (linha 153), mas **NÃO tem bloco de aplicação** (diferente do `ps4-bridge-keep-mode.patch` que tem bloco completo lines 512-521). **Ação:** adicionar bloco idêntico (`git apply --check` + `git apply` + `exit 1` se falhar) para `ps4-bridge-dp-init.patch` antes do `ps4-bridge-keep-mode.patch`. Sem isso, o init do lado DP da ponte MN864729 **não entra no kernel**, e o clock recovery continua falhando em todo modeset.
+### [x] ✅ **Passo 1 do plano DP: aplicar `ps4-bridge-dp-init.patch` no build** — CONCLUÍDO 2026-11-16
+O patch **existe** (`kernel/patches/ps4-bridge-dp-init.patch`), **bloco de aplicação adicionado** no `00-build-kernel-7.0.sh` (linhas 511-520). **Aplicado e validado ao vivo** na tag `20261116-keep-mode-aplicado`: init do lado DP da ponte MN864729 ativo, DP link training funcionando. Juntamente com `ps4-bridge-keep-mode.patch` (keep-mode), console puro estável 1h45m+ idle.
 
 ### [ ] **BTF mismatch dos módulos no rootfs**
 O `distro/01-build-image-7.0.sh` copia os módulos do kernel build (`cp -v "$KERNEL_BUILD_DIR/drivers/.../module.ko"`) **sem strip de BTF**. Resultado: módulos no rootfs têm BTF do build anterior e falham ao carregar no kernel novo (`failed to validate module BTF: -22`). Módulos afetados: `mts.ko`, `cifs.ko`, `baikal-dmac.ko`, `baikal_wdt.ko`, `baikal-hpet.ko`, `rtc-ps4-icc.ko`. **Solução:** no `01-build-image-7.0.sh`, após `modules_install` e antes de copiar, rodar `objcopy --remove-section=.BTF --remove-section=.BTF.base` em cada `.ko` OU recompilar contra o kernel atual. Exige decisão do usuário (alterar script de build).
@@ -474,7 +474,7 @@ Implementado no build: `zram-generator` no `PKGS`; `/etc/systemd/zram-generator.
 | Driver RTC corrigido | `drivers/rtc/rtc-ps4-icc.c` | `timer_delete` + UIE emulation + sintaxe corrigida |
 
 ### Itens pendentes para próximos builds/testes (consolidados das pendências críticas acima):
-1. [ ] **Aplicar `ps4-bridge-dp-init.patch` no build** (falta bloco de aplicação no `00-build-kernel-7.0.sh`)
+1. [x] ✅ **Aplicar `ps4-bridge-dp-init.patch` no build** — CONCLUÍDO 2026-11-16 (bloco de aplicação adicionado, validado ao vivo tag `20261116-keep-mode-aplicado`)
 2. [ ] **BTF mismatch módulos no rootfs** (CIFS, MTS, DMA, WDT, HPET, RTC) — strip BTF ou rebuild no `01-build-image-7.0.sh`
 3. [ ] **Baikal Memory sysfs offsets** (alinhar device file ↔ sysfs no driver)
 4. [ ] **RTC: validar `hwclock -r` ao vivo** (fix implementado, precisa rebuild+deploy+power-cycle)

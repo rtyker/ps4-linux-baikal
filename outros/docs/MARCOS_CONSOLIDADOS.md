@@ -26,6 +26,7 @@
 | **RTC via ICC (timekeeping)** | 2026-11-15 | ✅ | Tag `20261113-full-rebuild`: `/dev/rtc0` operacional, system clock semeado no boot, `/proc/driver/rtc` hora correta, `pacman -Sy` sem erro SSL/clock. `hwclock -r` timeout (falta UIE emulation). |
 | **Áudio HDMI** | 2026-11-15 | ✅ | Tag `20261113-full-rebuild`: `plughw:0,3` (HDMI 0) e `plughw:0,7` (HDMI 1) funcionam, `speaker-test` confirmado. |
 | **Baikal Memory v0.2 (device)** | 2026-11-15 | ✅ | Tag `20261113-full-rebuild`: módulo carrega, MAC `2c:cc:44:3f:69:5f` em offset 0x52f000, ICC em 0x52c000. Sysfs offsets desalinhados. |
+| **Video Bridge Panasonic MN864729 funcional** | 2026-11-16 | ✅ | Tag `20261116-keep-mode-aplicado`: 2 patches no `ps4_bridge.c` — `dp-init` habilita init lado DP (antes comentado *"No idea... Meh"*), `keep-mode` preserva `mode` no `post_disable` via flag `idle` evitando tela preta no unblank. Console puro (sem Xorg) estável 1h45m+ idle. Driver built-in (símbolos em `/proc/kallsyms`), DP link training ativo. |
 
 ---
 
@@ -48,6 +49,7 @@
 | `20260801-kvm-rtc-sata-final` | 2026-08-01 | ⚠️ Única cópia íntegra em `distro/RELEASE/v1.0.0/` (4 artefatos, MD5 conferido) |
 | `20261111-preflight-test` | 2026-11-11 | ✅ Build de teste validado — bzImage 16.1 MB, versão `7.0.8-Strawberry-ThinLTO-Baikal-+` |
 | `20261113-full-rebuild` | 2026-11-15 | ✅ **Full build testado ao vivo** — SATA ✅, RTC timekeeping ✅, Áudio HDMI ✅, Baikal Memory device ✅, eth0 NO-CARRIER (firmware), CIFS BTF mismatch, S5 não testado |
+| `20261116-keep-mode-aplicado` | 2026-11-16 | ✅ **Video bridge fix** — console puro estável 1h45m+, DP init + keep-mode patches aplicados |
 
 ---
 
