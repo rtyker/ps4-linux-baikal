@@ -50,6 +50,9 @@ opencode.json
 outros/scripts/host/ROTEIRO_VM_WINDOWS_10.md
 outros/scripts/host/99-ps4-hd-noautomount.rules
 
+# --- VM Windows 10 via NBD (local apenas) ---
+vm/
+
 # ============================================================
 # PROJETOS IGNORADOS (não são do Baikal)
 # ============================================================
