@@ -252,4 +252,5 @@ sshpass -p ps4 ssh root@192.168.6.128 "echo 8 > /proc/sys/kernel/printk; sync &&
 - **Causa raiz, para registro:** o comando ICC 4/1 `{0,0,2,0,1,0}` sempre esteve certo. O `icc_shutdown` original rodava no `pm_power_off`, depois do `lapic_shutdown()` e numa cadeia atômica, onde o `bpcie_icc_cmd()` (mutex + espera por IRQ) não funciona. Enviar o mesmo comando em `SYS_OFF_MODE_POWER_OFF_PREPARE` resolve.
 - **Não verificado:** a UART não mostrou as linhas `pr_emerg` do handler. O console serial do Linux se desliga com 0,63 s de boot (só o `tty0` fica como console), problema anterior e independente deste.
 - **`reboot`:** ✅ validado pelo usuário em 2026-11-16 (reiniciou corretamente; `test_history` id 92).
-- **Pendente:** testar `shutdown -h now` (systemd); promover a tag.
+- **`shutdown -h now`:** ✅ homologado pelo usuário em 2026-11-16 (teste pessoal; `test_history` id 93). **S5 completo:** `poweroff -f`, `shutdown -h now` e `reboot`.
+- **Pendente:** promover a tag.

@@ -495,8 +495,8 @@ Implementado no build: `zram-generator` no `PKGS`; `/etc/systemd/zram-generator.
 
 ## 🆕 Pendências abertas em 2026-11-16 (sessão da tag `20261116-s5-dma`)
 
-1. [~] **`shutdown -h now` (systemd) e `reboot`** com o kernel novo. **`reboot`: ✅ validado pelo usuário em 2026-11-16** (o console reinicia corretamente; `test_history` id 92; sem log, pois a UART do Linux segue muda). **Falta só `shutdown -h now`.** Obs.: o `bpcie` não tem `icc_reboot`; o reboot funciona pelo caminho padrão do kernel.
-2. [ ] **Promover a tag `20261116-s5-dma`** para `distro/RELEASE/` (`distro/scripts/promote-release.sh 20261116-s5-dma`) depois do item 1.
+1. [x] ✅ **`shutdown -h now` (systemd) e `reboot`** — **homologados pelo usuário em 2026-11-16** com o kernel `20261116-s5-dma` (`test_history` ids 92 e 93; sem log, pois a UART do Linux segue muda). Com o `poweroff -f` (id 91), o S5 está completo. Obs.: o `bpcie` não tem `icc_reboot`; o reboot funciona pelo caminho padrão do kernel.
+2. [ ] **Promover a tag `20261116-s5-dma`** para `distro/RELEASE/` (`distro/scripts/promote-release.sh 20261116-s5-dma`). Item 1 concluído; é o próximo passo.
 3. [ ] **Integrar o DMA no `baikal-memory`:** leitura e escrita em bloco pelo DMAC1 usando `0xC0000000 + off`, com fallback para `memcpy_fromio`/`memcpy_toio`. Plano próprio, via patch idempotente (regra do AGENTS.md). Conflito a resolver: `baikal-dmac` e o harness disputam o mesmo `104d:90dc`. DMAC2 só por polling.
 4. [ ] **Console serial do Linux some com 0,63 s de boot:** `console=uart8250,…` é substituído por `tty0` (`/proc/consoles` só lista `tty0`), então nenhuma captura UART mostra o Linux. Já era assim antes do build novo. Sem isso, o S5 foi validado sem o log `pr_emerg` do handler.
 5. [ ] **Ponte USB JMicron `152d:0578` do HD do PS4:** o modo UAS gerou erros de leitura e reset no host. O quirk `usb-storage` (`152d:0578:u`) vale só até reiniciar o PC; falta torná-lo permanente (`/etc/modprobe.d/`) e decidir o que fazer no PS4 (lição #79 já descreve o HD como instável).
