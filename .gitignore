@@ -114,3 +114,4 @@ mesa-26.1.5/
 mesa-26.1.5.tar.xz
 *.bak
 .opencode/
+others/tools/icc_cmd/icc_cmd

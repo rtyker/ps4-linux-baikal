@@ -1,7 +1,7 @@
 # Plano — S5 Power-Off via ICC (PS4 Baikal)
 
 **Data:** 2026-11-16 (revisado em 2026-11-16, contra o código-fonte e o acervo de RE)
-**Status:** 🟡 Em revisão. **Nada implementado.** Antes de qualquer patch é preciso rodar a Fase 0 (diagnóstico, sem build).
+**Status:** 🟢 **Causa raiz confirmada ao vivo (2026-11-16, Fase 1):** o 4/1 original `{0,0,2,0,1,0}`, enviado pelo ioctl `/dev/icc` com o Linux rodando, **desliga o console por completo** (luz apaga, fan para). O payload está certo; o problema é o **contexto** do `pm_power_off` (H1). Próximo: Fase 2A (ver §10).
 **Tag alvo (só se a Fase 2 for necessária):** `20261116-s5-poweroff-fix`
 **Critério de aceite final:** depois de `sync && poweroff -f`, a luz azul **apaga** e o fan **para**. Precisa haver também evidência no log UART do que o kernel/MCU fez.
 
@@ -94,7 +94,7 @@ Objetivo: descobrir **onde** o shutdown para. Custo: um power cycle.
 ### Fase 1 — Testar o comando ICC pelo userspace (sem build)
 O driver expõe o chardev `icc` (`register_chrdev(ICC_MAJOR, "icc")`, ioctl `ICC_IOCTL_CMD`, `ps4-bpcie-icc.c:554`). Nesse caminho o comando roda **com IRQs e LAPIC vivos**, então o reply da MCU chega normalmente.
 
-1. Escrever uma ferramenta mínima de userspace (em `others/tools/harness/`) que envia `major=4, minor=1, payload={0,0,2,0,1,0}` via `ICC_IOCTL_CMD` e imprime o reply. Antes de rodar, conferir o layout de `struct icc_cmd` em `aeolia-baikal.h`.
+1. Ferramenta pronta (2026-11-16): `others/tools/icc_cmd/` (`./build.sh`, binário estático). Primeiro `icc_cmd selftest` (2/6, versão do FW), depois `icc_cmd s5 --yes`. O layout de `struct icc_cmd` é conferido por `_Static_assert` (40 bytes, igual ao kernel x86_64). Ver o README da ferramenta.
 2. No PS4: `sync; mount -o remount,ro /` e então rodar a ferramenta (o console pode desligar na hora: é o objetivo).
 3. Interpretação:
    - **Desliga (luz apaga, fan para)** → o payload está **certo**. H1 confirmada, e a correção é **só de contexto** (Fase 2A).
@@ -183,3 +183,43 @@ sshpass -p ps4 ssh root@192.168.6.128 "echo 8 > /proc/sys/kernel/printk; sync &&
 - RE: `others/rea/acpi/decompiled/icc_power_dc528760.txt` (`dc528600`: init do serviço de power, 4/4 com `payload[0]=1`). **Não há** descompilação do shutdown (`0x1d8a3c`) no repo.
 - BACKLOG: `### [~] S5 incompleto no poweroff -f`
 - UART: `others/scripts/uart_start.sh`, `uart_stop.sh`
+
+---
+
+## 9. Execução de 2026-11-16 — resultado e crítica
+
+**Tag:** `20261116-btf-disabled-s5` (bzImage/config 15:39, initramfs/bootargs 16:25). Patch: `kernel/patches/ps4-icc-s5-shutdown.patch` (**não commitado**).
+
+**Resultado ao vivo (relato do usuário):** `poweroff -f` → Linux desligou normalmente, monitor apagou, **luz azul continuou acesa e fan continuou ligado**. É o mesmo sintoma do teste de 2026-07-25. **S5 não atingido.**
+
+**Por que o resultado não ensina nada sobre o payload:**
+1. **Fase 0 sem dado:** `others/tests/uart_logs/s5-fase0_20261116_145019.bin` = 296.137 bytes `0x20` + 1 `0x00`. É a UART censurada do Orbis, **nenhuma linha do Linux**. A captura `s5-test-btf-disabled_20261116_162844` tem **0 bytes**. Sem log, não dá para saber se o `icc_shutdown` rodou, travou ou retornou cedo.
+2. **O patch implementou a versão refutada na §0:** campos em `payload[0x0E..0x10]` (= `msg+0x1A`), deixando zerados `payload[2..4]`, onde o código original punha `cause=2, depth=0, hand=1`. `depth` mudou de 0 para 1 sem fonte. Adicionou o 4/4 "pré-sync" e um 4/1 "ack" (`payload[0]=1`) sem evidência. Também mexeu no apcie.
+3. **Possível regressão de envio:** o patch faz `return` se o 4/4 falhar. No contexto do `pm_power_off` (LAPIC desligado, cadeia atômica, ver H1), o 4/4 tende a dar timeout ou travar, e então **o 4/1 nem chega a ser enviado**. O código antigo sempre tocava o doorbell do 4/1. Ainda adicionou `msleep()` em contexto atômico.
+4. **Duas variáveis na mesma tag:** além do S5, o config tem `CONFIG_DEBUG_INFO_BTF` desligado e `SCHED_CLASS_EXT`/`EXT_GROUP_SCHED` removidos, em relação ao `keep-mode-aplicado`. O script oficial não desliga o BTF, então o config veio de fora dele (**não reproduzível**). Também **não há snapshot** em `kernel/snapshots/` para essa tag.
+5. Os comentários do patch afirmam "per Orbis RE (2026-07-30)" e "6 bytes truncated". **Ambos não se sustentam** pelo repo (ver §0).
+
+**Decisões:**
+- **Não promover** `20261116-btf-disabled-s5`. **Não commitar** o patch como está. Remover o bloco `PATCH_ICC_S5` do `00-build-kernel-7.0.sh` (ou trocá-lo por um patch da Fase 2A) antes do próximo build oficial.
+- **Próximo teste:**
+  1. Fase 0 refeita: iniciar a captura UART **já no Linux**, depois do SSH subir, com uns 60 s. Antes, conferir que a UART mostra o Linux (`echo s5-teste > /dev/kmsg` precisa aparecer no log). Rodar com o kernel **original** (6 bytes), para ter a linha de base.
+  2. Fase 1: 4/1 com `{0,0,2,0,1,0}` pelo ioctl do `/dev/icc`, com IRQs vivas. É o teste que separa H1 (contexto) de H2 (payload).
+
+---
+
+## 10. Fase 1 — 2026-11-16: ✅ SUCESSO (H1 confirmada)
+
+**Procedimento:** kernel em execução `20261116-btf-disabled-s5` (irrelevante, o ioctl não passa pelo `icc_shutdown`). Ferramenta `others/tools/icc_cmd/` (sha256 `c1487a6f…c533`).
+1. `icc_cmd selftest` (2/6, versão do FW) → `ioctl ok`, reply de 46 bytes. O canal ICC pelo chardev funciona.
+2. `sync` (o `mount -o remount,ro /` **falhou**: "mount point is busy") → `icc_cmd s5 --yes` → 4/1 com `00 00 02 00 01 00`.
+
+**Resultado (relato do usuário):** **desligou totalmente**: luz azul apagada e fan parado. O ioctl nem chegou a retornar, porque a energia caiu antes do reply.
+
+**Conclusões:**
+- **O payload original está certo para o Baikal.** Os offsets `+0x0E/+0x0F/+0x10` "do payload" e a sequência 4/4 → 4/1 → 4/1 ficam **refutados** em definitivo (§0 #2–#4).
+- **Causa raiz = H1:** o `icc_shutdown` roda no `pm_power_off`, depois de `lapic_shutdown()` e numa cadeia atômica. Lá o `bpcie_icc_cmd` (mutex + `wait_event_timeout` por IRQ) não funciona.
+- **Correção = Fase 2A, opção 1:** enviar o mesmo 4/1 num handler `SYS_OFF_MODE_POWER_OFF_PREPARE` (depois do `device_shutdown()`, com IRQs vivas, cadeia *blocking*). Nenhuma mudança de payload. Manter o `pm_power_off` antigo como rede de segurança.
+
+**Pendências deste teste:**
+- A captura UART `s5-fase1-ioctl_20261116_164511` teve **0 bytes**. O adaptador não recebeu nada. Conferir cabo/porta antes da validação da Fase 2A.
+- O rootfs desligou montado `rw` (o `sync` foi feito antes). Conferir no próximo boot se o `fsck` passou limpo.

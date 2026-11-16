@@ -173,7 +173,7 @@ O build `20261113-full-rebuild` final saiu SEM `rtc-ps4-icc` e SEM `baikal-memor
 | 7 | **SATA interno a 6 Gbps** | ✅ **PASS** | `ata1.00: configured for UDMA/100`, 931.51 GiB, `dd` 27 MB/s, **zero `disable device`** |
 | 8 | **CIFS mount** | ⚠️ **PARCIAL** | cifs.ko no rootfs tem BTF mismatch. Após strip BTF, falha symbols desconhecidos. Precisa rebuild do módulo contra kernel atual. Autofs configurado mas mountpoint some. |
 | 9 | **pacman (SSL/clock)** | ✅ **PASS** | `pacman -Sy` sincroniza sem erro de certificado/clock |
-| 10 | **S5 power-off (luz azul)** | ⏭️ **NÃO TESTADO** | Tag `20260730-s5-poweroff-fix` não existe em `boot_referencia/`; driver ICC tem payload 20 bytes mas precisa rebuild + UART capture + power-cycle |
+| 10 | **S5 power-off (luz azul)** | 🟡 **CAUSA RAIZ ACHADA** — 4/1 via ioctl desliga (2026-11-16); falta patch Fase 2A. Antes: ❌ | 2026-11-16, tag `20261116-btf-disabled-s5`: luz azul e fan ligados; sem log UART do Linux. Ver `PLANO_S5_POWEROFF_ICC.md` §9 |
 
 ### Checksums confirmados (tag `20261113-full-rebuild`)
 ```
@@ -232,7 +232,7 @@ Medições reais no PS4 (boot completo, `systemd` `running`, 0 unidades falhadas
 - [ ] **Baikal Memory: ajustar offsets sysfs** — offsets no device file (`/dev/baikal-memory`: MAC em 0x52f000, ICC em 0x52c000) divergem dos atributos sysfs (`bar5_0x2f000`, `bar5_0x2c000`). Corrigir driver para expor offsets corretos.
 - [x] ✅ **RTC: `hwclock -r` FUNCIONA** — validado ao vivo na tag `20261115-hwclock-min` (retorna `2026-11-15 18:20:34.848988-03:00`). Fix `clear_bit(RTC_FEATURE_UPDATE_INTERRUPT)` + `CONFIG_RTC_INTF_DEV_UIE_EMUL=y` confirmados no build atual.
 - [x] **Adicionar `alsa-utils` ao `PKGS`** — **JÁ PRESENTE** em `distro/01-build-image-7.0.sh` linha 244.
-- [ ] **S5 power-off (luz azul)**: tag `20260730-s5-poweroff-fix` não existe em `boot_referencia/`; driver ICC (`ps4-bpcie-icc.c`, `ps4-apcie-icc.c`) tem payload 20 bytes + pré-sync major=4/minor=4 + final major=4/minor=1. **Próximo:** rebuild tag S5 → deploy → **captura UART** (não netconsole) → `sync && poweroff -f` → confirmar log: payload 20 bytes enviado + resposta MCU + luz apaga.
+- [ ] **S5 power-off (luz azul)**: 🟡 causa raiz confirmada (4/1 via ioctl desliga; falta patch `POWER_OFF_PREPARE`). Teste anterior de 2026-11-16 falhou e foi inconclusivo (ver `PLANO_S5_POWEROFF_ICC.md` §9). **Próximo:** Fase 0 com UART do Linux confirmada → Fase 1 (4/1 original via ioctl `/dev/icc`, sem build).
 - [ ] **Mesa patchado (Gladius/Liverpool)**: o tar `mesa-ps4-gladius-liverpool-latest.tar.xz` existe (build 2026-11-13) e o script de build o referencia. **Pendente:** confirmar se o full-rebuild `20261113-full-rebuild` o incluiu (o script copia se o arquivo existe), e rodar `mesa/01-build-mesa.sh` se precisar atualizar.
 - [ ] **Adicionar `cpupower` ao `PKGS` + rebuild distro + deploy** para validar `cpufreq` (`CONFIG_X86_ACPI_CPUFREQ=y` já no kernel).
 - [x] ✅ **SATA a 6 Gbps — LIMITE DE HARDWARE (3.0 Gbps)** — não é bug; controlador PS4 negocia 3.0 Gbps. `ata1.00: configured for UDMA/100` funcional.
@@ -269,7 +269,11 @@ Medições reais no PS4 (boot completo, `systemd` `running`, 0 unidades falhadas
 - **Teste ao vivo:** `sync && poweroff -f` → SO desliga (SSH cai), mas **luz azul permanece acesa/pulsando + fan ligado** = S5 **não** atingido
 - dmesg pós-boot não mostrou log do ICC S5 shutdown (verificar se payload foi enviado)
 
-**Status 2026-11-16:** Tag `20260730-s5-poweroff-fix` **NÃO existe em `distro/boot_referencia/`** (artifacts listados não incluem essa tag). O código do driver ICC tem o payload corrigido (20 bytes + sequência pré-sync major=4/minor=4 + final major=4/minor=1), mas **falta rebuild da tag, deploy, captura UART (não netconsole — a rede cai junto com o shutdown), power-cycle físico, `sync && poweroff -f`, ler o log UART**.
+**Correção 2026-11-16:** o item 2 de "Já feito" **não vale para a árvore atual**: o patch de julho nunca virou `.patch` e foi perdido; `icc_shutdown` voltou ao código original de 6 bytes (que já é enviado com 20 bytes por causa do padding `ICC_MIN_PAYLOAD`). A fonte RE `0x1d8a3c` **não existe no repo**. Ver `others/docs/PLANO_S5_POWEROFF_ICC.md` §0.
+
+**✅ 2026-11-16 — CAUSA RAIZ CONFIRMADA (Fase 1):** o 4/1 original `{0,0,2,0,1,0}` enviado pelo ioctl `/dev/icc` (`others/tools/icc_cmd`) com o Linux rodando **desliga o console por completo** (luz apaga, fan para). O payload está certo; o problema é que o `icc_shutdown` roda no `pm_power_off` com LAPIC desligado e em contexto atômico. **Próximo:** Fase 2A, mandar o mesmo 4/1 num handler `SYS_OFF_MODE_POWER_OFF_PREPARE` (ver `PLANO_S5_POWEROFF_ICC.md` §10). `test_history` id 86.
+
+**Teste 2026-11-16 (tag `20261116-btf-disabled-s5`):** ❌ Linux e monitor desligam, **luz azul e fan continuam ligados**. **Inconclusivo**: captura UART sem nenhuma linha do Linux, e o patch usado implementa offsets refutados e pode nem enviar o 4/1 (ver §9 do plano). **Próximo:** Fase 0 com UART do Linux confirmada + Fase 1 (ioctl `/dev/icc`, sem build).
 
 ---
 
