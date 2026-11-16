@@ -1,0 +1,1377 @@
+[SceSystemStateMgr] No user input for 60 seconds
+[SceShellCore] Libc Heap Status: free 37%, in-use 3831.6 KB, trend -63.1 KB/min, peak 4371.1 KB, when 651 [sec]
+[SceShellUI] I/PSM.UI : UI system timer elapsed 00:11:00
+[SceShellCore] Libc Heap Status: free 37%, in-use 3831.6 KB, trend -69.2 KB/min, peak 4371.1 KB, when 682 [sec]
+ugen0.5: <JMicron, USB to ATAATAPI Bridge, 0123456789ABCDEF>(VID=0x152d PID=0x0578 depth=2 port=2 speed=4) at usbus0
+umass1: <JMicron USB to ATAATAPI Bridge, class 0/0, rev 3.00/5.08, addr 4> on usbus0
+umass1: sim_unit:0x00000001 device_unit:0x00000001
+umass1:  SCSI over Bulk-Only; quirks = 0x0000
+umass1:3:1:-1: Attached to scbus3
+da1 at umass-sim1 bus 1 scbus3 target 0 lun 0
+da1: <JMicron Generic 0508> Fixed Direct Access SCSI-6 device 
+da1: 400.000MB/s transfers
+da1: 114473MB (234441648 512 byte sectors: 255H 63S/T 14593C)
+
+DBG AutoMounter(checkSpecAndHub 494):
+	device(/dev/da1) is SUPER_SPEED.
+DBG AutoMounter(checkSpecAndHub 504):
+	deviceFilePath[/dev/da1] is connected to the USB port in general
+WARNING AutoMounter(bool AutoMounter::DevctlReader::UsbStartupHandler::isStartUp() 76):
+	fake implementation.
+MSG AutoMounter(void AutoMount::PsmEventNotifier::callback_connection(void **) 360):
+	Notify PsmEvent OnUsbStorageInserted
+MSG AutoMounter(int32_t AutoMounter::Util::checkFsFormat(const char *, uint32_t *) 888):
+	device(/dev/da1) has unknown format(0).
+MSG AutoMounter(int32_t _AutoMounter::UsbHandler::(anonymous namespace)::_mountFileSystem(std::string, bool, std::string &, uint32_t *, uint64_t *, uint64_t *, uint64_t *) 542):
+	/dev/da1 has unknown format.
+MSG AutoMounter(int32_t _AutoMounter::UsbHandler::requestMount(const char *, bool) 763): _mountFileSystem(deviceFilePath, false, mountPoint, &fsFormatType, &space, &freeSpace, &availableSpace) returned 0x80f4001c.
+MSG AutoMounter(int32_t _AutoMounter::UsbHandler::(anonymous namespace)::_acquireEncryptDevice(std::string, uint32_t *, uint32_t *, std::string &, uint64_t *) 592):
+	device(/dev/da1) is not qualified for encrypt device. ng_capability(0x2)
+verify_metadata: sceSblExternalHDDVerifyMetadata(0) failed 800f0435
+MSG AutoMounter(int32_t _AutoMounter::UsbHandler::(anonymous namespace)::checkEncryption(std::string, bool *) 347):
+	sceFsExternalStorageVerifyMetadata(/dev/da1) returned 0x80020050. device is not encrypted.
+MSG AutoMounter(int32_t _AutoMounter::UsbHandler::requestMount(const char *, bool) 795): _acquireEncryptDevice(deviceFilePath, &encryptDeviceFormat, &encryptDeviceStatus, encryptDeviceFilePath, &encryptDeviceId) returned 0x80f4001a.
+DBG AutoMounter(notifyMount 435):
+	eventArg.additionalFeatures[0x2000].
+MSG AutoMounter(int32_t AutoMounter::DevctlReader::handleCreateUsbDevice(const char *) 174): AutoMounter::UsbHandler::requestMount(deviceFilePath.c_str(), true) returned 0x80f4001a.
+MSG AutoMounter(void AutoMount::PsmEventNotifier::callback_mount(void **) 270):
+	Notify PsmEvent OnUsbStorageMounted
+
+DBG AutoMounter(checkSpecAndHub 494):
+	device(/dev/da1) is SUPER_SPEED.
+DBG AutoMounter(checkSpecAndHub 504):
+	deviceFilePath[/dev/da1] is connected to the USB port in general
+WARNING AutoMounter(bool AutoMounter::DevctlReader::UsbStartupHandler::isStartUp() 76):
+	fake implementation.
+MSG AutoMounter(void AutoMount::PsmEventNotifier::callback_connection(void **) 360):
+	Notify PsmEvent OnUsbStorageInserted
+MSG AutoMounter(int32_t _AutoMounter::UsbHandler::(anonymous namespace)::tryExfatMount(std::string, bool, std::string &, uint64_t *, uint64_t *, uint64_t *) 129):
+	device(/dev/da1s1) is mounted to /mnt/usb0 with exfat.
+DBG AutoMounter(notifyMount 435):
+	eventArg.additionalFeatures[0x2040].
+MSG AutoMounter(void AutoMount::PsmEventNotifier::callback_mount(void **) 270):
+	Notify PsmEvent OnUsbStorageMounted
+MSG AutoMounterMelUtil(void sceAutomounterMelUtil::callbackMountAll(void **) 279):
+		device(/dev/da1s1): exfat(mediaType=0x1001) is mounted at /mnt/usb0.
+
+callbackUsbStorageMountInternal()[374]: [MediaEvent] callbackUsbStorageMountInternal() devNum=0
+callbackUsbStorageMountInternal()[377]: [MediaEvent] callbackUsbStorageMountInternal() locked.
+MSG AutoMounterWrapper(void callbackUsbMount(SceUsbStorageEventDatas *, void *) 102):
+	DeviceId=0x3a5148a9
+[SceLncUtil] blockAppSuspend: name={SceSaveData}, appId={0x60000100}, refCount={1}
+[SceLncUtil] unblockAppSuspend: name={SceSaveData}, appId={0x60000100}, refCount={0}
+DBG AutoMounter(checkSpecAndHub 494):
+	device(/dev/da1) is SUPER_SPEED.
+DBG AutoMounter(checkSpecAndHub 504):
+	deviceFilePath[/dev/da1] is connected to the USB port in general
+WARNING AutoMounter(bool AutoMounter::DevctlReader::UsbStartupHandler::isStartUp() 76):
+	fake implementation.
+MSG AutoMounter(void AutoMount::PsmEventNotifier::callback_connection(void **) 360):
+	Notify PsmEvent OnUsbStorageInserted
+MSG AutoMounter(int32_t AutoMounter::Util::checkFsFormat(const char *, uint32_t *) 888):
+	device(/dev/da1s2) has unknown format(0).
+MSG AutoMounter(int32_t _AutoMounter::UsbHandler::(anonymous namespace)::_mountFileSystem(std::string, bool, std::string &, uint32_t *, uint64_t *, uint64_t *, uint64_t *) 542):
+	/dev/da1s2 has unknown format.
+MSG AutoMounter(int32_t _AutoMounter::UsbHandler::requestMount(const char *, bool) 763): _mountFileSystem(deviceFilePath, false, mountPoint, &fsFormatType, &space, &freeSpace, &availableSpace) returned 0x80f4001c.
+MSG AutoMounter(int32_t _AutoMounter::UsbHandler::(anonymous namespace)::_acquireEncryptDevice(std::string, uint32_t *, uint32_t *, std::string &, uint64_t *) 592):
+	device(/dev/da1s2) is not qualified for encrypt device. ng_capability(0x12)
+verify_metadata: sceSblExternalHDDVerifyMetadata(0) failed 800f0435
+MSG AutoMounter(int32_t _AutoMounter::UsbHandler::(anonymous namespace)::checkEncryption(std::string, bool *) 347):
+	sceFsExternalStorageVerifyMetadata(/dev/da1s2) returned 0x80020050. device is not encrypted.
+MSG AutoMounter(int32_t _AutoMounter::UsbHandler::requestMount(const char *, bool) 795): _acquireEncryptDevice(deviceFilePath, &encryptDeviceFormat, &encryptDeviceStatus, encryptDeviceFilePath, &encryptDeviceId) returned 0x80f4001a.
+DBG AutoMounter(notifyMount 435):
+	eventArg.additionalFeatures[0x2000].
+MSG AutoMounter(void AutoMount::PsmEventNotifier::callback_mount(void **) 270):
+	Notify PsmEvent OnUsbStorageMounted
+MSG AutoMounter(int32_t AutoMounter::DevctlReader::handleCreateUsbDevice(const char *) 174): AutoMounter::UsbHandler::requestMount(deviceFilePath.c_str(), true) returned 0x80f4001a.
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [id_goldhen_utils_payloader : SettingPage] -> [id_goldhen_utils_payloader_launchpad : SettingPage]
+[SceShellUI] I/PSM.UI :      Scene [id_goldhen_utils_payloader_launchpad : SettingPage] : Alive
+SetDeviceIndexBehavior: mode=SpecificUser, param=0x1b6ebedc
+[Theme/I] : Apply [BLUE] : [Option:111111]: with preloaded user
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.00msec] Layout[0.00msec/0widgets] : id_goldhen_utils_payloader_launchpad : SettingPage
+kernel_init()
+Kernel base = ffffffffd5c34000
+Direct map base = ffffec8000000000
+Testing global variable access (write protection)...
+OK.
+Kernel interface initialized
+Installing sys_kexec to system call #153
+kexec_init() successful
+
+sys_kexec invoked
+========================================
+PS4 Linux Payloads AIO
+FW 12.52 (1252)
+VRAM 1024 MB
+Southbridge: Baikal
+========================================
+sys_kexec(0x2008a8000, 16122880, 0x20180c000, 14771320, "panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0 drm.debug=0x06 earlycon=uart8250,mmio32,0xC890E000 console=uart8250,mmio32,0xC890E000 console=tty0 keep_bootcon earlyprintk=efi,keep loglevel=8 root=LABEL=psxitarch rw rootwait systemd.unified_cgroup_hierarchy=0 systemd.legacy_systemd_cgroup_controller=yes audit=0 amdgpu.audio=1 usbcore.autosuspend=-1 video=HDMI-A-1:1920x1080@60 mitigations=off zswap.enabled=1 log_buf_len=4M libata.force=1.00:3.0Gbps,noncq ahci.mobile_lpm_policy=1 netconsole=@192.168.0.2/eth0,6666@192.168.0.1/ff:ff:ff:ff:ff:ff")
+firmware_extract: Extract lib/firmware/amdgpu/gladius_pfp.bin 
+Copying PFP firmware
+NOP handler at 0xff0
+firmware_extract: Extract lib/firmware/amdgpu/gladius_me.bin 
+Copying ME firmware
+firmware_extract: Extract lib/firmware/amdgpu/gladius_ce.bin 
+Copying CE firmware
+NOP handler at 0x7f0
+firmware_extract: Extract lib/firmware/amdgpu/gladius_mec.bin 
+Copying MEC firmware
+NOP handler at 0xff0
+firmware_extract: Extract lib/firmware/amdgpu/gladius_mec2.bin 
+Copying MEC2 firmware
+NOP handler at 0xff0
+firmware_extract: Extract lib/firmware/amdgpu/gladius_rlc.bin 
+Copying RLC firmware
+firmware_extract: Extract lib/firmware/amdgpu/gladius_sdma.bin 
+Copying SDMA firmware
+firmware_extract: Extract lib/firmware/amdgpu/gladius_sdma1.bin 
+Copying SDMA1 firmware
+
+kexec parameters:
+    Kernel image size:   16122880 bytes
+    Initramfs size:      14868092 bytes (14771320 from user)
+    Kernel command line: panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0 drm.debug=0x06 earlycon=uart8250,mmio32,0xC890E000 console=uart8250,mmio32,0xC890E000 console=tty0 keep_bootcon earlyprintk=efi,keep loglevel=8 root=LABEL=psxitarch rw rootwait systemd.unified_cgroup_hierarchy=0 systemd.legacy_systemd_cgroup_controller=yes audit=0 amdgpu.audio=1 usbcore.autosuspend=-1 video=HDMI-A-1:1920x1080@60 mitigations=off zswap.enabled=1 log_buf_len=4M libata.force=1.00:3.0Gbps,noncq ahci.mobile_lpm_policy=1 netconsole=@192.168.0.2/eth0,6666@192.168.0.1/ff:ff:ff:ff:ff:ff
+    Kernel image buffer: 0xffffec8043000000
+    Initramfs buffer:    0xffffec8107000000
+kernel_hook_install(0xffffff807d8410f4, 0xffffffffd607bb10)
+  Using 64bit absolute jump
+******************************************************
+kexec successfully armed. Please shut down the system.
+******************************************************
+
+[KE]sceCameraDevKill::2685 ERROR: sceCameraProcConfigStop 0x802e0006 i=0 handle=257 pid=43
+ContextC.ocntecx:t.1cc:17744  ((aajmjCmonCtoextnCleteanuxptCl) - Inseatannupce 1)6 3-8 I9n wass nott pranocpeerl y2 d78e5str3oy2 ed.wa
+s Cnontoextt. cc:18p9r (aojmCponteerlxyt Cdeleasnturp) o- yCeodd.ec 
+MP3 CDoecodner wteasx ntot.c cp:ro1per89ly  unreg(iasjtermed.C
+oContnetxet.xcc:189 t(aCljemaCnonutep) xtCl-eanu p)C - oCoddeecc AT RACO9 pDus eScILoderK  wEas nnoct pordoeperlry  unregiCsontext.ctecr:18e9d (.a
+jmContextCleanup) - Codec Opus SILK Encoder was not properly unregistered.
+Context.cc:189 (ajmContextCleanup) - Codec Opus CELT Encoder waswas not  pnroopt preropleryly  uunrengisterreedg.is
+tConteerxt.cecd:1.89
+ (CajomContntexte.xtCcleacn:1up) -7 4Co (daecj OpumsC oDntextCleaCnup) o- Innstteancex 34t.40cc6:178 was 9n (ota jprmopeCrolyn detstroeyxed.t
+ClContext.ecc:a18n9 (ajumpC)ontext Cl-ean up)C ode- Cco dOecp uOpsu s CDecEoLTd erE nwacs noot prdero pewralys un nregiostte redp.ro
+perly ecoduer nwars enotgis propteerrly eunregdist.ered.
+
+ContextC.coc:n1t8ex9t (aj.mcCoc:n1te8x9tC l(eaajmnup) - Codec COopusnt CELeT xDteCcloedaer wnasup no)t  p-roperly  uCnroegidsect eCrEeLdP8. 
+Decoder was Conntoet xtpr.coc:p189 e(raljmCyont euxtnrCleaengup) i-s tereCodedc. MPEG4 AA
+C CEoncnodetr weaxs tn.otc cpr:1op89e rly( uajnmreCgistoenrteexd.t
+Cleanup) - Codec CELP8 EncodCeorn twext.cacs :n1o74 t( ajpmroCpoenterxtClelanyup ) -u Insntance 114r6e8g9 wisast neort perd.op
+eCorly denstrtoyede.xt
+.cContextc.:c1c8:198 9 ((ajamCjmontCextoCnlteaneup) x- CtColdeeca ACn3u Encp)o d-e r waCods neotc CE pLropPe(r1l6y) u nDreecgiostedreerd .
+wConatesxt n.occ:t1 74pr op(ajmCoenrtelxytClean uupn)r - eIngstianscteer 1e63d.842 wa
+s not properly destroyed.
+Context.cc:189 (ajmContextCleanup) - Codec DTS Encoder was not properly unregistered.
+Context.cc:191 (ajmContextCleanup) - More codecs were not properly unregistered...
+[SceSysCore mini] killall timeout 5[sec]...
+[SceSysCore mini] forcibly unmount 3 nullfses
+[SceSysCore mini] forcibly unmount /mnt/usb0
+[SceSysCore mini[REGMGR] 000006 ...
+] sceKernelPollE[ventFlag(reboot_flag): failed 80020010
+[SceSysCore mini] call reboot(4000)
+REGMGR] (    720.350 sec) 010006 ...
+[REGMGR] (   0.011707 sec) 010007 ...
+[REGMGR] 000108 ...
+Waiting (max 60 seconds) for system process `SceVnlru' to stop...done
+Waiting (max 60 seconds) for system process `SceBufdaemon1' to stop...done
+Waiting (max 60 seconds) for system process `SceBufdaemon2' to stop...SD Manual Tuning done. MaxPassWindowSize=23, TunePoint=11 CORE_CTRL=0x58408b
+done
+W
+Saynciitngi dniskg s,( vmanoxdes  r6emai0ning... sec0 onds) for system process `SceSyncer' to stop...0 0 sched_sync: flush softdep (iter=2)
+sched_sync: flush softdep (iter=1)
+done
+Waiting (max 60 seconds) for system process `SceBufdaemon0' to stop...done
+All buffers synced.
+Uptime: 12m4s
+icc post sync:Thermal alert LED off
+[REGMGR] 000007 @2@ ...
+icc08-4001 0802
+icc:failed to disabled reset button notification: 0005
+icc:disabled thermal notification
+ICC: howto:00004000 depth:2 cause:00 hand:01
+ICC: Shutdown.
+hook_icc_query_nowait called
+ICC 05-00 polling
+Fixing ACPI tables at 0xe0000 (0xffffffffffffffff)
+RSDT at 0xe0024
+XSDT at 0xe0088
+FACP at 0xe016c
+FACS at 0xe012c
+DSDT at 0xe0430
+APIC at 0xe0298
+MCFG at 0xe0304
+SSDT at 0xe0730
+ACPI tables fixed
+kexec: Waiting for secondary CPUs...
+kexec: Secondary CPUs quiesced
+kexec: Setting up GDT...
+kexec: Relocating stub...
+kexec: Setting up boot params...
+kexec: Cleaning up hardware...
+Current sb_id: 3
+
+SB_BAIKAL constant: 3
+
+kexec: Detected Baikal Southbridge, disabling IOMMU...
+kexec: Reconfiguring VRAM...
+kexec: Resetting GPU...
+kexec: About to relocate and jump to kernel
+[    0.000000] ps4: x86_ps4_early_setup: PS4 early setup
+[    0.000000] Linux version 7.0.8-Strawberry-ThinLTO-Baikal-+ (root@adsv2) (Debian clang version 19.1.7 (3+b1), Debian LLD 19.1.7) #1 SMP PREEMPT_DYNAMIC Thu Nov 12 07:18:53 -03 2026
+[    0.000000] 
+[    0.000000]   _________ __                       ___.
+[    0.000000]  /   _____//  |_____________ __  _  _\_ |__   __________________ ___.__.
+[    0.000000]  \_____  \\   __\_  __ \__  \\ \/ \/ /| __ \_/ __ \_  __ \_  __ <   |  |
+[    0.000000]  /        \|  |  |  | \// __ \\     / | \_\ \  ___/|  | \/|  | \/\___  |
+[    0.000000] /_______  /|__|  |__|  (____  /\/\_/  |___  /\___  >__|   |__|   / ____|
+[    0.000000]         \/                  \/            \/     \/              \/
+[    0.000000] 
+[    0.000000]   Strawberry PS4 Linux
+[    0.000000]   Platform  : Sony PlayStation 4
+[    0.000000]   Focus     : BAIKAL
+[    0.000000]   Release   : 7.0.8-Strawberry-ThinLTO-Baikal-+
+[    0.000000]   Builder   : root@adsv2
+[    0.000000]   Toolchain : Debian clang version 19.1.7 (3+b1), Debian LLD 19.1.7
+[    0.000000]   Build     : #1 SMP PREEMPT_DYNAMIC Thu Nov 12 07:18:53 -03 2026
+[    0.000000] 
+[    0.000000] Command line: panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0 drm.debug=0x06 earlycon=uart8250,mmio32,0xC890E000 console=uart8250,mmio32,0xC890E000 console=tty0 keep_bootcon earlyprintk=efi,keep loglevel=8 root=LABEL=psxitarch rw rootwait systemd.unified_cgroup_hierarchy=0 systemd.legacy_systemd_cgroup_controller=yes audit=0 amdgpu.audio=1 usbcore.autosuspend=-1 video=HDMI-A-1:1920x1080@60 mitigations=off zswap.enabled=1 log_buf_len=4M libata.force=1.00:3.0Gbps,noncq ahci.mobile_lpm_policy=1 netconsole=@192.168.0.2/eth0,6666@192.168.0.1/ff:ff:ff:ff:ff:ff
+[    0.000000] KERNEL supported cpus:
+[    0.000000]   AMD AuthenticAMD
+[    0.000000] BIOS-provided physical RAM map:
+[    0.000000] BIOS-e820: [mem 0x0000000000000000-0x0000000000007fff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x0000000000008000-0x000000000007ffff]  device reserved
+[    0.000000] BIOS-e820: [mem 0x0000000000080000-0x0000000000099fff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x000000000009a000-0x00000000000bffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x00000000000c0000-0x00000000000dffff]
+[    0.000000] BIOS-e820: [mem 0x00000000000e0000-0x00000000000effff]  ACPI data
+[    0.000000] BIOS-e820: [gap 0x00000000000f0000-0x00000000000fffff]
+[    0.000000] BIOS-e820: [mem 0x0000000000100000-0x00000000003fffff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x0000000000400000-0x000000000047ffff]  device reserved
+[    0.000000] BIOS-e820: [mem 0x0000000000480000-0x000000000067ffff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x0000000000680000-0x00000000006fffff]  device reserved
+[    0.000000] BIOS-e820: [mem 0x0000000000700000-0x000000007efe7fff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x000000007efe8000-0x000000007efeffff]  ACPI NVS
+[    0.000000] BIOS-e820: [mem 0x000000007eff0000-0x000000007effffff]  ACPI data
+[    0.000000] BIOS-e820: [mem 0x000000007f000000-0x000000007fffffff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x0000000080000000-0x00000000fbffffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x00000000fc000000-0x00000000ffffffff]
+[    0.000000] BIOS-e820: [mem 0x0000000100000000-0x000000013fffffff]  device reserved
+[    0.000000] BIOS-e820: [mem 0x0000000140000000-0x000000027effffff]  System RAM
+[    0.000000] earlycon: uart8250 at MMIO32 0x00000000c890e000 (options '')
+[    0.000000] printk: legacy bootconsole [uart8250] enabled
+[    0.000000] printk: debug: skip boot console de-registration.
+[    0.000000] Kernel compiled without mitigations, ignoring 'mitigations'; system may still be vulnerable
+[    0.000000] NX (Execute Disable) protection: active
+[    0.000000] APIC: Static calls initialized
+[    0.000000] SMBIOS 2.1 present.
+[    0.000000] DMI:  , BIOS unde Wed 09/22/2021 16:2
+[    0.000000] DMI: Memory slots populated: 1/1
+[    0.000000] ps4: EMC timer is broken.
+[    0.000000] ps4: Unable to measure TSC frequency, assuming default.
+[    0.000000] tsc: Detected 1594.000 MHz processor
+[    0.001114] e820: update [mem 0x00000000-0x00000fff] System RAM ==> device reserved
+[    0.008952] e820: remove [mem 0x000a0000-0x000fffff] System RAM
+[    0.015015] last_pfn = 0x27f000 max_arch_pfn = 0x400000000
+[    0.020630] MTRR map: 6 entries (3 fixed + 3 variable; max 20), built from 9 variable MTRRs
+[    0.029177] x86/PAT: Configuration [0-7]: WB  WC  UC- UC  WB  WP  UC- WT  
+[    0.036483] e820: update [mem 0x80000000-0x13fffffff] System RAM ==> device reserved
+[    0.044422] last_pfn = 0x80000 max_arch_pfn = 0x400000000
+[    0.056405] Using GB pages for direct mapping
+[    0.069289] printk: log buffer data + meta data: 4194304 + 17825792 = 22020096 bytes
+[    0.077220] printk: early log buf free: 61240(93%)
+[    0.082119] RAMDISK: [mem 0x107000000-0x107e2dfff]
+[    0.087019] Allocated new RAMDISK: [mem 0x27ccd0000-0x27dafde7b]
+[    0.363928] Move RAMDISK from [mem 0x107000000-0x107e2de7b] to [mem 0x27ccd0000-0x27dafde7b]
+[    0.372596] ACPI: Early table checksum verification disabled
+[    0.378386] ACPI: RSDP 0x00000000000E0000 000024 (v02 SIE   )
+[    0.384267] ACPI: XSDT 0x00000000000E0088 00004C (v01 SIE    ORBIS    20121218 INTL 20110211)
+[    0.392999] ACPI: FACP 0x00000000000E016C 0000F4 (v04 SIE    ORBIS    20130205 INTL 20110211)
+[    0.401729] ACPI: DSDT 0x00000000000E0430 00018C (v02 SIE    ORBIS    20121002 INTL 20110211)
+[    0.410457] ACPI: FACS 0x00000000000E012C 000040
+[    0.415179] ACPI: FACS 0x00000000000E012C 000040
+[    0.419900] ACPI: APIC 0x00000000000E0298 00006C (v02 SIE    ORBIS    20120725 INTL 20110211)
+[    0.428628] ACPI: MCFG 0x00000000000E0304 00003C (v01 SIE    ORBIS    20120725 INTL 20110211)
+[    0.437355] ACPI: SSDT 0x00000000000E0730 0001EC (v01 AMD    POWERNOW 00000001 AMD  00000001)
+[    0.446082] ACPI: IVRS 0x00000000000E091C 000054 (v01 F0F    PS4KEXEC 20161225 KEXC 20161225)
+[    0.454808] ACPI: Reserving FACP table memory at [mem 0xe016c-0xe025f]
+[    0.461485] ACPI: Reserving DSDT table memory at [mem 0xe0430-0xe05bb]
+[    0.468162] ACPI: Reserving FACS table memory at [mem 0xe012c-0xe016b]
+[    0.474838] ACPI: Reserving FACS table memory at [mem 0xe012c-0xe016b]
+[    0.481515] ACPI: Reserving APIC table memory at [mem 0xe0298-0xe0303]
+[    0.488191] ACPI: Reserving MCFG table memory at [mem 0xe0304-0xe033f]
+[    0.494867] ACPI: Reserving SSDT table memory at [mem 0xe0730-0xe091b]
+[    0.501543] ACPI: Reserving IVRS table memory at [mem 0xe091c-0xe096f]
+[    0.509070] ACPI: No IOAPIC entries present
+[    0.513345] ACPI: Using ACPI for processor (LAPIC) configuration information
+[    0.520561] CPU topo: Max. logical packages:   1
+[    0.525279] CPU topo: Max. logical nodes:      1
+[    0.529998] CPU topo: Num. nodes per package:  1
+[    0.534720] CPU topo: Max. logical dies:       1
+[    0.539439] CPU topo: Max. dies per package:   1
+[    0.544166] CPU topo: Max. threads per core:   1
+[    0.548884] CPU topo: Num. cores per package:     8
+[    0.553869] CPU topo: Num. threads per package:   8
+[    0.558854] CPU topo: Allowing 8 present CPUs plus 0 hotplug CPUs
+[    0.565106] [gap 0xfc000000-0xffffffff] available for PCI devices
+[    0.571341] clocksource: refined-jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645519600211568 ns
+[    0.582054] Zone ranges:
+[    0.584637]   DMA      [mem 0x0000000000001000-0x0000000000ffffff]
+[    0.590961]   DMA32    [mem 0x0000000001000000-0x00000000ffffffff]
+[    0.597282]   Normal   [mem 0x0000000100000000-0x000000027effffff]
+[    0.603604] Movable zone start for each node
+[    0.607966] Early memory node ranges
+[    0.611617]   node   0: [mem 0x0000000000001000-0x0000000000007fff]
+[    0.618027]   node   0: [mem 0x0000000000080000-0x0000000000099fff]
+[    0.624437]   node   0: [mem 0x0000000000100000-0x00000000003fffff]
+[    0.630847]   node   0: [mem 0x0000000000480000-0x000000000067ffff]
+[    0.637257]   node   0: [mem 0x0000000000700000-0x000000007efe7fff]
+[    0.643667]   node   0: [mem 0x000000007f000000-0x000000007fffffff]
+[    0.650076]   node   0: [mem 0x0000000140000000-0x000000027effffff]
+[    0.656487] Initmem setup node 0 [mem 0x0000000000001000-0x000000027effffff]
+[    0.663706] On node 0, zone DMA: 1 pages in unavailable ranges
+[    0.669673] On node 0, zone DMA: 120 pages in unavailable ranges
+[    0.675831] On node 0, zone DMA: 102 pages in unavailable ranges
+[    0.681984] On node 0, zone DMA: 128 pages in unavailable ranges
+[    0.688167] On node 0, zone DMA: 128 pages in unavailable ranges
+[    0.702108] On node 0, zone DMA32: 24 pages in unavailable ranges
+[    0.727943] On node 0, zone Normal: 4096 pages in unavailable ranges
+[    0.734466] setup_percpu: NR_CPUS:8 nr_cpumask_bits:8 nr_cpu_ids:8 nr_node_ids:1
+[    0.742621] percpu: Embedded 44 pages/cpu s142552 r8192 d29480 u262144
+[    0.749317] pcpu-alloc: s142552 r8192 d29480 u262144 alloc=1*2097152
+[    0.755820] pcpu-alloc: [0] 0 1 2 3 4 5 6 7 
+[    0.760214] Kernel command line: panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0 drm.debug=0x06 earlycon=uart8250,mmio32,0xC890E000 console=uart8250,mmio32,0xC890E000 console=tty0 keep_bootcon earlyprintk=efi,keep loglevel=8 root=LABEL=psxitarch rw rootwait systemd.unified_cgroup_hierarchy=0 systemd.legacy_systemd_cgroup_controller=yes audit=0 amdgpu.audio=1 usbcore.autosuspend=-1 video=HDMI-A-1:1920x1080@60 mitigations=off zswap.enabled=1 log_buf_len=4M libata.force=1.00:3.0Gbps,noncq ahci.mobile_lpm_policy=1 netconsole=@192.168.0.2/eth0,6666@192.168.0.1/ff:ff:ff:ff:ff:ff
+[    0.815359] audit: disabled (until reboot)
+[    0.821240] Dentry cache hash table entries: 1048576 (order: 11, 8388608 bytes, linear)
+[    0.830216] Inode-cache hash table entries: 524288 (order: 10, 4194304 bytes, linear)
+[    0.838286] software IO TLB: area num 8.
+[    0.866923] Built 1 zonelists, mobility grouping on.  Total pages: 1830409
+[    0.873970] mem auto-init: stack:off, heap alloc:off, heap free:off
+[    0.909411] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=8, Nodes=1
+[    0.916205] Dynamic Preempt: full
+[    0.919673] rcu: Preemptible hierarchical RCU implementation.
+[    0.925550] 	Trampoline variant of Tasks RCU enabled.
+[    0.930714] 	Tracing variant of Tasks RCU enabled.
+[    0.935610] rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.
+[    0.943372] RCU Tasks: Setting shift to 3 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=8.
+[    0.952286] NR_IRQS: 4352, nr_irqs: 128, preallocated irqs: 0
+[    0.958209] rcu: 	Offload RCU callbacks from CPUs: 0-7.
+[    0.963557] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[    0.970634] No irq handler for 0.49
+[    0.974222] Console: colour dummy device 80x25
+[    0.978768] printk: legacy console [tty0] enabled
+[    0.983596] ACPI: Core revision 20251212
+[    0.987669] ACPI: setting ELCR to 0200 (from ffff)
+[    0.992582] Failed to register legacy timer interrupt
+[    0.997748] APIC: Switch to symmetric I/O mode setup
+[    1.002859] clocksource: tsc-early: mask: 0xffffffffffffffff max_cycles: 0x16fa00e7d19, max_idle_ns: 440795227561 ns
+[    1.013645] Calibrating delay loop (skipped), value calculated using timer frequency.. 3188.00 BogoMIPS (lpj=6376000)
+[    1.017637] Last level iTLB entries: 4KB 512, 2MB 8, 4MB 4
+[    1.017637] Last level dTLB entries: 4KB 512, 2MB 256, 4MB 128, 1GB 0
+[    1.017637] mitigations: Enabled attack vectors: SMT mitigations: off
+[    1.017637] Speculative Store Bypass: Vulnerable
+[    1.017637] Spectre V2 : Vulnerable
+[    1.017637] RETBleed: Vulnerable
+[    1.017637] Spectre V1 : Vulnerable: __user pointer sanitization and usercopy barriers only; no swapgs barriers
+[    1.017637] x86/fpu: Supporting XSAVE feature 0x001: 'x87 floating point registers'
+[    1.017637] x86/fpu: Supporting XSAVE feature 0x002: 'SSE registers'
+[    1.017637] x86/fpu: Supporting XSAVE feature 0x004: 'AVX registers'
+[    1.017637] x86/fpu: xstate_offset[2]:  576, xstate_sizes[2]:  256
+[    1.017637] x86/fpu: Enabled xstate features 0x7, context size is 832 bytes, using 'standard' format.
+[    1.017637] Freeing SMP alternatives memory: 60K
+[    1.017637] pid_max: default: 32768 minimum: 301
+[    1.017637] Mount-cache hash table entries: 16384 (order: 5, 131072 bytes, linear)
+[    1.017637] Mountpoint-cache hash table entries: 16384 (order: 5, 131072 bytes, linear)
+[    1.017637] VFS: Finished mounting rootfs on nullfs
+[    1.017637] smpboot: CPU0: AMD DG1501SML87LB (family: 0x16, model: 0x43, stepping: 0x0)
+[    1.018026] Performance Events: AMD PMU driver.
+[    1.021648] ... version:                   0
+[    1.025639] ... bit width:                 48
+[    1.029640] ... generic counters:          4
+[    1.033639] ... generic bitmap:            000000000000000f
+[    1.037639] ... fixed-purpose counters:    0
+[    1.041639] ... fixed-purpose bitmap:      0000000000000000
+[    1.045639] ... value mask:                0000ffffffffffff
+[    1.049639] ... max period:                00007fffffffffff
+[    1.053639] ... global_ctrl mask:          000000000000000f
+[    1.057796] signal: max sigframe size: 1776
+[    1.061704] rcu: Hierarchical SRCU implementation.
+[    1.065644] rcu: 	Max phase no-delay instances is 1000.
+[    1.069791] Timer migration: 1 hierarchy levels; 8 children per group; 1 crossnode level
+[    1.073820] smp: Bringing up secondary CPUs ...
+[    1.077852] smpboot: x86: Booting SMP configuration:
+[    1.081662] .... node  #0, CPUs:      #1 #2 #3 #4 #5 #6 #7
+[    1.097726] smp: Brought up 1 node, 8 CPUs
+[    1.105650] smpboot: Total of 8 processors activated (25504.00 BogoMIPS)
+[    1.110730] Memory: 7037536K/7321636K available (22779K kernel code, 1109K rwdata, 19624K rodata, 1176K init, 620K bss, 279164K reserved, 0K cma-reserved)
+[    1.114059] devtmpfs: initialized
+[    1.118477] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+[    1.121647] posixtimers hash table entries: 4096 (order: 4, 65536 bytes, linear)
+[    1.125673] futex hash table entries: 2048 (131072 bytes on 1 NUMA nodes, total 128 KiB, linear).
+[    1.129711] prandom: seed boundary self test passed
+[    1.134523] prandom: 100 self tests passed
+[    1.142214] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[    1.146235] thermal_sys: Registered thermal governor 'step_wise'
+[    1.146265] cpuidle: using governor ladder
+[    1.153645] cpuidle: using governor menu
+[    1.158126] PCI: ECAM [mem 0xf8000000-0xfbffffff] (base 0xf8000000) for domain 0000 [bus 00-3f]
+[    1.161655] PCI: Using configuration type 1 for base access
+[    1.166195] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[    1.169640] HugeTLB: 28 KiB vmemmap can be freed for a 2.00 MiB page
+[    1.245642] raid6: sse2x4   gen()  5148 MB/s
+[    1.317638] raid6: sse2x2   gen()  4865 MB/s
+[    1.389639] raid6: sse2x1   gen()  4360 MB/s
+[    1.393639] raid6: using algorithm sse2x4 gen() 5148 MB/s
+[    1.465641] raid6: .... xor() 2692 MB/s, rmw enabled
+[    1.469640] raid6: using ssse3x2 recovery algorithm
+[    1.473713] ACPI: Added _OSI(Module Device)
+[    1.477641] ACPI: Added _OSI(Processor Device)
+[    1.481640] ACPI: Added _OSI(Processor Aggregator Device)
+[    1.485873] ACPI: 2 ACPI AML tables successfully acquired and loaded
+[    1.509698] ACPI: OSL: ACPI: Bypassing SCI allocation for PS4
+[    1.521700] ACPI: \_SB_: platform _OSC: OS support mask [00027eef]
+[    1.525717] ACPI: Interpreter enabled
+[    1.529649] ACPI: PM: (supports S0 S5)
+[    1.533639] ACPI: Using PIC for interrupt routing
+[    1.537658] PCI: Ignoring host bridge windows from ACPI; if necessary, use "pci=use_crs" and report a bug
+[    1.541639] PCI: Ignoring E820 reservations for host bridge windows
+[    1.546224] acpi PNP0A03:00: [Firmware Bug]: no secondary bus range in _CRS
+[    1.549649] ACPI: PCI Root Bridge [PCI0] (domain 0000 [bus 00-ff])
+[    1.553644] acpi PNP0A03:00: _OSC: OS supports [ExtendedConfig ASPM ClockPM Segments MSI HPX-Type3]
+[    1.557645] acpi PNP0A03:00: _OSC: OS requested [PME AER PCIeCapability LTR]
+[    1.561640] acpi PNP0A03:00: _OSC: platform willing to grant [PME AER PCIeCapability LTR]
+[    1.565640] acpi PNP0A03:00: _OSC: platform retains control of PCIe features (AE_ERROR)
+[    1.569641] acpi PNP0A03:00: [Firmware Info]: ECAM [mem 0xf8000000-0xfbffffff] for domain 0000 [bus 00-3f] only partially covers this bridge
+[    1.573654] acpi PNP0A03:00: host bridge window [io  0x0cf8-0x0cff] (ignored)
+[    1.577640] PCI: root bus 00: using default resources
+[    1.581676] PCI host bridge to bus 0000:00
+[    1.585643] pci_bus 0000:00: root bus resource [io  0x0000-0xffff]
+[    1.589640] pci_bus 0000:00: root bus resource [mem 0x00000000-0xffffffffff]
+[    1.593640] pci_bus 0000:00: root bus resource [bus 00-ff]
+[    1.597652] pci 0000:00:00.0: [1022:1436] type 00 class 0x060000 conventional PCI endpoint
+[    1.601719] pci 0000:00:00.2: [1022:1437] type 00 class 0x080600 conventional PCI endpoint
+[    1.605723] pci 0000:00:01.0: [1002:9924] type 00 class 0x030000 PCIe Root Complex Integrated Endpoint
+[    1.609656] pci 0000:00:01.0: BAR 0 [mem 0xe0000000-0xe3ffffff 64bit pref]
+[    1.613641] pci 0000:00:01.0: BAR 2 [mem 0xe4000000-0xe47fffff 64bit pref]
+[    1.617640] pci 0000:00:01.0: BAR 4 [io  0x6000-0x60ff]
+[    1.621640] pci 0000:00:01.0: BAR 5 [mem 0xe4800000-0xe483ffff]
+[    1.625640] pci 0000:00:01.0: ROM [mem 0x00000000-0x0001ffff pref]
+[    1.629643] pci 0000:00:01.0: enabling Extended Tags
+[    1.633651] pci 0000:00:01.0: Video device with shadowed ROM at [mem 0x000c0000-0x000dffff]
+[    1.637655] pci 0000:00:01.0: supports D1 D2
+[    1.641640] pci 0000:00:01.0: PME# supported from D1 D2 D3hot
+[    1.645699] pci 0000:00:01.1: [1002:9921] type 00 class 0x040300 PCIe Root Complex Integrated Endpoint
+[    1.649655] pci 0000:00:01.1: BAR 0 [mem 0xe4840000-0xe4843fff 64bit]
+[    1.653644] pci 0000:00:01.1: enabling Extended Tags
+[    1.657660] pci 0000:00:01.1: supports D1 D2
+[    1.661702] pci 0000:00:02.0: [1022:1438] type 00 class 0x060000 conventional PCI endpoint
+[    1.665728] pci 0000:00:14.0: [104d:90d7] type 00 class 0x088000 PCIe Endpoint
+[    1.669674] pci 0000:00:14.0: BAR 0 [mem 0xfdf8000000-0xfdf9ffffff 64bit]
+[    1.673641] pci 0000:00:14.0: BAR 2 [io  0x1000-0x13ff]
+[    1.677792] pci 0000:00:14.1: [104d:90d8] type 00 class 0x088001 PCIe Endpoint
+[    1.681674] pci 0000:00:14.1: BAR 0 [mem 0xc2000000-0xc2000fff 64bit]
+[    1.685791] pci 0000:00:14.2: [104d:90d9] type 00 class 0x088002 PCIe Endpoint
+[    1.689674] pci 0000:00:14.2: BAR 0 [mem 0xc4000000-0xc4007fff 64bit]
+[    1.693790] pci 0000:00:14.3: [104d:90da] type 00 class 0x088003 PCIe Endpoint
+[    1.697674] pci 0000:00:14.3: BAR 0 [mem 0xc6000000-0xc6000fff 64bit]
+[    1.701789] pci 0000:00:14.4: [104d:90db] type 00 class 0x088004 PCIe Endpoint
+[    1.705674] pci 0000:00:14.4: BAR 0 [mem 0xc8000000-0xc8001fff 64bit]
+[    1.709642] pci 0000:00:14.4: BAR 2 [mem 0xc8800000-0xc89fffff 64bit]
+[    1.713642] pci 0000:00:14.4: BAR 4 [mem 0xc9000000-0xc91fffff 64bit]
+[    1.717782] pci 0000:00:14.5: [104d:90dc] type 00 class 0x088005 PCIe Endpoint
+[    1.721674] pci 0000:00:14.5: BAR 0 [mem 0xca000000-0xca000fff 64bit]
+[    1.725642] pci 0000:00:14.5: BAR 2 [mem 0xca800000-0xca800fff 64bit]
+[    1.729792] pci 0000:00:14.6: [104d:90dd] type 00 class 0x088006 PCIe Endpoint
+[    1.733674] pci 0000:00:14.6: BAR 0 [mem 0xcc000000-0xcc000fff 64bit]
+[    1.737646] pci 0000:00:14.6: BAR 2 [mem 0x80000000-0xbfffffff 64bit]
+[    1.741641] pci 0000:00:14.6: BAR 4 [mem 0xcd000000-0xcd0fffff]
+[    1.745641] pci 0000:00:14.6: BAR 5 [mem 0xcd400000-0xcd43ffff]
+[    1.749785] pci 0000:00:14.7: [104d:90de] type 00 class 0x088007 PCIe Endpoint
+[    1.753674] pci 0000:00:14.7: BAR 0 [mem 0xce000000-0xce3fffff 64bit]
+[    1.757642] pci 0000:00:14.7: BAR 2 [mem 0xce800000-0xce80ffff 64bit]
+[    1.761642] pci 0000:00:14.7: BAR 4 [mem 0xcf000000-0xcf7fffff 64bit]
+[    1.765775] pci 0000:00:18.0: [1022:142e] type 00 class 0x060000 conventional PCI endpoint
+[    1.769702] pci 0000:00:18.1: [1022:142f] type 00 class 0x060000 conventional PCI endpoint
+[    1.773701] pci 0000:00:18.2: [1022:1430] type 00 class 0x060000 conventional PCI endpoint
+[    1.777700] pci 0000:00:18.3: [1022:1431] type 00 class 0x060000 conventional PCI endpoint
+[    1.781701] pci 0000:00:18.4: [1022:1432] type 00 class 0x060000 conventional PCI endpoint
+[    1.785699] pci 0000:00:18.5: [1022:1433] type 00 class 0x060000 conventional PCI endpoint
+[    1.789701] pci 0000:00:18.6: [1022:1434] type 00 class 0x060000 conventional PCI endpoint
+[    1.793702] pci_bus 0000:00: on NUMA node 0
+[    1.801809] iommu: Default domain type: Translated
+[    1.805640] iommu: DMA domain TLB invalidation policy: lazy mode
+[    1.809768] SCSI subsystem initialized
+[    1.813665] libata version 3.00 loaded.
+[    1.817674] ACPI: bus type USB registered
+[    1.821672] usbcore: registered new interface driver usbfs
+[    1.825654] usbcore: registered new interface driver hub
+[    1.829653] usbcore: registered new device driver usb
+[    1.837741] Advanced Linux Sound Architecture Driver Initialized.
+[    1.841944] Bluetooth: Core ver 2.22
+[    1.845701] NET: Registered PF_BLUETOOTH protocol family
+[    1.849639] Bluetooth: HCI device and connection manager initialized
+[    1.853642] Bluetooth: HCI socket layer initialized
+[    1.857641] Bluetooth: L2CAP socket layer initialized
+[    1.861641] Bluetooth: SCO socket layer initialized
+[    1.865716] PCI: Using ACPI for IRQ routing
+[    1.871362] PCI: pci_cache_line_size set to 64 bytes
+[    1.873675] e820: register RAM buffer resource [mem 0x00008000-0x0000ffff]
+[    1.877640] e820: register RAM buffer resource [mem 0x0009a000-0x0009ffff]
+[    1.881639] e820: register RAM buffer resource [mem 0x00680000-0x006fffff]
+[    1.885639] e820: register RAM buffer resource [mem 0x7efe8000-0x7fffffff]
+[    1.889639] e820: register RAM buffer resource [mem 0x27f000000-0x27fffffff]
+[    1.893661] pci 0000:00:01.0: vgaarb: setting as boot VGA device
+[    1.897637] pci 0000:00:01.0: vgaarb: bridge control possible
+[    1.897637] pci 0000:00:01.0: vgaarb: VGA device added: decodes=io+mem,owns=io+mem,locks=none
+[    1.897645] vgaarb: loaded
+[    1.902002] clocksource: Switched to clocksource tsc-early
+[    1.907440] pnp: PnP ACPI init
+[    1.910602] pnp: PnP ACPI: found 0 devices
+[    1.917755] NET: Registered PF_INET protocol family
+[    1.923001] IP idents hash table entries: 131072 (order: 8, 1048576 bytes, linear)
+[    1.977975] tcp_listen_portaddr_hash hash table entries: 4096 (order: 4, 65536 bytes, linear)
+[    1.986752] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[    1.994695] TCP established hash table entries: 65536 (order: 7, 524288 bytes, linear)
+[    2.002970] TCP bind hash table entries: 65536 (order: 9, 2097152 bytes, linear)
+[    2.011043] TCP: Hash tables configured (established 65536 bind 65536)
+[    2.017932] MPTCP token hash table entries: 8192 (order: 6, 196608 bytes, linear)
+[    2.025648] UDP hash table entries: 4096 (order: 6, 262144 bytes, linear)
+[    2.032671] UDP-Lite hash table entries: 4096 (order: 6, 262144 bytes, linear)
+[    2.040236] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[    2.046366] RPC: Registered named UNIX socket transport module.
+[    2.052432] RPC: Registered udp transport module.
+[    2.057250] RPC: Registered tcp transport module.
+[    2.062065] RPC: Registered tcp-with-tls transport module.
+[    2.067682] RPC: Registered tcp NFSv4.1 backchannel transport module.
+[    2.074728] pci_bus 0000:00: resource 4 [io  0x0000-0xffff]
+[    2.080451] pci_bus 0000:00: resource 5 [mem 0x00000000-0xffffffffff]
+[    2.087101] pci 0000:00:01.1: D0 power state depends on 0000:00:01.0
+[    2.089902] clocksource: timekeeping watchdog on CPU1: Marking clocksource 'tsc-early' as unstable because the skew is too large:
+[    2.093619] pci 0000:00:02.0: CLS mismatch (64 != 512), using 64 bytes
+[    2.105545] clocksource:                       'refined-jiffies' wd_nsec: 512032000 wd_now: fffedc08 wd_last: fffedb88 mask: ffffffff
+[    2.105550] clocksource:                       'tsc-early' cs_nsec: 813256419 cs_now: 1104677af35 cs_last: 10ff9333f79 mask: ffffffffffffffff
+[    2.112272] PCI-DMA: Using software bounce buffering for IO (SWIOTLB)
+[    2.124522] clocksource:                       Clocksource 'tsc-early' skewed 301224419 ns (301 ms) over watchdog 'refined-jiffies' interval of 512032000 ns (512 ms)
+[    2.124529] software IO TLB: mapped [mem 0x000000007afe8000-0x000000007efe8000] (64MB)
+[    2.124533] clocksource:                       'tsc-early' is current clocksource.
+[    2.124959] LVT offset 0 assigned for vector 0x400
+[    2.137543] tsc: Marking TSC unstable due to clocksource watchdog
+[    2.186271] clocksource: Switched to clocksource refined-jiffies
+[    2.186385] Trying to unpack rootfs image as initramfs...
+[    2.198291] perf: AMD IBS detected (0x000000ff)
+[    2.202311] kvm_amd: TSC scaling supported
+[    2.206270] kvm_amd: Nested Virtualization enabled
+[    2.210271] kvm_amd: Nested Paging enabled
+[    2.214271] kvm_amd: LBR virtualization supported
+[    2.245177] platform rtc_cmos: registered platform RTC device (no PNP device found)
+[    2.250869] Initialise system trusted keyrings
+[    2.254312] workingset: timestamp_bits=46 max_order=21 bucket_order=0
+[    2.258529] ntfs3: Warning: Activated 64 bits per cluster. Windows does not support this
+[    2.262328] fuse: init (API version 7.45)
+[    2.266433] cryptd: max_cpu_qlen set to 1000
+[    2.292349] NET: Registered PF_ALG protocol family
+[    2.294292] xor: automatically using best checksumming function   avx       
+[    2.298280] Key type asymmetric registered
+[    2.302277] Asymmetric key parser 'x509' registered
+[    2.306336] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 251)
+[    2.310279] io scheduler mq-deadline registered
+[    2.314279] io scheduler kyber registered
+[    2.318308] io scheduler bfq registered
+[    2.326815] Could not retrieve perf counters (-19)
+[    2.350305] Serial: 8250/16550 driver, 4 ports, IRQ sharing enabled
+[    2.358468] Non-volatile memory driver v1.3
+[    2.362296] Linux agpgart interface v0.103
+[    2.366496] ACPI: bus type drm_connector registered
+[    2.370305] [drm:amdgpu_acpi_enumerate_xcc] No matching acpi device found for AMD3000
+[    2.378511] brd: module loaded
+[    2.386451] loop: module loaded
+[    2.389681] zram: Added device: zram0
+[    2.390499] baikal_pcie 0000:00:14.4: bpcie glue probe
+[    2.394290] baikal_pcie 0000:00:14.4: Baikal chip revision: 5c202021:7ca85ea9:0000b100
+[    2.398287] pci 0000:00:14.0: bpcie_create_irq_domain
+[    2.402297] pci 0000:00:14.1: bpcie_create_irq_domain
+[    2.406288] pci 0000:00:14.2: bpcie_create_irq_domain
+[    2.410289] pci 0000:00:14.3: bpcie_create_irq_domain
+[    2.414289] baikal_pcie 0000:00:14.4: bpcie_create_irq_domain
+[    2.418289] pci 0000:00:14.5: bpcie_create_irq_domain
+[    2.422290] pci 0000:00:14.6: bpcie_create_irq_domain
+[    2.426294] pci 0000:00:14.7: bpcie_create_irq_domain
+[    2.462308] Turn ON BT/WLAN: ret=20, reply 00 00 00 00
+[    2.470331] usb0 status: ret=20, reply 00 00 01 00
+[    2.474290] USB is already turned ON!
+[    2.478372] input: Power Button as /devices/pci0000:00/0000:00:14.4/input/input0
+[    2.497568] Freeing initrd memory: 14520K
+[    2.522347] ret=46, reply 00 00 03 00 00 00 15 00
+[    2.534334] ret=20, reply 00 00 01 02 10 00 00 00
+[    2.542339] ret=20, reply 00 00 00 00 00 00 00 00
+[    2.550312] ps4-led ps4-led: PS4 LED driver ready.
+[    2.554348] ps4-fan ps4-fan: PS4 fan hwmon ready — temp1_input, temp1_crit (20–85°C), fan1_input
+[    2.558323] ps4-buzzer ps4-buzzer: PS4 buzzer driver ready.
+[    2.562362] ps4-mesa-lock: built without PS4_MESA_LOCK_TOKEN; all verification requests will fail
+[    2.566331] wireguard: WireGuard 1.0.0 loaded. See www.wireguard.com for information.
+[    2.570291] wireguard: Copyright (C) 2015-2019 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
+[    2.574567] tun: Universal TUN/TAP device driver, 1.6
+[    2.578375] sky2: driver version 1.30
+[    2.582351] usbcore: registered new interface driver mwifiex_usb
+[    2.586325] usbcore: registered new interface driver mt7601u
+[    2.590308] usbcore: registered new interface driver mt76x0u
+[    2.594342] usbcore: registered new interface driver mt76x2u
+[    2.598348] usbcore: registered new interface driver mt7663u
+[    2.602608] VFIO - User Level meta-driver version: 0.3
+[    2.606444] xhci_aeolia 0000:00:14.7: Baikal SATA PHY init
+[    2.610298] xhci_aeolia 0000:00:14.7: Baikal SATA EFUSE VALUE: 0x24:0x0e:0x0e
+[    2.614294] xhci_aeolia 0000:00:14.7: Baikal SATA PHY Trace length : 4
+[    2.618375] xhci_aeolia 0000:00:14.7: AHCI vers 0001.0300, 32 command slots, 6 Gbps, ATA mode
+[    2.622295] xhci_aeolia 0000:00:14.7: 1/1 ports implemented (port mask 0x1)
+[    2.626295] xhci_aeolia 0000:00:14.7: flags: ncq sntf pm clo only pmp pio slum part ccc apst 
+[    2.630427] scsi host0: ahci
+[    2.633346] ata1: SATA max UDMA/133 abar m65536@0xce800000 port 0xce800100 irq 32 lpm-pol 0
+[    2.634310] xhci_aeolia 0000:00:14.7: PS4 Baikal: AHCI polling timer started on xhci-aeolia (func .7, 1ms)
+[    2.638297] xhci_aeolia 0000:00:14.7: xhci_aeolia_probe_one 0 controller 90de irq 32
+[    2.646342] xhci_aeolia 0000:00:14.7: xHCI Host Controller
+[    2.650312] xhci_aeolia 0000:00:14.7: new USB bus registered, assigned bus number 1
+[    2.654406] xhci_aeolia 0000:00:14.7: hcc params 0x0228f66c hci version 0x100 quirks 0x0008000000010010
+[    2.658307] xhci_aeolia 0000:00:14.7: irq 32, io mem 0xce000000
+[    2.662301] xhci_aeolia 0000:00:14.7: xHCI Host Controller
+[    2.666300] xhci_aeolia 0000:00:14.7: new USB bus registered, assigned bus number 2
+[    2.670300] xhci_aeolia 0000:00:14.7: Host supports USB 3.0 SuperSpeed
+[    2.674405] usb usb1: New USB device found, idVendor=1d6b, idProduct=0002, bcdDevice= 7.00
+[    2.678298] usb usb1: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+[    2.682298] usb usb1: Product: xHCI Host Controller
+[    2.686299] usb usb1: Manufacturer: Linux 7.0.8-Strawberry-ThinLTO-Baikal-+ xhci-hcd
+[    2.690299] usb usb1: SerialNumber: 0000:00:14.7
+[    2.694397] hub 1-0:1.0: USB hub found
+[    2.698315] hub 1-0:1.0: 2 ports detected
+[    2.702440] usb usb2: We don't know the algorithms for LPM for this host, disabling LPM.
+[    2.706344] usb usb2: New USB device found, idVendor=1d6b, idProduct=0003, bcdDevice= 7.00
+[    2.710300] usb usb2: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+[    2.714300] usb usb2: Product: xHCI Host Controller
+[    2.718317] usb usb2: Manufacturer: Linux 7.0.8-Strawberry-ThinLTO-Baikal-+ xhci-hcd
+[    2.722301] usb usb2: SerialNumber: 0000:00:14.7
+[    2.726394] hub 2-0:1.0: USB hub found
+[    2.730318] hub 2-0:1.0: 2 ports detected
+[    2.758331] xhci_aeolia 0000:00:14.7: xhci_aeolia_probe_one 2 controller 90de irq 32
+[    2.766345] xhci_aeolia 0000:00:14.7: xHCI Host Controller
+[    2.770316] xhci_aeolia 0000:00:14.7: new USB bus registered, assigned bus number 3
+[    2.774420] xhci_aeolia 0000:00:14.7: hcc params 0x0220f06c hci version 0x100 quirks 0x0008000000010010
+[    2.778315] xhci_aeolia 0000:00:14.7: irq 32, io mem 0xcf000000
+[    2.782309] xhci_aeolia 0000:00:14.7: xHCI Host Controller
+[    2.786307] xhci_aeolia 0000:00:14.7: new USB bus registered, assigned bus number 4
+[    2.790308] xhci_aeolia 0000:00:14.7: Host supports USB 3.0 SuperSpeed
+[    2.794384] usb usb3: New USB device found, idVendor=1d6b, idProduct=0002, bcdDevice= 7.00
+[    2.798306] usb usb3: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+[    2.802306] usb usb3: Product: xHCI Host Controller
+[    2.806310] usb usb3: Manufacturer: Linux 7.0.8-Strawberry-ThinLTO-Baikal-+ xhci-hcd
+[    2.810306] usb usb3: SerialNumber: 0000:00:14.7
+[    2.814396] hub 3-0:1.0: USB hub found
+[    2.818321] hub 3-0:1.0: 1 port detected
+[    2.822422] usb usb4: We don't know the algorithms for LPM for this host, disabling LPM.
+[    2.826355] usb usb4: New USB device found, idVendor=1d6b, idProduct=0003, bcdDevice= 7.00
+[    2.830418] usb usb4: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+[    2.834328] usb usb4: Product: xHCI Host Controller
+[    2.838371] usb usb4: Manufacturer: Linux 7.0.8-Strawberry-ThinLTO-Baikal-+ xhci-hcd
+[    2.842309] usb usb4: SerialNumber: 0000:00:14.7
+[    2.846408] hub 4-0:1.0: USB hub found
+[    2.850331] hub 4-0:1.0: 1 port detected
+[    2.878429] usbcore: registered new interface driver uas
+[    2.882353] usbcore: registered new interface driver usb-storage
+[    2.886358] i8042: PNP: No PS/2 controller found.
+[    2.890358] mousedev: PS/2 mouse device common for all mice
+[    2.894393] usbcore: registered new interface driver xpad
+[    2.950345] usb 1-1: new low-speed USB device number 2 using xhci_aeolia
+[    2.974332] usb usb3-port1: over-current condition
+[    3.098353] usb 1-1: New USB device found, idVendor=046d, idProduct=c31c, bcdDevice=49.00
+[    3.102326] usb 1-1: New USB device strings: Mfr=1, Product=2, SerialNumber=0
+[    3.106325] usb 1-1: Product: USB Keyboard
+[    3.110326] usb 1-1: Manufacturer: Logitech
+[    3.110378] ata1: SATA link up 3.0 Gbps (SStatus 123 SControl 300)
+[    3.130353] ata1.00: ATA-10: TOSHIBA MQ04ABF100, JU0G0A, max UDMA/100
+[    3.138353] ata1.00: 1953525168 sectors, multi 16: LBA48 NCQ (depth 32), AA
+[    3.150346] ata1.00: Features: HIPM DIPM
+[    3.166346] usb usb4-port1: over-current condition
+[    3.170367] ata1.00: configured for UDMA/100
+[    3.174494] scsi 0:0:0:0: Direct-Access     ATA      TOSHIBA MQ04ABF1 0A   PQ: 0 ANSI: 5
+[    3.182683] sd 0:0:0:0: [sda] Drive-managed SMR disk
+[    3.182724] sd 0:0:0:0: Attached scsi generic sg0 type 0
+[    3.186338] sd 0:0:0:0: [sda] 1953525168 512-byte logical blocks: (1.00 TB/932 GiB)
+[    3.194331] sd 0:0:0:0: [sda] 4096-byte physical blocks
+[    3.198349] sd 0:0:0:0: [sda] Write Protect is off
+[    3.202351] sd 0:0:0:0: [sda] Mode Sense: 00 3a 00 00
+[    3.206395] sd 0:0:0:0: [sda] Write cache: enabled, read cache: enabled, doesn't support DPO or FUA
+[    3.210385] sd 0:0:0:0: [sda] Preferred minimum I/O size 4096 bytes
+[    3.318366] usb 2-2: new SuperSpeed USB device number 2 using xhci_aeolia
+[    3.346368] usb 2-2: New USB device found, idVendor=054c, idProduct=0c87, bcdDevice= 1.04
+[    3.350341] usb 2-2: New USB device strings: Mfr=1, Product=2, SerialNumber=0
+[    3.354341] usb 2-2: Product: 4-Port USB 3.0 Hub
+[    3.358341] usb 2-2: Manufacturer: Generic
+[    3.470364] hub 2-2:1.0: USB hub found
+[    3.474367] hub 2-2:1.0: 2 ports detected
+[    3.570362] usb 1-2: new high-speed USB device number 3 using xhci_aeolia
+[    3.722393] usb 1-2: New USB device found, idVendor=054c, idProduct=0c88, bcdDevice= 1.04
+[    3.726365] usb 1-2: New USB device strings: Mfr=1, Product=2, SerialNumber=0
+[    3.730386] usb 1-2: Product: 4-Port USB 2.0 Hub
+[    3.734364] usb 1-2: Manufacturer: Generic
+[    3.778413] hub 1-2:1.0: USB hub found
+[    3.782387] hub 1-2:1.0: 2 ports detected
+[    3.810415] usb 2-2.2: new SuperSpeed USB device number 3 using xhci_aeolia
+[    3.830397] usb 2-2.2: New USB device found, idVendor=152d, idProduct=0578, bcdDevice= 5.08
+[    3.834388] usb 2-2.2: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[    3.838396] usb 2-2.2: Product: USB to ATA/ATAPI Bridge
+[    3.842400] usb 2-2.2: Manufacturer: JMicron
+[    3.846432] usb 2-2.2: SerialNumber: 0123456789ABCDEF
+[    3.850494] usb 2-2.2: USB controller 0000:00:14.7 does not support streams, which are required by the UAS driver.
+[    3.854373] usb 2-2.2: Please try an other USB controller if you wish to use UAS.
+[    3.858394] usb 2-2.2: USB controller 0000:00:14.7 does not support streams, which are required by the UAS driver.
+[    3.860332] rtc_cmos rtc_cmos: broken or not accessible
+[    3.862373] usb 2-2.2: Please try an other USB controller if you wish to use UAS.
+[    3.866409] i2c_dev: i2c /dev entries driver
+[    3.870372] usb-storage 2-2.2:1.0: USB Mass Storage device detected
+[    3.870606] device-mapper: ioctl: 4.50.0-ioctl (2025-04-28) initialised: dm-devel@lists.linux.dev
+[    3.874414] usb-storage 2-2.2:1.0: Quirks match for vid 152d pid 0578: 1000000
+[    3.878426] amd_pstate: the _CPC object is not present in SBIOS or ACPI disabled
+[    3.882399] scsi host1: usb-storage 2-2.2:1.0
+[    3.886373] sdhci: Secure Digital Host Controller Interface driver
+[    3.886374] sdhci: Copyright(c) Pierre Ossman
+[    3.886398] sdhci-pci 0000:00:14.3: SDHCI controller found [104d:90da] (rev 0)
+[    3.886504] hid: raw HID events driver (C) Jiri Kosina
+[    3.894813] input: Logitech USB Keyboard as /devices/pci0000:00/0000:00:14.7/usb1/1-1/1-1:1.0/0003:046D:C31C.0001/input/input1
+[    3.930402] mmc0: SDHCI controller on PCI [0000:00:14.3] using ADMA
+[    3.986486] hid-generic 0003:046D:C31C.0001: input,hidraw0: USB HID v1.10 Keyboard [Logitech USB Keyboard] on usb-0000:00:14.7-1/input0
+[    4.002840] input: Logitech USB Keyboard as /devices/pci0000:00/0000:00:14.7/usb1/1-1/1-1:1.1/0003:046D:C31C.0002/input/input2
+[    4.046980] mmc0: new UHS-I speed SDR104 SDIO card at address 0001
+[    4.055375] [wlan][75]halPollDbgCr:(INIT WARN) SWPCDBGR 0x00000000
+[    4.070460] hid-generic 0003:046D:C31C.0002: input,hidraw1: USB HID v1.10 Device [Logitech USB Keyboard] on usb-0000:00:14.7-1/input1
+[    4.082447] usbcore: registered new interface driver usbhid
+[    4.090387] usbhid: USB HID core driver
+[    4.094493] usbcore: registered new interface driver snd-usb-audio
+[    4.098677] snd_hda_intel 0000:00:01.1: can't derive routing for PCI INT B
+[    4.106388] snd_hda_intel 0000:00:01.1: PCI INT B: not connected
+[    4.114492] u32 classifier
+[    4.118429]     input device check on
+[    4.118429]     Actions configured
+[    4.122499] ipip: IPv4 and MPLS over IPv4 tunneling driver
+[    4.131434] gre: GRE over IPv4 demultiplexer driver
+[    4.131990] input: HD-Audio Generic HDMI/DP,pcm=3 as /devices/pci0000:00/0000:00:01.1/sound/card0/input3
+[    4.138405] Initializing XFRM netlink socket
+[    4.146442] input: HD-Audio Generic HDMI/DP,pcm=7 as /devices/pci0000:00/0000:00:01.1/sound/card0/input4
+[    4.151563] NET: Registered PF_INET6 protocol family
+[    4.166581] Segment Routing with IPv6
+[    4.170394] RPL Segment Routing with IPv6
+[    4.174410] In-situ OAM (IOAM) with IPv6
+[    4.178427] mip6: Mobile IPv6
+[    4.178427] NET: Registered PF_PACKET protocol family
+[    4.186393] NET: Registered PF_APPLETALK protocol family
+[    4.190404] NET: Registered PF_X25 protocol family
+[    4.194402] X25: Linux Version 0.2
+[    4.198413] Bluetooth: RFCOMM TTY layer initialized
+[    4.202396] Bluetooth: RFCOMM socket layer initialized
+[    4.210393] Bluetooth: RFCOMM ver 1.11
+[    4.214394] Bluetooth: BNEP (Ethernet Emulation) ver 1.3
+[    4.218394] Bluetooth: BNEP filters: protocol multicast
+[    4.222398] Bluetooth: BNEP socket layer initialized
+[    4.230395] Bluetooth: HIDP (Human Interface Emulation) ver 1.2
+[    4.234396] Bluetooth: HIDP socket layer initialized
+[    4.238423] NET: Registered PF_PHONET protocol family
+[    4.246412] 8021q: 802.1Q VLAN Support v1.8
+[    4.252473] NET: Registered PF_IEEE802154 protocol family
+[    4.258423] Key type dns_resolver registered
+[    4.262474] batman_adv: B.A.T.M.A.N. advanced 2025.5 (compatibility version 15) loaded
+[    4.270439] NET: Registered PF_VSOCK protocol family
+[    4.274421] mpls_gso: MPLS GSO support
+[    4.282583] microcode: Current revision: 0x07043001
+[    4.287426] IPI shorthand broadcast: enabled
+[    4.304064] registered taskstats version 1
+[    4.306722] Loading compiled-in X.509 certificates
+[    4.316295] zswap: loaded using pool zstd
+[    4.318858] Btrfs loaded, zoned=no, fsverity=no
+[    4.326650] amdgpu 0000:00:01.0: can't derive routing for PCI INT A
+[    4.330408] amdgpu 0000:00:01.0: PCI INT A: not connected
+[    4.338407] amdgpu 0000:00:01.0: initializing kernel modesetting (GLADIUS 0x1002:0x9924 0x1002:0x9924 0x00).
+[    4.346425] amdgpu 0000:00:01.0: register mmio base: 0xE4800000
+[    4.354408] amdgpu 0000:00:01.0: register mmio size: 262144
+[    4.358428] amdgpu 0000:00:01.0: detected ip block number 0 <common_v1_0_0> (cik_common)
+[    4.366406] amdgpu 0000:00:01.0: detected ip block number 1 <gmc_v7_0_0> (gmc_v7_0)
+[    4.374406] amdgpu 0000:00:01.0: detected ip block number 2 <ih_v2_0_0> (cik_ih)
+[    4.382405] amdgpu 0000:00:01.0: detected ip block number 3 <dce_v8_1_0> (dce_v8_0)
+[    4.390405] amdgpu 0000:00:01.0: detected ip block number 4 <gfx_v7_1_0> (gfx_v7_0)
+[    4.398406] amdgpu 0000:00:01.0: detected ip block number 5 <sdma_v2_0_0> (cik_sdma)
+[    4.438763] amdgpu 0000:00:01.0: Fetched VBIOS from ROM BAR
+[    4.446411] amdgpu 0000:00:01.0: [drm] ATOM BIOS: 113-Roma-012
+[    4.450511] amdgpu 0000:00:01.0: vgaarb: deactivate vga console
+[    4.458419] amdgpu 0000:00:01.0: Trusted Memory Zone (TMZ) feature not supported
+[    4.466808] amdgpu 0000:00:01.0: Liverpool CLK: SPLL startup_freq_id=0 max_freq_id=0 SCLK startup_DID=16 current_DID=16
+[    4.478414] amdgpu 0000:00:01.0: Liverpool CLK: SPLL PDIVA=0 FBDIV=0x0
+[    4.482413] amdgpu 0000:00:01.0: Liverpool CLK: CG_SCLK_CNTL=0x00000010 DIVIDER=16 DIRCNTLEN=0 DIRCNTLDIV=0
+[    4.494413] amdgpu 0000:00:01.0: Liverpool CLK: force done. CG_SCLK_CNTL=0x00000010 DIRCNTLDIV=0 status=0x00000009
+[    4.502412] amdgpu 0000:00:01.0: Liverpool CLK: readback DID mismatch â€” expected 1 got 0
+[    4.514417] amdgpu 0000:00:01.0: vm size is 64 GB, 2 levels, block size is 10-bit, fragment size is 9-bit
+[    4.522417] amdgpu 0000:00:01.0: VRAM: 1024M 0x0000000F00000000 - 0x0000000F3FFFFFFF (1024M used)
+[    4.530415] amdgpu 0000:00:01.0: GART: 512M 0x0000000000000000 - 0x000000001FFFFFFF
+[    4.538420] amdgpu 0000:00:01.0: [drm] Detected VRAM RAM=1024M, BAR=1024M
+[    4.546415] amdgpu 0000:00:01.0: [drm] RAM width 64bits GDDR5
+[    4.554468] amdgpu 0000:00:01.0:  1024M of VRAM memory ready
+[    4.558418] amdgpu 0000:00:01.0:  3445M of GTT memory ready.
+[    4.562446] amdgpu 0000:00:01.0: [drm] GART: num cpu pages 131072, num gpu pages 131072
+[    4.574422] amdgpu 0000:00:01.0: Done gart
+[    4.578427] amdgpu 0000:00:01.0: Done init
+[    4.582441] amdgpu 0000:00:01.0: [drm] PCIE GART of 512M enabled (table at 0x0000000F00100000).
+[    4.591009] amdgpu 0000:00:01.0: PS4 GPU IRQ: vector=35 msi_enabled=1 pdev_irq=35
+[    4.598481] [drm:drm_connector_init_only] cmdline mode for connector HDMI-A-1  1920x1080@60Hz
+[    4.606426] amdgpu 0000:00:01.0: [drm] AMDGPU Display Connectors
+[    4.614419] amdgpu 0000:00:01.0: [drm] Connector 0:
+[    4.618419] amdgpu 0000:00:01.0: [drm]   HDMI-A-1
+[    4.622419] amdgpu 0000:00:01.0: [drm]   HPD1
+[    4.626420] amdgpu 0000:00:01.0: [drm]   DDC: 0x194c 0x194c 0x194d 0x194d 0x194e 0x194e 0x194f 0x194f
+[    4.638424] amdgpu 0000:00:01.0: [drm]   Encoders:
+[    4.642421] amdgpu 0000:00:01.0: [drm]     DFP1: INTERNAL_UNIPHY
+[    4.650473] [drm:dce_v8_0_pageflip_irq] amdgpu_crtc->pflip_status = 0 != AMDGPU_FLIP_SUBMITTED(2)
+[    4.654446] [drm:dce_v8_0_pageflip_irq] amdgpu_crtc->pflip_status = 0 != AMDGPU_FLIP_SUBMITTED(2)
+[    4.666483] amdgpu 0000:00:01.0: SE 4, SH per SE 1, CU per SH 9, active_cu_number 32
+[    4.674525] amdgpu 0000:00:01.0: Runtime PM not available
+[    4.682484] amdgpu 0000:00:01.0: [drm:drm_sysfs_connector_add] [CONNECTOR:54:HDMI-A-1] adding connector to sysfs
+[    4.690482] amdgpu 0000:00:01.0: [drm:drm_sysfs_connector_hotplug_event] [CONNECTOR:54:HDMI-A-1] generating connector hotplug event
+[    4.702436] [drm] Initialized amdgpu 3.64.0 for 0000:00:01.0 on minor 0
+[    4.710715] [drm:ps4_bridge_disable] ps4_bridge_disable (already disabled, skip)
+[    4.718428] [drm:amdgpu_atombios_encoder_dpms] encoder dpms 30 to mode 3, devices 00000008, active_devices 00000000
+[    4.730428] [drm:ps4_bridge_post_disable] ps4_bridge_post_disable
+[    4.742706] amdgpu 0000:00:01.0: [drm:drm_client_modeset_probe] 
+[    4.750431] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] [CONNECTOR:54:HDMI-A-1]
+[    4.758892] [drm:amdgpu_atombios_dp_get_dpcd] DPCD: 12 14 c4 41 01 06 01 80 02 00 00 00 00 00 00
+[    4.770796] [drm:amdgpu_atombios_dp_get_dpcd] Sink OUI: 000000
+[    4.774786] [drm:amdgpu_atombios_dp_get_dpcd] Branch OUI: 000000
+[    4.782894] [drm:ps4_bridge_detect] ps4_bridge_detect: force=1 dpcd_ret=0 lanes=0 clock=0
+[    4.790430] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] [CONNECTOR:54:HDMI-A-1] status updated from unknown to connected
+[    4.802435] [drm:ps4_bridge_get_modes] ps4_bridge_get_modes
+[    4.810588] amdgpu 0000:00:01.0: [drm:drm_sysfs_hotplug_event] generating hotplug event
+[    4.814532] [drm:ps4_bridge_get_modes] ps4_bridge_get_modes: using firmware EDID (256 bytes)
+[    4.822447] amdgpu 0000:00:01.0: [drm:update_display_info] [CONNECTOR:54:HDMI-A-1] HDMI: DVI dual 0, max TMDS clock 0 kHz
+[    4.826443] amdgpu 0000:00:01.0: [drm:update_display_info] [CONNECTOR:54:HDMI-A-1] ELD monitor LG FULL HD
+[    4.830444] amdgpu 0000:00:01.0: [drm:update_display_info] [CONNECTOR:54:HDMI-A-1] HDMI: latency present 0 0, video latency 0 0, audio latency 0 0
+[    4.834441] amdgpu 0000:00:01.0: [drm:update_display_info] [CONNECTOR:54:HDMI-A-1] ELD size 32, SAD count 0
+[    4.838745] [drm:ps4_bridge_get_modes] ps4_bridge_get_modes: EDID ok, 37 modes, extensions=1
+[    4.846461]  sda: sda1 sda3 sda5 sda7 sda9 sda10 sda11 sda12 sda13 sda17 sda19 sda25 sda27 sda29
+[    4.846738] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1920x1080": 75 174500 1920 1968 2000 2080 1080 1083 1088 1119 0x40 0x5 (BAD)
+[    4.850515] sd 0:0:0:0: [sda] Attached SCSI disk
+[    4.854434] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x480": 60 27000 720 736 798 858 480 489 495 525 0x40 0xa (BAD)
+[    4.862436] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1152x864": 75 108000 1152 1216 1344 1600 864 865 868 900 0x40 0x5 (BAD)
+[    4.866435] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1280x1024": 60 108000 1280 1328 1440 1688 1024 1025 1028 1066 0x40 0x5 (BAD)
+[    4.870435] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1440x900": 60 88750 1440 1488 1520 1600 900 903 909 926 0x40 0x9 (BAD)
+[    4.874436] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1680x1050": 60 119000 1680 1728 1760 1840 1050 1053 1059 1080 0x40 0x9 (BAD)
+[    4.874516] [wlan][75]wlanAdapterStart:(INIT WARN) Send a Dummy CMD as workaround
+[    4.878435] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1600x900": 60 108000 1600 1624 1704 1800 900 901 904 1000 0x40 0x5 (BAD)
+[    4.882467] [wlan][75]wlanQueryNicCapability:(INIT WARN) wlanQueryNicCapability: skip unexpected event ID[0x27]
+[    4.886437] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1280x800": 60 71000 1280 1328 1360 1440 800 803 809 823 0x40 0x9 (BAD)
+[    4.890672] [wlan][75]wlanAdapterStart:(INIT WARN) wlanAdapterStart: load manufacture data fail
+[    4.894457] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1400x1050": 60 101000 1400 1448 1480 1560 1050 1053 1057 1080 0x40 0x9 (BAD)
+[    4.902500] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "800x600": 60 40000 800 840 968 1056 600 601 605 628 0x40 0x5 (BAD)
+[    4.906458] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "640x480": 75 31500 640 656 720 840 480 481 484 500 0x40 0xa (BAD)
+[    4.914452] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "640x480": 60 25175 640 656 752 800 480 490 492 525 0x40 0xa (BAD)
+[    4.918458] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x400": 70 28320 720 738 846 900 400 412 414 449 0x40 0x6 (BAD)
+[    4.922463] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1280x1024": 75 135000 1280 1296 1440 1688 1024 1025 1028 1066 0x40 0x5 (BAD)
+[    4.926458] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1024x768": 75 78750 1024 1040 1136 1312 768 769 772 800 0x40 0x5 (BAD)
+[    4.930458] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1024x768": 60 65000 1024 1048 1184 1344 768 771 777 806 0x40 0xa (BAD)
+[    4.934461] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "800x600": 75 49500 800 816 896 1056 600 601 604 625 0x40 0x5 (BAD)
+[    4.938452] scsi 1:0:0:0: Direct-Access     JMicron  Generic          0508 PQ: 0 ANSI: 6
+[    4.942517] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x480": 60 27000 720 736 798 858 480 489 495 525 0x40 0xa (BAD)
+[    4.942575] sd 1:0:0:0: Attached scsi generic sg1 type 0
+[    4.946441] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "640x480": 60 25175 640 656 752 800 480 490 492 525 0x40 0xa (BAD)
+[    4.946450] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x576": 50 27000 720 732 796 864 576 581 586 625 0x40 0xa (BAD)
+[    4.946458] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1920x1080": 50 148500 1920 2448 2492 2640 1080 1084 1089 1125 0x40 0x5 (BAD)
+[    4.946465] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1280x720": 50 74250 1280 1720 1760 1980 720 725 730 750 0x40 0x5 (BAD)
+[    4.954466] sd 1:0:0:0: [sdb] 234441648 512-byte logical blocks: (120 GB/112 GiB)
+[    4.962441] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x480": 60 27027 720 736 798 858 480 489 495 525 0x40 0xa (BAD)
+[    4.962476] sd 1:0:0:0: [sdb] Write Protect is off
+[    4.974442] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "640x480": 60 25200 640 656 752 800 480 490 492 525 0x40 0xa (BAD)
+[    4.974452] sd 1:0:0:0: [sdb] Mode Sense: 47 00 00 08
+[    4.974456] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x480": 60 27027 720 736 798 858 480 489 495 525 0x40 0xa (BAD)
+[    4.990501] [wlan][75]mtk_reg_notify:(RLM WARN) County Code is not assigned. Use default WW.
+[    4.990501] sd 1:0:0:0: [sdb] Disabling FUA
+[    4.990501] sd 1:0:0:0: [sdb] Write cache: enabled, read cache: enabled, doesn't support DPO or FUA
+[    5.002447] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] [CONNECTOR:54:HDMI-A-1] probed modes:
+[    5.002458] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1920x1080": 60 148500 1920 2008 2052 2200 1080 1084 1089 1125 0x68 0x5
+[    5.010450] [wlan][75]rlmDomainSearchRegdomainFromLocalDataBase:(RLM ERROR) rlmDomainSearchRegdomainFromLocalDataBase(): Error, Cannot find the correct RegDomain. country = 00.
+[    5.022446] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1920x1080": 60 148500 1920 2008 2052 2200 1080 1084 1089 1125 0x48 0x5
+[    5.030940] [wlan][141]wlanBindBssIdxToNetInterface:(INIT ERROR) Array index out of bound, ucBssIndex=4
+[    5.042446] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1920x1080": 60 148352 1920 2008 2052 2200 1080 1084 1089 1125 0x40 0x5
+[    5.042456] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1280x720": 60 74250 1280 1390 1430 1650 720 725 730 750 0x40 0x5
+[    5.046451] [wlan][141]p2pRoleFsmStateTransition:(P2P STATE) [P2P_ROLE][0]TRANSITION(Bss1): [P2P_ROLE_STATE_IDLE] -> [P2P_ROLE_STATE_IDLE]
+[    5.058446] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1280x720": 60 74250 1280 1390 1430 1650 720 725 730 750 0x40 0x5
+[    5.070461] [wlan][141]wlanBindBssIdxToNetInterface:(INIT ERROR) Array index out of bound, ucBssIndex=4
+[    5.074447] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1280x720": 60 74176 1280 1390 1430 1650 720 725 730 750 0x40 0x5
+[    5.074457] amdgpu 0000:00:01.0: [drm:drm_client_modeset_probe] [CONNECTOR:54:HDMI-A-1] enabled? yes
+[    5.082452] [wlan][141]p2pRoleFsmStateTransition:(P2P STATE) [P2P_ROLE][1]TRANSITION(Bss2): [P2P_ROLE_STATE_IDLE] -> [P2P_ROLE_STATE_IDLE]
+[    5.082459] amdgpu 0000:00:01.0: [drm:drm_client_modeset_probe] [CONNECTOR:54:HDMI-A-1] found cmdline mode: 1920x1080
+[    5.094453] [wlan][141]wlanProcessCommandQueue:(INIT WARN) NO Res CMD TYPE[1] ID[0x11] SEQ[29]
+[    5.094887] [wlan][142]halPrintMailbox:(INIT ERROR) MailBox Status = 0x0003005A, 0x00FF00FF
+[    5.095182] [wlan][141]wlanProcessCommandQueue:(INIT WARN) NO Res CMD TYPE[1] ID[0x11] SEQ[29]
+[    5.095182] [wlan][141]wlanProcessCommandQueue:(INIT WARN) NO Res CMD TYPE[1] ID[0x11] SEQ[29]
+[    5.095207] [wlan][141]wlanProcessCommandQueue:(INIT WARN) NO Res CMD TYPE[1] ID[0x11] SEQ[29]
+[    5.106450] amdgpu 0000:00:01.0: [drm:drm_client_modeset_probe] picking CRTCs for 16384x16384 config
+[    5.106477] [wlan][142]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[    5.122454] amdgpu 0000:00:01.0: [drm:drm_client_modeset_probe] [CRTC:42:crtc-0] desired mode 1920x1080 set (0,0)
+[    5.122473] [wlan][142]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[    5.138462] amdgpu 0000:00:01.0: [drm:__drm_fb_helper_initial_config_and_unlock] test CRTC 0 primary plane
+[    5.142475]  sdb: sdb1 sdb2
+[    5.142503] sd 1:0:0:0: [sdb] Attached SCSI disk
+[    5.150474] [wlan][142]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE8
+[    5.162455] amdgpu 0000:00:01.0: [drm:drm_fbdev_ttm_driver_fbdev_probe] surface width(1920), height(1080) and bpp(32)
+[    5.162497] [wlan][142]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE8
+[    5.178519] amdgpu 0000:00:01.0: [drm:drm_mode_addfb2] [FB:56]
+[    5.190467] [wlan][142]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[    5.394494] fbcon: amdgpudrmfb (fb0) is primary device
+[    5.394487] [wlan][141]wlanProcessCommandQueue:(INIT WARN) NO Res CMD TYPE[1] ID[0x70] SEQ[36]
+[    5.394628] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[    5.394639] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:42:crtc-0] [FB:56] #connectors=1 (x y) (0 0)
+[    5.394647] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:42:crtc-0] no fb, full mode set
+[    5.394653] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:42:crtc-0] modes are different, full mode set:
+[    5.394658] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] "": 0 0 0 0 0 0 0 0 0 0 0x0 0x0
+[    5.394665] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] "1920x1080": 60 148500 1920 2008 2052 2200 1080 1084 1089 1125 0x68 0x5
+[    5.394673] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CONNECTOR:54:HDMI-A-1] encoder changed, full mode switch
+[    5.394677] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CONNECTOR:54:HDMI-A-1] CRTC changed, full mode switch
+[    5.394682] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CONNECTOR:54:HDMI-A-1] to [CRTC:42:crtc-0]
+[    5.394688] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:42:crtc-0] attempting to set mode from userspace: "1920x1080": 60 148500 1920 2008 2052 2200 1080 1084 1089 1125 0x68 0x5
+[    5.394698] [drm:amdgpu_encoder_set_active_device] setting active device to 00000008 from 00000008 00000008 for encoder 2
+[    5.394707] [drm:amdgpu_atombios_dp_set_link_config] ps4 dp link config: ret=0 mode_clock=148500 lanes=4 clock=162000 sink_type=19
+[    5.394722] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_mode] [CRTC:42:crtc-0]
+[    5.394727] [drm:ps4_bridge_disable] ps4_bridge_disable (already disabled, skip)
+[    5.394746] [drm:ps4_bridge_post_disable] ps4_bridge_post_disable
+[    5.394778] [drm:dce_v8_0_crtc_mode_set] ps4 crtc mode_set: 1920x1080 clock=148500 adjusted=162000 pll=255
+[    5.394778] [drm:amdgpu_pll_compute] 162000 - 162000, pll dividers - fb: 113.4 ref: 2, post 35
+[    5.394778] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_mode] [ENCODER:53:TMDS-53] set [MODE:1920x1080]
+[    5.394778] [drm:amdgpu_atombios_encoder_dpms] encoder dpms 30 to mode 3, devices 00000008, active_devices 00000008
+[    5.394498] [wlan][142]halPrintMailbox:(INIT ERROR) MailBox Status = 0x0003005A, 0x00FF00FF
+[    5.394498] [drm:dce_v8_0_pageflip_irq] amdgpu_crtc->pflip_status = 0 != AMDGPU_FLIP_SUBMITTED(2)
+[    5.394498] [drm:dce_v8_0_pageflip_irq] amdgpu_crtc->pflip_status = 0 != AMDGPU_FLIP_SUBMITTED(2)
+[    5.394498] [drm:dce_v8_0_pageflip_irq] amdgpu_crtc->pflip_status = 0 != AMDGPU_FLIP_SUBMITTED(2)
+[    5.394498] [drm:dce_v8_0_pageflip_irq] amdgpu_crtc->pflip_status = 0 != AMDGPU_FLIP_SUBMITTED(2)
+[    5.394498] [drm:dce_v8_0_pageflip_irq] amdgpu_crtc->pflip_status = 0 != AMDGPU_FLIP_SUBMITTED(2)
+[    5.394498] [wlan][142]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[    5.394498] [wlan][142]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[    5.394498] [wlan][142]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE8
+[    5.394498] [wlan][142]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DF6
+[    5.394498] [wlan][142]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[    5.394528] [wlan][141]wlanoidSetGtkRekeyData:(REQ INFO) wlanoidSetGtkRekeyData
+[    5.394528] [wlan][141]wlanoidSetGtkRekeyData:(REQ INFO) ucCmdSeqNum = 41
+[    5.394778] Bluetooth: hci0: Firmware already downloaded
+[    5.398865] [drm:ps4_bridge_mode_set] vic mode: 16
+[    5.398900] [drm:dce_v8_0_crtc_load_lut] 0
+[    5.398928] [drm:ps4_bridge_pre_enable] ps4_bridge_pre_enable
+[    5.402493] [drm:amdgpu_atombios_encoder_dpms] encoder dpms 30 to mode 0, devices 00000008, active_devices 00000008
+[    5.418541] Bluetooth: hci0: Device setup in 23438 usecs
+[    5.418873] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 0 voltage 0.4V pre_emph 0dB
+[    5.418890] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 1 voltage 0.4V pre_emph 0dB
+[    5.418894] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 2 voltage 0.4V pre_emph 0dB
+[    5.418898] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 3 voltage 0.4V pre_emph 0dB
+[    5.418902] [drm:amdgpu_atombios_dp_get_adjust_train] using signal parameters: voltage 0.4V pre_emph 0dB
+[    5.422885] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 0 voltage 0.4V pre_emph 0dB
+[    5.422902] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 1 voltage 0.4V pre_emph 0dB
+[    5.422906] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 2 voltage 0.4V pre_emph 0dB
+[    5.422910] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 3 voltage 0.4V pre_emph 0dB
+[    5.422914] [drm:amdgpu_atombios_dp_get_adjust_train] using signal parameters: voltage 0.4V pre_emph 0dB
+[    5.426882] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 0 voltage 0.4V pre_emph 0dB
+[    5.426899] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 1 voltage 0.4V pre_emph 0dB
+[    5.426904] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 2 voltage 0.4V pre_emph 0dB
+[    5.426908] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 3 voltage 0.4V pre_emph 0dB
+[    5.426912] [drm:amdgpu_atombios_dp_get_adjust_train] using signal parameters: voltage 0.4V pre_emph 0dB
+[    5.430886] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 0 voltage 0.4V pre_emph 0dB
+[    5.430903] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 1 voltage 0.4V pre_emph 0dB
+[    5.430907] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 2 voltage 0.4V pre_emph 0dB
+[    5.430911] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 3 voltage 0.4V pre_emph 0dB
+[    5.430915] [drm:amdgpu_atombios_dp_get_adjust_train] using signal parameters: voltage 0.4V pre_emph 0dB
+[    5.434886] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 0 voltage 0.4V pre_emph 0dB
+[    5.434902] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 1 voltage 0.4V pre_emph 0dB
+[    5.434907] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 2 voltage 0.4V pre_emph 0dB
+[    5.434911] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 3 voltage 0.4V pre_emph 0dB
+[    5.434915] [drm:amdgpu_atombios_dp_get_adjust_train] using signal parameters: voltage 0.4V pre_emph 0dB
+[    5.438892] [drm:amdgpu_atombios_dp_link_train] *ERROR* clock recovery tried 5 times
+[    5.438907] [drm:amdgpu_atombios_dp_link_train] *ERROR* clock recovery failed
+[    5.439720] [drm:ps4_bridge_enable] ps4_bridge_enable (mode: 16)
+[    5.439728] [drm:ps4_bridge_enable] ps4_bridge_enable: Belize attempt 1/3
+[    5.622968] [drm:amdgpu_atombios_dp_get_dpcd] DPCD: 12 14 c4 41 01 06 01 80 02 00 00 00 00 00 00
+[    5.623346] [drm:amdgpu_atombios_dp_get_dpcd] Sink OUI: 000000
+[    5.623712] [drm:amdgpu_atombios_dp_get_dpcd] Branch OUI: 000000
+[    5.624178] [drm:ps4_bridge_enable] ps4_bridge: post-enable DPCD ret=0 lanes=4 clock=162000 sink_type=19
+[    5.624185] [drm:ps4_bridge_enable] ps4_bridge: retraining DP link after bridge enable
+[    5.638895] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 0 voltage 0.4V pre_emph 0dB
+[    5.638913] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 1 voltage 0.4V pre_emph 0dB
+[    5.638917] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 2 voltage 0.4V pre_emph 0dB
+[    5.638921] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 3 voltage 0.4V pre_emph 0dB
+[    5.638925] [drm:amdgpu_atombios_dp_get_adjust_train] using signal parameters: voltage 0.4V pre_emph 0dB
+[    5.642895] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 0 voltage 0.4V pre_emph 0dB
+[    5.642912] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 1 voltage 0.4V pre_emph 0dB
+[    5.642917] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 2 voltage 0.4V pre_emph 0dB
+[    5.642921] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 3 voltage 0.4V pre_emph 0dB
+[    5.642925] [drm:amdgpu_atombios_dp_get_adjust_train] using signal parameters: voltage 0.4V pre_emph 0dB
+[    5.646895] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 0 voltage 0.4V pre_emph 0dB
+[    5.646912] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 1 voltage 0.4V pre_emph 0dB
+[    5.646916] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 2 voltage 0.4V pre_emph 0dB
+[    5.646920] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 3 voltage 0.4V pre_emph 0dB
+[    5.646924] [drm:amdgpu_atombios_dp_get_adjust_train] using signal parameters: voltage 0.4V pre_emph 0dB
+[    5.650899] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 0 voltage 0.4V pre_emph 0dB
+[    5.650916] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 1 voltage 0.4V pre_emph 0dB
+[    5.650920] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 2 voltage 0.4V pre_emph 0dB
+[    5.650924] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 3 voltage 0.4V pre_emph 0dB
+[    5.650928] [drm:amdgpu_atombios_dp_get_adjust_train] using signal parameters: voltage 0.4V pre_emph 0dB
+[    5.654899] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 0 voltage 0.4V pre_emph 0dB
+[    5.654916] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 1 voltage 0.4V pre_emph 0dB
+[    5.654920] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 2 voltage 0.4V pre_emph 0dB
+[    5.654924] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 3 voltage 0.4V pre_emph 0dB
+[    5.654928] [drm:amdgpu_atombios_dp_get_adjust_train] using signal parameters: voltage 0.4V pre_emph 0dB
+[    5.658900] [drm:amdgpu_atombios_dp_link_train] *ERROR* clock recovery tried 5 times
+[    5.658915] [drm:amdgpu_atombios_dp_link_train] *ERROR* clock recovery failed
+[    5.742517] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:42:crtc-0] Setting connector DPMS state to on
+[    5.742536] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 	[CONNECTOR:54:HDMI-A-1] set DPMS on
+[    5.742771] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[    5.742773] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:44:crtc-1] [NOFB]
+[    5.746768] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[    5.746772] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:46:crtc-2] [NOFB]
+[    5.746782] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[    5.746782] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:48:crtc-3] [NOFB]
+[    5.746782] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[    5.746782] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:50:crtc-4] [NOFB]
+[    5.746782] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[    5.746782] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:52:crtc-5] [NOFB]
+[    5.746819] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[    5.746824] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:42:crtc-0] [FB:56] #connectors=1 (x y) (0 0)
+[    5.746832] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CONNECTOR:54:HDMI-A-1] to [CRTC:42:crtc-0]
+[    5.750504] Console: switching to colour frame buffer device 240x67
+[    5.750504] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[    5.750504] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:42:crtc-0] [FB:56] #connectors=1 (x y) (0 0)
+[    5.750504] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CONNECTOR:54:HDMI-A-1] to [CRTC:42:crtc-0]
+[    6.958576] amdgpu 0000:00:01.0: [drm] fb0: amdgpudrmfb frame buffer device
+[    6.966787] ahci 0000:00:14.2: DMA bits = 32
+[    6.970576] ahci 0000:00:14.2: DMA enable
+[    6.974596] ahci 0000:00:14.2: AHCI vers 0001.0300, 32 command slots, 3 Gbps, unknown mode
+[    6.982573] ahci 0000:00:14.2: 1/1 ports implemented (port mask 0x1)
+[    6.988058] amdgpu 0000:00:01.0: [drm:drm_fb_helper_hotplug_event] 
+[    6.990576] ahci 0000:00:14.2: flags: ncq sntf pm clo only pmp pio slum part ccc apst 
+[    6.990579] amdgpu 0000:00:01.0: [drm:drm_client_modeset_probe] 
+[    6.994801] scsi host2: ahci
+[    6.992751] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] [CONNECTOR:54:HDMI-A-1]
+[    6.996449] ata2: SATA max UDMA/133 abar m32768@0xc4000000 port 0xc4000100 irq 36 lpm-pol 1 ext
+[    6.996156] [drm:amdgpu_atombios_dp_get_dpcd] DPCD: 12 14 c4 41 01 06 01 80 02 00 00 00 00 00 00
+[    6.998598] ahci 0000:00:14.2: PS4 Baikal: AHCI polling timer started (1ms)
+[    6.998384] [drm:amdgpu_atombios_dp_get_dpcd] Sink OUI: 000000
+[    7.000950] netconsole: netconsole: local port 6665
+[    7.000137] [drm:amdgpu_atombios_dp_get_dpcd] Branch OUI: 000000
+[    7.003427] netconsole: netconsole: local IPv4 address 192.168.0.2
+[    7.002624] [drm:ps4_bridge_detect] ps4_bridge_detect: force=1 dpcd_ret=0 lanes=4 clock=162000
+[    7.005077] netconsole: netconsole: interface name 'eth0'
+[    7.003821] [drm:ps4_bridge_get_modes] ps4_bridge_get_modes
+[    7.006579] netconsole: netconsole: local ethernet address 'ff:ff:ff:ff:ff:ff'
+[    7.005441] amdgpu 0000:00:01.0: [drm:drm_edid_connector_update] [CONNECTOR:54:HDMI-A-1] EDID changed, epoch counter 2
+[    7.008159] netconsole: netconsole: remote port 6666
+[    7.006669] [drm:ps4_bridge_get_modes] ps4_bridge_get_modes: using firmware EDID (256 bytes)
+[    7.009855] netconsole: netconsole: remote IPv4 address 192.168.0.1
+[    7.008324] amdgpu 0000:00:01.0: [drm:update_display_info] [CONNECTOR:54:HDMI-A-1] HDMI: DVI dual 0, max TMDS clock 0 kHz
+[    7.011437] netconsole: netconsole: remote ethernet address ff:ff:ff:ff:ff:ff
+[    7.010056] amdgpu 0000:00:01.0: [drm:update_display_info] [CONNECTOR:54:HDMI-A-1] ELD monitor LG FULL HD
+[    7.013211] netpoll: netconsole: eth0 doesn't exist, aborting
+[    7.012362] amdgpu 0000:00:01.0: [drm:update_display_info] [CONNECTOR:54:HDMI-A-1] HDMI: latency present 0 0, video latency 0 0, audio latency 0 0
+[    7.014576] netconsole: Not enabling netconsole for cmdline0. Netpoll setup failed
+[    7.014257] amdgpu 0000:00:01.0: [drm:update_display_info] [CONNECTOR:54:HDMI-A-1] ELD size 32, SAD count 0
+[    7.016601] printk: console [netcon0] enabled
+[    7.015933] [drm:ps4_bridge_get_modes] ps4_bridge_get_modes: EDID ok, 37 modes, extensions=1
+[    7.018595] netconsole: network logging started
+[    7.018874] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1920x1080": 75 174500 1920 1968 2000 2080 1080 1083 1088 1119 0x40 0x5 (BAD)
+[    7.021017] cfg80211: Loading compiled-in X.509 certificates for regulatory database
+[    7.020405] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x480": 60 27000 720 736 798 858 480 489 495 525 0x40 0xa (BAD)
+[    7.031718] Loaded X.509 cert 'sforshee: 00b28ddf47aef9cea7'
+[    7.038576] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1152x864": 75 108000 1152 1216 1344 1600 864 865 868 900 0x40 0x5 (BAD)
+[    7.040175] Loaded X.509 cert 'wens: 61c038651aabdcf94bd0ac7ff06c7248db18c600'
+[    7.038585] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1280x1024": 60 108000 1280 1328 1440 1688 1024 1025 1028 1066 0x40 0x5 (BAD)
+[    7.042679] faux_driver regulatory: Direct firmware load for regulatory.db failed with error -2
+[    7.040909] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1440x900": 60 88750 1440 1488 1520 1600 900 903 909 926 0x40 0x9 (BAD)
+[    7.044958] cfg80211: failed to load regulatory.db
+[    7.045018] clk: Disabling unused clocks
+[    7.043828] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1680x1050": 60 119000 1680 1728 1760 1840 1050 1053 1059 1080 0x40 0x9 (BAD)
+[    7.046582] ALSA device list:
+[    7.046583] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1600x900": 60 108000 1600 1624 1704 1800 900 901 904 1000 0x40 0x5 (BAD)
+[    7.049070]   #0: HD-Audio Generic at 0xe4840000 irq 34
+[    7.049116] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1280x800": 60 71000 1280 1328 1360 1440 800 803 809 823 0x40 0x9 (BAD)
+[    7.049134] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1400x1050": 60 101000 1400 1448 1480 1560 1050 1053 1057 1080 0x40 0x9 (BAD)
+[    7.434614] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "800x600": 60 40000 800 840 968 1056 600 601 605 628 0x40 0x5 (BAD)
+[    7.434630] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "640x480": 75 31500 640 656 720 840 480 481 484 500 0x40 0xa (BAD)
+[    7.464005] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "640x480": 60 25175 640 656 752 800 480 490 492 525 0x40 0xa (BAD)
+[    7.464023] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x400": 70 28320 720 738 846 900 400 412 414 449 0x40 0x6 (BAD)
+[    7.464030] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1280x1024": 75 135000 1280 1296 1440 1688 1024 1025 1028 1066 0x40 0x5 (BAD)
+[    7.464037] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1024x768": 75 78750 1024 1040 1136 1312 768 769 772 800 0x40 0x5 (BAD)
+[    7.474646] ata2: SATA link up 1.5 Gbps (SStatus 113 SControl 300)
+[    7.478606] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1024x768": 60 65000 1024 1048 1184 1344 768 771 777 806 0x40 0xa (BAD)
+[    7.480573] ata2.00: ATAPI: SONY    PS-SYSTEM   420R, 6141, max UDMA/133
+[    7.482629] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "800x600": 75 49500 800 816 896 1056 600 601 604 625 0x40 0x5 (BAD)
+[    7.484599] ata2.00: configured for UDMA/133
+[    7.486614] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x480": 60 27000 720 736 798 858 480 489 495 525 0x40 0xa (BAD)
+[    7.502757] scsi 2:0:0:0: CD-ROM            SONY     PS-SYSTEM   420R 6141 PQ: 0 ANSI: 5
+[    7.502607] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "640x480": 60 25175 640 656 752 800 480 490 492 525 0x40 0xa (BAD)
+[    7.614623] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x576": 50 27000 720 732 796 864 576 581 586 625 0x40 0xa (BAD)
+[    7.630615] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1920x1080": 50 148500 1920 2448 2492 2640 1080 1084 1089 1125 0x40 0x5 (BAD)
+[    7.646620] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1280x720": 50 74250 1280 1720 1760 1980 720 725 730 750 0x40 0x5 (BAD)
+[    7.662652] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x480": 60 27027 720 736 798 858 480 489 495 525 0x40 0xa (BAD)
+[    7.674647] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "640x480": 60 25200 640 656 752 800 480 490 492 525 0x40 0xa (BAD)
+[    7.690624] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x480": 60 27027 720 736 798 858 480 489 495 525 0x40 0xa (BAD)
+[    7.706626] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] [CONNECTOR:54:HDMI-A-1] probed modes:
+[    7.718625] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1920x1080": 60 148500 1920 2008 2052 2200 1080 1084 1089 1125 0x68 0x5
+[    7.734635] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1920x1080": 60 148500 1920 2008 2052 2200 1080 1084 1089 1125 0x48 0x5
+[    7.750622] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1920x1080": 60 148352 1920 2008 2052 2200 1080 1084 1089 1125 0x40 0x5
+[    7.766626] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1280x720": 60 74250 1280 1390 1430 1650 720 725 730 750 0x40 0x5
+[    7.782627] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1280x720": 60 74250 1280 1390 1430 1650 720 725 730 750 0x40 0x5
+[    7.798629] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1280x720": 60 74176 1280 1390 1430 1650 720 725 730 750 0x40 0x5
+[    7.814626] amdgpu 0000:00:01.0: [drm:drm_client_modeset_probe] [CONNECTOR:54:HDMI-A-1] enabled? yes
+[    7.826629] amdgpu 0000:00:01.0: [drm:drm_client_modeset_probe] [CONNECTOR:54:HDMI-A-1] found cmdline mode: 1920x1080
+[    7.838627] amdgpu 0000:00:01.0: [drm:drm_client_modeset_probe] picking CRTCs for 1920x1080 config
+[    7.850633] amdgpu 0000:00:01.0: [drm:drm_client_modeset_probe] [CRTC:42:crtc-0] desired mode 1920x1080 set (0,0)
+[    7.862653] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[    7.870677] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:42:crtc-0] [FB:56] #connectors=1 (x y) (0 0)
+[    7.882653] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CONNECTOR:54:HDMI-A-1] to [CRTC:42:crtc-0]
+[    7.882702] sr 2:0:0:0: [sr0] scsi3-mmc drive: 0x/0x cd/rw xa/form2 cdda tray
+[    7.894636] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[    7.894635] cdrom: Uniform CD-ROM driver Revision: 3.20
+[    7.894636] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:44:crtc-1] [NOFB]
+[    7.926906] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[    7.934633] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:46:crtc-2] [NOFB]
+[    7.946908] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[    7.954643] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:48:crtc-3] [NOFB]
+[    7.962908] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[    7.970642] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:50:crtc-4] [NOFB]
+[    7.982910] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[    7.990649] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:52:crtc-5] [NOFB]
+[    7.990705] sr 2:0:0:0: Attached scsi CD-ROM sr0
+[    7.992062] amdgpu 0000:00:01.0: [drm:drm_client_hotplug] fbdev: ret=0
+[    7.994684] sr 2:0:0:0: Attached scsi generic sg2 type 5
+[    8.023164] Freeing unused kernel image (initmem) memory: 1176K
+[    8.030648] Write protecting the kernel read-only data: 45056k
+[    8.035775] Freeing unused kernel image (text/rodata gap) memory: 1796K
+[    8.046866] Freeing unused kernel image (rodata/data gap) memory: 856K
+[    8.054668] Run /init as init process
+[    8.058641]   with arguments:
+[    8.062642]     /init
+[    8.066643]   with environment:
+[    8.070641]     HOME=/
+[    8.074642]     TERM=linux
+[    9.786786] random: crng init done
+[   10.302813] [wlan][141]wlanProcessCommandQueue:(INIT WARN) NO Res CMD TYPE[1] ID[0x14] SEQ[49]
+[   10.310840] [wlan][142]halPrintMailbox:(INIT ERROR) MailBox Status = 0x0003005A, 0x00FF00FF
+[   10.322831] [wlan][142]halPollDbgCr:(INIT WARN) SWPCDBGR 0xE0010DE2
+[   10.330827] [wlan][142]halPollDbgCr:(INIT WARN) SWPCDBGR 0x00001DDE
+[   10.338812] [wlan][142]halPollDbgCr:(INIT WARN) SWPCDBGR 0x00001DDE
+[   10.342813] [wlan][142]halPollDbgCr:(INIT WARN) SWPCDBGR 0x00001DDE
+[   10.350808] [wlan][142]halPollDbgCr:(INIT WARN) SWPCDBGR 0x00001DDE
+[   10.491973] EXT4-fs (sdb2): mounted filesystem 1edf2469-7901-4984-abfe-2042027e0841 r/w with ordered data mode. Quota mode: disabled.
+[   10.618907] systemd[1]: System time advanced to built-in epoch: Thu 2026-11-05 10:36:31 -03
+[   10.699501] systemd[1]: systemd 262.2-1-arch running in system mode (+PAM +AUDIT -SELINUX +APPARMOR -IMA +IPE +SMACK +SECCOMP +GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 +KMOD +LIBCRYPTSETUP +LIBCRYPTSETUP_PLUGINS +LIBFDISK +PCRE2 +PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD +BPF_FRAMEWORK +BTF +XKBCOMMON +UTMP +LIBARCHIVE)
+[   10.734863] systemd[1]: Detected architecture x86-64.
+[   10.743367] systemd[1]: Hostname set to <ps4-baikal>.
+[   10.886877] systemd[1]: bpf-restrict-fs: BPF LSM hook not enabled in the kernel, BPF LSM not supported.
+[   11.180298] systemd[1]: Queued start job for default target Multi-User System.
+[   11.201511] systemd[1]: Created slice Slice /system/dirmngr.
+[   11.210844] systemd[1]: Created slice Slice /system/getty.
+[   11.221585] systemd[1]: Created slice Slice /system/gpg-agent.
+[   11.227163] systemd[1]: Created slice Slice /system/gpg-agent-browser.
+[   11.233150] systemd[1]: Created slice Slice /system/gpg-agent-extra.
+[   11.239262] systemd[1]: Created slice Slice /system/gpg-agent-ssh.
+[   11.248972] systemd[1]: Created slice Slice /system/keyboxd.
+[   11.253177] systemd[1]: Created slice Slice /system/modprobe.
+[   11.263422] systemd[1]: Created slice Slice /system/wpa_supplicant.
+[   11.268843] systemd[1]: Created slice User and Session Slice.
+[   11.272571] systemd[1]: Started Dispatch Password Requests to Console Directory Watch.
+[   11.276334] systemd[1]: Started Forward Password Requests to Wall Directory Watch.
+[   11.283206] systemd[1]: Set up automount Arbitrary Executable File Formats File System Automount Point.
+[   11.288433] systemd[1]: Expecting device /sys/subsystem/net/devices/wlan0...
+[   11.292217] systemd[1]: Reached target Local dm-clone Devices.
+[   11.303136] systemd[1]: Reached target Image Downloads.
+[   11.311014] systemd[1]: Reached target Local Integrity Protected Volumes.
+[   11.316327] systemd[1]: Reached target Path Units.
+[   11.324082] systemd[1]: Reached target Remote File Systems.
+[   11.328304] systemd[1]: Reached target Slice Units.
+[   11.335995] systemd[1]: Reached target Swaps.
+[   11.343187] systemd[1]: Reached target Local Verity Protected Volumes.
+[   11.348529] systemd[1]: Listening on Device-mapper event daemon FIFOs.
+[   11.352596] systemd[1]: Listening on LVM2 poll daemon socket.
+[   11.364610] systemd[1]: Listening on Query the User Interactively for a Password.
+[   11.376137] systemd[1]: Listening on Process Core Dump Socket.
+[   11.380624] systemd[1]: Listening on Credential Encryption/Decryption.
+[   11.392507] systemd[1]: Listening on Disk Encryption Enrollment Service Socket.
+[   11.404582] systemd[1]: Listening on Factory Reset Management.
+[   11.415404] systemd[1]: Listening on Hostname Service Socket.
+[   11.424138] systemd[1]: Listening on Journal Socket (/dev/log).
+[   11.428555] systemd[1]: Listening on Journal Sockets.
+[   11.435388] systemd[1]: Listening on Console Output Muting Service Socket.
+[   11.440677] systemd[1]: Listening on Network Management Resolve Hook Socket.
+[   11.447684] systemd[1]: Listening on Network Management Metrics Varlink Socket.
+[   11.452695] systemd[1]: Listening on Network Management Varlink Socket.
+[   11.463881] systemd[1]: Listening on Network Management Netlink Socket.
+[   11.468709] systemd[1]: TPM PCR Measurements skipped, unmet condition check ConditionSecurity=measured-os
+[   11.470986] systemd[1]: Make TPM PCR Policy skipped, unmet condition check ConditionSecurity=measured-uki
+[   11.479265] systemd[1]: Listening on Disk Repartitioning Service Socket.
+[   11.484557] systemd[1]: Listening on Resolve Monitor Varlink Socket.
+[   11.488525] systemd[1]: Listening on Resolve Service Varlink Socket.
+[   11.500633] systemd[1]: Listening on Simple Block Device Backed Storage Provider.
+[   11.508740] systemd[1]: Listening on Simple File System Backed Storage Provider.
+[   11.516577] systemd[1]: Listening on System Install Tool.
+[   11.528924] systemd[1]: Listening on System Updates.
+[   11.532948] systemd[1]: Listening on udev Kernel Socket.
+[   11.540540] systemd[1]: Listening on udev Varlink Socket.
+[   11.548752] systemd[1]: Listening on User Database Manager Socket.
+[   11.560231] systemd[1]: Mounting Huge Pages File System...
+[   11.571602] systemd[1]: Mounting POSIX Message Queue File System...
+[   11.576462] systemd[1]: Kernel Debug File System skipped, unmet condition check ConditionPathExists=/sys/kernel/debug
+[   11.579193] systemd[1]: Kernel Trace File System skipped, unmet condition check ConditionPathExists=/sys/kernel/tracing
+[   11.583152] systemd[1]: tmp.mount: Directory /tmp to mount over is not empty, mounting anyway.
+[   11.591108] systemd[1]: tmp.mount: x-systemd.graceful-option=usrquota specified, but option is not available, suppressing.
+[   11.598997] systemd[1]: Mounting Temporary Directory /tmp...
+[   11.608328] systemd[1]: Create List of Static Device Nodes skipped, unmet condition check ConditionFileNotEmpty=/lib/modules/7.0.8-Strawberry-ThinLTO-Baikal-+/modules.devname
+[   11.615608] systemd[1]: Starting Monitoring of LVM2 mirrors, snapshots etc. using dmeventd or progress polling...
+[   11.620586] systemd[1]: Load Kernel Module configfs skipped, unmet condition check ConditionKernelModuleLoaded=!configfs
+[   11.627610] systemd[1]: Mounting Kernel Configuration File System...
+[   11.632535] systemd[1]: Load Kernel Module drm skipped, unmet condition check ConditionKernelModuleLoaded=!drm
+[   11.635099] systemd[1]: Load Kernel Module fuse skipped, unmet condition check ConditionKernelModuleLoaded=!fuse
+[   11.642969] systemd[1]: Mounting FUSE Control File System...
+[   11.652039] systemd[1]: Clear Stale Hibernate Storage Info skipped, unmet condition check ConditionPathExists=/sys/firmware/efi/efivars/HibernateLocation-8cf2644b-4b0b-428f-9387-6d876050dc67
+[   11.659001] systemd[1]: Starting Journal Service...
+[   11.672614] systemd[1]: Starting Load Kernel Modules...
+[   11.680473] systemd[1]: TPM PCR Machine ID Measurement skipped, unmet condition check ConditionSecurity=measured-os
+[   11.691602] systemd[1]: TPM PCR OS Separator skipped, unmet condition check ConditionSecurity=measured-os
+[   11.703517] systemd-journald[303]: Collecting audit messages is disabled.
+[   11.712911] systemd[1]: Starting Remount Root and Kernel File Systems...
+[   11.719899] mts 0000:00:14.1: Glue (00:14.4) ioremapped em 0x00000000c8800000 -> ffffc90001400000 (2 MB)
+[   11.719917] mts 0000:00:14.1: Glue BAR4 (00:14.4) ioremapped em 0x00000000c9000000 -> ffffc90002800000 (efuse calibracao PHY)
+[   11.719922] mts 0000:00:14.1: mts 0.1: BAR0 0x00000000c2000000 len 0x1000, stage=4
+[   11.719930] mts 0000:00:14.1: PROBE: BAR0[0x00]=0x00509e40 BAR0[0x04]=0x00000b14 BAR0[0x08]=0x0f597c00
+[   11.719937] mts 0000:00:14.1: PROBE: BAR0[0x34]=0x00000000 BAR0[0x38]=0x00000000 BAR0[0x50]=0x00000000
+[   11.719945] mts 0000:00:14.1: PROBE: BAR0[0x5c]=0x00101000 BAR0[0x70]=0x00000000 BAR0[0x74]=0x00002277
+[   11.719950] mts 0000:00:14.1: PROBE: BAR0[0x7c]=0x017d7840 (clock) BAR0[0xac]=0x00000009
+[   11.719956] mts 0000:00:14.1: PROBE: Glue [0x10a030]=0x000016c9 [0x180020]=0x00000000 [0x180074]=0x00000000
+[   11.719968] mts 0000:00:14.1: PROBE: Glue BAR4 [0xC000]=0x000f0111 [0xC05c]=0x7c100000 [0xC060]=0x0d13b1a2 [0xC068]=0x00000120 [0xC06c]=0xbfbf8787 [0xC100]=0x00000000
+[   11.719972] mts 0000:00:14.1: --- dump da BAR0 (offsets com conteudo conhecido) ---
+[   11.719975] mts 0000:00:14.1:   +0x000 = 0x00509e40
+[   11.719979] mts 0000:00:14.1:   +0x004 = 0x00000b14
+[   11.719984] mts 0000:00:14.1:   +0x008 = 0x0f597c00
+[   11.719987] mts 0000:00:14.1:   +0x00c = 0x03b0030c
+[   11.719990] mts 0000:00:14.1:   +0x010 = 0x00000085
+[   11.719994] mts 0000:00:14.1:   +0x014 = 0x00002ccc
+[   11.719997] mts 0000:00:14.1:   +0x018 = 0x443f695f
+[   11.720001] mts 0000:00:14.1:   +0x01c = 0x00000000
+[   11.720004] mts 0000:00:14.1:   +0x02c = 0x0000ff00
+[   11.720007] mts 0000:00:14.1:   +0x030 = 0x00010100
+[   11.720010] mts 0000:00:14.1:   +0x034 = 0x00000000
+[   11.720014] mts 0000:00:14.1:   +0x038 = 0x00000000
+[   11.720017] mts 0000:00:14.1:   +0x03c = 0x10000000
+[   11.720021] mts 0000:00:14.1:   +0x040 = 0x10004000
+[   11.720024] mts 0000:00:14.1:   +0x044 = 0x10000000
+[   11.720027] mts 0000:00:14.1:   +0x048 = 0x10004000
+[   11.720031] mts 0000:00:14.1:   +0x050 = 0x00000000
+[   11.720034] mts 0000:00:14.1:   +0x054 = 0x007ffffa
+[   11.720037] mts 0000:00:14.1:   +0x05c = 0x00101000
+[   11.720040] mts 0000:00:14.1:   +0x064 = 0xa0000200
+[   11.720044] mts 0000:00:14.1:   +0x070 = 0x00000000
+[   11.720047] mts 0000:00:14.1:   +0x074 = 0x00002277
+[   11.720050] mts 0000:00:14.1:   +0x07c = 0x017d7840
+[   11.720053] mts 0000:00:14.1:   +0x080 = 0x000002bb
+[   11.720057] mts 0000:00:14.1:   +0x098 = 0x00000002
+[   11.720060] mts 0000:00:14.1:   +0x09c = 0x0000006f
+[   11.720063] mts 0000:00:14.1:   +0x0ac = 0x00000009
+[   11.720067] mts 0000:00:14.1:   +0x0b0 = 0x001f03ff
+[   11.720070] mts 0000:00:14.1:   +0x0b4 = 0x001fffff
+[   11.720074] mts 0000:00:14.1:   clock (0x7c) = 25000000 Hz (25 MHz, esperado)
+[   11.720082] mts 0000:00:14.1:   contadores: pkts=0 bytes=0 | pkts2=0 bytes2=0
+[   11.720086] mts 0000:00:14.1: MDIO: residuo inicial 0x0050
+[   11.720129] mts 0000:00:14.1: MDIO devad=0x01 reg=0x0002 (PMA/PMD ID1) = 0x0000
+[   11.720172] mts 0000:00:14.1: MDIO devad=0x01 reg=0x0003 (PMA/PMD ID2) = 0x0000
+[   11.720215] mts 0000:00:14.1: MDIO devad=0x01 reg=0x0000 (PMA/PMD Control1) = 0x0000
+[   11.720258] mts 0000:00:14.1: MDIO devad=0x01 reg=0x0001 (PMA/PMD Status1) = 0x0000
+[   11.720289] mts 0000:00:14.1: MDIO devad=0x03 reg=0x0002 (PCS ID1) = 0x0000
+[   11.720292] mts 0000:00:14.1: MDIO: SEM leitura valida (1 distintos) — transacao nao completou
+[   11.720399] mts 0000:00:14.1: aneis: TX va=00000000702f1a2e dma=0x000000000111c000 | RX va=000000007c5cf980 dma=0x000000000111d000 | bufs dma=0x0000000001180000 (384 KB)
+[   11.720416] mts 0000:00:14.1: aneis programados: TX base/ptr=0x0111c000/0x0111c000 RX base/ptr=0x0111d000/0x0111d000
+[   11.720429] mts 0000:00:14.1: MAC_ENABLE: iniciando (stage=4 enable_phy_calib=1)
+[   11.720434] mts 0000:00:14.1: MAC_ENABLE: pre 0x34=0x00000000 0x38=0x00000000
+[   11.720440] mts 0000:00:14.1: MAC_ENABLE: pos 0x34=0x00000001 0x38=0x00000000
+[   11.720449] mts 0000:00:14.1: MAC_ENABLE: 0x50=0x00000000 0x5c=0x00101000
+[   11.720451] mts 0000:00:14.1: PHY calibration: iniciando...
+[   11.726932] mts 0000:00:14.1: ICC cmd 4 0x38 (GBE power-on): ret=20 reply=01 tries=1
+[   12.162913] mts 0000:00:14.1: ICC cmd 4 0x38: GBE power-on CONFIRMADO (reply=0x01)
+[   12.176972] systemd[1]: Starting Create Static Device Nodes in /dev gracefully...
+[   12.187057] systemd[1]: Early TPM SRK Setup skipped, unmet condition check ConditionSecurity=measured-os
+[   12.195038] systemd[1]: TPM PCR NvPCR Initialization Separator skipped, unmet condition check ConditionPathExists=/etc/initrd-release
+[   12.211042] systemd[1]: Reached target Local Encrypted Volumes.
+[   12.219261] systemd[1]: TPM NvPCR Product ID Measurement skipped, unmet condition check ConditionSecurity=measured-os
+[   12.232563] systemd[1]: Starting Load udev Rules from Credentials...
+[   12.243412] systemd[1]: Starting Coldplug All udev Devices...
+[   12.258999] systemd[1]: Started Journal Service.
+[   12.315094] systemd-journald[303]: Received client request to flush runtime journal.
+[   12.670953] mts 0000:00:14.1: GBE clock config: 0x10a030 before=0x000016c9
+[   12.678962] mts 0000:00:14.1: GBE clock config: 0x10a030 after=0x000016d9
+[   12.687425] mts 0000:00:14.1: 0x50 pre-hold=0x00000000
+[   12.695166] mts 0000:00:14.1: GBE hold/pulse: asserting pulse (0x180074) and hold (0x180020) with val=0x01...
+[   12.708715] mts 0000:00:14.1: GBE glue block ctrl [0x142020] pre=0x06040400
+[   12.715362] mts 0000:00:14.1: GBE glue block ctrl [0x142020] post=0x06040400
+[   12.724709] mts 0000:00:14.1:   GBE hold readback [0x180020]=0x00000001 pulse [0x180074]=0x00000000
+[   12.735376] mts 0000:00:14.1: 0x50 pos-hold=0x00000000
+[   12.759717] mts 0000:00:14.1: PHY wakeup: tentando acordar PHY via MDIO...
+[   12.766954] mts 0000:00:14.1:   Glue Janela 0x140000 (Power/Reset States):
+[   12.776620] mts 0000:00:14.1:     Glue [0x140000] = 0x10206333
+[   12.782976] mts 0000:00:14.1:     Glue [0x140004] = 0x00000000
+[   12.782984] mts 0000:00:14.1:     Glue [0x140008] = 0x00000000
+[   12.782988] mts 0000:00:14.1:     Glue [0x14000c] = 0x00000000
+[   12.803028] mts 0000:00:14.1:     Glue [0x140010] = 0x00000000
+[   12.803039] mts 0000:00:14.1:     Glue [0x140014] = 0x00000000
+[   12.803043] mts 0000:00:14.1:     Glue [0x140018] = 0x00200001
+[   12.803046] mts 0000:00:14.1:     Glue [0x14001c] = 0x000050c5
+[   12.803049] mts 0000:00:14.1:     Glue [0x140020] = 0x00000000
+[   12.803052] mts 0000:00:14.1:   Glue Janela 0x180000 (Peripheral Hold/Pulse):
+[   12.803056] mts 0000:00:14.1:     SATA hold [0x18002c] = 0x00000000 | pulse [0x18006c] = 0x00000000
+[   12.803061] mts 0000:00:14.1:     xHCI hold [0x180030] = 0x00000000 | pulse [0x180070] = 0x00000000
+[   12.803066] mts 0000:00:14.1:     GBE  hold [0x180020] = 0x00000001 | pulse [0x180074] = 0x00000000 | (bloco 0x3c00, nao-GBE) [0x180034] = 0x00000000
+[   12.921278] mts 0000:00:14.1:   FALHA ao ler status inicial (ret=-110)
+[   13.174975] mts 0000:00:14.1: PHY calibration: BAR4 params: 0x6c=0xbfbf8787 0x68=0x00000120 0x60=0x0d13b1a2 0x5c=0x7c100000 0x100=0x00000000
+[   13.179053] mts 0000:00:14.1: PHY calibration: condicao efuse bateu (p0=0xbfbf8787) — executando tuning analogico
+[   14.448506] sd 1:0:0:0: [sdb] tag#0 UNKNOWN(0x2003) Result: hostbyte=0x00 driverbyte=DRIVER_OK cmd_age=0s
+[   14.459092] sd 1:0:0:0: [sdb] tag#0 Sense Key : 0xb [current] 
+[   14.463052] sd 1:0:0:0: [sdb] tag#0 ASC=0x47 ASCQ=0x1 
+[   14.472899] sd 1:0:0:0: [sdb] tag#0 CDB: opcode=0x28 28 00 03 17 38 c0 00 01 f0 00
+[   14.483057] I/O error, dev sdb, sector 51853504 op 0x0:(READ) flags 0x80700 phys_seg 4 prio class 2
+[   22.617462] mts 0000:00:14.1: pre  0x04=0x00000000
+[   22.619589] mts 0000:00:14.1: post 0x04=0x00000000
+[   22.627602] mts 0000:00:14.1: pre  0x78=0x00000000
+[   22.631577] mts 0000:00:14.1: post 0x78=0x00000000
+[   22.864496] mts 0000:00:14.1: pre  MDIO 0x33001e=0x8240
+[   23.093996] mts 0000:00:14.1: pre  Page 0=0x8240
+[   23.208553] mts 0000:00:14.1: pre  0x0c=0x00000000
+[   23.211616] mts 0000:00:14.1: post 0x0c=0x00000000
+[   23.215612] mts 0000:00:14.1: pre  0x08=0x00000000
+[   23.223880] mts 0000:00:14.1: post 0x08=0x00000000
+[   23.227613] mts 0000:00:14.1: pre  0x1d4=0x00000000
+[   23.227621] mts 0000:00:14.1: post 0x1d4=0x00000000
+[   23.227625] mts 0000:00:14.1: pre  0x10=0x00000000
+[   23.243625] mts 0000:00:14.1: post 0x10=0x00000000
+[   23.247608] mts 0000:00:14.1: PHY calibration table: executando loop indexado 0x1bc-0x1d4...
+[   23.387370] mts 0000:00:14.1: PHY calibration: loop 66 iteracoes concluido
+[   23.395598] mts 0000:00:14.1: Aguardando calibração PHY completar (0x1d0 bit 0)...
+[   23.459323] mts 0000:00:14.1: PHY calibration: concluída
+[   23.467628] mts 0000:00:14.1: 0x50 pos-tuning=0x00000000
+[   23.471629] mts 0000:00:14.1: GBE hold/pulse: releasing hold (0x180020 = 0), polling PHY...
+[   23.487621] mts 0000:00:14.1: BAR0+0x1c trigger ACK na iteracao 1 (val=0x80030000)
+[   23.495956] mts 0000:00:14.1: PHY Clause 22 AN restart executado: BMCR=0x1000 (reset_bit15=0 AN_en=1)
+[   23.507688] mts 0000:00:14.1:   poll pos-release [0/201]: ret=0 val=0x0000
+[   23.619705] mts 0000:00:14.1:   poll pos-release [1/201]: ret=0 val=0x0000
+[   23.731724] mts 0000:00:14.1:   poll pos-release [2/201]: ret=0 val=0x0000
+[   23.843714] mts 0000:00:14.1:   poll pos-release [3/201]: ret=0 val=0x0000
+[   23.955737] mts 0000:00:14.1:   poll pos-release [4/201]: ret=0 val=0x0000
+[   25.627834] mts 0000:00:14.1:   poll pos-release [20/201]: ret=0 val=0x0000
+[   27.715965] mts 0000:00:14.1:   poll pos-release [40/201]: ret=0 val=0x0000
+[   29.804100] mts 0000:00:14.1:   poll pos-release [60/201]: ret=0 val=0x0000
+[   31.892226] mts 0000:00:14.1:   poll pos-release [80/201]: ret=0 val=0x0000
+[   33.980361] mts 0000:00:14.1:   poll pos-release [100/201]: ret=0 val=0x0000
+[   36.068492] mts 0000:00:14.1:   poll pos-release [120/201]: ret=0 val=0x0000
+[   38.156618] mts 0000:00:14.1:   poll pos-release [140/201]: ret=0 val=0x0000
+[   40.244748] mts 0000:00:14.1:   poll pos-release [160/201]: ret=0 val=0x0000
+[   42.332878] mts 0000:00:14.1:   poll pos-release [180/201]: ret=0 val=0x0000
+[   44.421009] mts 0000:00:14.1:   poll pos-release [200/201]: ret=0 val=0x0000
+[   44.532950] mts 0000:00:14.1: GBE hold/pulse: 201/201 tentativas (~20s) esgotadas SEM bit2 setar (ultimo val=0x0000, algum dado real visto=0)
+[   44.544942] mts 0000:00:14.1: 0x50 pos-release=0x00001000
+[   44.553992] mts 0000:00:14.1: MDIO diagnosis (POST-calibration, POST-hold-release): testing Clause 45 vs Clause 22...
+[   44.565042] mts 0000:00:14.1:   Post-calib Clause 45: ret=0 val=0x0000
+[   44.573020] mts 0000:00:14.1:   Post-calib Clause 22: ret=0 val=0x1000
+[   44.580929] mts 0000:00:14.1:   ⚠️ Post-calib: Clause 45 completou sem timeout mas valor e residuo (0x0000) — barramento MDIO responde, PHY nao tem dado real
+[   44.596937] mts 0000:00:14.1: MAC enable: 0x34=0x00000000 0x38=0x00000000 0x50=0x00001000 0x5c=0x00101000 0x70=0x00000000
+[   44.608938] mts 0000:00:14.1: IMR (0x54) = 0x00000000 (irq_mask=0x0)
+[   44.617021] mts 0000:00:14.1: MAC lido da SPM: 2c:cc:44:3f:69:5f
+[   44.625282] mts 0000:00:14.1: mts registrado como eth0, MAC 2c:cc:44:3f:69:5f

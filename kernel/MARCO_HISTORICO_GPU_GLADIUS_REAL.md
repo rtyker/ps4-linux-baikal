@@ -12,7 +12,7 @@ Foi confirmada ao vivo a **extração em tempo real e inicialização 100% bem-s
 
 O driver `amdgpu` inicializou todos os subsistemas da GPU, reconheceu os **32 Compute Units (CUs)** da APU do PS4 Pro, e criou os nós de aceleração `/dev/dri/card0` e `/dev/dri/renderD128` no Linux **sem apresentar nenhum erro de fence/ring (`-110`)**.
 
-Os 8 arquivos de firmware genuínos extraídos foram baixados do console e salvos em `distro/firmware_gpu/amdgpu/` (usados pelo build) e `outros/rea/firmware_gladius_real/` (backup dedicado de referência).
+Os 8 arquivos de firmware genuínos extraídos foram baixados do console e salvos em `distro/firmware_gpu/amdgpu/` (usados pelo build) e `others/rea/firmware_gladius_real/` (backup dedicado de referência).
 
 ---
 

@@ -1,0 +1,22 @@
+# Makefile para baikal_dmac_test_spm.c
+# Compilar contra o kernel do PS4 (kernel/kernel_build_7.0)
+# Uso: make -f Makefile.spm KDIR=/mnt/hdauxiliar/ps4-linux-baikal/kernel/kernel_build_7.0
+
+KDIR ?= /mnt/hdauxiliar/ps4-linux-baikal/kernel/kernel_build_7.0
+CC := ccache clang
+LLVM := 1
+ARCH := x86_64
+
+obj-m := baikal_dmac_test_spm.o
+
+baikal_dmac_test_spm-y := baikal_dmac_test_spm.o
+
+all:
+	$(MAKE) -C $(KDIR) M=$(PWD) -f $(PWD)/Makefile.spm modules CC="$(CC)" LLVM=$(LLVM) ARCH=$(ARCH)
+
+clean:
+	$(MAKE) -C $(KDIR) M=$(PWD) -f $(PWD)/Makefile.spm clean
+
+# Compilação isolada do .o (para validação rápida sem .ko)
+baikal_dmac_test_spm.o: baikal_dmac_test_spm.c
+	$(MAKE) -C $(KDIR) M=$(PWD) -f $(PWD)/Makefile.spm CC="$(CC)" LLVM=$(LLVM) ARCH=$(ARCH) $@

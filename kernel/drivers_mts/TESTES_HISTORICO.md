@@ -2,14 +2,14 @@
 
 Registro dos testes de hardware feitos entre 2026-07-22 e 2026-07-30, com o que
 **continua valendo** e o que foi **refutado depois**. Substitui os relatórios de
-sessão que ficavam soltos em `../../outros/docs/relatorios/`
+sessão que ficavam soltos em `../../others/docs/relatorios/`
 (`PHY_DEBUG_SESSION_20260724.md`, `TESTE_RX_OWN_INVERSION_RESULTADO.md`,
 `TESTE_TAIL_POINTER_RESULTADO.md`, `TESTE_TELNET_EH0_SUBNET_2026-07-23.md`,
 `TESTE_MAC_EN2_BMCR_RESULTADO_2026-07-23.md`, `RESULTADO_TESTE3.txt`,
 `RESUMO_FINAL_TESTE3.txt`) e o `CHANGES_CLAUSE22_2026-07-23.md`.
 
 > A fonte estruturada (consultável por SQL) continua sendo a tabela `test_history`
-> do [`../../outros/rea/ps4_hardware_memory.db`](../../outros/rea/ps4_hardware_memory.db):
+> do [`../../others/rea/ps4_hardware_memory.db`](../../others/rea/ps4_hardware_memory.db):
 > `SELECT id, timestamp, phase, test_name, status FROM test_history ORDER BY id;`
 > Este arquivo dá o contexto e a leitura crítica que o banco não tem.
 

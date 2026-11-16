@@ -250,7 +250,7 @@ else
     echo "  Desmonte o rootfs e ligue o PS4 — o ps4-automount.service monta no boot."
 fi
 echo "  Desmontar tudo:            desmonta_todas.sh"
-echo "  Documentação:              outros/docs/MONTAGEM_HD_INTERNO.md"
+echo "  Documentação:              others/docs/MONTAGEM_HD_INTERNO.md"
 echo ""
 
 if [ "${VERIFY:-1}" -eq 2 ]; then

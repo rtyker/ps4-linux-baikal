@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"/mnt/t/downloads/PS4/linux_project/tools/ps4_hdd_tools/pkg_pfs_tool/build/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

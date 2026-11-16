@@ -17,7 +17,7 @@ ROOTFS_TAR="${2:-$SCRIPT_DIR/arch_minimal_v2-7.0.tar}"
 TAG="${3:-${TAG:-}}"
 
 # REGRA CRÍTICA (AGENTS.md): NUNCA montar diretamente em /mnt — sempre em um
-# subdiretório dedicado, para não colidir com outros mounts do sistema.
+# subdiretório dedicado, para não colidir com others mounts do sistema.
 BURN_MNT="${PS4_BURN_MNT:-/mnt/ps4_burn_7.0}"
 
 [ "$EUID" -eq 0 ] || { echo "Execute com sudo"; exit 1; }

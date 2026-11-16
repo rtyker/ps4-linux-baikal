@@ -83,7 +83,7 @@ git clone https://github.com/feeRnt/ps4-linux-12xx.git . --depth 1 -b v5.4.247__
 ### Passo 2: Copiar e preparar a configuração base
 ```bash
 # Copie o arquivo neocine.config do diretório da distro para a pasta raiz da compilação
-cp outros/rea/neocine.config .config 2>/dev/null || true  # arquivo não existe mais neste repositório
+cp others/rea/neocine.config .config 2>/dev/null || true  # arquivo não existe mais neste repositório
 
 # Atualize a configuração base
 make olddefconfig

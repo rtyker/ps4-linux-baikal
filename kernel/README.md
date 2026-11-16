@@ -3,7 +3,7 @@
 Build do kernel Linux **7.0.8-Strawberry-ThinLTO-Baikal-+** para o PS4 Slim/Pro
 Baikal (CUH-2xxx). Na raiz desta frente fica só o que participa do build e dos
 patches; todo o resto (RE, dumps, docs, diagnósticos, memória de sessão) foi
-separado em [`../outros/`](../outros/) para revisão/reorganização.
+separado em [`../others/`](../others/) para revisão/reorganização.
 
 > A distro que roda **em cima** deste kernel é a frente 2, em [`../distro/`](../distro/).
 
@@ -84,7 +84,7 @@ make -j2 LLVM=1 CC="ccache clang" ARCH=x86_64 prepare                       # ~2
 | `kernel_build_7.0/` | Árvore fonte do kernel + ccache (gitignored — criado localmente, não vem no clone) |
 | `.ccache/` | Cache do compilador (gitignored) |
 | `snapshots/` | Snapshots de segurança da árvore fonte (gitignored) |
-| `../outros/` | **Fora do build** (separado para revisão): `rea/` (acervo de RE: dumps Orbis, decompilado, scans, scripts Ghidra, SQLite), `consolidado/` (documentação técnica), `docs/` (planos), `tools/` (harnesses ao vivo, `ps4_hdd_tools`), `scripts/` (diagnóstico) e `tests/` |
+| `../others/` | **Fora do build** (separado para revisão): `rea/` (acervo de RE: dumps Orbis, decompilado, scans, scripts Ghidra, SQLite), `consolidado/` (documentação técnica), `docs/` (planos), `tools/` (harnesses ao vivo, `ps4_hdd_tools`), `scripts/` (diagnóstico) e `tests/` |
 
 ## Regras que valem para esta frente
 
@@ -93,5 +93,5 @@ make -j2 LLVM=1 CC="ccache clang" ARCH=x86_64 prepare                       # ~2
   revalidar `git apply --check` de árvore limpa, e só então rodar o build.
 - **Proibido** heredoc/`sed` inline no script de build para injetar código.
 - Antes de qualquer varredura de registradores ao vivo, consultar o SQLite
-  (`outros/rea/ps4_hardware_memory.db`) — cada teste custa um power cycle.
+  (`others/rea/ps4_hardware_memory.db`) — cada teste custa um power cycle.
 - Regras completas e procedimentos: [`../AGENTS.md`](../AGENTS.md).

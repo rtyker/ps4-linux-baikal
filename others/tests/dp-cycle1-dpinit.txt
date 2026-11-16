@@ -1,0 +1,508 @@
+[  352.273688] amdgpu 0000:00:01.0: [drm:status_store] [CONNECTOR:54:HDMI-A-1] force updated from 0 to 1 or reprobing
+[  352.273707] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] [CONNECTOR:54:HDMI-A-1]
+[  352.273718] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] [CONNECTOR:54:HDMI-A-1] status updated from connected to disconnected
+[  352.273734] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] [CONNECTOR:54:HDMI-A-1] disconnected
+[  352.273744] amdgpu 0000:00:01.0: [drm:drm_edid_connector_update] [CONNECTOR:54:HDMI-A-1] EDID changed, epoch counter 3
+[  352.273755] amdgpu 0000:00:01.0: [drm] User-defined mode not supported: "1920x1080": 60 148500 1920 2008 2052 2200 1080 1084 1089 1125 0x68 0x5
+[  352.274016] amdgpu 0000:00:01.0: [drm:drm_sysfs_hotplug_event] generating hotplug event
+[  352.274053] amdgpu 0000:00:01.0: [drm:drm_fb_helper_hotplug_event] 
+[  352.274059] amdgpu 0000:00:01.0: [drm:drm_client_modeset_probe] 
+[  352.274067] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] [CONNECTOR:54:HDMI-A-1]
+[  352.274074] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] [CONNECTOR:54:HDMI-A-1] disconnected
+[  352.274082] amdgpu 0000:00:01.0: [drm:drm_client_modeset_probe] No connectors reported connected with modes
+[  352.274087] amdgpu 0000:00:01.0: [drm:drm_client_modeset_probe] [CONNECTOR:54:HDMI-A-1] enabled? no
+[  352.274095] amdgpu 0000:00:01.0: [drm:drm_client_modeset_probe] picking CRTCs for 1920x1080 config
+[  352.274109] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[  352.274114] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:42:crtc-0] [NOFB]
+[  352.274122] [drm:ps4_bridge_disable] ps4_bridge_disable
+[  352.277875] [drm:amdgpu_atombios_encoder_dpms] encoder dpms 30 to mode 3, devices 00000008, active_devices 00000008
+[  352.278333] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00600 AUX <- (ret=  1) 02
+[  352.279950] [drm:ps4_bridge_post_disable] ps4_bridge_post_disable
+[  352.312564] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[  352.312573] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:44:crtc-1] [NOFB]
+[  352.312585] [drm:ps4_bridge_disable] ps4_bridge_disable (already disabled, skip)
+[  352.312590] [drm:amdgpu_atombios_encoder_dpms] encoder dpms 30 to mode 3, devices 00000008, active_devices 00000000
+[  352.312598] [drm:ps4_bridge_post_disable] ps4_bridge_post_disable
+[  352.313238] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[  352.313244] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:46:crtc-2] [NOFB]
+[  352.313251] [drm:ps4_bridge_disable] ps4_bridge_disable (already disabled, skip)
+[  352.313255] [drm:amdgpu_atombios_encoder_dpms] encoder dpms 30 to mode 3, devices 00000008, active_devices 00000000
+[  352.313262] [drm:ps4_bridge_post_disable] ps4_bridge_post_disable
+[  352.313901] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[  352.313907] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:48:crtc-3] [NOFB]
+[  352.313913] [drm:ps4_bridge_disable] ps4_bridge_disable (already disabled, skip)
+[  352.313918] [drm:amdgpu_atombios_encoder_dpms] encoder dpms 30 to mode 3, devices 00000008, active_devices 00000000
+[  352.313924] [drm:ps4_bridge_post_disable] ps4_bridge_post_disable
+[  352.314559] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[  352.314566] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:50:crtc-4] [NOFB]
+[  352.314571] [drm:ps4_bridge_disable] ps4_bridge_disable (already disabled, skip)
+[  352.314579] [drm:amdgpu_atombios_encoder_dpms] encoder dpms 30 to mode 3, devices 00000008, active_devices 00000000
+[  352.314585] [drm:ps4_bridge_post_disable] ps4_bridge_post_disable
+[  352.315220] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[  352.315226] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:52:crtc-5] [NOFB]
+[  352.315232] [drm:ps4_bridge_disable] ps4_bridge_disable (already disabled, skip)
+[  352.315236] [drm:amdgpu_atombios_encoder_dpms] encoder dpms 30 to mode 3, devices 00000008, active_devices 00000000
+[  352.315242] [drm:ps4_bridge_post_disable] ps4_bridge_post_disable
+[  352.315888] amdgpu 0000:00:01.0: [drm:drm_client_hotplug] fbdev: ret=0
+[  354.275276] amdgpu 0000:00:01.0: [drm:status_store] [CONNECTOR:54:HDMI-A-1] force updated from 1 to 2 or reprobing
+[  354.275295] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] [CONNECTOR:54:HDMI-A-1]
+[  354.275308] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] [CONNECTOR:54:HDMI-A-1] status updated from disconnected to connected
+[  354.275322] [drm:ps4_bridge_get_modes] ps4_bridge_get_modes
+[  354.275440] amdgpu 0000:00:01.0: [drm:drm_sysfs_hotplug_event] generating hotplug event
+[  354.275479] amdgpu 0000:00:01.0: [drm:drm_fb_helper_hotplug_event] 
+[  354.275485] amdgpu 0000:00:01.0: [drm:drm_client_modeset_probe] 
+[  354.283746] amdgpu 0000:00:01.0: Direct firmware load for edid/my_edid.bin failed with error -2
+[  354.283754] [drm:ps4_bridge_get_modes] ps4_bridge_get_modes: no firmware EDID (edid/my_edid.bin), falling back to DDC
+[  354.283945] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 00
+[  354.284237] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00000 AUX -> (ret= 15) 12 14 c4 41 01 06 01 80 02 00 00 00 00 00 00
+[  354.284244] [drm:amdgpu_atombios_dp_get_dpcd] DPCD: 12 14 c4 41 01 06 01 80 02 00 00 00 00 00 00
+[  354.284421] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 00
+[  354.284612] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00400 AUX -> (ret=  3) 00 00 00
+[  354.284620] [drm:amdgpu_atombios_dp_get_dpcd] Sink OUI: 000000
+[  354.284796] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 00
+[  354.284994] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00500 AUX -> (ret=  3) 00 00 00
+[  354.285000] [drm:amdgpu_atombios_dp_get_dpcd] Branch OUI: 000000
+[  354.285175] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 00
+[  354.285473] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00080 AUX -> (ret= 16) 04 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[  354.285479] [drm:ps4_bridge_get_modes] ps4_bridge_get_modes: DPCD ret=0 sink_type=19 lanes=4 clock=162000
+[  354.285487] [drm:ps4_bridge_get_modes] ps4_bridge_get_modes: trying AUX DDC i2c_id=144 adapter_nr=3 adapter=card0-HDMI-A-1
+[  354.291436] amdgpu 0000:00:01.0: [drm:update_display_info] [CONNECTOR:54:HDMI-A-1] HDMI: DVI dual 0, max TMDS clock 0 kHz
+[  354.291447] amdgpu 0000:00:01.0: [drm:update_display_info] [CONNECTOR:54:HDMI-A-1] ELD monitor MN864729     
+[  354.291454] amdgpu 0000:00:01.0: [drm:update_display_info] [CONNECTOR:54:HDMI-A-1] HDMI: latency present 0 0, video latency 0 0, audio latency 0 0
+[  354.291461] amdgpu 0000:00:01.0: [drm:update_display_info] [CONNECTOR:54:HDMI-A-1] ELD size 36, SAD count 1
+[  354.291624] [drm:ps4_bridge_get_modes] ps4_bridge_get_modes: EDID ok, 35 modes, extensions=1
+[  354.291878] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1920x1080i": 60 74250 1920 2008 2052 2200 1080 1084 1094 1125 0x40 0x15 (BAD)
+[  354.291889] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x480": 60 27000 720 736 798 858 480 489 495 525 0x40 0xa (BAD)
+[  354.291897] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1152x864": 60 81579 1152 1216 1336 1520 864 865 868 895 0x0 0x6 (BAD)
+[  354.291906] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1280x1024": 60 108000 1280 1328 1440 1688 1024 1025 1028 1066 0x40 0x5 (BAD)
+[  354.291914] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1280x960": 60 108000 1280 1376 1488 1800 960 961 964 1000 0x40 0x5 (BAD)
+[  354.291923] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1680x1050": 60 119000 1680 1728 1760 1840 1050 1053 1059 1080 0x40 0x9 (BAD)
+[  354.291931] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "800x600": 60 40000 800 840 968 1056 600 601 605 628 0x40 0x5 (BAD)
+[  354.291939] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "640x480": 60 25175 640 656 752 800 480 490 492 525 0x40 0xa (BAD)
+[  354.291947] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1024x768": 60 65000 1024 1048 1184 1344 768 771 777 806 0x40 0xa (BAD)
+[  354.291955] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x480": 60 27000 720 736 798 858 480 489 495 525 0x40 0xa (BAD)
+[  354.291963] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "640x480": 60 25175 640 656 752 800 480 490 492 525 0x40 0xa (BAD)
+[  354.291970] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1920x1080i": 50 74250 1920 2448 2492 2640 1080 1084 1094 1125 0x40 0x15 (BAD)
+[  354.291979] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x576": 50 27000 720 732 796 864 576 581 586 625 0x40 0xa (BAD)
+[  354.291986] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1920x1080i": 60 74250 1920 2008 2052 2200 1080 1084 1094 1125 0x40 0x15 (BAD)
+[  354.291994] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1920x1080": 50 148500 1920 2448 2492 2640 1080 1084 1089 1125 0x40 0x5 (BAD)
+[  354.292002] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1280x720": 50 74250 1280 1720 1760 1980 720 725 730 750 0x40 0x5 (BAD)
+[  354.292010] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1920x1080i": 60 74176 1920 2008 2052 2200 1080 1084 1094 1125 0x40 0x15 (BAD)
+[  354.292018] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x480": 60 27027 720 736 798 858 480 489 495 525 0x40 0xa (BAD)
+[  354.292026] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "640x480": 60 25200 640 656 752 800 480 490 492 525 0x40 0xa (BAD)
+[  354.292034] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x480": 60 27027 720 736 798 858 480 489 495 525 0x40 0xa (BAD)
+[  354.292043] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] [CONNECTOR:54:HDMI-A-1] probed modes:
+[  354.292051] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1920x1080": 60 148500 1920 2008 2052 2200 1080 1084 1089 1125 0x68 0x5
+[  354.292060] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1920x1080": 60 148500 1920 2008 2052 2200 1080 1084 1089 1125 0x48 0x5
+[  354.292069] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1920x1080": 60 148352 1920 2008 2052 2200 1080 1084 1089 1125 0x40 0x5
+[  354.292078] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1280x720": 60 74250 1280 1390 1430 1650 720 725 730 750 0x40 0x5
+[  354.292087] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1280x720": 60 74250 1280 1390 1430 1650 720 725 730 750 0x40 0x5
+[  354.292096] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1280x720": 60 74176 1280 1390 1430 1650 720 725 730 750 0x40 0x5
+[  354.292112] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] [CONNECTOR:54:HDMI-A-1]
+[  354.292119] [drm:ps4_bridge_get_modes] ps4_bridge_get_modes
+[  354.292125] amdgpu 0000:00:01.0: [drm:drm_edid_connector_update] [CONNECTOR:54:HDMI-A-1] EDID changed, epoch counter 4
+[  354.292155] amdgpu 0000:00:01.0: Direct firmware load for edid/my_edid.bin failed with error -2
+[  354.292159] [drm:ps4_bridge_get_modes] ps4_bridge_get_modes: no firmware EDID (edid/my_edid.bin), falling back to DDC
+[  354.292337] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 00
+[  354.292626] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00000 AUX -> (ret= 15) 12 14 c4 41 01 06 01 80 02 00 00 00 00 00 00
+[  354.292634] [drm:amdgpu_atombios_dp_get_dpcd] DPCD: 12 14 c4 41 01 06 01 80 02 00 00 00 00 00 00
+[  354.292810] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 00
+[  354.293007] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00400 AUX -> (ret=  3) 00 00 00
+[  354.293013] [drm:amdgpu_atombios_dp_get_dpcd] Sink OUI: 000000
+[  354.293188] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 00
+[  354.293385] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00500 AUX -> (ret=  3) 00 00 00
+[  354.293390] [drm:amdgpu_atombios_dp_get_dpcd] Branch OUI: 000000
+[  354.293568] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 00
+[  354.293865] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00080 AUX -> (ret= 16) 04 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[  354.293872] [drm:ps4_bridge_get_modes] ps4_bridge_get_modes: DPCD ret=0 sink_type=19 lanes=4 clock=162000
+[  354.293878] [drm:ps4_bridge_get_modes] ps4_bridge_get_modes: trying AUX DDC i2c_id=144 adapter_nr=3 adapter=card0-HDMI-A-1
+[  354.299937] amdgpu 0000:00:01.0: [drm:update_display_info] [CONNECTOR:54:HDMI-A-1] HDMI: DVI dual 0, max TMDS clock 0 kHz
+[  354.299954] amdgpu 0000:00:01.0: [drm:update_display_info] [CONNECTOR:54:HDMI-A-1] ELD monitor MN864729     
+[  354.299961] amdgpu 0000:00:01.0: [drm:update_display_info] [CONNECTOR:54:HDMI-A-1] HDMI: latency present 0 0, video latency 0 0, audio latency 0 0
+[  354.299968] amdgpu 0000:00:01.0: [drm:update_display_info] [CONNECTOR:54:HDMI-A-1] ELD size 36, SAD count 1
+[  354.300123] [drm:ps4_bridge_get_modes] ps4_bridge_get_modes: EDID ok, 35 modes, extensions=1
+[  354.300375] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1920x1080i": 60 74250 1920 2008 2052 2200 1080 1084 1094 1125 0x40 0x15 (BAD)
+[  354.300385] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x480": 60 27000 720 736 798 858 480 489 495 525 0x40 0xa (BAD)
+[  354.300394] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1152x864": 60 81579 1152 1216 1336 1520 864 865 868 895 0x0 0x6 (BAD)
+[  354.300402] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1280x1024": 60 108000 1280 1328 1440 1688 1024 1025 1028 1066 0x40 0x5 (BAD)
+[  354.300410] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1280x960": 60 108000 1280 1376 1488 1800 960 961 964 1000 0x40 0x5 (BAD)
+[  354.300418] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1680x1050": 60 119000 1680 1728 1760 1840 1050 1053 1059 1080 0x40 0x9 (BAD)
+[  354.300426] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "800x600": 60 40000 800 840 968 1056 600 601 605 628 0x40 0x5 (BAD)
+[  354.300434] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "640x480": 60 25175 640 656 752 800 480 490 492 525 0x40 0xa (BAD)
+[  354.300442] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1024x768": 60 65000 1024 1048 1184 1344 768 771 777 806 0x40 0xa (BAD)
+[  354.300449] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x480": 60 27000 720 736 798 858 480 489 495 525 0x40 0xa (BAD)
+[  354.300474] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "640x480": 60 25175 640 656 752 800 480 490 492 525 0x40 0xa (BAD)
+[  354.300483] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1920x1080i": 50 74250 1920 2448 2492 2640 1080 1084 1094 1125 0x40 0x15 (BAD)
+[  354.300491] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x576": 50 27000 720 732 796 864 576 581 586 625 0x40 0xa (BAD)
+[  354.300499] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1920x1080i": 60 74250 1920 2008 2052 2200 1080 1084 1094 1125 0x40 0x15 (BAD)
+[  354.300507] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1920x1080": 50 148500 1920 2448 2492 2640 1080 1084 1089 1125 0x40 0x5 (BAD)
+[  354.300515] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1280x720": 50 74250 1280 1720 1760 1980 720 725 730 750 0x40 0x5 (BAD)
+[  354.300523] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1920x1080i": 60 74176 1920 2008 2052 2200 1080 1084 1094 1125 0x40 0x15 (BAD)
+[  354.300530] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x480": 60 27027 720 736 798 858 480 489 495 525 0x40 0xa (BAD)
+[  354.300538] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "640x480": 60 25200 640 656 752 800 480 490 492 525 0x40 0xa (BAD)
+[  354.300546] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x480": 60 27027 720 736 798 858 480 489 495 525 0x40 0xa (BAD)
+[  354.300555] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] [CONNECTOR:54:HDMI-A-1] probed modes:
+[  354.300566] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1920x1080": 60 148500 1920 2008 2052 2200 1080 1084 1089 1125 0x68 0x5
+[  354.300575] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1920x1080": 60 148500 1920 2008 2052 2200 1080 1084 1089 1125 0x48 0x5
+[  354.300584] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1920x1080": 60 148352 1920 2008 2052 2200 1080 1084 1089 1125 0x40 0x5
+[  354.300593] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1280x720": 60 74250 1280 1390 1430 1650 720 725 730 750 0x40 0x5
+[  354.300602] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1280x720": 60 74250 1280 1390 1430 1650 720 725 730 750 0x40 0x5
+[  354.300610] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1280x720": 60 74176 1280 1390 1430 1650 720 725 730 750 0x40 0x5
+[  354.300619] amdgpu 0000:00:01.0: [drm:drm_client_modeset_probe] [CONNECTOR:54:HDMI-A-1] enabled? yes
+[  354.300629] amdgpu 0000:00:01.0: [drm:drm_client_modeset_probe] [CONNECTOR:54:HDMI-A-1] found cmdline mode: 1920x1080
+[  354.300635] amdgpu 0000:00:01.0: [drm:drm_client_modeset_probe] picking CRTCs for 1920x1080 config
+[  354.300644] amdgpu 0000:00:01.0: [drm:drm_client_modeset_probe] [CRTC:42:crtc-0] desired mode 1920x1080 set (0,0)
+[  354.300659] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[  354.300664] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:42:crtc-0] [FB:56] #connectors=1 (x y) (0 0)
+[  354.300672] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:42:crtc-0] no fb, full mode set
+[  354.300678] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CONNECTOR:54:HDMI-A-1] DPMS not on, full mode switch
+[  354.300684] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CONNECTOR:54:HDMI-A-1] encoder changed, full mode switch
+[  354.300690] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CONNECTOR:54:HDMI-A-1] CRTC changed, full mode switch
+[  354.300695] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CONNECTOR:54:HDMI-A-1] to [CRTC:42:crtc-0]
+[  354.300702] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:42:crtc-0] attempting to set mode from userspace: "1920x1080": 60 148500 1920 2008 2052 2200 1080 1084 1089 1125 0x68 0x5
+[  354.300712] [drm:amdgpu_encoder_set_active_device] setting active device to 00000008 from 00000008 00000008 for encoder 2
+[  354.300722] [drm:amdgpu_atombios_dp_set_link_config] ps4 dp link config: ret=0 mode_clock=148500 lanes=4 clock=162000 sink_type=19
+[  354.300734] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_mode] [CRTC:42:crtc-0]
+[  354.300740] [drm:ps4_bridge_disable] ps4_bridge_disable (already disabled, skip)
+[  354.300752] [drm:ps4_bridge_post_disable] ps4_bridge_post_disable
+[  354.300818] [drm:dce_v8_0_crtc_mode_set] ps4 crtc mode_set: 1920x1080 clock=148500 adjusted=162000 pll=255
+[  354.300828] [drm:amdgpu_pll_compute] 162000 - 162000, pll dividers - fb: 113.4 ref: 2, post 35
+[  354.300876] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_mode] [ENCODER:53:TMDS-53] set [MODE:1920x1080]
+[  354.300882] [drm:amdgpu_atombios_encoder_dpms] encoder dpms 30 to mode 3, devices 00000008, active_devices 00000008
+[  354.300891] [drm:dce_v8_0_pageflip_irq] amdgpu_crtc->pflip_status = 0 != AMDGPU_FLIP_SUBMITTED(2)
+[  354.300911] [drm:dce_v8_0_pageflip_irq] amdgpu_crtc->pflip_status = 0 != AMDGPU_FLIP_SUBMITTED(2)
+[  354.300916] [drm:dce_v8_0_pageflip_irq] amdgpu_crtc->pflip_status = 0 != AMDGPU_FLIP_SUBMITTED(2)
+[  354.300921] [drm:dce_v8_0_pageflip_irq] amdgpu_crtc->pflip_status = 0 != AMDGPU_FLIP_SUBMITTED(2)
+[  354.300925] [drm:dce_v8_0_pageflip_irq] amdgpu_crtc->pflip_status = 0 != AMDGPU_FLIP_SUBMITTED(2)
+[  354.301312] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00600 AUX <- (ret=  1) 02
+[  354.302575] [drm:ps4_bridge_mode_set] vic mode: 16
+[  354.302596] [drm:dce_v8_0_crtc_load_lut] 0
+[  354.302622] [drm:ps4_bridge_pre_enable] ps4_bridge_pre_enable
+[  354.312864] [drm:amdgpu_atombios_encoder_dpms] encoder dpms 30 to mode 0, devices 00000008, active_devices 00000008
+[  354.313535] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 00
+[  354.313716] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00002 AUX -> (ret=  1) c4
+[  354.313894] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00600 AUX <- (ret=  1) 01
+[  354.315758] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00107 AUX <- (ret=  1) 10
+[  354.315938] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00101 AUX <- (ret=  1) 84
+[  354.316116] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00100 AUX <- (ret=  1) 06
+[  354.316296] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00102 AUX <- (ret=  1) 00
+[  354.316478] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00102 AUX <- (ret=  1) 01
+[  354.316697] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00103 AUX <- (ret=  4) 00 00 00 00
+[  354.317479] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 01
+[  354.317701] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00202 AUX -> (ret=  6) 00 00 00 00 00 00
+[  354.317708] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 0 voltage 0.4V pre_emph 0dB
+[  354.317714] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 1 voltage 0.4V pre_emph 0dB
+[  354.317719] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 2 voltage 0.4V pre_emph 0dB
+[  354.317724] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 3 voltage 0.4V pre_emph 0dB
+[  354.317729] [drm:amdgpu_atombios_dp_get_adjust_train] using signal parameters: voltage 0.4V pre_emph 0dB
+[  354.317945] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00103 AUX <- (ret=  4) 00 00 00 00
+[  354.318350] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 01
+[  354.318575] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00202 AUX -> (ret=  6) 00 00 00 00 00 00
+[  354.318583] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 0 voltage 0.4V pre_emph 0dB
+[  354.318589] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 1 voltage 0.4V pre_emph 0dB
+[  354.318594] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 2 voltage 0.4V pre_emph 0dB
+[  354.318599] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 3 voltage 0.4V pre_emph 0dB
+[  354.318604] [drm:amdgpu_atombios_dp_get_adjust_train] using signal parameters: voltage 0.4V pre_emph 0dB
+[  354.318811] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00103 AUX <- (ret=  4) 00 00 00 00
+[  354.319198] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 01
+[  354.319421] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00202 AUX -> (ret=  6) 00 00 00 00 00 00
+[  354.319427] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 0 voltage 0.4V pre_emph 0dB
+[  354.319432] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 1 voltage 0.4V pre_emph 0dB
+[  354.319437] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 2 voltage 0.4V pre_emph 0dB
+[  354.319442] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 3 voltage 0.4V pre_emph 0dB
+[  354.319447] [drm:amdgpu_atombios_dp_get_adjust_train] using signal parameters: voltage 0.4V pre_emph 0dB
+[  354.319653] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00103 AUX <- (ret=  4) 00 00 00 00
+[  354.320058] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 01
+[  354.320283] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00202 AUX -> (ret=  6) 00 00 00 00 00 00
+[  354.320290] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 0 voltage 0.4V pre_emph 0dB
+[  354.320296] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 1 voltage 0.4V pre_emph 0dB
+[  354.320301] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 2 voltage 0.4V pre_emph 0dB
+[  354.320306] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 3 voltage 0.4V pre_emph 0dB
+[  354.320311] [drm:amdgpu_atombios_dp_get_adjust_train] using signal parameters: voltage 0.4V pre_emph 0dB
+[  354.320519] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00103 AUX <- (ret=  4) 00 00 00 00
+[  354.320905] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 01
+[  354.321127] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00202 AUX -> (ret=  6) 00 00 00 00 00 00
+[  354.321134] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 0 voltage 0.4V pre_emph 0dB
+[  354.321139] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 1 voltage 0.4V pre_emph 0dB
+[  354.321144] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 2 voltage 0.4V pre_emph 0dB
+[  354.321148] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 3 voltage 0.4V pre_emph 0dB
+[  354.321153] [drm:amdgpu_atombios_dp_get_adjust_train] using signal parameters: voltage 0.4V pre_emph 0dB
+[  354.321369] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00103 AUX <- (ret=  4) 00 00 00 00
+[  354.321739] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 01
+[  354.321961] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00202 AUX -> (ret=  6) 00 00 00 00 00 00
+[  354.321967] [drm:amdgpu_atombios_dp_link_train] *ERROR* clock recovery tried 5 times
+[  354.321972] [drm:amdgpu_atombios_dp_link_train] *ERROR* clock recovery failed
+[  354.322542] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00102 AUX <- (ret=  1) 00
+[  354.322774] [drm:ps4_bridge_enable] ps4_bridge_enable (mode: 16)
+[  354.322781] [drm:ps4_bridge_enable] ps4_bridge_enable: Belize attempt 1/3
+[  354.493050] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 00
+[  354.493343] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00000 AUX -> (ret= 15) 12 14 c4 41 01 06 01 80 02 00 00 00 00 00 00
+[  354.493350] [drm:amdgpu_atombios_dp_get_dpcd] DPCD: 12 14 c4 41 01 06 01 80 02 00 00 00 00 00 00
+[  354.493527] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 00
+[  354.493726] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00400 AUX -> (ret=  3) 00 00 00
+[  354.493732] [drm:amdgpu_atombios_dp_get_dpcd] Sink OUI: 000000
+[  354.493909] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 00
+[  354.494107] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00500 AUX -> (ret=  3) 00 00 00
+[  354.494113] [drm:amdgpu_atombios_dp_get_dpcd] Branch OUI: 000000
+[  354.494289] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 00
+[  354.494588] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00080 AUX -> (ret= 16) 04 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[  354.494595] [drm:ps4_bridge_enable] ps4_bridge: post-enable DPCD ret=0 lanes=4 clock=162000 sink_type=19
+[  354.494601] [drm:ps4_bridge_enable] ps4_bridge: retraining DP link after bridge enable
+[  354.494778] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 00
+[  354.494954] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00002 AUX -> (ret=  1) c4
+[  354.495130] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00600 AUX <- (ret=  1) 01
+[  354.496757] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00107 AUX <- (ret=  1) 10
+[  354.496936] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00101 AUX <- (ret=  1) 84
+[  354.497114] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00100 AUX <- (ret=  1) 06
+[  354.497294] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00102 AUX <- (ret=  1) 00
+[  354.497473] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00102 AUX <- (ret=  1) 01
+[  354.497691] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00103 AUX <- (ret=  4) 00 00 00 00
+[  354.498474] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 01
+[  354.498697] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00202 AUX -> (ret=  6) 00 00 00 00 00 00
+[  354.498703] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 0 voltage 0.4V pre_emph 0dB
+[  354.498709] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 1 voltage 0.4V pre_emph 0dB
+[  354.498714] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 2 voltage 0.4V pre_emph 0dB
+[  354.498719] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 3 voltage 0.4V pre_emph 0dB
+[  354.498724] [drm:amdgpu_atombios_dp_get_adjust_train] using signal parameters: voltage 0.4V pre_emph 0dB
+[  354.498930] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00103 AUX <- (ret=  4) 00 00 00 00
+[  354.499338] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 01
+[  354.499568] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00202 AUX -> (ret=  6) 00 00 00 00 00 00
+[  354.499575] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 0 voltage 0.4V pre_emph 0dB
+[  354.499581] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 1 voltage 0.4V pre_emph 0dB
+[  354.499587] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 2 voltage 0.4V pre_emph 0dB
+[  354.499592] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 3 voltage 0.4V pre_emph 0dB
+[  354.499597] [drm:amdgpu_atombios_dp_get_adjust_train] using signal parameters: voltage 0.4V pre_emph 0dB
+[  354.499804] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00103 AUX <- (ret=  4) 00 00 00 00
+[  354.500191] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 01
+[  354.500414] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00202 AUX -> (ret=  6) 00 00 00 00 00 00
+[  354.500420] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 0 voltage 0.4V pre_emph 0dB
+[  354.500425] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 1 voltage 0.4V pre_emph 0dB
+[  354.500430] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 2 voltage 0.4V pre_emph 0dB
+[  354.500435] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 3 voltage 0.4V pre_emph 0dB
+[  354.500439] [drm:amdgpu_atombios_dp_get_adjust_train] using signal parameters: voltage 0.4V pre_emph 0dB
+[  354.500655] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00103 AUX <- (ret=  4) 00 00 00 00
+[  354.501060] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 01
+[  354.501285] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00202 AUX -> (ret=  6) 00 00 00 00 00 00
+[  354.501293] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 0 voltage 0.4V pre_emph 0dB
+[  354.501299] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 1 voltage 0.4V pre_emph 0dB
+[  354.501304] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 2 voltage 0.4V pre_emph 0dB
+[  354.501309] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 3 voltage 0.4V pre_emph 0dB
+[  354.501314] [drm:amdgpu_atombios_dp_get_adjust_train] using signal parameters: voltage 0.4V pre_emph 0dB
+[  354.501521] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00103 AUX <- (ret=  4) 00 00 00 00
+[  354.501907] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 01
+[  354.502130] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00202 AUX -> (ret=  6) 00 00 00 00 00 00
+[  354.502136] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 0 voltage 0.4V pre_emph 0dB
+[  354.502141] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 1 voltage 0.4V pre_emph 0dB
+[  354.502146] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 2 voltage 0.4V pre_emph 0dB
+[  354.502151] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 3 voltage 0.4V pre_emph 0dB
+[  354.502155] [drm:amdgpu_atombios_dp_get_adjust_train] using signal parameters: voltage 0.4V pre_emph 0dB
+[  354.502362] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00103 AUX <- (ret=  4) 00 00 00 00
+[  354.502738] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 01
+[  354.502961] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00202 AUX -> (ret=  6) 00 00 00 00 00 00
+[  354.502967] [drm:amdgpu_atombios_dp_link_train] *ERROR* clock recovery tried 5 times
+[  354.502971] [drm:amdgpu_atombios_dp_link_train] *ERROR* clock recovery failed
+[  354.503544] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00102 AUX <- (ret=  1) 00
+[  354.577874] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:42:crtc-0] Setting connector DPMS state to on
+[  354.577885] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 	[CONNECTOR:54:HDMI-A-1] set DPMS on
+[  354.577905] [drm:dce_v8_0_crtc_load_lut] 0
+[  354.577925] [drm:ps4_bridge_pre_enable] ps4_bridge_pre_enable
+[  354.577931] [drm:ps4_bridge_pre_enable] ps4_bridge_pre_enable (already enabled or enabling, skip)
+[  354.577936] [drm:amdgpu_atombios_encoder_dpms] encoder dpms 30 to mode 0, devices 00000008, active_devices 00000008
+[  354.578247] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 00
+[  354.578426] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00002 AUX -> (ret=  1) c4
+[  354.578606] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00600 AUX <- (ret=  1) 01
+[  354.580756] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00107 AUX <- (ret=  1) 10
+[  354.580936] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00101 AUX <- (ret=  1) 84
+[  354.581113] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00100 AUX <- (ret=  1) 06
+[  354.581292] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00102 AUX <- (ret=  1) 00
+[  354.581471] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00102 AUX <- (ret=  1) 01
+[  354.581680] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00103 AUX <- (ret=  4) 00 00 00 00
+[  354.582462] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 01
+[  354.582685] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00202 AUX -> (ret=  6) 00 00 00 00 00 00
+[  354.582691] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 0 voltage 0.4V pre_emph 0dB
+[  354.582697] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 1 voltage 0.4V pre_emph 0dB
+[  354.582702] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 2 voltage 0.4V pre_emph 0dB
+[  354.582707] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 3 voltage 0.4V pre_emph 0dB
+[  354.582712] [drm:amdgpu_atombios_dp_get_adjust_train] using signal parameters: voltage 0.4V pre_emph 0dB
+[  354.582929] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00103 AUX <- (ret=  4) 00 00 00 00
+[  354.583338] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 01
+[  354.583567] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00202 AUX -> (ret=  6) 00 00 00 00 00 00
+[  354.583575] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 0 voltage 0.4V pre_emph 0dB
+[  354.583581] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 1 voltage 0.4V pre_emph 0dB
+[  354.583586] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 2 voltage 0.4V pre_emph 0dB
+[  354.583591] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 3 voltage 0.4V pre_emph 0dB
+[  354.583596] [drm:amdgpu_atombios_dp_get_adjust_train] using signal parameters: voltage 0.4V pre_emph 0dB
+[  354.583803] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00103 AUX <- (ret=  4) 00 00 00 00
+[  354.584190] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 01
+[  354.584413] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00202 AUX -> (ret=  6) 00 00 00 00 00 00
+[  354.584419] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 0 voltage 0.4V pre_emph 0dB
+[  354.584424] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 1 voltage 0.4V pre_emph 0dB
+[  354.584429] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 2 voltage 0.4V pre_emph 0dB
+[  354.584434] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 3 voltage 0.4V pre_emph 0dB
+[  354.584439] [drm:amdgpu_atombios_dp_get_adjust_train] using signal parameters: voltage 0.4V pre_emph 0dB
+[  354.584654] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00103 AUX <- (ret=  4) 00 00 00 00
+[  354.585059] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 01
+[  354.585284] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00202 AUX -> (ret=  6) 00 00 00 00 00 00
+[  354.585292] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 0 voltage 0.4V pre_emph 0dB
+[  354.585298] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 1 voltage 0.4V pre_emph 0dB
+[  354.585303] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 2 voltage 0.4V pre_emph 0dB
+[  354.585308] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 3 voltage 0.4V pre_emph 0dB
+[  354.585313] [drm:amdgpu_atombios_dp_get_adjust_train] using signal parameters: voltage 0.4V pre_emph 0dB
+[  354.585520] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00103 AUX <- (ret=  4) 00 00 00 00
+[  354.585906] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 01
+[  354.586129] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00202 AUX -> (ret=  6) 00 00 00 00 00 00
+[  354.586135] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 0 voltage 0.4V pre_emph 0dB
+[  354.586140] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 1 voltage 0.4V pre_emph 0dB
+[  354.586145] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 2 voltage 0.4V pre_emph 0dB
+[  354.586150] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 3 voltage 0.4V pre_emph 0dB
+[  354.586155] [drm:amdgpu_atombios_dp_get_adjust_train] using signal parameters: voltage 0.4V pre_emph 0dB
+[  354.586361] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00103 AUX <- (ret=  4) 00 00 00 00
+[  354.586738] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 01
+[  354.586960] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00202 AUX -> (ret=  6) 00 00 00 00 00 00
+[  354.586966] [drm:amdgpu_atombios_dp_link_train] *ERROR* clock recovery tried 5 times
+[  354.586970] [drm:amdgpu_atombios_dp_link_train] *ERROR* clock recovery failed
+[  354.587543] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00102 AUX <- (ret=  1) 00
+[  354.587774] [drm:ps4_bridge_enable] ps4_bridge_enable (mode: 16)
+[  354.587780] [drm:ps4_bridge_enable] ps4_bridge_enable: Belize attempt 1/3
+[  354.758054] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 00
+[  354.758347] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00000 AUX -> (ret= 15) 12 14 c4 41 01 06 01 80 02 00 00 00 00 00 00
+[  354.758354] [drm:amdgpu_atombios_dp_get_dpcd] DPCD: 12 14 c4 41 01 06 01 80 02 00 00 00 00 00 00
+[  354.758531] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 00
+[  354.758723] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00400 AUX -> (ret=  3) 00 00 00
+[  354.758729] [drm:amdgpu_atombios_dp_get_dpcd] Sink OUI: 000000
+[  354.758906] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 00
+[  354.759104] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00500 AUX -> (ret=  3) 00 00 00
+[  354.759109] [drm:amdgpu_atombios_dp_get_dpcd] Branch OUI: 000000
+[  354.759285] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 00
+[  354.759584] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00080 AUX -> (ret= 16) 04 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[  354.759590] [drm:ps4_bridge_enable] ps4_bridge: post-enable DPCD ret=0 lanes=4 clock=162000 sink_type=19
+[  354.759597] [drm:ps4_bridge_enable] ps4_bridge: retraining DP link after bridge enable
+[  354.759773] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 00
+[  354.759950] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00002 AUX -> (ret=  1) c4
+[  354.760126] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00600 AUX <- (ret=  1) 01
+[  354.761739] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00107 AUX <- (ret=  1) 10
+[  354.761919] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00101 AUX <- (ret=  1) 84
+[  354.762096] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00100 AUX <- (ret=  1) 06
+[  354.762276] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00102 AUX <- (ret=  1) 00
+[  354.762455] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00102 AUX <- (ret=  1) 01
+[  354.762663] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00103 AUX <- (ret=  4) 00 00 00 00
+[  354.763466] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 01
+[  354.763693] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00202 AUX -> (ret=  6) 00 00 00 00 00 00
+[  354.763701] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 0 voltage 0.4V pre_emph 0dB
+[  354.763707] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 1 voltage 0.4V pre_emph 0dB
+[  354.763712] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 2 voltage 0.4V pre_emph 0dB
+[  354.763717] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 3 voltage 0.4V pre_emph 0dB
+[  354.763722] [drm:amdgpu_atombios_dp_get_adjust_train] using signal parameters: voltage 0.4V pre_emph 0dB
+[  354.763929] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00103 AUX <- (ret=  4) 00 00 00 00
+[  354.764316] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 01
+[  354.764540] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00202 AUX -> (ret=  6) 00 00 00 00 00 00
+[  354.764548] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 0 voltage 0.4V pre_emph 0dB
+[  354.764553] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 1 voltage 0.4V pre_emph 0dB
+[  354.764561] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 2 voltage 0.4V pre_emph 0dB
+[  354.764566] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 3 voltage 0.4V pre_emph 0dB
+[  354.764570] [drm:amdgpu_atombios_dp_get_adjust_train] using signal parameters: voltage 0.4V pre_emph 0dB
+[  354.764787] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00103 AUX <- (ret=  4) 00 00 00 00
+[  354.765191] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 01
+[  354.765416] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00202 AUX -> (ret=  6) 00 00 00 00 00 00
+[  354.765423] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 0 voltage 0.4V pre_emph 0dB
+[  354.765429] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 1 voltage 0.4V pre_emph 0dB
+[  354.765434] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 2 voltage 0.4V pre_emph 0dB
+[  354.765439] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 3 voltage 0.4V pre_emph 0dB
+[  354.765444] [drm:amdgpu_atombios_dp_get_adjust_train] using signal parameters: voltage 0.4V pre_emph 0dB
+[  354.765652] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00103 AUX <- (ret=  4) 00 00 00 00
+[  354.766038] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 01
+[  354.766261] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00202 AUX -> (ret=  6) 00 00 00 00 00 00
+[  354.766267] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 0 voltage 0.4V pre_emph 0dB
+[  354.766273] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 1 voltage 0.4V pre_emph 0dB
+[  354.766278] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 2 voltage 0.4V pre_emph 0dB
+[  354.766282] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 3 voltage 0.4V pre_emph 0dB
+[  354.766287] [drm:amdgpu_atombios_dp_get_adjust_train] using signal parameters: voltage 0.4V pre_emph 0dB
+[  354.766493] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00103 AUX <- (ret=  4) 00 00 00 00
+[  354.766882] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 01
+[  354.767107] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00202 AUX -> (ret=  6) 00 00 00 00 00 00
+[  354.767114] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 0 voltage 0.4V pre_emph 0dB
+[  354.767120] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 1 voltage 0.4V pre_emph 0dB
+[  354.767125] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 2 voltage 0.4V pre_emph 0dB
+[  354.767130] [drm:amdgpu_atombios_dp_get_adjust_train] requested signal parameters: lane 3 voltage 0.4V pre_emph 0dB
+[  354.767135] [drm:amdgpu_atombios_dp_get_adjust_train] using signal parameters: voltage 0.4V pre_emph 0dB
+[  354.767342] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00103 AUX <- (ret=  4) 00 00 00 00
+[  354.767731] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 01
+[  354.767955] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00202 AUX -> (ret=  6) 00 00 00 00 00 00
+[  354.767961] [drm:amdgpu_atombios_dp_link_train] *ERROR* clock recovery tried 5 times
+[  354.767965] [drm:amdgpu_atombios_dp_link_train] *ERROR* clock recovery failed
+[  354.768546] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_write] (null): 0x00102 AUX <- (ret=  1) 00
+[  354.848606] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[  354.848614] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:44:crtc-1] [NOFB]
+[  354.849243] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[  354.849250] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:46:crtc-2] [NOFB]
+[  354.849878] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[  354.849884] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:48:crtc-3] [NOFB]
+[  354.850508] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[  354.850514] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:50:crtc-4] [NOFB]
+[  354.851138] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] 
+[  354.851144] amdgpu 0000:00:01.0: [drm:drm_crtc_helper_set_config] [CRTC:52:crtc-5] [NOFB]
+[  354.851781] amdgpu 0000:00:01.0: [drm:drm_client_hotplug] fbdev: ret=0
+[  356.298148] amdgpu 0000:00:01.0: [drm:status_store] [CONNECTOR:54:HDMI-A-1] force updated from 2 to 0 or reprobing
+[  356.298168] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] [CONNECTOR:54:HDMI-A-1]
+[  356.298362] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 00
+[  356.298655] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00000 AUX -> (ret= 15) 12 14 c4 41 01 06 01 80 02 00 00 00 00 00 00
+[  356.298663] [drm:amdgpu_atombios_dp_get_dpcd] DPCD: 12 14 c4 41 01 06 01 80 02 00 00 00 00 00 00
+[  356.298840] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 00
+[  356.299039] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00400 AUX -> (ret=  3) 00 00 00
+[  356.299045] [drm:amdgpu_atombios_dp_get_dpcd] Sink OUI: 000000
+[  356.299222] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 00
+[  356.299420] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00500 AUX -> (ret=  3) 00 00 00
+[  356.299426] [drm:amdgpu_atombios_dp_get_dpcd] Branch OUI: 000000
+[  356.299605] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 00
+[  356.299904] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00080 AUX -> (ret= 16) 04 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[  356.299911] [drm:ps4_bridge_detect] ps4_bridge_detect: force=1 dpcd_ret=0 lanes=4 clock=162000
+[  356.299919] [drm:ps4_bridge_get_modes] ps4_bridge_get_modes
+[  356.299926] amdgpu 0000:00:01.0: [drm:drm_edid_connector_update] [CONNECTOR:54:HDMI-A-1] EDID changed, epoch counter 5
+[  356.299974] amdgpu 0000:00:01.0: Direct firmware load for edid/my_edid.bin failed with error -2
+[  356.299980] [drm:ps4_bridge_get_modes] ps4_bridge_get_modes: no firmware EDID (edid/my_edid.bin), falling back to DDC
+[  356.300158] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 00
+[  356.300466] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00000 AUX -> (ret= 15) 12 14 c4 41 01 06 01 80 02 00 00 00 00 00 00
+[  356.300474] [drm:amdgpu_atombios_dp_get_dpcd] DPCD: 12 14 c4 41 01 06 01 80 02 00 00 00 00 00 00
+[  356.300651] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 00
+[  356.300849] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00400 AUX -> (ret=  3) 00 00 00
+[  356.300855] [drm:amdgpu_atombios_dp_get_dpcd] Sink OUI: 000000
+[  356.301031] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 00
+[  356.301229] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00500 AUX -> (ret=  3) 00 00 00
+[  356.301234] [drm:amdgpu_atombios_dp_get_dpcd] Branch OUI: 000000
+[  356.301411] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_probe] (null): 0x00102 AUX -> (ret=  1) 00
+[  356.301709] amdgpu 0000:00:01.0: [drm:drm_dp_dpcd_read] (null): 0x00080 AUX -> (ret= 16) 04 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[  356.301716] [drm:ps4_bridge_get_modes] ps4_bridge_get_modes: DPCD ret=0 sink_type=19 lanes=4 clock=162000
+[  356.301723] [drm:ps4_bridge_get_modes] ps4_bridge_get_modes: trying AUX DDC i2c_id=144 adapter_nr=3 adapter=card0-HDMI-A-1
+[  356.307694] amdgpu 0000:00:01.0: [drm:update_display_info] [CONNECTOR:54:HDMI-A-1] HDMI: DVI dual 0, max TMDS clock 0 kHz
+[  356.307704] amdgpu 0000:00:01.0: [drm:update_display_info] [CONNECTOR:54:HDMI-A-1] ELD monitor MN864729     
+[  356.307711] amdgpu 0000:00:01.0: [drm:update_display_info] [CONNECTOR:54:HDMI-A-1] HDMI: latency present 0 0, video latency 0 0, audio latency 0 0
+[  356.307718] amdgpu 0000:00:01.0: [drm:update_display_info] [CONNECTOR:54:HDMI-A-1] ELD size 36, SAD count 1
+[  356.307880] [drm:ps4_bridge_get_modes] ps4_bridge_get_modes: EDID ok, 35 modes, extensions=1
+[  356.308134] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1920x1080i": 60 74250 1920 2008 2052 2200 1080 1084 1094 1125 0x40 0x15 (BAD)
+[  356.308144] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x480": 60 27000 720 736 798 858 480 489 495 525 0x40 0xa (BAD)
+[  356.308153] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1152x864": 60 81579 1152 1216 1336 1520 864 865 868 895 0x0 0x6 (BAD)
+[  356.308161] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1280x1024": 60 108000 1280 1328 1440 1688 1024 1025 1028 1066 0x40 0x5 (BAD)
+[  356.308169] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1280x960": 60 108000 1280 1376 1488 1800 960 961 964 1000 0x40 0x5 (BAD)
+[  356.308177] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1680x1050": 60 119000 1680 1728 1760 1840 1050 1053 1059 1080 0x40 0x9 (BAD)
+[  356.308185] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "800x600": 60 40000 800 840 968 1056 600 601 605 628 0x40 0x5 (BAD)
+[  356.308193] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "640x480": 60 25175 640 656 752 800 480 490 492 525 0x40 0xa (BAD)
+[  356.308201] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1024x768": 60 65000 1024 1048 1184 1344 768 771 777 806 0x40 0xa (BAD)
+[  356.308209] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x480": 60 27000 720 736 798 858 480 489 495 525 0x40 0xa (BAD)
+[  356.308217] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "640x480": 60 25175 640 656 752 800 480 490 492 525 0x40 0xa (BAD)
+[  356.308225] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1920x1080i": 50 74250 1920 2448 2492 2640 1080 1084 1094 1125 0x40 0x15 (BAD)
+[  356.308233] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x576": 50 27000 720 732 796 864 576 581 586 625 0x40 0xa (BAD)
+[  356.308241] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1920x1080i": 60 74250 1920 2008 2052 2200 1080 1084 1094 1125 0x40 0x15 (BAD)
+[  356.308249] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1920x1080": 50 148500 1920 2448 2492 2640 1080 1084 1089 1125 0x40 0x5 (BAD)
+[  356.308257] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1280x720": 50 74250 1280 1720 1760 1980 720 725 730 750 0x40 0x5 (BAD)
+[  356.308264] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "1920x1080i": 60 74176 1920 2008 2052 2200 1080 1084 1094 1125 0x40 0x15 (BAD)
+[  356.308272] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x480": 60 27027 720 736 798 858 480 489 495 525 0x40 0xa (BAD)
+[  356.308280] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "640x480": 60 25200 640 656 752 800 480 490 492 525 0x40 0xa (BAD)
+[  356.308288] amdgpu 0000:00:01.0: [drm:drm_mode_prune_invalid] Rejected mode: "720x480": 60 27027 720 736 798 858 480 489 495 525 0x40 0xa (BAD)
+[  356.308297] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] [CONNECTOR:54:HDMI-A-1] probed modes:
+[  356.308305] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1920x1080": 60 148500 1920 2008 2052 2200 1080 1084 1089 1125 0x68 0x5
+[  356.308314] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1920x1080": 60 148500 1920 2008 2052 2200 1080 1084 1089 1125 0x48 0x5
+[  356.308323] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1920x1080": 60 148352 1920 2008 2052 2200 1080 1084 1089 1125 0x40 0x5
+[  356.308331] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1280x720": 60 74250 1280 1390 1430 1650 720 725 730 750 0x40 0x5
+[  356.308340] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1280x720": 60 74250 1280 1390 1430 1650 720 725 730 750 0x40 0x5
+[  356.308349] amdgpu 0000:00:01.0: [drm:drm_helper_probe_single_connector_modes] Probed mode: "1280x720": 60 74176 1280 1390 1430 1650 720 725 730 750 0x40 0x5
+[  360.220437] mts 0000:00:14.1: RX_CLEAN idx=0 ctl=0x80000600 OWN=1 len=1536 cleaned=20000

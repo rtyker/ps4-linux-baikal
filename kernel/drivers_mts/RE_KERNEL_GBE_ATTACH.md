@@ -124,7 +124,7 @@ ulong fcn.ffffffffdc3f5bd0(int64_t major, int64_t minor, int64_t len, int64_t ou
     return ret;
 }
 ```
-**Isso é literalmente uma função `icc_query(major, minor, len, out)` de uso geral** — provavelmente chamada por VÁRIOS drivers, não só GBE. Vale a pena, em uma sessão futura, buscar TODOS os xrefs pra essa função (`/r 0xffffffffdc3f5bd0`) e catalogar todos os pares `(major, minor)` usados no kernel inteiro — pode revelar outros comandos úteis (thermal, fan, etc.) de brinde.
+**Isso é literalmente uma função `icc_query(major, minor, len, out)` de uso geral** — provavelmente chamada por VÁRIOS drivers, não só GBE. Vale a pena, em uma sessão futura, buscar TODOS os xrefs pra essa função (`/r 0xffffffffdc3f5bd0`) e catalogar todos os pares `(major, minor)` usados no kernel inteiro — pode revelar others comandos úteis (thermal, fan, etc.) de brinde.
 
 **Observação importante:** o campo `minor` aqui é de **16 bits** (`req.minor = minor` num campo u16), não 8 bits como testamos ao vivo via `/proc/ps4_icc` (que usava `major minor` como bytes soltos, ex: `5 0x41`). Confirmar no código de `icc_query_sync`/protocolo se o minor real é de fato 1 byte (como testado) ou 2 bytes — se for 2 bytes, testes anteriores podem ter testado só a metade baixa do espaço de minors válido.
 
@@ -162,9 +162,9 @@ Pivô após o beco sem saída do ICC major=4 (ver seção seguinte). Localizado 
 // lê o "dado" correspondente de volta em BAR2+0x110088
 // aplica ~(valor >> shift) & mask pra extrair bits específicos
 ```
-Classifica o argumento de entrada (provável número de linha de IRQ) em 3 faixas (`&0xffffffe0==0xa0`, `&0xfffffff8==0x78`, `&0xfffffffc==0x6c`) escolhendo um índice (2 ou 3) e uma máscara/shift diferentes — **é a rotina de leitura de status de interrupção pendente do glue**, não um "liga/desliga" direto. Mas confirma que o BAR2 tem um mecanismo de índice+dado (2 registradores físicos dão acesso a um banco maior de "sub-registradores virtuais") — mecanismo que pode ser reaproveitado para outros fins (clock-gate?) em índices diferentes de 2/3.
+Classifica o argumento de entrada (provável número de linha de IRQ) em 3 faixas (`&0xffffffe0==0xa0`, `&0xfffffff8==0x78`, `&0xfffffffc==0x6c`) escolhendo um índice (2 ou 3) e uma máscara/shift diferentes — **é a rotina de leitura de status de interrupção pendente do glue**, não um "liga/desliga" direto. Mas confirma que o BAR2 tem um mecanismo de índice+dado (2 registradores físicos dão acesso a um banco maior de "sub-registradores virtuais") — mecanismo que pode ser reaproveitado para others fins (clock-gate?) em índices diferentes de 2/3.
 
-**Busca por outros usos de `0x110084`/`0x110088` no binário inteiro:** só essa UMA ocorrência genuína (uma segunda aparente, em `0xdc95452b`, é **falso positivo** — bytes de uma instrução `je` coincidindo com o padrão binário buscado, não uma referência real). **Não há uma contraparte de "escrita" óbvia usando esses mesmos 2 registradores em outro lugar do kernel.**
+**Busca por others usos de `0x110084`/`0x110088` no binário inteiro:** só essa UMA ocorrência genuína (uma segunda aparente, em `0xdc95452b`, é **falso positivo** — bytes de uma instrução `je` coincidindo com o padrão binário buscado, não uma referência real). **Não há uma contraparte de "escrita" óbvia usando esses mesmos 2 registradores em outro lugar do kernel.**
 
 ## ACHADO PRINCIPAL DA SESSÃO: attach() do baikal_pcie.c localizado e decompilado (2026-07-20)
 
@@ -226,7 +226,7 @@ O padrão observado (qualquer escrita → releitura sempre `0`, independente do 
 
 ### Estado após esta tentativa (honesto)
 Escrita em `0xc890a030` **não é a peça que falta** (ou pelo menos não sozinha) — testada corretamente agora, sem efeito no `B2_CHIP_ID`. Duas hipóteses abertas pra próxima sessão:
-1. Talvez seja necessária uma SEQUÊNCIA de escritas (não uma única), ou escrever em conjunto com outros registradores vistos no `attach()` (ex: os lidos em `BAR4+0x4084/0xc020/0xc024` logo antes desta chamada).
+1. Talvez seja necessária uma SEQUÊNCIA de escritas (não uma única), ou escrever em conjunto com others registradores vistos no `attach()` (ex: os lidos em `BAR4+0x4084/0xc020/0xc024` logo antes desta chamada).
 2. Talvez o "liga a GBE" não esteja nem em `baikal_pcie.c` — pode estar em outro lugar ainda não mapeado (o `SceGbeMtsCtrl`/`icc_power.c` original, ou um terceiro componente).
 
 ### Estado honesto após essa linha de investigação
@@ -335,7 +335,7 @@ void fcn.ffffffffdc5a3060(int64_t arg1) {
 
 ### Próximos passos concretos desta rodada (só análise estática, nenhum teste ao vivo ainda — ordem sugerida)
 1. **Investigar se o próprio boot/kexec do Linux reseta a rail.** Verificar (a) se o núcleo genérico de PCI do Linux emite algum reset de barramento secundário (`pci_reset_bridge_secondary_bus`/bridge control register) durante a enumeração do bridge Baikal `baikal_pcie`, e (b) se o payload de `kexec()` (código em `ps4-linux-payloads/`) faz algo que mexa em config space de PCI ou reset de barramento antes de saltar pro kernel Linux. Esse é o item mais promissor e ainda não verificado.
-2. **RE de `icc_device_power.c`/`icc_device_power_control` de verdade** (só temos evidência de STRINGS até agora, nunca decompilamos a função real) — `BAIKAL_HARDWARE_DISCOVERIES.md` seção C aponta essa função como candidata a controlar "clock e energia do barramento PCIe para Ethernet", mas os testes ao vivo de `major=5` (que corresponde a esse serviço) só cobriram minors já conhecidos de outros dispositivos (wlan/bt/usb/hdd/bd) — nunca confirmamos por RE se existe um minor (ou um payload/formato origem→destino dentro de um minor já testado) especificamente pra GBE. Buscar a string `icc_device_power_control` ou os xrefs de `icc_device_power.c` linha a linha no dump pode revelar isso.
+2. **RE de `icc_device_power.c`/`icc_device_power_control` de verdade** (só temos evidência de STRINGS até agora, nunca decompilamos a função real) — `BAIKAL_HARDWARE_DISCOVERIES.md` seção C aponta essa função como candidata a controlar "clock e energia do barramento PCIe para Ethernet", mas os testes ao vivo de `major=5` (que corresponde a esse serviço) só cobriram minors já conhecidos de others dispositivos (wlan/bt/usb/hdd/bd) — nunca confirmamos por RE se existe um minor (ou um payload/formato origem→destino dentro de um minor já testado) especificamente pra GBE. Buscar a string `icc_device_power_control` ou os xrefs de `icc_device_power.c` linha a linha no dump pode revelar isso.
 3. Decompilar `func_0xffffffffdc5a6290` (fallback quando o handshake RMU não responde em 7s) e `func_0xffffffffdc5a4950`/`func_0xffffffffdc5a3060` (caminhos alternativos de up/down ainda não vistos) — só pra fechar 100% da cadeia de código do driver e confirmar que realmente não sobrou nenhuma chamada ICC/MMIO de power não encontrada.
 4. Só depois de (1) e (2): se alguma dessas linhas achar um candidato concreto (registrador ou comando ICC com semântica de power claramente identificada), documentar aqui e então (e só então) propor um teste ao vivo específico em `ICC_GBE_TEST_LOG.md`.
 

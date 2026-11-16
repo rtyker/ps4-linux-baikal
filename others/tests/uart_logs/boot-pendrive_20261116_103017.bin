@@ -1,0 +1,341 @@
+#
+# A user thread receives a fatal signal
+#
+# signal: 11 (SIGSEGV)
+# thread ID: 101102
+# thread name: 
+# proc ID: 46
+# proc name: ScePartyDaemon
+# reason: page fault (user read data, page not present)
+# fault address: 00000000000001e0
+#
+# registers:
+# rax: 00000000000001c6  rbx: 0000000881c93d60
+# rcx: 0000000881c93d60  rdx: 0000000000000006
+# rsi: 0000000000000000  rdi: 0000000836136430
+# rbp: 0000000000000000  rsp: 000000000021fff8
+# r8 : 0000000000000000  r9 : 0000000001020183
+# r10: 000000000515ca11  r11: 0000000000000212
+# r12: 0000000000000000  r13: 0000000881c93dc0
+# r14: 0000000000000000  r15: 0000000000000000
+# rip: 000000000019c066  eflags: 00010246
+# BrF: ffffffffffffffff  BrT: 000000000019c063
+#
+# backtrace:
+#
+# dynamic libraries:
+# /app0/eboot.bin
+#  text: 000000001c928000:000000001cfdc000 r-x
+#  data: 000000001d010000:000000001d3c4000 rw-
+#  fingerprint: 99734c594ec1647ae9b079c303178f3000000000
+# /7JWPYRZdCm/common/lib/libkernel_sys.sprx
+#  text: 0000000837474000:00000008374c8000 r-x
+#  data: 00000008374cc000:0000000837504000 rw-
+#  fingerprint: ff6501a2b83ec52ffd301e94af20490e00000000
+# /7JWPYRZdCm/common/lib/libSceLibcInternal.sprx
+#  text: 000000083aba4000:000000083acd8000 r-x
+#  data: 000000083ace0000:000000083acfc000 rw-
+#  fingerprint: 880aa19881586dd24d1af615e7f62d5f00000000
+# /7JWPYRZdCm/common/lib/libSceSysmodule.sprx
+#  text: 00000008130b4000:00000008130c0000 r-x
+#  data: 00000008130c4000:00000008130d0000 rw-
+#  fingerprint: 24952bcab86cf2a9d28189970de43dec00000000
+# /7JWPYRZdCm/common/lib/libSceIpmi.sprx
+#  text: 000000080909c000:00000008090a8000 r-x
+#  data: 00000008090ac000:00000008090c0000 rw-
+#  fingerprint: ad88c9a36cb671bf4a151e6fc7cbe75900000000
+# /7JWPYRZdCm/common/lib/libSceNetCtl.sprx
+#  text: 0000000839bb4000:0000000839bbc000 r-x
+#  data: 0000000839bc0000:0000000839bc4000 rw-
+#  fingerprint: 90c7d7f9dda248dbf50cab103888e92700000000
+# /7JWPYRZdCm/common/lib/libSceNet.sprx
+#  text: 0000000821758000:0000000821790000 r-x
+#  data: 0000000821794000:00000008218a8000 rw-
+#  fingerprint: eb5bcc3b92d7eb4dd854652b85ad45ae00000000
+# /7JWPYRZdCm/common/lib/libSceRtc.sprx
+#  text: 0000000811044000:000000081104c000 r-x
+#  data: 0000000811050000:0000000811054000 rw-
+#  fingerprint: 8be85f06d81503a312f2681d1f9b0ca500000000
+# /7JWPYRZdCm/common/lib/libSceSsl2.sprx
+#  text: 000000081ebc8000:000000081ed10000 r-x
+#  data: 000000081ed2c000:000000081ed30000 rw-
+#  fingerprint: 20fd8127a00a5057d8f9e4f3979cb28c00000000
+# /7JWPYRZdCm/common/lib/libSceHttp.sprx
+#  text: 0000000816ba8000:0000000816be0000 r-x
+#  data: 0000000816be4000:0000000816bec000 rw-
+#  fingerprint: 6889bac51cbd58cf91ad80fe4dd9750100000000
+# /7JWPYRZdCm/common/lib/libSceHttp2.sprx
+#  text: 000000082157c000:00000008215b0000 r-x
+#  data: 00000008215b4000:00000008215b8000 rw-
+#  fingerprint: 8739981bc9e8bfe7b41a737cb0679aba00000000
+# /7JWPYRZdCm/common/lib/libSceNpCommon.sprx
+#  text: 0000000817b38000:0000000817b7c000 r-x
+#  data: 0000000817b80000:0000000817b84000 rw-
+#  fingerprint: aac3293e2054105511ece0b3a61ac90c00000000
+# /7JWPYRZdCm/common/lib/libSceNpUtility.sprx
+#  text: 000000082b564000:000000082b58c000 r-x
+#  data: 000000082b590000:000000082b594000 rw-
+#  fingerprint: b2d69a8b9c4e68ce863298eaf04a11fe00000000
+# /7JWPYRZdCm/common/lib/libSceRegMgr.sprx
+#  text: 000000081b46c000:000000081b470000 r-x
+#  data: 000000081b474000:000000081b478000 rw-
+#  fingerprint: 9a98ef885f467a289cba6ce20b8cca3c00000000
+# /7JWPYRZdCm/common/lib/libSceNpManager.sprx
+#  text: 0000000811a4c000:0000000811aa0000 r-x
+#  data: 0000000811aa4000:0000000811aa8000 rw-
+#  fingerprint: 803300c1060e5eff7fd03a50b311dfcf00000000
+# /7JWPYRZdCm/common/lib/libSceNpWebApi.sprx
+#  text: 0000000832984000:000000083299c000 r-x
+#  data: 00000008329a0000:00000008329a4000 rw-
+#  fingerprint: e0381af624565d167f06c360c8b8bc7000000000
+# /7JWPYRZdCm/common/lib/libSceNpWebApi2.sprx
+#  text: 000000081cf48000:000000081cf6c000 r-x
+#  data: 000000081cf70000:000000081cf74000 rw-
+#  fingerprint: a7288a3003806fc9f0a73ff2d36fe12600000000
+# /7JWPYRZdCm/common/lib/libSceSystemService.sprx
+#  text: 00000008114d4000:0000000811510000 r-x
+#  data: 0000000811514000:0000000811520000 rw-
+#  fingerprint: fa8364051adaf2d3611c0a6d2913d07500000000
+# /7JWPYRZdCm/common/lib/libSceUserService.sprx
+#  text: 0000000838664000:0000000838674000 r-x
+#  data: 0000000838678000:000000083867c000 rw-
+#  fingerprint: a3a5b3a6361c2d3f2579ddb912d1265a00000000
+# /7JWPYRZdCm/common/lib/libSceSysUtil.sprx
+#  text: 00000008398c8000:00000008398cc000 r-x
+#  data: 00000008398d0000:00000008398d4000 rw-
+#  fingerprint: 3d7f6f61918fdf892e9aa8d9173bc0f000000000
+# /7JWPYRZdCm/common/lib/libSceMbus.sprx
+#  text: 0000000833df4000:0000000833e00000 r-x
+#  data: 0000000833e04000:0000000833e08000 rw-
+#  fingerprint: b2b7c9ebc2ee1130b029e4a7d5bf5e7a00000000
+# /7JWPYRZdCm/common/lib/libSceAudioOut.sprx
+#  text: 0000000834c98000:0000000834cb0000 r-x
+#  data: 0000000834cb4000:0000000834cb8000 rw-
+#  fingerprint: 307afbb692d24a3757e48cce8c93b84300000000
+# /7JWPYRZdCm/common/lib/libSceAudioIn.sprx
+#  text: 0000000830c40000:0000000830c48000 r-x
+#  data: 0000000830c4c000:0000000830c50000 rw-
+#  fingerprint: f1a6dededf25814a01b343f2cc4718da00000000
+# /7JWPYRZdCm/common/lib/libSceAvSetting.sprx
+#  text: 00000008127b4000:00000008127c0000 r-x
+#  data: 00000008127c4000:00000008127c8000 rw-
+#  fingerprint: 6515c8bf5104d2befe0c7fc5b798ad7500000000
+# /7JWPYRZdCm/common/lib/libSceAjm.sprx
+#  text: 000000083f37c000:000000083f380000 r-x
+#  data: 000000083f384000:000000083f388000 [SceLncService] No heart beat of Shell UI has been observed for 1059 msec.
+rw-
+#  fingerprint: fb4bfb98c9c43f525e3f6c49670a6c5d00000000
+# /7JWPYRZdCm/common/lib/libSceVoice.sprx
+#  text: 000000080887c000:000000080889c000 r-x
+#  data: 00000008088a0000:00000008088e0000 rw-
+#  fingerprint: 56e19570854b20028b202c340f4d6c7f00000000
+# /7JWPYRZdCm/common/lib/libSceAppInstUtil.sprx
+#  text: 000000083304c000:0000000833058000 r-x
+#  data: 000000083305c000:0000000833064000 rw-
+#  fingerprint: aea345c55d8bf81db2e86bd9b11c012c00000000
+# /7JWPYRZdCm/common/lib/libSceSharePlay.sprx
+#  text: 0000000824724000:0000000824728000 r-x
+#  data: 000000082472c000:0000000824730000 rw-
+#  fingerprint: daaf0707d52f66534f26f3a2a633ff3400000000
+# /7JWPYRZdCm/common/lib/libSceVnaInternal.sprx
+#  text: 000000080074c000:0000000800750000 r-x
+#  data: 0000000800754000:0000000800758000 rw-
+#  fingerprint: 1f5c7242c3042dbaec12f31dcba3de2400000000
+# /7JWPYRZdCm/common/lib/libSceRudp.sprx
+#  text: 0000000802da0000:0000000802dc8000 r-x
+#  data: 0000000802dcc000:0000000802dd0000 rw-
+#  fingerprint: 95f3929d0a7e9e919ee745163bfa4a4c00000000
+# /7JWPYRZdCm/common/lib/libSceJson2.sprx
+#  text: 000000080a884000:000000080a898000 r-x
+#  data: 000000080a89c000:000000080a8a0000 rw-
+#  fingerprint: 3af0dc5fdc7e9d19adc7887830e3179000000000
+# /7JWPYRZdCm/common/lib/libSceRandom.sprx
+#  text: 000000082155c000:0000000821560000 r-x
+#  data: 0000000821564000:0000000821568000 rw-
+#  fingerprint: a6355f17f2833cf413d7bc70d732ddb400000000
+# /7JWPYRZdCm/common/lib/libSceRemoteplay.sprx
+#  text: 0000000824b84000:0000000824b8c000 r-x
+#  data: 0000000824b90000:0000000824b94000 rw-
+#  fingerprint: 2c6b7478f70b7dab149d4ef2d493159500000000
+# /system/common/lib/libkernel.sprx
+#  text: 00000008360a8000:00000008360fc000 r-x
+#  data: 0000000836100000:0000000836138000 rw-
+#  fingerprint: ba7aa6d44b714e22b0824c89d7436d0900000000
+# /system/common/lib/libSceSysUtil.sprx
+#  text: 0000000828080000:0000000828084000 r-x
+#  data: 0000000828088000:000000082808c000 rw-
+#  fingerprint: 3d7f6f61918fdf892e9aa8d9173bc0f000000000
+[Syscore App] App Crash : PID=0x2e, reason=0xb
+[Syscore App] Syscore Event Queue Push : SCE_SYSCORE_EVENT_APP_CRASH
+[Syscore App] Syscore Event Queue Pop : SCE_SYSCORE_EVENT_APP_CRASH
+[SceLncService] AppCrash: pid={0x0000002e} appId={0x60000504} appLocalPid={0x10504050}
+[SceLncUCtil] blockAppSuspend: name={SceNpUds}, appId={0x60000100}, refCount={1}
+[SceLncUtil] unblockAppSuspend: name={SceNpUds}, appId={0x60000100}, refCount={0}
+[SceLncService] getCoredumpSequence() isDebuggable={0} isKeepProcess={1} isUserDebugRequest={0} isLimitKeepProcess={0} enableCrashReport={1}
+[SceLncService] CoredumpSequence = {DUMP_PROCESS}
+[SceLncService] getCoredumpMode() isSystem={0x00000001}, reason={0x0000000b}
+[SceLncService] notifyAppCrash() pid={0x0000002e}, appId={0x60000504}, appLocalPid={0x10504050}, coredump.path,name,mode={/user/data/sce_coredumps/NPXS21002_1794836368/,NPXS21002_1794836368.sorbisdmp,1}, enableCrashReport={1}, skipVshDump={0}
+[SceLncService] enableCrashReport={1}, crashReportMode={0}, isAllowed={0}
+[SceLncService] kick coredump is disabled.
+[Syscore App] Kill process: 0x2e
+[mbus] onSessionKilled. pid=46
+#### AudioOut recovery is done [576637(361)-] (576637 22316513)
+#### AudioOut recovery is done [551788(346)-] (551788 14333850)
+ontext.cc:189 (ajmContextCleanup) - Codec CELP8 Decoder was not properly unregistered.
+Context.cc:189 (ajmContextCleanup) - Codec CELP8 Encoder was not properly unregistered.
+Context.cc:189 (ajmContextCleanup) - Codec CELP(16) Decoder was not properly un#### AudioOut recovery is done [418210(262)-] (418210 14848329)
+registered.
+Context.cc:191 (ajmContextCleanup) - More codecs were not properly unregistered...
+@ removeSession:L184
+[Syscore App] Kill process: 0x2e => 0
+[Syscore App] EVFILCT_PROC NOTE_EXIT received : pid=0x2e
+[AppMgr Trace]: pid=0x2e, deleted.
+[Syscore App] Syscore Event Queue Push : SCE_SYSCORE_EVENT_ON_PROCESS_UNLOADED
+[AppMgr] checkAppTerminated pid=0x33 is still alive in 0x60000504
+[Syscore App] Kill process: 0x33
+[Syscore App] Syscore Event Queue Pop : SCE_SYSCORE_EVENT_ON_PROCESS_UNLOADED
+[Syscore App] process delete event : pid=0x2e
+#### AudioOut recovery is done [455386(285)-] (455386 22773084)
+ontext.cc:189 (ajmContextCleanup) - Codec Opus SILK Encoder was not properly unregistered.
+Context.cc:189 (ajmContextCleanup) - Codec Opus CELT Encoder was not properly unregistered.
+Context.cc:189 (ajmContextCleanup) - Codec Opus Decoder was not properly unregistered.
+[Syscore App] EVFILT_PROC NOTE_EXIT received : pid=0x33
+[Syscore App] Kill process: 0x33 => 0
+[avs] lock 0:17
+[AppMgr Trace]: pid=0x33, deleted.
+[Syscore App] Syscore Event Queue Push : SCE_SYSCORE_EVENT_ON_PROCESS_UNLOADED
+[AppMgr] All processes exited
+[Syscore App] Syscore Event Queue Push : SCE_SYSCORE_EVENT_ON_APP_UNLOADED
+[AppMgr Trace]: AppId=0x60000504  deleted
+[Syscore App] Syscore Event Queue Pop : SCE_SYSCORE_EVENT_ON_PROCESS_UNLOADED
+[SceLncService] KillApp() appId={0x60000504}, withSuspend={0}, forceKill={1} killReason={0}
+[Syscore App] Syscore Event Queue Pop : SCE_SYSCORE_EVENT_ON_APP_UNLOADED
+[SceLncService] BlockingKill() appId={0x60000504}, titleId={NPXS21002}, is_coredumpFinished={0}, forceKill={1}
+[SceLncService] convertToSysCoreKillReason: {0x00000000}->{0x00000000}
+[Syscore App]  ExpandCpuSetMode : enable
+[SceLncService] this app has already exited. appId={0x60000504}
+[SceLncService] start unmountAllForShellCoreInternal()
+[SceLncService] end unmountAllForShellCoreInternal()
+[avs] lock 17:0
+[Syscore App] process delete event : pid=0x33
+[SceLncUtil] blockAppSuspend: name={SceNpUds}, appId={0x60000100}, refCount={1}
+[SceLncUtil] unblockAppSuspend: name={SceNpUds}, appId={0x60000100}, refCount={0}
+[libSceSaveData] wait 0 msec for session killed
+[SceRnpsAppMgr] UnblockAllAppInstall(): NPXS21002(appId=0x60000504)
+[SceLncService] onAppExit() appId={0x60000504}
+[UIProcess] malloc stats freeSize:41184352 (98%) inuseSize:758688 peakSize:760640 [pid:0x3a]
+[SceLncService] ProcessTerm()
+[SceLncService] ProcessTerm() returned
+[SceLncService] convertToSysCoreKillReason: {0x00000000}->{0x00000000}
+[SceShellCore] RESTART Party Daemon
+[SceLncService] launchApp(NPXS21002)
+[SceLncService] category={gdd} VRMode={0,0}
+[SceLncService] hnm,psnf,pc,tk,ns={1,0,0,0,0} appBootMode={-1}
+[SceLncService] appType={SCE_LNC_APP_TYPE_DAEMON} [] appVer={00.00}
+[SceLncService] Num. of logged-in users is 1
+[SceLncService] PrepareProcessLaunchDebuggerCheck()
+[SceLncService] PrepareProcessLaunchDebuggerCheck() returned
+[SceLncService] PrepareProcessLaunchDebugger()
+[SceLncService] PrepareProcessLaunchDebugger() returned
+[SceLncService] spawnApp
+[Syscore App] createApp NPXS21002
+[Syscore App] processSpawn(pid, 0x60000f04, 0x10f04130, appParam,m processParam, 0, 0, 1, param, debug, 0)
+[Syscore App] appParam: appType = 0x2, rootPath = /mnt/sandbox/NPXS21002_000, titleId = NPXS21002
+[Syscore App] processParam: elfPath = /app0/eboot.bin, fullPath = /system/vsh/app/NPXS21002/eboot.bin
+[Syscore App] new pid=0x45[Syscore App] attributeExe= 0
+[Syscore App] Ready to exec
+[Syscore App] wait for NOTE_EXIT|NOTE_EXEC
+[Syscore App] Add event : pid=0x45
+[AppMgr Trace]: New Process, pid=0x45, created.
+[AppMgr Trace]: New App, appId=0x60000f04, created
+[Syscore App]  ExpandCpuSetMode : enable
+DBG: Process 69 untraced!
+<69> EXEC /app0/eboot.bin [system], vm#0, dmem#0  <501735 msec>
+[Syscore App] Start sceApplicationAddProcess /app0/webrtc_daemon.self
+[Syscore App] calling add process
+[Syscomre App] processSpawn(pid, 0x60000f04, 0x10f04141, appParam, processParam, 0, 0, 0, param, debug, 0)
+[Syscore App] appParam: appType = 0x2, rootPath = /mnt/sandbox/NPXS21002_000, titleId = NPXS21002
+[Syscore App] processParam: elfPath = /app0/webrtc_daemon.self, fullPath = /system/vsh/app/NPXS21002/webrtc_daemon.self
+[Syscore App] new pid=0x46[Syscore App] attributeExe= 0
+[Syscore App] Ready to exec
+[Syscore App] wait for NOTE_EXIT|NOTE_EXEC
+[Syscore App] Add event : pid=0x46
+[AppMgr Trace]: New Process, pid=0x46, created.
+DBG: Process 70 untraced!
+<70> EXEC /app0/webrtc_daemon.self [unspecified], vm#0, dmem#0  <501992 msec>
+[mbus] onNewClient. clientNum 9 over 8
+SQLite MSG pthreadMutexInit 138: redundant call.
+SQLite MSG pthreadMutexInit 138: redundant call.
+SQLite MSG pthreadMutexInit 138: redundant call.
+SQLite MSG pthreadMutexInit 138: redundant call.
+[SceLncService] W:\Build\J02690785\vsh\shell\shell_core\lnc_service\lnc_manager.cpp(2188) getAppId: LNC_ISOK::0x80940004->0xffffffff
+@ busStatusChangeSubscribe:L4750
+[SceShellCore] VM Stats: RSS 532.7, kernel 265.8, wire count 337.4, swap out 0.0, page table CPU 2429/6144 GPU 385/2048
+[SceShellCore] FMEM   1.3/   4.5 NPXS20977 SceSysAvControl.elf
+[SceShellCore] FMEM  10.6/  74.3 NPXS20991 SceSysCore.elf
+[SceShellCore] FMEM   9.3/  54.3 NPXS20973 orbis_audiod.elf
+[SceShellCore] FMEM   3.2/  11.2 NPXS20976 GnmCompositor.elf
+[SceShellCore] FMEM  28.0/ 349.0 NPXS20000 SceShellCore
+[SceShellCore] FMEM 322.1/ 839.0 NPXS20001 SceShellUI
+[SceShellCore] FMEM   3.5/   8.3 NPXS21003 SceAvCapture
+[SceShellCore] FMEM   8.2/  32.4 NPXS21000 SceGameLiveStreaming
+[SceShellCore] FMEM   4.3/  25.4 NPXS21004 SceVideoCoreServer
+[SceShellCore] FMEM   9.7/  51.3 NPXS21006 SceRemotePlay
+[SceShellCore] FMEM   6.8/  39.0 NPXS21010 SceCloudClientDaemon
+[SceShellCore] FMEM   3.2/  10.8 NPXS21016 SceSpZeroConf
+[SceShellCore] FMEM   6.3/  18.1 NPXS21019 SceSocialScreenMgr
+[SceShellCore] FMEM   4.3/   9.8 NPXS21007 SceMusicCoreServer
+[SceShellCore] FMEM   6.5/  14.4 NPXS21020 SceVoiceAndAgent
+[SceShellCore] FMEM   2.1/   5.1 NPXS20967 fs_cleaner.elf
+[SceShellCore] FMEM   2.0/  10.2 NPXS20974 SceVdecProxy.elf
+[SceShellCore] FMEM   2.0/  10.3 NPXS20975 SceVencProxy.elf
+[SceShellCore] FMEM  25.6/ 268.0 NPXS20001 SecureUIProcess.self
+[SceShellCore] FMEM  41.5/ 535.0 NPXS20001 SecureWebProcess.self
+[SceShellCore] FMEM  10.7/ 358.8 NPXS20001 orbis-jsc-compiler.self
+[SceShellCore] FMEM  13.7/  43.5 NPXS21002 ScePartyDaemon
+[SceShellCore] FMEM   7.9/ 156.0 NPXS21002 webrtc_daemon.self
+[SceShellCore] Libc Heap Status: free 36%, in-use 3891.0 KB, trend +11.4 KB/min, peak 4355.6 KB, when 495 [sec]
+ugen0.7: <SanDisk, Cruzer Blade, 4C530000321216110004> at usbus0 (disconnected)
+umass1: at uhub4, port 1, addr 9 (disconnected)
+(da1:umass-sim1:1:0:0): lost device - 0 outstanding, 2 refs
+g_deMSG AutoMounter(int32_t AutoMounstrter::DevctlReader::handleDestroyUsbDevice(const char *) 229):
+	no file system is mounted on deviceFilePath(/dev/da1).
+MSG AutoMounter(int32_t AutoMounter::DevctlReader::handleDestroyUsbDevice(const char *) 229):
+	no file system is mounted on deviceFilePath(/dev/da1s2).
+MSG AutoMounter(int32_t AutoMount::DirectoryMapManager::removeLockAnyByDevice(const char *, bool *, pid_t *, char *, char *) 449):
+	there is no lock for /dev/da1s1.
+MSG AutoMounter(void AutoMount::PsmEventNotifier::callback_connection(void **) 360):
+	Notify PsmEvent OnUsbStorageEjected
+MSG AutoMounter(void (anonymous namespace)::callbackDisconnection(void **) 280):
+	DISCONNECTO: erase(): device: /dev/da1
+.MSG AutoMounter(void AutoMount::PsmEventNotifier::callback_connection(void **) 360):
+	Notify PsmEvent OnUsbStorageEjected
+MSG AutoMounter(void AutoMount::PsmEventNotifier::callback_connection(void **) 360):
+	Notify PsmEvent OnUsbStorageEjected
+MSG AutoMounter(void (anonymous namespace)::callbackDisconnection(void **) 280):
+	DISCONNECTO: erase(): device: /dev/da1s2
+.MSG AutoMounter(void (anonymous namespace)::callbackDisconnection(void **) 280):
+	DISCONNECTO: erase(): device: /dev/da1s1
+oy_provider(da1) calls providergone(da1)
+g_disk_providergone(da1) calls d_gone(da)
+.MSG AutoMounter(int32_t _AutoMounter::UsbHandler::(anonymous namespace)::unmountExFat(std::string, std::string) 659):
+	device(/dev/da1s1) is unmounted from /mnt/usb0.
+DBG AutoMounter(notifyUnmount 484):
+	eventArg.additionalFeatures[0x400].
+MSG AutoMounter(int32_t AutoMount::EventManager::notifyEvent(uint32_t, const void *, size_t) 609):
+	melUtilUnmountHandler starts without dispatching thread.
+MSG AutoMounterMelUtil(void sceAutomounterMelUtil::callbackUnmountAll(void **) 361):
+		device(/dev/da1s1): mountpoint(/mnt/usb0) is unmounted.
+MSG AutoMounter(int32_t AutoMount::EventManager::notifyEvent(uint32_t, const void *, size_t) 611):
+	melUtilUnmountHandler ended.
+MSG AutoMounter(int32_t AutoMount::EventManager::notifyEvent(uint32_t, const void *, size_t) 609):
+	melUtilExfatUnmountHandler starts without dispatching thread.
+MSG AutoMounter(void AutoMount::PsmEventNotifier::callback_unmount(void **) 327):
+	Notify PsmEvent OnUsbStorageUnmounted
+MSG AutoMounter(int32_t AutoMount::EventManager::notifyEvent(uint32_t, const void *, size_t) 611):
+	melUtilExfatUnmountHandler ended.
+MSG AutoMounterWrapper(void callbackUsbUnmount(SceUsbStorageEventDatas *, void *) 121):
+	DeviceId=0xffcd4e4
+[SceLncUtil] blockAppSuspend: name={SceSaveData}, appId={0x60000100}, refCount={1}
+[SceLncUtil] unblockAppSuspend: name={SceSaveData}, appId={0x60000100}, refCount={0}
+[UIProcess] malloc stats freeSize:41184768 (98%) inuseSize:758272 peakSize:760640 [pid:0x3a]

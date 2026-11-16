@@ -46,7 +46,6 @@ nothing about the rootfs. `PS4_BOOT_REF` lets you point the distro at a differen
 | **Wired Ethernet (`eth0`)** | ⚠️ partial | In-house `mts.ko` driver brings up the MAC and DMA, but the PHY never leaves power-down (firmware blocker, investigation closed) |
 | **Full power-off (S5)** | ⚠️ partial | `poweroff` shuts down the OS; the blue light does not turn off by itself |
 | **Baikal HPET clocksource / watchdog** | ⏸️ disabled | Patches are applied by the build but `CONFIG_CLKSRC_BAIKAL_HPET` and `CONFIG_WATCHDOG` are off by default: a build with both enabled gave a black screen twice (UART stops at `kexec: About to relocate and jump to kernel`; root cause unconfirmed). Pending isolated tests, see `BACKLOG.md` |
-| **Rootfs boot SSD (USB)** | 🔴 failing | Intermittent CRC read errors (`ASC=0x47`) on the USB SSD: replace the drive/cable before long tests |
 
 ### 🌟 Reverse Engineering Highlight: Baikal Memory Driver (SPM/DDR3)
 The Baikal southbridge (PS4 Slim) has a dedicated auxiliary 256 MB DDR3 memory chip (Scratch Pad Memory, SPM, PCI `00:14.6`) that previously had no Linux support at all. The project built the `baikal-memory` driver from scratch:
@@ -55,7 +54,7 @@ The Baikal southbridge (PS4 Slim) has a dedicated auxiliary 256 MB DDR3 memory c
 * **Syscon/ICC bridge:** Safe mapping of the message area shared with the Syscon (`BAR5+0x2c000`).
 * **Safety and idempotency:** Module with guarded writes (`allow_write=0`), a strict whitelist for the BAR2 window, and idempotent integration into kernel 7.0 via patch.
 
-Details, root causes, and what has already been ruled out: [`outros/docs/BACKLOG.md`](outros/docs/BACKLOG.md).
+Details, root causes, and what has already been ruled out: [`others/docs/BACKLOG.md`](others/docs/BACKLOG.md).
 
 ## Release Notes — 2026-11-16 (Tag `20261116-keep-mode-aplicado`)
 

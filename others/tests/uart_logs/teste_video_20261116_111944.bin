@@ -1,0 +1,389 @@
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [ContentAreaScene : ContentAreaScene] -> [SystemArea : SystemAreaScene]
+[SceShellUI] I/PSM.UI :      Scene [SystemArea : SystemAreaScene] : Alive
+SetDeviceIndexBehavior: mode=SpecificUser, param=0x1b6ebedc
+[Theme/I] : Apply [BLUE] : [Option:111111]: with preloaded user
+[SceShellUI] W/PSM.UI : WARNING : Scene LayoutBuild : [5.44msec/4widgets] : SystemAreaNotification : SystemAreaPluginNotification
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.01msec] Layout[5.44msec/4widgets] : SystemAreaNotification : SystemAreaPluginNotification
+[SceShellUI] I/PSM.UI : ** Unload enqueue: SystemAreaNotification : SystemAreaPluginNotification
+[SceShellUI] I/PSM.UI : SceneQ : Unloaded[0.36msec] : SystemAreaNotification : SystemAreaPluginNotification
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.01msec] Layout[0.00msec/0widgets] : SystemAreaPSPlus : SystemAreaPluginPSPlus
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [SystemArea : SystemAreaScene] -> []
+SetDeviceIndexBehavior: mode=SpecificUser, param=0x1b6ebedc
+[SceShellUI] W/PSM.UI : SystemSound called when there is no FocusActiveScene !
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.01msec] Layout[0.00msec/0widgets] : SettingsPlugin : SettingsApplication
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.00msec] Layout[0.00msec/0widgets] : Noname : FrameScene
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.00msec] Layout[0.00msec/0widgets] : NormalStack : SettingPageNormalStack
+sceRemoteplayInitialize: 0x80fc0003
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.00msec] Layout[0.00msec/0widgets] : SettingsBGScene : Scene
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [] -> [id_goldhen_menu : SettingPage]
+[SceShellUI] I/PSM.UI :      Scene [id_goldhen_menu : SettingPage] : Alive
+SetDeviceIndexBehavior: mode=SpecificUser, param=0x1b6ebedc
+[Theme/I] : Apply [BLUE] : [Option:111111]: with preloaded user
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.00msec] Layout[0.00msec/0widgets] : id_goldhen_menu : SettingPage
+[SceShellCore] Libc Heap Status: free 37%, in-use 3818.1 KB, trend +3.2 KB/min, peak 4268.1 KB, when 143 [sec]
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [id_goldhen_menu : SettingPage] -> [id_goldhen_utils : SettingPage]
+[SceShellUI] I/PSM.UI :      Scene [id_goldhen_utils : SettingPage] : Alive
+SetDeviceIndexBehavior: mode=SpecificUser, param=0x1b6ebedc
+[Theme/I] : Apply [BLUE] : [Option:111111]: with preloaded user
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.01msec] Layout[0.00msec/0widgets] : id_goldhen_utils : SettingPage
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [id_goldhen_utils : SettingPage] -> [id_goldhen_utils_payloader : SettingPage]
+[SceShellUI] I/PSM.UI :      Scene [id_goldhen_utils_payloader : SettingPage] : Alive
+SetDeviceIndexBehavior: mode=SpecificUser, param=0x1b6ebedc
+[Theme/I] : Apply [BLUE] : [Option:111111]: with preloaded user
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.00msec] Layout[0.00msec/0widgets] : id_goldhen_utils_payloader : SettingPage
+[SceShellUI] I/PSM.UI : OnFocusActiveSceneChanged [id_goldhen_utils_payloader : SettingPage] -> [id_goldhen_utils_payloader_launchpad : SettingPage]
+[SceShellUI] I/PSM.UI :      Scene [id_goldhen_utils_payloader_launchpad : SettingPage] : Alive
+SetDeviceIndexBehavior: mode=SpecificUser, param=0x1b6ebedc
+[Theme/I] : Apply [BLUE] : [Option:111111]: with preloaded user
+[SceShellUI] I/PSM.UI : SceneQ : Loaded[0.01msec] Layout[0.00msec/0widgets] : id_goldhen_utils_payloader_launchpad : SettingPage
+kernel_init()
+Kernel base = ffffffffd7538000
+Direct map base = ffff96cb00000000
+Testing global variable access (write protection)...
+OK.
+Kernel interface initialized
+Installing sys_kexec to system call #153
+kexec_init() successful
+
+sys_kexec invoked
+========================================
+PS4 Linux Payloads AIO
+FW 12.52 (1252)
+VRAM 1024 MB
+Southbridge: Baikal
+========================================
+sys_kexec(0x20063c000, 16135168, 0x2015a0000, 23773947, "panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0 earlycon=uart8250,mmio32,0xC890E000 console=uart8250,mmio32,0xC890E000 console=tty0 root=LABEL=psxitarch rw rootwait amdgpu.audio=1 usbcore.autosuspend=-1 video=HDMI-A-1:1920x1080@60 log_buf_len=4M")
+#### AudioOut recovery is done [566962(355)-] (566962 17903495)
+[KE]sceCameraDevKill::2685 ERROR: sceCameraProcConfigStop 0x802e0006 i=0 handle=257 Conptid=ext.ccC:o1n744 (ajmC4o
+ntextCleanup) - Instance 278532 was not properly deCsonttroeyextd..
+cConctext:.c17c:1849  ((ajmaCojnmtextCCleaonnup) - Cotdec Oexputs SILKCl eEncoder wasa not npropuerp)ly unr egist-ere d.I
+nCstoanntextc.ecc :174 1(ajmCo6nte3x8tC9l eanwuap) - sInstanc e 34n406o7t was  pnorto propeprely rdleyst rodyeeds.t
+rCoonytedext..c
+cC:on189 te(xatjmC.ocntexctCl:e18anup) -9 Cod e(c aOpusj DemcCoodenrt was extnoCt prleanoup)p erl-y  Cunordegeistecr eMPd3. D
+ecodetrext.cc: w189 a(as jmCnontextoCletan upp) - rCodopeec Orpuls Sy unILK Enrecgoidesr twearesd. not pr
+operCly uonrnegtiestxetred..cc
+:C1ont8e9xt .cc(:a1j8m9 (CoajmConnttexteClxeatnupC) -le Caodnuecp) Opu s C-ELT En cCodoerd weacs  AnotT proRpAerlyC 9unr eDgiestecoredd.e
+rC ontweaxst .ncco:t189 (ajm CporntoextClpeearly unrnup) e- Cgisotdeerc eOpdus. Dec
+oder was not properly unregistered.
+Context.cc:189 (ajmContextCleanup) - Codec Opus CELT Encoder was not properlCy ountnregisteerxetd..
+cCocnte:1x8t9.c c(:1aj89m (CajmoCnotnteextxCtleanuCp)l -e Caondeup)c  -Opus  CELTC Decooddeerc w asM Pnot pErGope4rly  unrAeAgCist Encoder was not properly unregistered.
+ered.
+Context.cc:174 (ajmContextCleanup) - Instance 114689 was not properly destroyed.
+Context.cc:189 (ajmContextCleanup) - Codec AC3 Encoder was not properly unregistered.
+Context.cc:174 (ajmContextCleanup) - Instance 163842 was not properly destroyed.
+Context.cc:189 (ajmContextCleanup) - Codec DTS EncodetryGetMsg() failed. ret = 0x80020003, msgSize = 48
+r was not properly unregistered.
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+firmware_extract: ExtrtryGetMsg() failed. ret = 0x80020003, msgSize = 48
+act lib/firmware/amdgpu/gladius_pfp.bin 
+Copying PFP firmware
+NOP handler at 0xff0
+firmware_extract: Extract lib/firmware/amdgpu/gtryGetMsg() failed. ret = 0x80020003, msgSize = 48
+ladius_me.bin 
+Copying ME firmware
+firmware_extract: Extract lib/firmware/amdgpu/gladius_ce.bin 
+Copying CE firmware
+NOP handler tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+at 0x7f0
+firmware_extract: Extract lib/firmware/amdgpu/gladius_mec.bin 
+Copying MEC firmware
+NOP handler at 0xff0
+firmware_extracttryGetMsg() failed. ret = 0x80020003, msgSize = 48
+: Extract lib/firmware/amdgpu/gladius_mec2.bin 
+Copying MEC2 firmware
+NOP handler at 0xff0
+firmware_extract: Extract lib/firmware/tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+amdgpu/gladius_rlc.bin 
+Copying RLC firmware
+firmware_extract: Extract lib/firmware/amdgpu/gladius_sdma.bin 
+Copying SDMA firmwaretryGetMsg() failed. ret = 0x80020003, msgSize = 48
+
+firmware_extract: Extract lib/firmware/amdgpu/gladius_sdma1.bin 
+Copying SDMA1 firmware
+tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+
+kexec parameters:
+    Kernel image size:   16135168 bytes
+    Initramfs size:      23870719 bytes (2377tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+3947 from user)
+    Kernel command line: panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0 earlycon=uarttryGetMsg() failed. ret = 0x80020003, msgSize = 48
+8250,mmio32,0xC890E000 console=uart8250,mmio32,0xC890E000 console=tty0 root=LABEL=psxitarch rw rootwait amdgpu.audio=1 usbcore.autosusptryGetMsg() failed. ret = 0x80020003, msgSize = 48
+end=-1 video=HDMI-A-1:1920x1080@60 log_buf_len=4M
+    Kernel image buffer: 0xffff96cb48000000
+    Initramfs buffer:    0xftryGetMsg() failed. ret = 0x80020003, msgSize = 48
+fffffffffffffff
+kernel_hook_install(0xffffff807f59d0f4, 0xffffffffd797fb10)
+  Using 64bit absolute jump
+*************************tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+*****************************
+kexec successfully armed. Please shut down the system.
+***********************************************tryGetMsg() failed. ret = 0x80020003, msgSize = 48
+*******
+
+Context.cc:189 (ajmContextCleanup) - Codec CELP8 Decoder was not properly unregistered.
+Context.cc:189 (ajmContextCleanup) - Codec CELP8 Encoder was not properly unregistered.
+Context.cc:189 (ajmContextCleanup) - Codec CELP(16) Decoder was not properly unregistered.
+Context.cc:191 (ajmContextCleanup) - More codecs were not properly unregistered...
+[SceSysCore mini] killall timeout 5[sec]...
+[SceSysCore mini] forcibly unmount 1 nullfses
+[SceSysCore mini] forcibly unmount /mnt/usb0
+[SceSysCore mini[REGMGR] 000006 ...
+] sceKernelPollE[ventFlag(reboot_flag): failed 80020010
+[SceSysCore mini] call reboot(4000)
+REGMGR] (    181.457 sec) 010006 ...
+[REGMGR] (   0.011693 sec) 010007 ...
+[REGMGR] 000108 ...
+[REGMGR] 000501 ...
+Waiting (max 60 seconds) for system process `SceVnlru' to stop...done
+Waiting (max 60 seconds) for system process `SceBufdaemon0' to stop...SD Manual Tuning done. MaxPassWindowSize=23, TunePoint=11 CORE_CTRL=0x58408b
+done
+W
+Sayincing tdiinsks, vnodes rgemain ing.(m..0a x 60 seconds) for system process `SceSyncer' to stop...0 0 sched_sync: flush softdep (iter=2)
+sched_sync: flush softdep (iter=1)
+done
+Waiting (max 60 seconds) for system process `SceBufdaemon1' to stop...done
+Waiting (max 60 seconds) for system process `SceBufdaemon2' to stop...done
+All buffers synced.
+Uptime: 3m6s
+icc post sync:Thermal alert LED off
+[REGMGR] 000007 @2@ ...
+icc08-4001 0802
+icc:failed to disabled reset button notification: 0005
+icc:disabled thermal notification
+eth0: link state changed to DOWN
+ICC: howto:00004000 depth:2 cause:00 hand:01
+ICC: Shutdown.
+hook_icc_query_nowait called
+ICC 05-00 polling
+Fixing ACPI tables at 0xe0000 (0xffff96cb000e0000)
+RSDT at 0xe0024
+XSDT at 0xe0088
+FACP at 0xe016c
+FACS at 0xe012c
+DSDT at 0xe0430
+APIC at 0xe0298
+MCFG at 0xe0304
+SSDT at 0xe0730
+ACPI tables fixed
+kexec: Waiting for secondary CPUs...
+kexec: Secondary CPUs quiesced
+kexec: Setting up GDT...
+kexec: Relocating stub...
+kexec: Setting up boot params...
+kexec: Cleaning up hardware...
+Current sb_id: 3
+
+SB_BAIKAL constant: 3
+
+kexec: Detected Baikal Southbridge, disabling IOMMU...
+kexec: Reconfiguring VRAM...
+kexec: Resetting GPU...
+kexec: About to relocate and jump to kernel
+[    0.000000] ps4: x86_ps4_early_setup: PS4 early setup
+[    0.000000] Linux version 7.0.8-Strawberry-ThinLTO-Baikal-+ (root@adsv2) (Debian clang version 19.1.7 (3+b1), Debian LLD 19.1.7) #1 SMP PREEMPT_DYNAMIC Mon Nov 16 09:10:14 -03 2026
+[    0.000000] 
+[    0.000000]   _________ __                       ___.
+[    0.000000]  /   _____//  |_____________ __  _  _\_ |__   __________________ ___.__.
+[    0.000000]  \_____  \\   __\_  __ \__  \\ \/ \/ /| __ \_/ __ \_  __ \_  __ <   |  |
+[    0.000000]  /        \|  |  |  | \// __ \\     / | \_\ \  ___/|  | \/|  | \/\___  |
+[    0.000000] /_______  /|__|  |__|  (____  /\/\_/  |___  /\___  >__|   |__|   / ____|
+[    0.000000]         \/                  \/            \/     \/              \/
+[    0.000000] 
+[    0.000000]   Strawberry PS4 Linux
+[    0.000000]   Platform  : Sony PlayStation 4
+[    0.000000]   Focus     : BAIKAL
+[    0.000000]   Release   : 7.0.8-Strawberry-ThinLTO-Baikal-+
+[    0.000000]   Builder   : root@adsv2
+[    0.000000]   Toolchain : Debian clang version 19.1.7 (3+b1), Debian LLD 19.1.7
+[    0.000000]   Build     : #1 SMP PREEMPT_DYNAMIC Mon Nov 16 09:10:14 -03 2026
+[    0.000000] 
+[    0.000000] Command line: panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0 earlycon=uart8250,mmio32,0xC890E000 console=uart8250,mmio32,0xC890E000 console=tty0 root=LABEL=psxitarch rw rootwait amdgpu.audio=1 usbcore.autosuspend=-1 video=HDMI-A-1:1920x1080@60 log_buf_len=4M
+[    0.000000] KERNEL supported cpus:
+[    0.000000]   AMD AuthenticAMD
+[    0.000000] BIOS-provided physical RAM map:
+[    0.000000] BIOS-e820: [mem 0x0000000000000000-0x0000000000007fff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x0000000000008000-0x000000000007ffff]  device reserved
+[    0.000000] BIOS-e820: [mem 0x0000000000080000-0x0000000000099fff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x000000000009a000-0x00000000000bffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x00000000000c0000-0x00000000000dffff]
+[    0.000000] BIOS-e820: [mem 0x00000000000e0000-0x00000000000effff]  ACPI data
+[    0.000000] BIOS-e820: [gap 0x00000000000f0000-0x00000000000fffff]
+[    0.000000] BIOS-e820: [mem 0x0000000000100000-0x00000000003fffff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x0000000000400000-0x000000000047ffff]  device reserved
+[    0.000000] BIOS-e820: [mem 0x0000000000480000-0x000000000067ffff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x0000000000680000-0x00000000006fffff]  device reserved
+[    0.000000] BIOS-e820: [mem 0x0000000000700000-0x000000007efe7fff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x000000007efe8000-0x000000007efeffff]  ACPI NVS
+[    0.000000] BIOS-e820: [mem 0x000000007eff0000-0x000000007effffff]  ACPI data
+[    0.000000] BIOS-e820: [mem 0x000000007f000000-0x000000007fffffff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x0000000080000000-0x00000000fbffffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x00000000fc000000-0x00000000ffffffff]
+[    0.000000] BIOS-e820: [mem 0x0000000100000000-0x000000013fffffff]  device reserved
+[    0.000000] BIOS-e820: [mem 0x0000000140000000-0x000000027effffff]  System RAM
+[    0.000000] earlycon: uart8250 at MMIO32 0x00000000c890e000 (options '')
+[    0.000000] printk: legacy bootconsole [uart8250] enabled
+[    0.000000] NX (Execute Disable) protection: active
+[    0.000000] APIC: Static calls initialized
+[    0.000000] SMBIOS 2.1 present.
+[    0.000000] DMI:  , BIOS unde Wed 09/22/2021 16:2
+[    0.000000] DMI: Memory slots populated: 1/1
+[    0.000000] ps4: EMC timer is broken.
+[    0.000000] ps4: Unable to measure TSC frequency, assuming default.
+[    0.000000] tsc: Detected 1594.000 MHz processor
+[    0.001132] last_pfn = 0x27f000 max_arch_pfn = 0x400000000
+[    0.006752] MTRR map: 6 entries (3 fixed + 3 variable; max 20), built from 9 variable MTRRs
+[    0.015307] x86/PAT: Configuration [0-7]: WB  WC  UC- UC  WB  WP  UC- WT  
+[    0.022623] last_pfn = 0x80000 max_arch_pfn = 0x400000000
+[    0.034560] Using GB pages for direct mapping
+[    0.047248] printk: log buffer data + meta data: 4194304 + 17825792 = 22020096 bytes
+[    0.055188] printk: early log buf free: 61704(94%)
+[    0.060090] RAMDISK: [mem 0x4e000000-0x4f6c3fff]
+[    0.064836] ACPI: Early table checksum verification disabled
+[    0.070632] ACPI: RSDP 0x00000000000E0000 000024 (v02 SIE   )
+[    0.076520] ACPI: XSDT 0x00000000000E0088 00004C (v01 SIE    ORBIS    20121218 INTL 20110211)
+[    0.085258] ACPI: FACP 0x00000000000E016C 0000F4 (v04 SIE    ORBIS    20130205 INTL 20110211)
+[    0.093997] ACPI: DSDT 0x00000000000E0430 00018C (v02 SIE    ORBIS    20121002 INTL 20110211)
+[    0.102732] ACPI: FACS 0x00000000000E012C 000040
+[    0.107458] ACPI: FACS 0x00000000000E012C 000040
+[    0.112184] ACPI: APIC 0x00000000000E0298 00006C (v02 SIE    ORBIS    20120725 INTL 20110211)
+[    0.120918] ACPI: MCFG 0x00000000000E0304 00003C (v01 SIE    ORBIS    20120725 INTL 20110211)
+[    0.129653] ACPI: SSDT 0x00000000000E0730 0001EC (v01 AMD    POWERNOW 00000001 AMD  00000001)
+[    0.138387] ACPI: IVRS 0x00000000000E091C 000054 (v01 F0F    PS4KEXEC 20161225 KEXC 20161225)
+[    0.147121] ACPI: Reserving FACP table memory at [mem 0xe016c-0xe025f]
+[    0.153805] ACPI: Reserving DSDT table memory at [mem 0xe0430-0xe05bb]
+[    0.160487] ACPI: Reserving FACS table memory at [mem 0xe012c-0xe016b]
+[    0.167169] ACPI: Reserving FACS table memory at [mem 0xe012c-0xe016b]
+[    0.173851] ACPI: Reserving APIC table memory at [mem 0xe0298-0xe0303]
+[    0.180533] ACPI: Reserving MCFG table memory at [mem 0xe0304-0xe033f]
+[    0.187215] ACPI: Reserving SSDT table memory at [mem 0xe0730-0xe091b]
+[    0.193897] ACPI: Reserving IVRS table memory at [mem 0xe091c-0xe096f]
+[    0.201430] ACPI: No IOAPIC entries present
+[    0.205709] ACPI: Using ACPI for processor (LAPIC) configuration information
+[    0.212931] CPU topo: Max. logical packages:   1
+[    0.217654] CPU topo: Max. logical nodes:      1
+[    0.222375] CPU topo: Num. nodes per package:  1
+[    0.227102] CPU topo: Max. logical dies:       1
+[    0.231825] CPU topo: Max. dies per package:   1
+[    0.236555] CPU topo: Max. threads per core:   1
+[    0.241278] CPU topo: Num. cores per package:     8
+[    0.246267] CPU topo: Num. threads per package:   8
+[    0.251256] CPU topo: Allowing 8 present CPUs plus 0 hotplug CPUs
+[    0.257513] [gap 0xfc000000-0xffffffff] available for PCI devices
+[    0.263753] clocksource: refined-jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645519600211568 ns
+[    0.274476] Zone ranges:
+[    0.277062]   DMA      [mem 0x0000000000001000-0x0000000000ffffff]
+[    0.283391]   DMA32    [mem 0x0000000001000000-0x00000000ffffffff]
+[    0.289718]   Normal   [mem 0x0000000100000000-0x000000027effffff]
+[    0.296044] Movable zone start for each node
+[    0.300409] Early memory node ranges
+[    0.304062]   node   0: [mem 0x0000000000001000-0x0000000000007fff]
+[    0.310477]   node   0: [mem 0x0000000000080000-0x0000000000099fff]
+[    0.316891]   node   0: [mem 0x0000000000100000-0x00000000003fffff]
+[    0.323306]   node   0: [mem 0x0000000000480000-0x000000000067ffff]
+[    0.329720]   node   0: [mem 0x0000000000700000-0x000000007efe7fff]
+[    0.336136]   node   0: [mem 0x000000007f000000-0x000000007fffffff]
+[    0.342551]   node   0: [mem 0x0000000140000000-0x000000027effffff]
+[    0.348965] Initmem setup node 0 [mem 0x0000000000001000-0x000000027effffff]
+[    0.356190] On node 0, zone DMA: 1 pages in unavailable ranges
+[    0.362162] On node 0, zone DMA: 120 pages in unavailable ranges
+[    0.368325] On node 0, zone DMA: 102 pages in unavailable ranges
+[    0.374484] On node 0, zone DMA: 128 pages in unavailable ranges
+[    0.380671] On node 0, zone DMA: 128 pages in unavailable ranges
+[    0.394591] On node 0, zone DMA32: 24 pages in unavailable ranges
+[    0.420353] On node 0, zone Normal: 4096 pages in unavailable ranges
+[    0.426880] setup_percpu: NR_CPUS:8 nr_cpumask_bits:8 nr_cpu_ids:8 nr_node_ids:1
+[    0.435033] percpu: Embedded 44 pages/cpu s142552 r8192 d29480 u262144
+[    0.441773] Kernel command line: panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0 earlycon=uart8250,mmio32,0xC890E000 console=uart8250,mmio32,0xC890E000 console=tty0 root=LABEL=psxitarch rw rootwait amdgpu.audio=1 usbcore.autosuspend=-1 video=HDMI-A-1:1920x1080@60 log_buf_len=4M
+[    0.471604] Dentry cache hash table entries: 1048576 (order: 11, 8388608 bytes, linear)
+[    0.480564] Inode-cache hash table entries: 524288 (order: 10, 4194304 bytes, linear)
+[    0.488640] software IO TLB: area num 8.
+[    0.516611] Built 1 zonelists, mobility grouping on.  Total pages: 1830409
+[    0.523663] mem auto-init: stack:off, heap alloc:off, heap free:off
+[    0.558837] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=8, Nodes=1
+[    0.565639] Dynamic Preempt: full
+[    0.569111] rcu: Preemptible hierarchical RCU implementation.
+[    0.574993] 	Trampoline variant of Tasks RCU enabled.
+[    0.580159] 	Tracing variant of Tasks RCU enabled.
+[    0.585059] rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.
+[    0.592826] RCU Tasks: Setting shift to 3 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=8.
+[    0.601747] NR_IRQS: 4352, nr_irqs: 128, preallocated irqs: 0
+[    0.607675] rcu: 	Offload RCU callbacks from CPUs: 0-7.
+[    0.613027] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[    0.620111] No irq handler for 0.49
+[    0.623703] Console: colour dummy device 80x25
+[    0.628253] printk: legacy console [tty0] enabled
+[    0.633068] printk: legacy bootconsole [uart8250] disabled

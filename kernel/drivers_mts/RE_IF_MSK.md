@@ -118,7 +118,7 @@ Existem duas camadas: o controller (`mskc`) e a porta (`msk`).
   `gbe:ctrl`, setup da interface.
 
 **Pendências que continuam abertas:**
-- Não confirmei se o `mts` (Baikal) tem as rotinas `switch_rmu_*` com outros nomes, ou se a
+- Não confirmei se o `mts` (Baikal) tem as rotinas `switch_rmu_*` com others nomes, ou se a
   gestão do switch no Baikal é feita de forma diferente. As strings `switch_rmu_*` só apareceram
   na região do `msk`.
 - Ainda não há evidência de que a diferença msk/mts explique o `chip_id = 0` — as duas linhas
@@ -128,7 +128,7 @@ Existem duas camadas: o controller (`mskc`) e a porta (`msk`).
 Ao conferir esta descoberta, `tools/re_find_func.sh` inicialmente **contradisse** os três
 endereços (relatou que `0xdc4c4ff0` e `0xdc4c5140` resolviam para fora dos limites da função mais
 próxima). Investigação do assembly bruto mostrou que os três **são mesmo** início real de função
-— a ferramenta tinha três bugs próprios (janela de bytes desalinhada, entre outros; detalhes no
+— a ferramenta tinha três bugs próprios (janela de bytes desalinhada, entre others; detalhes no
 cabeçalho do script). Corrigidos e revalidados contra a regressão conhecida (`0xdc5a0c80`) antes
 de aceitar esta descoberta. Ver header de `tools/re_find_func.sh` para o histórico completo.
 

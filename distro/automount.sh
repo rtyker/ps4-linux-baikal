@@ -40,7 +40,7 @@ echo "⚡ Montando Partições do HD Interno do PS4 (read-only) ⚡"
 echo "========================================================="
 
 # Descobre o device do HD interno sem assumir /dev/sda: com o HD USB de boot
-# plugado, o USB costuma ser sda e o interno sdb (e vice-versa em outros setups).
+# plugado, o USB costuma ser sda e o interno sdb (e vice-versa em others setups).
 INTERNAL_DEV=""
 for cand in sdb sda; do
     if [ -b "/dev/${cand}27" ]; then
@@ -73,7 +73,7 @@ if ! "$MONTA_CMD" --check-key >/dev/null 2>&1; then
     echo ""
     echo "Depois recarregue o serviço:"
     echo "    systemctl restart ps4-automount.service"
-    echo "Detalhes: outros/docs/MONTAGEM_HD_INTERNO.md"
+    echo "Detalhes: others/docs/MONTAGEM_HD_INTERNO.md"
     exit 0
 fi
 

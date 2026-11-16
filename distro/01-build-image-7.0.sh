@@ -329,7 +329,7 @@ NETEOF
 # não tem link (PHY mudo). O módulo continua instalado no rootfs e pode ser carregado à mão
 # (`modprobe mts` usa stage=4 via /etc/modprobe.d/mts.conf).
 # Reativar: ENABLE_MTS=1 sudo ./01-build-image-7.0.sh <TAG>
-# Ver outros/docs/BACKLOG.md, item "Auditoria de boot/otimização".
+# Ver others/docs/BACKLOG.md, item "Auditoria de boot/otimização".
 mkdir -p "$ROOTFS_DIR/etc/modprobe.d"
 echo "options mts stage=4" > "$ROOTFS_DIR/etc/modprobe.d/mts.conf"
 if [ "${ENABLE_MTS:-0}" = "1" ]; then
@@ -789,7 +789,7 @@ Sem a chave o boot continua normal — o serviço ps4-automount só não monta n
 e avisa no log (journalctl -u ps4-automount).
 
 A chave é um segredo: nunca comite, nunca deixe modo 644, nunca compartilhe.
-Documentação completa: outros/docs/MONTAGEM_HD_INTERNO.md
+Documentação completa: others/docs/MONTAGEM_HD_INTERNO.md
 KEYEOF
 chmod 600 "$ROOTFS_DIR/etc/ps4-keys/LEIA-ME.txt"
 
@@ -800,16 +800,16 @@ fi
 
 # Diagnóstico do esquema de IV (iv_offset) — o monta_particao.sh já imprime
 # dmsetup table/blkid/magic em caso de falha; não há script de tweak separado.
-if [ -f "$SCRIPT_DIR/../outros/tools/ps4_hdd_tools/pkg_pfs_tool/build/pkg_pfs_tool" ]; then
-  cp -v "$SCRIPT_DIR/../outros/tools/ps4_hdd_tools/pkg_pfs_tool/build/pkg_pfs_tool" "$ROOTFS_DIR/usr/local/bin/pkg_pfs_tool"
-  cp -v "$SCRIPT_DIR/../outros/tools/ps4_hdd_tools/pkg_pfs_tool/config.ini" "$ROOTFS_DIR/usr/local/bin/config.ini"
+if [ -f "$SCRIPT_DIR/../others/tools/ps4_hdd_tools/pkg_pfs_tool/build/pkg_pfs_tool" ]; then
+  cp -v "$SCRIPT_DIR/../others/tools/ps4_hdd_tools/pkg_pfs_tool/build/pkg_pfs_tool" "$ROOTFS_DIR/usr/local/bin/pkg_pfs_tool"
+  cp -v "$SCRIPT_DIR/../others/tools/ps4_hdd_tools/pkg_pfs_tool/config.ini" "$ROOTFS_DIR/usr/local/bin/config.ini"
   chmod +x "$ROOTFS_DIR/usr/local/bin/pkg_pfs_tool"
 else
-  echo "AVISO: pkg_pfs_tool não encontrado em outros/tools/ps4_hdd_tools/pkg_pfs_tool/build/"
+  echo "AVISO: pkg_pfs_tool não encontrado em others/tools/ps4_hdd_tools/pkg_pfs_tool/build/"
   echo "       (o PFS do HD interno não será acessível via FUSE nesta imagem)."
 fi
-if [ -f "$SCRIPT_DIR/../outros/tools/ps4_hdd_tools/pkg_pfs_tool/build/ps4_pfs_fuse" ]; then
-  cp -v "$SCRIPT_DIR/../outros/tools/ps4_hdd_tools/pkg_pfs_tool/build/ps4_pfs_fuse" "$ROOTFS_DIR/usr/local/bin/ps4_pfs_fuse"
+if [ -f "$SCRIPT_DIR/../others/tools/ps4_hdd_tools/pkg_pfs_tool/build/ps4_pfs_fuse" ]; then
+  cp -v "$SCRIPT_DIR/../others/tools/ps4_hdd_tools/pkg_pfs_tool/build/ps4_pfs_fuse" "$ROOTFS_DIR/usr/local/bin/ps4_pfs_fuse"
   chmod +x "$ROOTFS_DIR/usr/local/bin/ps4_pfs_fuse"
 else
   echo "AVISO: ps4_pfs_fuse não encontrado — montagem FUSE do PFS indisponível nesta imagem."
@@ -898,7 +898,7 @@ arch-chroot "$ROOTFS_DIR" mkinitcpio -k "$KVER_FULL" -g "/boot/initramfs-$KVER_F
 
 echo "=== Usando initramfs recem-gerado (mkinitcpio, reflete o rootfs desta build) ==="
 cp "$ROOTFS_DIR/boot/initramfs-$KVER_FULL.img" "$INITRAMFS_OUT"
-# O mkinitcpio cria a imagem com umask 077 (modo 600). Os outros artefatos da
+# O mkinitcpio cria a imagem com umask 077 (modo 600). Os others artefatos da
 # tag ficam 644 — deixar o initramfs 600 quebra promote-release.sh e qualquer
 # conferência manual feita por usuário normal (sem sudo).
 chmod 644 "$INITRAMFS_OUT"
@@ -922,7 +922,7 @@ echo "=== Gerando /etc/fstab (raiz + share CIFS do adsv2) ==="
 #    do PS4 esta falhando; ver BACKLOG, P0);
 #  - CIFS: share [dados_aux] do adsv2 com uid/gid 1001 (usuario local anderson).
 #    nofail + x-systemd.automount: sem rede o boot nao trava, monta no 1o acesso.
-#    Ver outros/docs/BACKLOG.md, item "Habilitar o cliente CIFS/SMB".
+#    Ver others/docs/BACKLOG.md, item "Habilitar o cliente CIFS/SMB".
 cat > "$ROOTFS_DIR/etc/fstab" << 'FSTABEOF'
 LABEL=psxitarch  /               ext4  rw,noatime,errors=remount-ro  0 1
 //192.168.6.101/dados_aux  /mnt/hdauxiliar  cifs  credentials=/etc/samba/credentials,uid=1001,gid=1001,forceuid,forcegid,vers=3.0,iocharset=utf8,file_mode=0644,dir_mode=0755,_netdev,nofail,x-systemd.automount,x-systemd.mount-timeout=10s  0 0

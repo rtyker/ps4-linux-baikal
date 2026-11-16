@@ -60,7 +60,7 @@ Tabela completa, método de identificação e confirmação do mapeamento de BAR
 - hold  → `0xc8800000 + 0x180000 + 0x20` = **`0xc8980020`**
 - pulse → `0xc8800000 + 0x180000 + 0x74` = **`0xc8980074`**
 
-Sugestão de primeiro passo **somente leitura** (seguro, sem escrever nada): ler esses dois endereços e comparar com os equivalentes de SATA (`0xc898002c`/`0xc898006c`) e xHCI (`0xc8980030`/`0xc8980070`), que estão em periféricos comprovadamente funcionando. Se o hold da GBE estiver em `1` e o dos outros em `0`, a hipótese fica confirmada antes de qualquer escrita.
+Sugestão de primeiro passo **somente leitura** (seguro, sem escrever nada): ler esses dois endereços e comparar com os equivalentes de SATA (`0xc898002c`/`0xc898006c`) e xHCI (`0xc8980030`/`0xc8980070`), que estão em periféricos comprovadamente funcionando. Se o hold da GBE estiver em `1` e o dos others em `0`, a hipótese fica confirmada antes de qualquer escrita.
 
 ## Observações auxiliares (não são testes ICC, mas relevantes)
 - Registrador `0x118` do BAR0 (não é o chip_id, é outro campo próximo) **flutuou entre leituras** (`01` numa leitura, `00` na seguinte, sem nenhum comando ICC no meio) — é volátil/dinâmico, não confiar nele como indicador de estado fixo. Só `0x11a`/`0x11b` (chip_id/mac_cfg) importam para saber se a GBE acordou.
@@ -125,7 +125,7 @@ Para corrigir isso de forma robusta e definitiva: usar scripts Python do lado do
 
 ## ⚠️ ATUALIZAÇÃO 2026-07-21 — toda a seção abaixo ("Próximos candidatos") está OBSOLETA
 
-O teste de sanidade nativa (ver seção "Teste de Sanidade Nativa (Orbis vs Linux)" acima) **confirmou** que a GBE já vem ligada e funcional sob Orbis com cabo direto — não existe "botão ICC/MMIO de power-on" a ser encontrado, porque não precisamos ligar nada. O item 1 da lista de "próximos passos" (verificar re-gateamento no kexec) deixou de ser hipótese e virou fato confirmado. **Caçar major/minor ICC novos ou registradores MMIO de power (itens abaixo) não é mais produtivo.** Seção mantida apenas como histórico — a investigação seguiu por outros caminhos (ver `PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md` para o estado atual: driver dedicado `mts.ko`, MAC ligado, PHY mudo é o bloqueador).
+O teste de sanidade nativa (ver seção "Teste de Sanidade Nativa (Orbis vs Linux)" acima) **confirmou** que a GBE já vem ligada e funcional sob Orbis com cabo direto — não existe "botão ICC/MMIO de power-on" a ser encontrado, porque não precisamos ligar nada. O item 1 da lista de "próximos passos" (verificar re-gateamento no kexec) deixou de ser hipótese e virou fato confirmado. **Caçar major/minor ICC novos ou registradores MMIO de power (itens abaixo) não é mais produtivo.** Seção mantida apenas como histórico — a investigação seguiu por others caminhos (ver `PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md` para o estado atual: driver dedicado `mts.ko`, MAC ligado, PHY mudo é o bloqueador).
 
 ## Próximos candidatos NÃO testados ainda (HISTÓRICO — ver aviso acima)
 - ~~Outros minors próximos de `0x38` sob major 4~~ **FEITO (teste #5), descartado — GET não distingue minors sob major 4.**
