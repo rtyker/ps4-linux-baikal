@@ -145,7 +145,7 @@ Módulo da tag `20261116-dma-split` carregado de `/tmp` sobre o kernel do HD (a 
 
 **Mudanças feitas no patch durante o fechamento** (`kernel/patches/baikal-memory-dma.patch`): `dma_chunk` calculado só depois de alocar o bounce (causa do `len=0`); divisão cabeça/miolo/cauda; leitura na lacuna devolve fim de dados; reaquisição do canal sob demanda; `dma_state` mostra `ativo DMAC1`/`DMAC2`; `use_dma` padrão `1`. Compila com `W=1` sem avisos.
 
-**Desvios que continuam em relação ao desenho:** (a) o erro de DMA desliga o DMA até recarregar o módulo e o `dma_state` mostra `desligado: erro anterior` (sem o motivo detalhado do §2.6); (b) o tempo de espera no `baikal_dma_do_transfer` é de 3 s como no §2.4, mas **não há teste de erro induzido** do DMAC (o fallback por erro nunca foi exercitado ao vivo); (c) o `baikal-memory-dma-v2.patch` é uma alternativa **abandonada** (não entra no build e ainda tem o bug do `dma_chunk`).
+**Desvios que continuam em relação ao desenho:** (a) o erro de DMA desliga o DMA até recarregar o módulo e o `dma_state` mostra `desligado: erro anterior` (sem o motivo detalhado do §2.6); (b) o tempo de espera no `baikal_dma_do_transfer` é de 3 s como no §2.4, mas **não há teste de erro induzido** do DMAC (o fallback por erro nunca foi exercitado ao vivo); (c) o `baikal-memory-dma-v2.patch`, uma alternativa **abandonada** que ainda tinha o bug do `dma_chunk`, foi removido do repositório.
 
 **Armadilhas de teste:** `dd of=-` NÃO escreve na saída padrão (cria um arquivo chamado `-`); para hash, omita `of=`. Restaurar zeros com `head | dd bs=64k count=1` grava só parte (o `dd` lê o pipe uma vez): use arquivo. `allow_write` é `0444` (só muda recarregando o módulo).
 

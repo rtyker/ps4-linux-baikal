@@ -536,29 +536,7 @@ p.write_text(src.replace(old, new), encoding="utf-8")
 
 ---
 
-## 🐛 Bug Conhecido — DMA `baikal-memory` com `len=0` (2026-11-16)
-
-**Descoberta 2026-11-16 (teste baikal-memory DMA):** Ao testar throughput de leitura/escrita via DMA no `/dev/baikal-memory`, o comando `dd if=/dev/baikal-memory ... iflag=direct` falha com `Invalid argument`.
-
-**Causa:** Character devices (misc devices, `/dev/...`) não implementam a operação `direct_IO` necessária para `O_DIRECT`/`iflag=direct`. Apenas block devices e alguns file systems suportam isso.
-
-**Workaround válido:** Usar `dd` **sem** `iflag=direct`/`oflag=direct`. O buffer do kernel faz a cópia userspace↔kernel, que é inevitável com character devices.
-
-```bash
-# ❌ FALHA
-dd if=/dev/baikal-memory of=/dev/null bs=1M count=100 iflag=direct
-
-# ✅ FUNCIONA (mas mede throughput userspace + kernel copy)
-dd if=/dev/baikal-memory of=/dev/null bs=1M count=100
-```
-
-**Impacto nos testes DMA:** O baseline CPU (~4 MB/s) e o teste DMA (~500 MB/s target) devem ser medidos **sem** `iflag=direct`. A diferença de velocidade ainda será evidente (ordem de grandeza), mas o valor absoluto inclui o overhead de `copy_to_user`/`copy_from_user`.
-
-**Alternativa para benchmark puro:** Implementar `mmap` no driver e medir acesso direto à memória mapeada, ou usar `fio` com engine `mmap` se o device suportar `mmap`.
-
----
-
-## 🐛 Bug Conhecido — DMA `baikal-memory` com `len=0` (2026-11-16)
+## 🐛 Bug Conhecido — DMA `baikal-memory` com `len=0` (2026-11-16) — ✅ CORRIGIDO
 
 **Sintoma:** `dmaengine_prep_dma_memcpy` falha com `len=0` ao tentar usar DMA na janela BAR2 do `/dev/baikal-memory`. O bounce buffer (1 MiB) aloca corretamente, mas o chunk de DMA calculado é zero.
 
@@ -566,7 +544,7 @@ dd if=/dev/baikal-memory of=/dev/null bs=1M count=100
 
 **Observação sobre o patch em uso:** o `baikal-memory-dma.patch` (v1, o que o `00-build-kernel-7.0.sh` aplica, commit `34abe82`) ainda **desliga o DMA permanentemente** no primeiro erro. O `baikal-memory-dma-v2.patch` tem o fallback para a CPU sem desligar, mas **não é usado pelo build** e **ainda tem o bug do `dma_chunk`**.
 
-**Status (2026-11-16): CORRIGIDO e validado ao vivo no PS4, só com o módulo carregado à mão.** Build oficial `20261116-dma-chunk-fix` (`EXIT=0`, 57 s de link ThinLTO com cache quente; `bzImage` de 11 MiB, **acima do limite de ~10 MB do kexec**; `bootargs` e `initramfs` dessa tag **não** foram gerados). O módulo foi carregado de `/tmp/baikal-memory-fix.ko` sobre o kernel que já rodava; o kernel gravado no HD **continua com o módulo antigo (com o bug)**. Resultados medidos:
+**Status (2026-11-16): CORRIGIDO e validado ao vivo no PS4, só com o módulo carregado à mão.** Build oficial `20261116-dma-chunk-fix` (`EXIT=0`, 57 s de link ThinLTO com cache quente; `bzImage` de 10,56 MiB, do mesmo tamanho do kernel `20261116-dma-test` que o PS4 já roda; o aviso do script sobre "limite de ~10 MB do kexec" não se confirma, pois tags de 15 MiB também subiram ao vivo). O módulo foi carregado de `/tmp/baikal-memory-fix.ko` sobre o kernel que já rodava; o kernel gravado no HD **continua com o módulo antigo (com o bug)**. Resultados medidos:
 
 - **Primeiro uso de DMA:** leitura de 64 KiB passou pelo DMA (`dma_bytes_read=65536`, `cpu_bytes_read=0`, `dma_errors=0`), sem `len=0` no `dmesg`.
 - **Leitura, 10 medidas de 64 KiB cada (`dd bs=64k count=1 skip=1`, sem `iflag=direct`):** DMA mediana 192,6 µs (~340 MB/s) contra CPU mediana 16 144,6 µs (~4,1 MB/s), ou seja, ~84× mais rápido. Em 4 MiB (1 medida): DMA 7,7 ms (547 MB/s) contra CPU 1,029 s (4,1 MB/s). A vazão inclui o `copy_to_user`; não é a do DMAC puro (~1,5 GB/s no harness).
@@ -582,7 +560,7 @@ dd if=/dev/baikal-memory of=/dev/null bs=1M count=100
 5. **`dd of=-` NÃO escreve na saída padrão:** cria um arquivo chamado `-` no diretório atual. Para calcular hash de uma leitura, omita o `of=` (`dd if=... | sha256sum`). Um teste de "antes/depois" feito com `of=-` comparou entradas vazias e não valia nada.
 6. **A BAR5 (`/dev/baikal-memory` em `0x500000`) tem dados vivos que mudam sozinhos** (5 leituras seguidas sem escrita deram 5 hashes distintos). Não use o hash da BAR5 como prova de que "nada mudou".
 
-**Fechamento do plano (2026-11-16, build `20261116-dma-final`):** além da correção do `dma_chunk`, o `baikal-memory-dma.patch` passou a (a) dividir cabeça e cauda desalinhadas (CPU) do miolo múltiplo de 4 e ≥ `dma_min` (DMA); (b) devolver 0 bytes (fim de dados) na lacuna `0x401000`–`0x4fffff`; (c) pedir o canal DMA sob demanda, com tentativa a cada 1 s, quando o `baikal_dmac` sobe depois; (d) mostrar `ativo DMAC1`/`DMAC2` no `dma_state`; (e) ter `use_dma` ligado por padrão. A bateria de 10 testes do plano passou ao vivo (`test_history` 94–97; resultados em `others/rea/spm/plans/PLANO_BAIKAL_MEMORY_DMA_2026-11-16.md` §5.1) e o módulo compila com `W=1` sem avisos. **Pendente:** gravar no HD (item 3c do `BACKLOG.md`); o `bzImage` dessa tag tem 11 MiB, acima do limite de ~10 MB de alguns loaders `kexec`. "Nada além do limite muda" na escrita parcial só foi verificado por leitura do código. O fallback por erro do DMAC nunca foi exercitado ao vivo.
+**Fechamento do plano (2026-11-16, build `20261116-dma-final`):** além da correção do `dma_chunk`, o `baikal-memory-dma.patch` passou a (a) dividir cabeça e cauda desalinhadas (CPU) do miolo múltiplo de 4 e ≥ `dma_min` (DMA); (b) devolver 0 bytes (fim de dados) na lacuna `0x401000`–`0x4fffff`; (c) pedir o canal DMA sob demanda, com tentativa a cada 1 s, quando o `baikal_dmac` sobe depois; (d) mostrar `ativo DMAC1`/`DMAC2` no `dma_state`; (e) ter `use_dma` ligado por padrão. A bateria de 10 testes do plano passou ao vivo (`test_history` 94–97; resultados em `others/rea/spm/plans/PLANO_BAIKAL_MEMORY_DMA_2026-11-16.md` §5.1) e o módulo compila com `W=1` sem avisos. **Pendente:** gravar no HD (item 3c do `BACKLOG.md`), o que exige o HD plugado no PC. A tag `20261116-dma-final` já está completa em `distro/boot_referencia/` (`bootargs` e `initramfs` copiados da tag `20261116-dma-test`, que é a que o PS4 roda, com `md5` conferido); o comando final é `sudo ./distro/deploy-boot-7.0.sh 20261116-dma-final`, precedido de `distro/scripts/install-modules-7.0.sh <ROOTFS_DIR> kernel/kernel_build_7.0 7.0.8-Strawberry-ThinLTO-Baikal-+` com o rootfs montado. O aviso de "bzImage acima de 10 MB" do script é só heurística: a tag tem 10,56 MiB, igual à que o PS4 já roda. "Nada além do limite muda" na escrita parcial só foi verificado por leitura do código. O fallback por erro do DMAC nunca foi exercitado ao vivo.
 
 ---
 
