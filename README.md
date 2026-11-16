@@ -57,6 +57,27 @@ The Baikal southbridge (PS4 Slim) has a dedicated auxiliary 256 MB DDR3 memory c
 
 Details, root causes, and what has already been ruled out: [`outros/docs/BACKLOG.md`](outros/docs/BACKLOG.md).
 
+## Release Notes — 2026-11-16 (Tag `20261116-keep-mode-aplicado`)
+
+**Video Bridge Panasonic MN864729 now functional** — pure console (no Xorg) stable for 1h45m+ idle.
+
+Two patches applied to the bridge driver (`drivers/gpu/drm/amd/amdgpu/ps4_bridge.c`):
+
+1. **`ps4-bridge-dp-init.patch`** — Enables the DisplayPort-side initialization sequence for the Panasonic MN864729 bridge (HDMI retimer). The sequence was previously disabled with the comment: *"No idea. DP stuff probably. This borks for some reason. Meh."* Now active, it allows DP link training to proceed correctly.
+
+2. **`ps4-bridge-keep-mode.patch`** — In `post_disable` (DPMS off / console blank), the driver no longer zeroes `mn_bridge->mode`. Instead it sets an `idle` flag to preserve the mode state. On the next `enable` (DPMS on / console unblank), this prevents the *"mode not available"* error that previously left the screen permanently black after idle/screensaver.
+
+**Validated on real PS4 hardware (CUH-2xxx, Baikal SoC):**
+- Pure console framebuffer (`amdgpudrmfb`) stable for 1h45m+ with `consoleblank=0`
+- HDMI connector `HDMI-A-1` reports `connected`, modes `1920x1080` and `1280x720` available
+- DP link training active (visible in `dmesg` as `amdgpu_atombios_dp_link_train`)
+- Driver built into kernel (symbols present in `/proc/kallsyms`)
+
+**Artifacts:** `distro/boot_referencia/*-7.0-20261116-keep-mode-aplicado*` (bzImage, config, bootargs, initramfs, `.build-complete`).  
+**Rollback:** `sudo ./deploy-boot-7.0.sh 20261116-keep-mode-aplicado` (boot-only, keeps rootfs).
+
+---
+
 ## Release
 
 [`distro/RELEASE/`](distro/RELEASE/) holds the **v1.0.0** distribution release (`bzImage`,
