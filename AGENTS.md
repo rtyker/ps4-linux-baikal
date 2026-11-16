@@ -136,7 +136,7 @@ make -C kernel/kernel_build_7.0 M=$(pwd) CC="ccache clang" LLVM=1 ARCH=x86_64 ar
 **NUNCA** `make modules` ou `make` na raiz do kernel.
 - **PROIBIDO usar heredocs (`cat << 'EOF'`), `sed` ou `echo >>` inline no script de build** para injetar código ou modificar `Makefile`/`Kconfig` do kernel. Toda modificação deve estar encapsulada em um arquivo `.patch` limpo em `patches/`.
   - Motivo: injeções inline (heredocs/sed) alteram o contexto dos arquivos do kernel e fazem com que patches subsequentes falhem silenciosamente ao tentar aplicar no mesmo arquivo.
-  - **Prefira `awk` sobre `sed`** para manipulação de arquivos em scripts de build/patch: `awk` é mais robusto para parsing estruturado, lida melhor com múltiplas linhas, variáveis e contextos complexos; `sed` é frágil com escapes, quebras de linha e estado. Use `awk` para qualquer transformação não-trivial (ex: inserir blocos, substituir padrões multi-linha, condicionais).
+  - **Ferramenta para editar fonte antes de gerar o patch:** a ordem está na seção "Ferramenta para escrever patches" mais abaixo (Edit > Python com asserts > awk > sed). Não use `sed`/`awk` inline no script de build para casar blocos multi-linha.
   - Exemplo: `patches/ps4-icc-rtc-wrapper.patch` contém 100% da implementação do RTC (`rtc-ps4-icc.c`, `Kconfig`, `Makefile` e wrappers) de forma autocontida.
   - Exemplo: `patches/ahci-baikal-polling-fallback.patch` (SATA polling) é aplicado via `git apply --check` + `exit 1` em caso de falha (falha alta é obrigatória).
 
@@ -476,6 +476,97 @@ Ghidra headless está instalado em `/mnt/hdauxiliar/ghidra_12.1.2` e os scripts 
   -readOnly
 ```
 Adicionar novo endereço em `TARGET_ADDRS` do `ExtractMtsNamespaceNoAnalysis.py` antes de rodar. Saídas em `others/rea/decompiled/extracted/`.
+
+---
+
+## 🔴 REGRA CRÍTICA — `dd iflag=direct` NÃO funciona com character devices
+
+**Descoberta 2026-11-16 (teste baikal-memory DMA):** Ao testar throughput de leitura/escrita via DMA no `/dev/baikal-memory`, o comando `dd if=/dev/baikal-memory ... iflag=direct` falha com `Invalid argument`.
+
+**Causa:** Character devices (misc devices, `/dev/...`) não implementam a operação `direct_IO` necessária para `O_DIRECT`/`iflag=direct`. Apenas block devices e alguns file systems suportam isso.
+
+**Workaround válido:** Usar `dd` **sem** `iflag=direct`/`oflag=direct`. O buffer do kernel faz a cópia userspace↔kernel, que é inevitável com character devices.
+
+```bash
+# ❌ FALHA
+dd if=/dev/baikal-memory of=/dev/null bs=1M count=100 iflag=direct
+
+# ✅ FUNCIONA (mas mede throughput userspace + kernel copy)
+dd if=/dev/baikal-memory of=/dev/null bs=1M count=100
+```
+
+**Impacto nos testes DMA:** O baseline CPU (~4 MB/s) e o teste DMA (~500 MB/s target) devem ser medidos **sem** `iflag=direct`. A diferença de velocidade ainda será evidente (ordem de grandeza), mas o valor absoluto inclui o overhead de `copy_to_user`/`copy_from_user`.
+
+**Alternativa para benchmark puro:** Implementar `mmap` no driver e medir acesso direto à memória mapeada, ou usar `fio` com engine `mmap` se o device suportar `mmap`.
+
+---
+
+## 🔴 REGRA CRÍTICA — Ferramenta para escrever patches: Edit > Python com asserts > awk > sed
+
+**Violação recorrente (2026-11-16):** Uso repetido de `sed` inline e heredocs para modificar `baikal-memory.c` quebrou o arquivo 5+ vezes (brackets desbalanceados, símbolos não definidos, modpost falhou). `sed` e `awk` em blocos multi-linha podem alterar o trecho errado sem avisar; o script de patch precisa falhar alto.
+
+**Ordem de preferência:**
+1. **Ferramenta Edit** (substituição exata, exige trecho único) para mudanças pontuais no fonte do kernel.
+2. **Python** em arquivo separado (ex: `/tmp/fix.py`, rodado com `python3 -I`) para transformações scriptadas. Cada troca deve ter `assert texto.count(trecho) == 1` antes de substituir; leitura/escrita com encoding explícito.
+3. **awk** só quando não houver alternativa; script em arquivo (`awk -f fix.awk`), sem casar blocos multi-linha por contagem de `getline` fixa.
+4. **sed**: apenas substituições de uma linha já conhecidas. Nunca `sed -i` multi-linha ou com regex complexo.
+
+**Procedimento obrigatório (nesta ordem, sem pular etapas):**
+1. Resetar a árvore: `git -C kernel/kernel_build_7.0 reset --hard HEAD` (base limpa; mudanças não commitadas somem, por design).
+2. Editar o fonte em `kernel/kernel_build_7.0/` com a ferramenta Edit (ou Python, se for transformação scriptada).
+3. Compilar isoladamente só o arquivo tocado: `make -C kernel/kernel_build_7.0 M=$(pwd) CC="ccache clang" LLVM=1 ARCH=x86_64 <arquivo>.o`. Sem isso, a mudança não está validada.
+4. Gerar o patch: `git -C kernel/kernel_build_7.0 diff HEAD -- <arquivos> > patches/<nome>.patch`. Nunca escrever o `.patch` à mão.
+5. Resetar de novo e validar: `git -C kernel/kernel_build_7.0 reset --hard origin/<branch>` e depois `git -C kernel/kernel_build_7.0 apply --check <caminho>/patches/<nome>.patch`. Só segue se passar.
+6. Registrar a aplicação no `00-build-kernel-7.0.sh` no padrão `git apply --check` + `exit 1` (sem `|| echo AVISO`).
+7. Só então commitar.
+
+**Proibido em todos os casos:** heredoc inline (`cat << 'EOF' | python3 ...`), `echo >>` ou sed para injetar código no fonte do kernel. Um script de transformação fica sempre em arquivo temporário fora do repositório, nunca inline no comando.
+
+**Exemplo de script Python com asserts:**
+```python
+# /tmp/fix.py  —  rodar: python3 -I /tmp/fix.py
+from pathlib import Path
+p = Path("kernel/kernel_build_7.0/drivers/misc/baikal-memory.c")
+src = p.read_text(encoding="utf-8")
+old = "    /* trecho antigo exato */\n"
+new = "    /* trecho novo */\n"
+assert src.count(old) == 1, f"trecho encontrado {src.count(old)}x"
+p.write_text(src.replace(old, new), encoding="utf-8")
+```
+
+---
+
+## 🐛 Bug Conhecido — DMA `baikal-memory` com `len=0` (2026-11-16)
+
+**Descoberta 2026-11-16 (teste baikal-memory DMA):** Ao testar throughput de leitura/escrita via DMA no `/dev/baikal-memory`, o comando `dd if=/dev/baikal-memory ... iflag=direct` falha com `Invalid argument`.
+
+**Causa:** Character devices (misc devices, `/dev/...`) não implementam a operação `direct_IO` necessária para `O_DIRECT`/`iflag=direct`. Apenas block devices e alguns file systems suportam isso.
+
+**Workaround válido:** Usar `dd` **sem** `iflag=direct`/`oflag=direct`. O buffer do kernel faz a cópia userspace↔kernel, que é inevitável com character devices.
+
+```bash
+# ❌ FALHA
+dd if=/dev/baikal-memory of=/dev/null bs=1M count=100 iflag=direct
+
+# ✅ FUNCIONA (mas mede throughput userspace + kernel copy)
+dd if=/dev/baikal-memory of=/dev/null bs=1M count=100
+```
+
+**Impacto nos testes DMA:** O baseline CPU (~4 MB/s) e o teste DMA (~500 MB/s target) devem ser medidos **sem** `iflag=direct`. A diferença de velocidade ainda será evidente (ordem de grandeza), mas o valor absoluto inclui o overhead de `copy_to_user`/`copy_from_user`.
+
+**Alternativa para benchmark puro:** Implementar `mmap` no driver e medir acesso direto à memória mapeada, ou usar `fio` com engine `mmap` se o device suportar `mmap`.
+
+---
+
+## 🐛 Bug Conhecido — DMA `baikal-memory` com `len=0` (2026-11-16)
+
+**Sintoma:** `dmaengine_prep_dma_memcpy` falha com `len=0` ao tentar usar DMA na janela BAR2 do `/dev/baikal-memory`. O bounce buffer (1 MiB) aloca corretamente, mas o chunk de DMA calculado é zero.
+
+**Causa (identificada por leitura do código em 2026-11-16, ainda NÃO confirmada em hardware):** erro de ordem em `baikal_memory_read()` e `baikal_memory_write()` (`drivers/misc/baikal-memory.c`). `dma_chunk = min_t(size_t, chunk, dev->dma_bounce_size)` é calculado **antes** de `baikal_dma_alloc_bounce()`, e `dma_bounce_size` só recebe valor dentro dessa função (é 0 até lá). No primeiro uso de DMA o `dma_chunk` vale 0, o `dmaengine_prep_dma_memcpy` falha com `len=0` e, na versão antiga, o erro desligava o DMA para sempre. Depois da alocação o tamanho passa a 1 MiB, então só o primeiro chunk é afetado. A hipótese antiga (transição BAR0→BAR2) não se sustenta: o cálculo não depende de BAR. Correção prevista: alocar o bounce antes de calcular `dma_chunk`.
+
+**Workaround:** Patch para remover desativação permanente de DMA em erro (em `/tmp/fix_dma_permanent.patch`) — permite fallback para CPU e retry no próximo chunk.
+
+**Status:** Não resolvido. Tag `20261116-dma-test` buildada mas DMA não funcional.
 
 ---
 
