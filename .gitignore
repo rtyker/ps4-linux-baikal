@@ -113,3 +113,4 @@ distro/mesa/*.zip
 mesa-26.1.5/
 mesa-26.1.5.tar.xz
 *.bak
+.opencode/
