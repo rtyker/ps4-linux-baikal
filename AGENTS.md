@@ -562,11 +562,23 @@ dd if=/dev/baikal-memory of=/dev/null bs=1M count=100
 
 **Sintoma:** `dmaengine_prep_dma_memcpy` falha com `len=0` ao tentar usar DMA na janela BAR2 do `/dev/baikal-memory`. O bounce buffer (1 MiB) aloca corretamente, mas o chunk de DMA calculado é zero.
 
-**Causa (identificada por leitura do código em 2026-11-16, ainda NÃO confirmada em hardware):** erro de ordem em `baikal_memory_read()` e `baikal_memory_write()` (`drivers/misc/baikal-memory.c`). `dma_chunk = min_t(size_t, chunk, dev->dma_bounce_size)` é calculado **antes** de `baikal_dma_alloc_bounce()`, e `dma_bounce_size` só recebe valor dentro dessa função (é 0 até lá). No primeiro uso de DMA o `dma_chunk` vale 0, o `dmaengine_prep_dma_memcpy` falha com `len=0` e, na versão antiga, o erro desligava o DMA para sempre. Depois da alocação o tamanho passa a 1 MiB, então só o primeiro chunk é afetado. A hipótese antiga (transição BAR0→BAR2) não se sustenta: o cálculo não depende de BAR. Correção prevista: alocar o bounce antes de calcular `dma_chunk`.
+**Causa (identificada por leitura do código e CONFIRMADA em hardware em 2026-11-16):** erro de ordem em `baikal_memory_read()` e `baikal_memory_write()` (`drivers/misc/baikal-memory.c`). `dma_chunk = min_t(size_t, chunk, dev->dma_bounce_size)` é calculado **antes** de `baikal_dma_alloc_bounce()`, e `dma_bounce_size` só recebe valor dentro dessa função (é 0 até lá). No primeiro uso de DMA o `dma_chunk` vale 0, o `dmaengine_prep_dma_memcpy` falha com `len=0` e, na versão antiga, o erro desligava o DMA para sempre. Depois da alocação o tamanho passa a 1 MiB, então só o primeiro chunk é afetado. A hipótese antiga (transição BAR0→BAR2) não se sustenta: o cálculo não depende de BAR. Correção aplicada em `patches/baikal-memory-dma.patch` (commit `c5074ad`): `dma_chunk` é declarado sem valor e só calculado depois da alocação do bounce, nas duas funções.
 
-**Workaround:** Patch para remover desativação permanente de DMA em erro (em `/tmp/fix_dma_permanent.patch`) — permite fallback para CPU e retry no próximo chunk.
+**Observação sobre o patch em uso:** o `baikal-memory-dma.patch` (v1, o que o `00-build-kernel-7.0.sh` aplica, commit `34abe82`) ainda **desliga o DMA permanentemente** no primeiro erro. O `baikal-memory-dma-v2.patch` tem o fallback para a CPU sem desligar, mas **não é usado pelo build** e **ainda tem o bug do `dma_chunk`**.
 
-**Status:** Não resolvido. Tag `20261116-dma-test` buildada mas DMA não funcional.
+**Status (2026-11-16): CORRIGIDO e validado ao vivo no PS4, só com o módulo carregado à mão.** Build oficial `20261116-dma-chunk-fix` (`EXIT=0`, 57 s de link ThinLTO com cache quente; `bzImage` de 11 MiB, **acima do limite de ~10 MB do kexec**; `bootargs` e `initramfs` dessa tag **não** foram gerados). O módulo foi carregado de `/tmp/baikal-memory-fix.ko` sobre o kernel que já rodava; o kernel gravado no HD **continua com o módulo antigo (com o bug)**. Resultados medidos:
+
+- **Primeiro uso de DMA:** leitura de 64 KiB passou pelo DMA (`dma_bytes_read=65536`, `cpu_bytes_read=0`, `dma_errors=0`), sem `len=0` no `dmesg`.
+- **Leitura, 10 medidas de 64 KiB cada (`dd bs=64k count=1 skip=1`, sem `iflag=direct`):** DMA mediana 192,6 µs (~340 MB/s) contra CPU mediana 16 144,6 µs (~4,1 MB/s), ou seja, ~84× mais rápido. Em 4 MiB (1 medida): DMA 7,7 ms (547 MB/s) contra CPU 1,029 s (4,1 MB/s). A vazão inclui o `copy_to_user`; não é a do DMAC puro (~1,5 GB/s no harness).
+- **Conteúdo, leitura:** a janela BAR2 inteira (4 MiB) é toda zero, então DMA == CPU (mesmo SHA-256) **não prova nada sozinho**.
+- **Conteúdo, escrita (prova real):** 64 KiB aleatórios gravados pelo DMA em SPM `0x200000` (offset do arquivo `0x201000` = 2 101 248; contadores `dma_w=65536`, `cpu_w=0`). Lidos de volta, o padrão ficou idêntico pela CPU e pelo DMA (mesmo SHA-256 `d987e6ce…`), e as guardas de 4 KiB antes e depois ficaram intactas. Janela restaurada a zero e conferida (0 bytes não nulos).
+- **Não testado:** escrita maior que o bounce (1 MiB), não alinhada, escrita pela CPU, e o kernel do HD com a correção embutida.
+
+**Armadilhas do teste de escrita (para não repetir):**
+1. `allow_write` é parâmetro `0444`: só muda recarregando o módulo (`rmmod` + `insmod ... allow_write=1`). `use_dma` muda em runtime (`/sys/module/baikal_memory/parameters/use_dma`).
+2. O driver **não** impõe janela de escrita dentro da BAR2 (só barra fora dela). A janela validada (SPM `0x200000`, até 64 KiB, harness `test_history` 90) tem de ser imposta por quem testa. Offset do arquivo = `0x1000` (início da BAR2) + offset da SPM.
+3. **Não restaurar zeros com `head -c 65536 /dev/zero | dd bs=64k count=1`:** o `dd` lê do pipe uma vez só e escreveu parte, deixando 24 469 bytes do padrão na SPM. Usar um arquivo de zeros (`dd if=zero.bin ... oflag=seek_bytes seek=<offset> conv=notrunc`) e **conferir lendo de volta**.
+4. Antes de escrever, ler a janela e as guardas e abortar se não forem zero; restaurar e recarregar o módulo sem `allow_write` no final.
 
 ---
 
