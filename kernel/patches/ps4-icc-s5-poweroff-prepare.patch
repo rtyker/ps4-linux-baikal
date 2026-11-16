@@ -1,0 +1,82 @@
+diff --git a/drivers/ps4/ps4-bpcie-icc.c b/drivers/ps4/ps4-bpcie-icc.c
+index 7c486fc..a00c940 100644
+--- a/drivers/ps4/ps4-bpcie-icc.c
++++ b/drivers/ps4/ps4-bpcie-icc.c
+@@ -6,6 +6,7 @@
+ #include <linux/delay.h>
+ #include <linux/fs.h>
+ #include <linux/uaccess.h>
++#include <linux/reboot.h>
+ #include <asm/ps4.h>
+ #include "baikal.h"
+ 
+@@ -413,6 +414,42 @@ static void icc_shutdown(void)
+ 	WARN_ON(1);
+ }
+ 
++/*
++ * S5 (power-off) via ICC no ponto POWER_OFF_PREPARE.
++ *
++ * O icc_shutdown() acima é chamado em pm_power_off, DEPOIS de
++ * native_machine_shutdown() ter feito local_irq_disable() + lapic_shutdown(),
++ * numa cadeia de notifiers atômica. Lá o bpcie_icc_cmd() (mutex +
++ * wait_event_timeout esperando a IRQ de reply) não funciona, e o console fica
++ * com luz azul e fan ligados (S5 nunca atingido).
++ *
++ * A cadeia POWER_OFF_PREPARE roda em kernel_power_off() depois de
++ * device_shutdown() (discos já descarregados) e ANTES de machine_power_off():
++ * IRQs e LAPIC ainda vivos, cadeia "blocking" (pode dormir). O comando é o
++ * mesmo 4/1 {0,0,2,0,1,0}: validado ao vivo em 2026-11-16 enviando-o pelo
++ * ioctl /dev/icc com o Linux rodando (console desligou por completo).
++ *
++ * Se a energia não cair em 5 s, o fluxo segue para o pm_power_off antigo
++ * (rede de segurança).
++ */
++static struct sys_off_handler *icc_poweroff_prep_handler;
++
++static int icc_poweroff_prepare(struct sys_off_data *data)
++{
++	static const u8 command[] = { 0, 0, 2, 0, 1, 0 };
++	int ret;
++
++	if (bpcie_status() != 1)
++		return NOTIFY_DONE;
++
++	pr_emerg("icc: S5 (power-off prepare): enviando ICC 4/1\n");
++	ret = bpcie_icc_cmd(4, 1, command, sizeof(command), NULL, 0);
++	pr_emerg("icc: S5 ICC 4/1 ret=%d; aguardando corte de energia\n", ret);
++	msleep(5000);
++	pr_emerg("icc: S5 energia nao caiu em 5 s; seguindo para pm_power_off\n");
++	return NOTIFY_DONE;
++}
++
+ static void *ioctl_tmp_buf = NULL;
+ static bool icc_chrdev_registered;
+ 
+@@ -546,6 +583,15 @@ int bpcie_icc_init(struct bpcie_dev *sc)
+ 	do_icc_init();
+ 	pm_power_off = &icc_shutdown;
+ 
++	icc_poweroff_prep_handler = register_sys_off_handler(
++			SYS_OFF_MODE_POWER_OFF_PREPARE, SYS_OFF_PRIO_DEFAULT,
++			icc_poweroff_prepare, NULL);
++	if (IS_ERR(icc_poweroff_prep_handler)) {
++		sc_err("icc: register_sys_off_handler(POWER_OFF_PREPARE) failed: %ld\n",
++		       PTR_ERR(icc_poweroff_prep_handler));
++		icc_poweroff_prep_handler = NULL;
++	}
++
+ 	ioctl_tmp_buf = kzalloc(1 << 16, GFP_KERNEL);
+  	if (!ioctl_tmp_buf) {
+  		sc_err("icc: alloc ioctl_tmp_buf failed\n");
+@@ -590,6 +636,10 @@ void bpcie_icc_remove(struct bpcie_dev *sc)
+ 	kfree(ioctl_tmp_buf);
+ 	ioctl_tmp_buf = NULL;
+ 	pm_power_off = NULL;
++	if (icc_poweroff_prep_handler) {
++		unregister_sys_off_handler(icc_poweroff_prep_handler);
++		icc_poweroff_prep_handler = NULL;
++	}
+ 	icc_pwrbutton_remove(sc);
+ 	icc_i2c_remove(sc);
+ 	mutex_lock(&bcpie_icc_mutex);

@@ -223,3 +223,21 @@ sshpass -p ps4 ssh root@192.168.6.128 "echo 8 > /proc/sys/kernel/printk; sync &&
 **Pendências deste teste:**
 - A captura UART `s5-fase1-ioctl_20261116_164511` teve **0 bytes**. O adaptador não recebeu nada. Conferir cabo/porta antes da validação da Fase 2A.
 - O rootfs desligou montado `rw` (o `sync` foi feito antes). Conferir no próximo boot se o `fsck` passou limpo.
+
+---
+
+## 11. Fase 2A — patch `ps4-icc-s5-poweroff-prepare.patch` (2026-11-16)
+
+**Arquivo:** `kernel/patches/ps4-icc-s5-poweroff-prepare.patch`. Só `drivers/ps4/ps4-bpcie-icc.c`; apcie intocado.
+
+**O que faz:** registra `icc_poweroff_prepare()` com `register_sys_off_handler(SYS_OFF_MODE_POWER_OFF_PREPARE, SYS_OFF_PRIO_DEFAULT, …)` no `bpcie_icc_init()` (e o desregistra no `bpcie_icc_remove()`). O handler manda o **mesmo** 4/1 `{0,0,2,0,1,0}` validado na Fase 1, loga com `pr_emerg` antes e depois e espera 5 s com `msleep`. Se a energia não cair, segue para o `pm_power_off`/`icc_shutdown` antigo, que fica **intocado** como rede de segurança.
+
+**Validação (procedimento do AGENTS.md):**
+- Compilação isolada `drivers/ps4/ps4-bpcie-icc.o` com `W=1`: **0 warnings**, `register_sys_off_handler`/`unregister_sys_off_handler` referenciados.
+- Patch gerado por `git diff` (base = HEAD + `ps4-icc-rtc-wrapper.patch`, o único outro patch que toca esse arquivo).
+- `git apply --cached --check` num índice temporário, a partir de HEAD, na ordem do build (`ps4-icc-proc-debug` → `ps4-icc-rtc-wrapper` → este): **OK**. O conteúdo final é **idêntico** ao arquivo compilado.
+
+**Pendente:**
+1. Incluir o patch no `00-build-kernel-7.0.sh` (lista do preflight + bloco `git apply --check`/`exit 1`, **depois** do `PATCH_RTC`). Adiado porque havia um build oficial (`20261116-dma-test`) rodando: editar um script bash em execução pode corromper o run.
+2. Build oficial com BTF **ligado** → tag `20261116-s5-poweroff-fix`. Deploy, UART conferida (`echo s5-teste > /dev/kmsg` visível), `sync && poweroff -f`, `shutdown -h now` e `reboot`.
+3. Aceite: luz apaga e fan para, e a UART mostra `icc: S5 (power-off prepare): enviando ICC 4/1`.
