@@ -150,7 +150,7 @@ preflight() {
            ps4-icc-proc-debug.patch mts-baikal-gbe-driver.patch \
            baikal-memory-fase2.patch baikal-dmac.patch baikal-memory-dma.patch \
            clocksource-baikal-hpet.patch baikal-wdt.patch \
-           ps4-bridge-dp-init.patch ps4-bridge-link-rate.patch \
+           ps4-bridge-dp-init.patch ps4-dp-link-rate-270000.patch \
            ps4-bridge-keep-mode.patch ps4-icc-s5-poweroff-prepare.patch; do
     [ -f "$SCRIPT_DIR/patches/$p" ] || die "patch ausente: $SCRIPT_DIR/patches/$p"
   done
@@ -563,21 +563,26 @@ fi
 git apply "$PATCH_BRIDGE_DP_INIT"
 echo "✓ Patch ps4-bridge-dp-init aplicado com sucesso (git apply, validado com --check)"
 
-# Ponte de vídeo Panasonic MN864729 (ps4_bridge.c): forçar link rate 2.7 Gbps
-# se o sink suportar (MAX_LINK_RATE >= 0x0A). O DPCD do sink PS4 reporta 5.4 Gbps
-# (0x14), mas o amdgpu_atombios_dp_get_dp_link_config escolhe 162000 por ser o
-# primeiro que satisfaz o pixel clock. Sobrescrevemos para 270000 no pre_enable
-# para melhor margem de clock recovery. Passo 2 do plano DP.
-PATCH_BRIDGE_LINK_RATE="$SCRIPT_DIR/patches/ps4-bridge-link-rate.patch"
-[ -f "$PATCH_BRIDGE_LINK_RATE" ] || { echo "❌ ERRO FATAL: $PATCH_BRIDGE_LINK_RATE não encontrado"; exit 1; }
-if ! git apply --check "$PATCH_BRIDGE_LINK_RATE" 2>/tmp/bridge_link_rate_patch_check.log; then
-  echo "❌ ERRO FATAL: patch ps4-bridge-link-rate não aplica contra o kernel atual:"
-  cat /tmp/bridge_link_rate_patch_check.log
+# Link DP a 2,7 Gbps (passo 2 do plano DP) — atombios_dp.c, NÃO na ponte.
+# O sink (MN864729) anuncia 5,4 Gbps (DPCD 0x01 = 0x14) e o código escolhia
+# 162000 por ser a primeira taxa que satisfaz o pixel clock. Forçamos 270000
+# em amdgpu_atombios_dp_get_dp_link_config(), que roda no mode_fixup do
+# encoder: assim o valor vale para TODOS os consumidores de dig_connector->dp_clock
+# (ajuste do PLL em atombios_crtc.c, ss_info, setup do DIG encoder, do
+# transmissor e o DP_LINK_BW_SET do link training).
+# ⚠️ Sobrescrever dp_clock em ps4_bridge_pre_enable (como no patch antigo
+# ps4-bridge-link-rate.patch) é TARDE DEMAIS: o PLL já foi ajustado com 162000,
+# e o link treinaria em 2,7 Gbps com o PLL coerente em 1,62 Gbps.
+PATCH_DP_LINK_RATE="$SCRIPT_DIR/patches/ps4-dp-link-rate-270000.patch"
+[ -f "$PATCH_DP_LINK_RATE" ] || { echo "❌ ERRO FATAL: $PATCH_DP_LINK_RATE não encontrado"; exit 1; }
+if ! git apply --check "$PATCH_DP_LINK_RATE" 2>/tmp/dp_link_rate_patch_check.log; then
+  echo "❌ ERRO FATAL: patch ps4-dp-link-rate-270000 não aplica contra o kernel atual:"
+  cat /tmp/dp_link_rate_patch_check.log
   echo "  Regenere o patch a partir de uma árvore limpa (ver AGENTS.md)."
   exit 1
 fi
-git apply "$PATCH_BRIDGE_LINK_RATE"
-echo "✓ Patch ps4-bridge-link-rate aplicado com sucesso (git apply, validado com --check)"
+git apply "$PATCH_DP_LINK_RATE"
+echo "✓ Patch ps4-dp-link-rate-270000 aplicado com sucesso (git apply, validado com --check)"
 
 # Ponte de vídeo Panasonic MN864729 (ps4_bridge.c): não zerar mn_bridge->mode no
 # post_disable. Um DPMS off->on (screensaver) religa o encoder sem novo modeset,

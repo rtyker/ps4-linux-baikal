@@ -1,0 +1,44 @@
+diff --git a/drivers/gpu/drm/amd/amdgpu/atombios_dp.c b/drivers/gpu/drm/amd/amdgpu/atombios_dp.c
+index 518707bc9..2877c026d 100644
+--- a/drivers/gpu/drm/amd/amdgpu/atombios_dp.c
++++ b/drivers/gpu/drm/amd/amdgpu/atombios_dp.c
+@@ -259,6 +259,7 @@ static int amdgpu_atombios_dp_get_dp_link_config(struct drm_connector *connector
+ 	static const unsigned link_rates[3] = { 162000, 270000, 540000 };
+ 	unsigned max_link_rate = drm_dp_max_link_rate(dpcd);
+ 	unsigned min_lane_num = 1;
++	unsigned min_link_rate = 0;
+ 	unsigned max_lane_num = drm_dp_max_lane_count(dpcd);
+ 	unsigned lane_num, i, max_pix_clock;
+ 	struct amdgpu_connector *amdgpu_connector = to_amdgpu_connector(connector);
+@@ -266,9 +267,19 @@ static int amdgpu_atombios_dp_get_dp_link_config(struct drm_connector *connector
+ 	struct amdgpu_device *adev = drm_to_adev(dev);
+ 
+ 	/* Liverpool is always connected to an encoder that needs 4 lanes */
+-	if ((adev->asic_type == CHIP_LIVERPOOL) || (adev->asic_type == CHIP_GLADIUS))
++	if ((adev->asic_type == CHIP_LIVERPOOL) || (adev->asic_type == CHIP_GLADIUS)) {
+ 		min_lane_num = 4;
+ 
++		/* PS4: a ponte DP interna (Panasonic MN864729) não estabiliza o
++		 * clock recovery em 1,62 Gbps — o link falha a cada modeset e a
++		 * tela apaga (passo 2 do plano DP, others/docs/BACKLOG.md). O
++		 * sink anuncia 5,4 Gbps, então começar em 2,7 Gbps; 1,62 Gbps só
++		 * se o sink não anunciar 2,7 Gbps.
++		 */
++		if (max_link_rate >= 270000)
++			min_link_rate = 270000;
++	}
++
+ 	if (amdgpu_connector_encoder_get_dp_bridge_encoder_id(connector) ==
+ 	    ENCODER_OBJECT_ID_NUTMEG) {
+ 		for (lane_num = min_lane_num; lane_num <= max_lane_num; lane_num <<= 1) {
+@@ -281,7 +292,9 @@ static int amdgpu_atombios_dp_get_dp_link_config(struct drm_connector *connector
+ 		}
+ 	} else {
+ 		for (i = 0; i < ARRAY_SIZE(link_rates) && link_rates[i] <= max_link_rate; i++) {
+-			for (lane_num = 1; lane_num <= max_lane_num; lane_num <<= 1) {
++			if (link_rates[i] < min_link_rate)
++				continue;
++			for (lane_num = min_lane_num; lane_num <= max_lane_num; lane_num <<= 1) {
+ 				max_pix_clock = (lane_num * link_rates[i] * 8) / bpp;
+ 				if (max_pix_clock >= pix_clock) {
+ 					*dp_lanes = lane_num;

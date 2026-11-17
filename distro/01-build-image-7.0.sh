@@ -208,6 +208,8 @@ PKGS=(
   lsof
   strace
   perf
+  # cpupower: validação de cpufreq (amd_pstate falha; CONFIG_X86_ACPI_CPUFREQ=y no kernel)
+  cpupower
   dmidecode
   smartmontools
   pacman-contrib
