@@ -262,7 +262,7 @@ Antes de rodar `deploy-boot-7.0.sh <TAG>`:
 
 ### Caminho alternativo de boot: kernel e initramfs pelo disco INTERNO (2026-11-17)
 
-O payload procura `bzImage`, `initramfs.cpio.gz`, `bootargs.txt` e `vram.txt` **um a um**, nesta ordem: `/mnt/usb0`, `/mnt/usb1`, `/data/linux/boot/`, `/user/system/boot/`. Com esses 4 arquivos fora do USB e em `/data/linux/boot/` (enviados por FTP do GoldHEN, porta 2121, no Orbis), o kernel sai do disco interno; o rootfs continua no USB. **Atenção:** `deploy-boot-7.0.sh` recria os 4 arquivos no USB e devolve a prioridade a ele; para este caminho use `distro/deploy-boot-ftp-7.0.sh <TAG>` (sobe por FTP com `.part`, confere o MD5 e renomeia; não toca no `deploy-boot-7.0.sh`). Procedimento, estado e rollback: `others/docs/BOOT_PELO_DISCO_INTERNO.md` (status: aguardando confirmação do primeiro boot).
+O payload procura `bzImage`, `initramfs.cpio.gz`, `bootargs.txt` e `vram.txt` **um a um**, nesta ordem: `/mnt/usb0`, `/mnt/usb1`, `/data/linux/boot/`, `/user/system/boot/`. Com esses 4 arquivos fora do USB e em `/data/linux/boot/` (enviados por FTP do GoldHEN, porta 2121, no Orbis), o kernel sai do disco interno; o rootfs continua no USB. **Atenção:** `deploy-boot-7.0.sh` recria os 4 arquivos no USB e devolve a prioridade a ele; para este caminho use `distro/deploy-boot-ftp-7.0.sh <TAG>` (sobe por FTP com `.part`, confere o MD5 e renomeia; não toca no `deploy-boot-7.0.sh`). Procedimento, estado e rollback: `others/docs/BOOT_FROM_INTERNAL_DISK.md` (status: aguardando confirmação do primeiro boot).
 
 ### Referências
 

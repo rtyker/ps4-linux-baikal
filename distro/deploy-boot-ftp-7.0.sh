@@ -4,7 +4,7 @@
 # Caminho alternativo ao deploy-boot-7.0.sh (que escreve no USB e NAO e tocado por este script).
 # O payload procura bzImage, initramfs.cpio.gz, bootargs.txt e vram.txt, um a um, em /mnt/usb0,
 # /mnt/usb1, /data/linux/boot e /user/system/boot. Este script mantem os 4 em /data/linux/boot.
-# Detalhes e cuidados: others/docs/BOOT_PELO_DISCO_INTERNO.md
+# Detalhes e cuidados: others/docs/BOOT_FROM_INTERNAL_DISK.md
 #
 # Requisitos: o PS4 em modo ORBIS com o FTP do GoldHEN (porta 2121) ativo; curl e md5sum no host.
 # NUNCA faz probe na porta 9090 (o BinLoader tem accept() unico).
