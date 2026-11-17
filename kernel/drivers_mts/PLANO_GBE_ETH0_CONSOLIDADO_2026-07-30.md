@@ -1,5 +1,15 @@
 # Plano Consolidado — GBE Ethernet (`mts.ko` / `eth0`) — PS4 Baikal
 
+> ⛔ **SUBSTITUÍDO EM 2026-11-17 por `others/docs/PLAN_ETH0_BAIKAL.md`.** O veredito "PHY ligado
+> pelo firmware Sony antes do kernel, investigação encerrada" foi retirado. A revisão com REA no
+> dump 12.52 e a releitura do nosso log de 2026-11-12 mostraram: o MAC chega ao Linux configurado
+> e parado pelo Orbis (não desligado); o stop do Orbis deixa o bit 4 de `0x0147.1e` ligado (resíduo
+> de shutdown, o mesmo que dois projetos externos limpam para ter link); e o nosso `mts.c` tem
+> defeitos que impediam ver o link (opcode de escrita C45, endereço "packed", espera de link no
+> registrador errado, reset do bloco no meio do bring-up, polaridade da IMR e do bit 31 dos
+> descritores). Vários "refutados" deste arquivo (#50, #61, #62, #70, #72) foram reavaliados
+> (`test_history` 123). Mantido só como histórico.
+
 > **Substitui todos os planos de GBE anteriores** (arquivados em `consolidado/obsoleto/` em
 > 2026-07-30): `PLANO_BAR4_EFUSE_CALIBRACAO_2026-07-23.md`, `PLANO_DUPLEX_PHY_MDIO_2026-07-23.md`,
 > `PLANO_FASES_GBE_2026-07-24.md`, `PLANO_FASES_GBE_2026-07-25.md`,

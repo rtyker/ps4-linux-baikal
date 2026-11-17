@@ -1,0 +1,87 @@
+Orbis 12.52 kernel, GBE driver function 0xffffffffdc5a0750 (dev_method_threads_stop_residue)
+Role (our reading, 2026-11-17): Device method (suspend/detach-like): stops the two worker threads (one of them is gbe_phy_ctrl), then the same stop + residue write.
+
+Source dump: others/rea/dumps/kmem_dump_1252.bin
+  sha256 196e093182e74a6cec5d072c88673af35c3584ebf66f2c092a05a8242769d7a1
+  virtual base 0xffffffffdc350000
+Analyzed slice: VA 0xffffffffdc590000-0xffffffffdc5c0000 (196608 bytes)
+  sha256 99301a318f580f3993b93d504e2b3e80f6f6d76059bab3b808d68b84f27da488
+Tool: REA (rea-agents 6.5.0), provider Ghidra 12.1.2, raw-binary x86_64
+Operation: procedure_pseudo_code   Evidence ID: ev_928ff6bd2709eccc4b9816866a9bbba0ee7e76250e85d0e80c7fc0adf17e8c3f
+This is decompiler output (pseudocode), not source. Names FUN_/func_ are Ghidra's.
+-----------------------------------------------------------------------------
+/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+
+undefined8 FUN_ffffffffdc5a0750(void)
+
+{
+  long lVar1;
+  code *pcVar2;
+  int iVar3;
+  long lVar4;
+  undefined8 uVar5;
+  undefined8 uVar6;
+  
+  lVar4 = FUN_ffffffffdc5b6b00();
+  iVar3 = func_0xffffffffdc5242f0(*(undefined8 *)(lVar4 + 0x3150));
+  if (iVar3 == 0) {
+    func_0xffffffffdc6c8300(lVar4 + 0x3158,0,0xffffffffdcb0dc47,0x12bc);
+    *(byte *)(lVar4 + 0x317a) = *(byte *)(lVar4 + 0x317a) | 2;
+    func_0xffffffffdc4902b0(lVar4 + 0x3178);
+    func_0xffffffffdc6c85b0(lVar4 + 0x3158,0,0xffffffffdcb0dc47,0x12bf);
+    iVar3 = func_0xffffffffdc524390(*(undefined8 *)(lVar4 + 0x3150),_DAT_ffffffffde61c420 * 0x3c);
+    if (iVar3 == 0) {
+      if (*(int *)(lVar4 + 0x30e0) != 0) {
+LAB_ffffffffdc5a086b:
+        func_0xffffffffdc6c8300(lVar4 + 0x30b0,0,0xffffffffdcb0dc47,0x12d6);
+        if (((*(long **)(lVar4 + 0x30a0) != (long *)0x0) &&
+            (lVar1 = **(long **)(lVar4 + 0x30a0), lVar1 != 0)) &&
+           ((*(byte *)(lVar1 + 0x1c8) & 0x40) != 0)) {
+          FUN_ffffffffdc5a3060(lVar4);
+          FUN_ffffffffdc5a24d0(lVar4,0x147001e,0x10);
+          func_0xffffffffdc4afb10(1000);
+        }
+        func_0xffffffffdc6c85b0(lVar4 + 0x30b0,0,0xffffffffdcb0dc47,0x12dc);
+        return 0;
+      }
+      iVar3 = func_0xffffffffdc5242f0(*(undefined8 *)(lVar4 + 0x31a0));
+      if (iVar3 == 0) {
+        func_0xffffffffdc6c8300(lVar4 + 0x31a8,0,0xffffffffdcb0dc47,0x12cb);
+        *(byte *)(lVar4 + 0x31ca) = *(byte *)(lVar4 + 0x31ca) | 2;
+        *(undefined4 *)(lVar4 + 0x31cc) = 1;
+        func_0xffffffffdc4902b0(lVar4 + 0x31c8);
+        func_0xffffffffdc6c85b0(lVar4 + 0x31a8,0,0xffffffffdcb0dc47,0x12cf);
+        iVar3 = func_0xffffffffdc524390
+                          (*(undefined8 *)(lVar4 + 0x31a0),_DAT_ffffffffde61c420 * 0x3c);
+        if (iVar3 == 0) goto LAB_ffffffffdc5a086b;
+        func_0xffffffffdcabbf00();
+        func_0xffffffffdcabbe70(0xffffffffdc5a094d);
+        uVar5 = 0xffffffffdcb0deb7;
+        uVar6 = 0x2b;
+      }
+      else {
+        func_0xffffffffdcabbf00();
+        func_0xffffffffdcabbe70(0xffffffffdc5a092e);
+        uVar5 = 0xffffffffdcb0de8a;
+        uVar6 = 0x27;
+      }
+    }
+    else {
+      func_0xffffffffdcabbf00();
+      func_0xffffffffdcabbe70(0xffffffffdc5a090f);
+      uVar5 = 0xffffffffdcb0de62;
+      uVar6 = 0x23;
+    }
+  }
+  else {
+    func_0xffffffffdcabbf00();
+    func_0xffffffffdcabbe70(0xffffffffdc5a08f0);
+    uVar5 = 0xffffffffdcb0de39;
+    uVar6 = 0x1f;
+  }
+  func_0xffffffffdc460780(uVar6,uVar5);
+                    /* WARNING: Does not return */
+  pcVar2 = (code *)invalidInstructionException();
+  (*pcVar2)();
+}
+

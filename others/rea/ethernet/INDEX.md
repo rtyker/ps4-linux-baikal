@@ -61,7 +61,14 @@ ethernet/
 - **Driver Linux:** `mts.ko` (kernel/drivers_mts/mts.c)
 - **Status:** MAC ligado, TX ~95%, **RX BLOQUEADO — PHY power-down**
 
-## Conclusão da Investigação (2026-07-30)
+## Reabertura (2026-11-17) — a conclusão de 2026-07-30 abaixo foi retirada
+> Plano vigente: `others/docs/PLAN_ETH0_BAIKAL.md`. Fontes novas: dois drivers externos que funcionam
+> (Gcsman110 `ps4-mts-linux-driver`, meerzulee `linux-psx`) e a revisão com REA no dump 12.52.
+> O pseudocódigo REA de 9 funções da GBE (C45 write/read, teardown com o resíduo `0x0147.1e`,
+> dois métodos de stop, `mac_stop`, `mac_enable`, TX reclaim, `gbe_phy_ctrl`) está em
+> `decompiled/rea_20261117/` (README com evidência e como reproduzir; `test_history` 123).
+
+## Conclusão da Investigação (2026-07-30) — ⛔ RETIRADA em 2026-11-17
 > **Power-on físico do PHY é feito pelo firmware/bootloader Sony ANTES do kernel Orbis.**
 > Não há sequência replicável via MDIO, ICC, SAMU ou RMU.
 > **Investigação ENCERRADA** — reabrir apenas com fonte de dados nova.

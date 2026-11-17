@@ -1,5 +1,12 @@
 # `mts` — driver da Gigabit Ethernet do southbridge Baikal (PS4 Pro)
 
+> ⚠️ **Revisão de 2026-11-17:** o plano vigente é `others/docs/PLAN_ETH0_BAIKAL.md` (o
+> `PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md` ficou só como histórico). A seção 2.4 dele lista
+> os defeitos deste `mts.c` encontrados por comparação com o firmware (D1-D14), e várias
+> conclusões abaixo ("PHY mudo", "Clause 45 sempre zero", "eco 0x1000", "PHY ID Marvell falso
+> positivo") foram reavaliadas lá. Não tome este README como verdade sobre o hardware sem
+> ler o plano.
+
 **Este README é a fonte única sobre o driver MTS.** Tudo que era espalhado por
 `consolidado/`, `docs/` e memórias de sessão sobre a GBE do Baikal está resumido e
 indexado aqui. Documentos de dados brutos (RE, logs de teste) continuam em
@@ -232,6 +239,15 @@ bit 15 **zerar**; o correto é esperar **setar**. Antes do fix o "sucesso" era d
 residual do barramento (valor latched da transação anterior), o que gerou o falso
 positivo de "PHY ID Marvell `0x888103a2` confirmado" (2026-07-25). Depois do fix o
 eco é limpo (`0x1000`).
+
+> **Correção 2026-11-17** (`others/docs/PLAN_ETH0_BAIKAL.md`, seções 2.2-2.4): a linha
+> "Clause 22" da tabela acima descreve a codificação **antiga**; o `mts.c` usa desde 2026-07-29 a
+> do firmware (`reg<<8 | 0x4000` para ler, `valor<<16 | reg<<8 | 0x2000` para escrever, sem
+> campo de PHY). A escrita Clause 45 do `mts.c` usa opcode `0x10` na fase de dado, mas o
+> firmware usa `0x60`; os helpers "packed" decodificam o registrador como `(packed >> 8) &
+> 0xffff`, e o certo é `packed >> 16`. O `0x1000` não é eco: é o BMCR depois de escrevermos
+> `0x1200`, com o bit de restart já autolimpo (sinal de PHY vivo). Os zeros da Clause 45 vêm de
+> MMD 1/3, que o firmware nunca lê. E `0x03a2`, do "PHY ID Marvell", é o PHYID1 do PHY MediaTek.
 
 ---
 

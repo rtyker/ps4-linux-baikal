@@ -387,6 +387,8 @@ earlycon=uart8250,mmio32,0xC890E000 console=uart8250,mmio32,0xC890E000 console=t
 
 ## Compilação de Módulos
 
+> ⚠️ **2026-11-17:** `build_mts_module.sh` e `deploy_mts.sh` ainda apontam para `drivers_mts/` na raiz (a pasta virou `kernel/drivers_mts/` em 2026-11-11) e não funcionam até a fase 0 do `others/docs/PLAN_ETH0_BAIKAL.md` corrigir os caminhos. E o `deploy_mts.sh push` faz `rmmod` + `insmod`, o que o plano proíbe depois de um MAC enable.
+
 Use `sudo others/scripts/build_mts_module.sh` (já validado) para compilar o driver `mts.ko`.
 
 Não criar `Makefile` ad-hoc nem comandos `gcc` diretos — o script já encapsula opções de cross-compile e flags corretas.
@@ -415,6 +417,8 @@ sshpass -p ps4 ssh root@192.168.6.128 "rmmod mts 2>/dev/null; insmod /tmp/mts.ko
 Requer: sshpass, scp no host. PS4 precisa ter SSH rodando.
 
 ## ⚠️ REGRAS CRÍTICAS DO DRIVER mts.ko
+
+> 🔎 **Reavaliação de 2026-11-17 (`others/docs/PLAN_ETH0_BAIKAL.md`, seção 2.5):** várias regras abaixo foram deduzidas enquanto o `mts.c` tinha defeitos que hoje sabemos (opcode de escrita C45, endereço "packed", espera de link no registrador errado, reset do bloco no meio do bring-up, polaridade da IMR). Algumas são contrariadas pelo firmware ou pelo nosso próprio log de 2026-11-12: o firmware habilita com `0x34 |= 1`/`0x38 |= 1` (leitura-modifica-escrita); `0x04` valia `0xb14` antes de qualquer escrita (não zero); o ICC 4/0x38 respondeu na primeira tentativa; o hold `0x180020` leu `1`; e o PHY tem sinais de vida em Clause 22. **Continue obedecendo as regras** até um experimento do plano mostrar o contrário, mas não as trate como fatos sobre o hardware. A conclusão "PHY em domínio de power separado, ligado só pelo firmware Sony" está **retirada**.
 
 ### MAC Enable/Stop (descobertas 2026-07-24/25)
 - **NUNCA escrever 0 em BAR0+0x34/0x38** — corrompe estado permanentemente

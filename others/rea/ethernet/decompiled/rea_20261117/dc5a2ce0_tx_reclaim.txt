@@ -1,0 +1,59 @@
+Orbis 12.52 kernel, GBE driver function 0xffffffffdc5a2ce0 (tx_reclaim)
+Role (our reading, 2026-11-17): TX completion: loops while word0 bit 31 is set; stops at an idle descriptor (word2 >= 0xffff0000); frees the mbuf and marks word2 idle again.
+
+Source dump: others/rea/dumps/kmem_dump_1252.bin
+  sha256 196e093182e74a6cec5d072c88673af35c3584ebf66f2c092a05a8242769d7a1
+  virtual base 0xffffffffdc350000
+Analyzed slice: VA 0xffffffffdc590000-0xffffffffdc5c0000 (196608 bytes)
+  sha256 99301a318f580f3993b93d504e2b3e80f6f6d76059bab3b808d68b84f27da488
+Tool: REA (rea-agents 6.5.0), provider Ghidra 12.1.2, raw-binary x86_64
+Operation: procedure_pseudo_code   Evidence ID: ev_868ccea5d3df2a42d821e6629f5c45ddf9010f463b29f55bfa544035db4f5890
+This is decompiler output (pseudocode), not source. Names FUN_/func_ are Ghidra's.
+-----------------------------------------------------------------------------
+void FUN_ffffffffdc5a2ce0(long param_1)
+
+{
+  long *plVar1;
+  undefined8 *puVar2;
+  long lVar3;
+  int iVar4;
+  int *piVar5;
+  long lVar6;
+  long *plVar7;
+  
+  lVar3 = **(long **)(param_1 + 0x30a0);
+  if (*(long *)(param_1 + 0x28) != 0) {
+    func_0xffffffffdc3cae20(*(undefined8 *)(param_1 + 8),*(long *)(param_1 + 0x28),10);
+  }
+  lVar6 = (long)*(int *)(param_1 + 0x305c);
+  piVar5 = *(int **)(param_1 + 0x68 + lVar6 * 0x18);
+  if (*piVar5 < 0) {
+    plVar7 = (long *)(param_1 + 0x68 + lVar6 * 0x18);
+    do {
+      if (0xfffeffff < (uint)piVar5[2]) {
+        return;
+      }
+      if (*(long *)(param_1 + 0x58 + lVar6 * 0x18) != 0) {
+        puVar2 = (undefined8 *)(param_1 + 0x58 + lVar6 * 0x18);
+        plVar1 = (long *)(lVar3 + 0xe8);
+        *plVar1 = *plVar1 + 1;
+        func_0xffffffffdc750770(*puVar2);
+        *puVar2 = 0;
+        piVar5 = (int *)*plVar7;
+      }
+      *(int *)(param_1 + 0x32b4) = piVar5[1] - *(int *)(param_1 + 0x32a8);
+      *(uint *)(*plVar7 + 8) = *(uint *)(*plVar7 + 8) | 0xffff0000;
+      iVar4 = *(int *)(param_1 + 0x305c) + 1;
+      if (0xff < iVar4) {
+        iVar4 = 0;
+      }
+      lVar6 = (long)iVar4;
+      *(int *)(param_1 + 0x305c) = iVar4;
+      *(int *)(param_1 + 0x3060) = *(int *)(param_1 + 0x3060) + 1;
+      plVar7 = (long *)(param_1 + 0x68 + lVar6 * 0x18);
+      piVar5 = *(int **)(param_1 + 0x68 + lVar6 * 0x18);
+    } while (*piVar5 < 0);
+  }
+  return;
+}
+

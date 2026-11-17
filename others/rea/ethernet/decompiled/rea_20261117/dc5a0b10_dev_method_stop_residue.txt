@@ -1,0 +1,31 @@
+Orbis 12.52 kernel, GBE driver function 0xffffffffdc5a0b10 (dev_method_stop_residue)
+Role (our reading, 2026-11-17): Device method (shutdown-like): lock; if the interface is RUNNING: mac_stop, Clause 45 write 0x0147.1e = 0x0010, DELAY(1000).
+
+Source dump: others/rea/dumps/kmem_dump_1252.bin
+  sha256 196e093182e74a6cec5d072c88673af35c3584ebf66f2c092a05a8242769d7a1
+  virtual base 0xffffffffdc350000
+Analyzed slice: VA 0xffffffffdc590000-0xffffffffdc5c0000 (196608 bytes)
+  sha256 99301a318f580f3993b93d504e2b3e80f6f6d76059bab3b808d68b84f27da488
+Tool: REA (rea-agents 6.5.0), provider Ghidra 12.1.2, raw-binary x86_64
+Operation: procedure_pseudo_code   Evidence ID: ev_5e77a962cdb441d5e4405603188e0524ef846f9bf05483680cffc91b74548304
+This is decompiler output (pseudocode), not source. Names FUN_/func_ are Ghidra's.
+-----------------------------------------------------------------------------
+undefined8 FUN_ffffffffdc5a0b10(void)
+
+{
+  long lVar1;
+  long lVar2;
+  
+  lVar2 = FUN_ffffffffdc5b6b00();
+  func_0xffffffffdc6c8300(lVar2 + 0x30b0,0,0xffffffffdcb0dc47,0x1314);
+  if (((*(long **)(lVar2 + 0x30a0) != (long *)0x0) &&
+      (lVar1 = **(long **)(lVar2 + 0x30a0), lVar1 != 0)) && ((*(byte *)(lVar1 + 0x1c8) & 0x40) != 0)
+     ) {
+    FUN_ffffffffdc5a3060(lVar2);
+    FUN_ffffffffdc5a24d0(lVar2,0x147001e,0x10);
+    func_0xffffffffdc4afb10(1000);
+  }
+  func_0xffffffffdc6c85b0(lVar2 + 0x30b0,0,0xffffffffdcb0dc47,0x131a);
+  return 0;
+}
+

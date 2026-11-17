@@ -1,0 +1,112 @@
+Orbis 12.52 kernel, GBE driver function 0xffffffffdc5a2680 (mdio_c45_read)
+Role (our reading, 2026-11-17): Clause 45 read. Address phase as in the write, read phase devad << 8 | 0xe0, result = register >> 16.
+
+Source dump: others/rea/dumps/kmem_dump_1252.bin
+  sha256 196e093182e74a6cec5d072c88673af35c3584ebf66f2c092a05a8242769d7a1
+  virtual base 0xffffffffdc350000
+Analyzed slice: VA 0xffffffffdc590000-0xffffffffdc5c0000 (196608 bytes)
+  sha256 99301a318f580f3993b93d504e2b3e80f6f6d76059bab3b808d68b84f27da488
+Tool: REA (rea-agents 6.5.0), provider Ghidra 12.1.2, raw-binary x86_64
+Operation: procedure_pseudo_code   Evidence ID: ev_3221064ca7a47f7bedb20e2574de6d4f01b6806f31961c626f68e754b8223cbc
+This is decompiler output (pseudocode), not source. Names FUN_/func_ are Ghidra's.
+-----------------------------------------------------------------------------
+undefined4 FUN_ffffffffdc5a2680(long param_1,uint param_2,undefined2 *param_3)
+
+{
+  undefined4 *puVar1;
+  uint *puVar2;
+  short sVar3;
+  undefined2 uVar4;
+  int iVar5;
+  undefined4 uVar6;
+  undefined8 uVar7;
+  uint uVar8;
+  uint uVar9;
+  
+  func_0xffffffffdc6c8300(param_1 + 0x3180,0,0xffffffffdcb0dc47,0x5ab);
+  puVar1 = *(undefined4 **)(*(long *)(param_1 + 0x3068) + 0x10);
+  if (*(long *)(*(long *)(param_1 + 0x3068) + 8) == 0) {
+    out((short)puVar1,0x8000);
+  }
+  else {
+    *puVar1 = 0x8000;
+  }
+  uVar8 = (param_2 & 0x1f) << 8;
+  uVar9 = param_2 & 0xffff0000 | uVar8 | 0x20;
+  puVar2 = *(uint **)(*(long *)(param_1 + 0x3068) + 0x10);
+  if (*(long *)(*(long *)(param_1 + 0x3068) + 8) == 0) {
+    out((short)puVar2,uVar9);
+  }
+  else {
+    *puVar2 = uVar9;
+  }
+  iVar5 = 10000;
+  do {
+    puVar1 = *(undefined4 **)(*(long *)(param_1 + 0x3068) + 0x10);
+    if (*(long *)(*(long *)(param_1 + 0x3068) + 8) == 0) {
+      uVar6 = in((short)puVar1);
+      sVar3 = (short)uVar6;
+    }
+    else {
+      sVar3 = (short)*puVar1;
+    }
+    if (sVar3 < 0) {
+      puVar1 = *(undefined4 **)(*(long *)(param_1 + 0x3068) + 0x10);
+      if (*(long *)(*(long *)(param_1 + 0x3068) + 8) == 0) {
+        out((short)puVar1,0x8000);
+      }
+      else {
+        *puVar1 = 0x8000;
+      }
+      uVar8 = uVar8 | 0xe0;
+      puVar2 = *(uint **)(*(long *)(param_1 + 0x3068) + 0x10);
+      if (*(long *)(*(long *)(param_1 + 0x3068) + 8) == 0) {
+        out((short)puVar2,uVar8);
+      }
+      else {
+        *puVar2 = uVar8;
+      }
+      iVar5 = 10000;
+      goto LAB_ffffffffdc5a27a0;
+    }
+    func_0xffffffffdc4afb10(1);
+    iVar5 = iVar5 + -1;
+  } while (iVar5 != 0);
+  uVar7 = 0xffffffffdcb0dce3;
+  goto LAB_ffffffffdc5a27db;
+  while( true ) {
+    func_0xffffffffdc4afb10(1);
+    iVar5 = iVar5 + -1;
+    if (iVar5 == 0) break;
+LAB_ffffffffdc5a27a0:
+    puVar1 = *(undefined4 **)(*(long *)(param_1 + 0x3068) + 0x10);
+    if (*(long *)(*(long *)(param_1 + 0x3068) + 8) == 0) {
+      uVar6 = in((short)puVar1);
+      sVar3 = (short)uVar6;
+    }
+    else {
+      sVar3 = (short)*puVar1;
+    }
+    if (sVar3 < 0) {
+      puVar1 = *(undefined4 **)(*(long *)(param_1 + 0x3068) + 0x10);
+      if (*(long *)(*(long *)(param_1 + 0x3068) + 8) == 0) {
+        uVar6 = in((short)puVar1);
+        uVar4 = (undefined2)((uint)uVar6 >> 0x10);
+      }
+      else {
+        uVar4 = (undefined2)((uint)*puVar1 >> 0x10);
+      }
+      uVar6 = 0;
+      *param_3 = uVar4;
+      goto LAB_ffffffffdc5a280c;
+    }
+  }
+  uVar7 = 0xffffffffdcb0dd04;
+LAB_ffffffffdc5a27db:
+  func_0xffffffffdc630420(uVar7);
+  uVar6 = 0x23;
+LAB_ffffffffdc5a280c:
+  func_0xffffffffdc6c85b0(param_1 + 0x3180,0,0xffffffffdcb0dc47,0x5d8);
+  return uVar6;
+}
+
