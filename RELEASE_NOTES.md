@@ -64,6 +64,6 @@ public measurements are theirs. Thank you.
 ### Known limits
 
 - Capacity is 188 MiB on the tested console; an older measurement said 256 MB and the two disagree without explanation.
-- The service is installed and enabled, but auto-start at boot has not been confirmed yet (needs one reboot).
+- Auto-start at boot is confirmed: after a reboot the service is `active` and `/dev/baikal_spm0` (180 MiB, priority 50) is listed next to zram.
 - **DP-2 (link at 2.7 Gbps) is in this tag but did not fix the DisplayPort `clock recovery` failures**
   (stress test: 4–6 failures per mode switch; the image still comes up). It is not a validated fix.
