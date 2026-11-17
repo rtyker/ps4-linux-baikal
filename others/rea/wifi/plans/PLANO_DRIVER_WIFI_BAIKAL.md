@@ -99,6 +99,18 @@ Carregar a configuração de fábrica do WiFi (país, MAC, potência e 5 GHz) pa
 
 **Pendências abertas:** confirmar MAC do WiFi versus BT (`E8:D8:19:93:CC:AF` versus `…AE`); layout dos campos de potência, que ficaram zerados de propósito.
 
+## Retomada planejada (2026-11-17) — passos guardados, a decidir com o usuário depois
+
+**Estado reconferido ao vivo em 2026-11-17 (kernel `20261117-dp-diag2`):** continua tudo sem NVRAM. `/data` não existe; `wlanAdapterStart: load manufacture data fail` aos 2,96 s; `country = 00` (`iw reg get`: `country 00: DFS-UNSET`); `Array index out of bound, ucBssIndex=4` 2 vezes. MAC do `wlan0` = `00:0c:43:26:60:48` (origem ainda desconhecida); eFUSE `0x004–0x009` = `E8:D8:19:93:CC:AF`. O `hci0` existe, mas o endereço do BT **não foi relido hoje** (`bluetoothctl` travou); o BACKLOG registrou `…CC:AE` antes, o que sugere que não colide com o do WiFi. O `initramfs` atual do HD continua cpio newc puro (`070701`), então o método de acrescentar um segundo archive vale.
+
+**Passos propostos (nada executado):**
+1. Gerar o `initramfs` com o NVRAM a partir do `initramfs` da tag atual: `others/rea/wifi/tools/gen_wifi_nvram_initramfs.sh <initramfs_original> <saida> E8:D8:19:93:CC:AF BR`.
+2. Gravar como **tag nova de teste** (sugestão `20261117-wifi-nvram`): mesmo `bzImage`/`config`/`bootargs` da tag em uso, só o `initramfs` trocado, via `deploy-boot-7.0.sh` com o HD no PC, conferindo o MD5. O `initramfs` da tag boa não é tocado, então o rollback é um `deploy-boot` simples.
+3. Boot e verificação: `dmesg | grep -E "manufacture|RegDomain"` e `iw reg get`; critério: sem `load manufacture data fail`, sem `country = 00`, MAC igual ao do arquivo, e o SSH via WiFi continua funcionando.
+4. Se o WiFi piorar: `deploy-boot` da tag anterior.
+
+**Antes de executar, o usuário precisa decidir:** (a) confirmar o país `BR`; (b) confirmar o MAC do eFUSE `…CC:AF` para o `wlan0`; (c) reler o endereço do BT (por `hciconfig` ou `btmgmt`, com timeout) para garantir que não colide.
+
 ## Itens que permanecem no lugar (build)
 
 Ver `others/rea/wifi/INDEX.md`, seção "O que NÃO está aqui".

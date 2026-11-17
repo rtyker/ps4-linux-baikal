@@ -377,6 +377,7 @@ Chave EAP canônica obtida ao vivo (5 dumps, 3 boots): sha256 `990c1aa3…c8bf` 
 ---
 
 ### [ ] WiFi — manufacture data (NVRAM) ausente → movido para `others/rea/wifi/`
+**Reconferido ao vivo em 2026-11-17: continua sem NVRAM (`country = 00`). Passos de retomada guardados no plano (seção "Retomada planejada"); aguardando decisão do usuário sobre país, MAC e a gravação da tag de teste.**
 Pendência e plano de correção (NVRAM `/data/nvram/APCFG/APRDEB/WIFI`, país BR, MAC do eFUSE) agora vivem em [`others/rea/wifi/plans/PLANO_DRIVER_WIFI_BAIKAL.md`](../rea/wifi/plans/PLANO_DRIVER_WIFI_BAIKAL.md). Índice da pasta: [`others/rea/wifi/INDEX.md`](../rea/wifi/INDEX.md).
 
 ---
