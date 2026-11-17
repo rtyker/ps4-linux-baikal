@@ -1,5 +1,5 @@
 Orbis 12.52 kernel, GBE driver function 0xffffffffdc5a3060 (mac_stop)
-Role (our reading, 2026-11-17): IMR=0x7ffffa, 0x34=2 and 0x38=2 each polled until bit 1 clears, frees TX/RX mbufs, descriptors back to 0x80000000, clears ifnet RUNNING|OACTIVE.
+Role (our reading, 2026-11-17): IMR=0x7ffffa, 0x34=2 and 0x38=2 each polled until bit 1 clears, frees TX/RX buffers, descriptors back to 0x80000000, clears ifnet RUNNING|OACTIVE.
 
 Source dump: others/rea/dumps/kmem_dump_1252.bin
   sha256 196e093182e74a6cec5d072c88673af35c3584ebf66f2c092a05a8242769d7a1

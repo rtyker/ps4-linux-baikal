@@ -1,5 +1,5 @@
 Orbis 12.52 kernel, GBE driver function 0xffffffffdc5a31f0 (mac_enable)
-Role (our reading, 2026-11-17): Builds the rings (TX word0 0x80000000 idle, word2 |= 0xffff0000; RX word0 0x00000600 owned by hardware, WRAP on 255), programs 0x44/0x3c (TX) and 0x48/0x40 (RX), 0x34 |= 1, 0x38 |= 1, IMR = softc+0x3098.
+Role (our reading, 2026-11-17): Builds the rings (TX word0 0x80000000 idle, word2 |= 0xffff0000; RX word0 0x00000600 owned by hardware, WRAP on 255), programs 0x44/0x3c (TX) and 0x48/0x40 (RX), 0x34 |= 1, 0x38 |= 1, IMR = softc+0x3098 (0x1018).
 
 Source dump: others/rea/dumps/kmem_dump_1252.bin
   sha256 196e093182e74a6cec5d072c88673af35c3584ebf66f2c092a05a8242769d7a1

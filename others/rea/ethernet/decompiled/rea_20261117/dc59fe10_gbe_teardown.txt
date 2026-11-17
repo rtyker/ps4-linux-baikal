@@ -1,5 +1,5 @@
 Orbis 12.52 kernel, GBE driver function 0xffffffffdc59fe10 (gbe_teardown)
-Role (our reading, 2026-11-17): GBE teardown on the global softc: IMR(0x54)=0x7ffffa, 0x34=2 (poll bit 1), 0x38=2, clear ifnet RUNNING|OACTIVE, Clause 45 write 0x0147.1e = 0x0010 (the shutdown residue), DELAY(1000).
+Role (our reading, 2026-11-17): GBE teardown on the global softc: IMR(0x54)=0x7ffffa, 0x34=2 (poll bit 1), 0x38=2, clear ifnet RUNNING|OACTIVE, Clause 45 write 0x0147.1e = 0x0010 (the shutdown residue), DELAY(1000). Its only caller is the block-reset routine dc6df850.
 
 Source dump: others/rea/dumps/kmem_dump_1252.bin
   sha256 196e093182e74a6cec5d072c88673af35c3584ebf66f2c092a05a8242769d7a1

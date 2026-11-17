@@ -228,7 +228,7 @@ Medições reais no PS4 (boot completo, `systemd` `running`, 0 unidades falhadas
 
 **P2 — otimização de boot (44 s → meta ~15-20 s):**
 - [x] **33 s** de `systemd-modules-load` eram o `mts.ko` — auto-carregamento DESATIVADO em 2026-11-12 (decisão do usuário: Ethernet fica para o futuro): `distro/01-build-image-7.0.sh` agora só cria `/etc/modules-load.d/mts.conf` quando `ENABLE_MTS=1`; no PS4 o arquivo foi renomeado para `mts.conf.disabled`. O `mts.ko` continua instalado e pode ser carregado à mão (`modprobe mts`, usa `stage=4` do `modprobe.d`). **Reativar:** `ENABLE_MTS=1 sudo ./01-build-image-7.0.sh <TAG>`, ou no rootfs vivo `mv /etc/modules-load.d/mts.conf{.disabled,}`. Quando retomar o trabalho de Ethernet: mover o carregamento para uma unit própria depois de `multi-user`/`network-pre`, em vez de `modules-load` (para não bloquear o boot).
-- [ ] **O `mts.ko` ainda carrega em todo boot (achado de 2026-11-17, sem medição ao vivo):** o item acima tirou só o `modules-load.d`. O initramfs `20261117-dp-diag2` ainda tem `MODULES="mts"`, o `mts.ko` e `options mts stage=4`, e o `init` dele roda `modprobe -qab $MODULES`; o módulo tem `MODULE_DEVICE_TABLE`, então o udev também pode carregá-lo do rootfs; e o `mts` aparece na lista de módulos da validação de 2026-11-15. Origem: `MODULES=(... mts ...)` em `distro/01-build-image-7.0.sh:716`. O custo no boot de hoje não foi medido. Correção imediata sem rebuild: `modprobe.blacklist=mts` no bootargs (decisão E3 do `others/docs/PLAN_ETH0_BAIKAL.md`); a definitiva é tirar `mts` do `MODULES` (precisa de `01-build-image`).
+- [ ] **O `mts.ko` ainda carrega em todo boot (achado de 2026-11-17, sem medição ao vivo):** o item acima tirou só o `modules-load.d`. O initramfs `20261117-dp-diag2` ainda tem `MODULES="mts"`, o `mts.ko` e `options mts stage=4`, e o `init` dele roda `modprobe -qab $MODULES`; o módulo tem `MODULE_DEVICE_TABLE`, então o udev também pode carregá-lo do rootfs; e o `mts` aparece na lista de módulos da validação de 2026-11-15. Origem: `MODULES=(... mts ...)` em `distro/01-build-image-7.0.sh:716`. O custo no boot de hoje não foi medido. Correção imediata sem rebuild: `module_blacklist=mts` no bootargs (parâmetro do kernel, checado em `load_module()` na árvore 7.0.8: devolve `-EPERM` seja qual for o caminho; decisão E3 do `others/docs/PLAN_ETH0_BAIKAL.md`); a definitiva é tirar `mts` do `MODULES` (precisa de `01-build-image`).
 - [x] `drm.debug=0x06` + `loglevel=8`: 257 das 1321 linhas do dmesg eram `drm`. Removidos do bootargs de produção (mantém `drm.debug=0` implícito e `loglevel` padrão).
 - [x] `keep_bootcon earlyprintk=efi,keep` — removido do bootargs de produção.
 - [x] `ldconfig.service` gasta 1,0 s; com `ld.so.cache` já pronto — mantido como `static` (condition-based), só roda quando necessário. Funciona corretamente, não requer ação.
@@ -264,7 +264,12 @@ Medições reais no PS4 (boot completo, `systemd` `running`, 0 unidades falhadas
 
 ### [x] 🔒 GBE Ethernet — PHY nunca sai de power-down — INVESTIGAÇÃO ENCERRADA 2026-07-30 (bloqueador de firmware, não solucionável via driver Linux)
 
-> 🔓 **REABERTA PARA DECISÃO em 2026-11-17 — ver `others/docs/PLAN_ETH0_BAIKAL.md`.** Revisão estática
+> 🔓 **REABERTA em 2026-11-17 por decisão do usuário (E1) — ver `others/docs/PLAN_ETH0_BAIKAL.md`.**
+> **Estado:** fase S (estática) e fase 0 do host concluídas (`test_history` 123 e 124); o módulo de
+> diagnóstico `others/tools/mts_peek/` compila e nunca foi carregado; **o console está proibido até o
+> usuário liberar** (plano do rootfs interno em andamento). **Próximo passo exato:** P0-3 (tag com
+> `module_blacklist=mts`, precisa de E3) e a fase A (leituras com o `mts_peek`), ambos no console.
+> Revisão estática
 > (REA no dump 12.52 + releitura do log UART de 2026-11-12, `test_history` 123): o MAC chega ao Linux
 > configurado e parado pelo Orbis, não desligado; todo caminho de stop do Orbis grava `0x0010` em
 > `0x0147.1e` (resíduo que dois projetos externos limpam para ter link); o `mts.c` tem 14 defeitos

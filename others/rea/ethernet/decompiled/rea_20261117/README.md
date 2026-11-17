@@ -1,6 +1,6 @@
 # Orbis 12.52 GBE driver: REA pseudocode of 2026-11-17
 
-Nine functions of the Orbis GBE (`mts`) driver, decompiled with REA to re-check the Ethernet plan. The plan that uses them is `others/docs/PLAN_ETH0_BAIKAL.md` (section 2.2). Each file starts with a header naming the function, our reading of its role, the source dump, the analyzed slice and the REA evidence ID.
+Fifteen functions of the Orbis GBE (`mts`) driver, decompiled with REA to re-check the Ethernet plan. The plan that uses them is `others/docs/PLAN_ETH0_BAIKAL.md` (section 2.2). Each file starts with a header naming the function, our reading of its role, the source dump, the analyzed slice and the REA evidence ID.
 
 This is decompiler output, not source code. The names `FUN_*`, `func_*`, `param_*` and `*Var*` are Ghidra's. The role line in each header is our interpretation and can be wrong; the pseudocode under it is what the tool produced.
 
@@ -15,6 +15,12 @@ This is decompiler output, not source code. The names `FUN_*`, `func_*`, `param_
 | `dc5a31f0_mac_enable.txt` | `0xffffffffdc5a31f0` | `mac_enable`: ring layout and ownership, ring registers, `0x34 \|= 1`, `0x38 \|= 1`, IMR |
 | `dc5a2ce0_tx_reclaim.txt` | `0xffffffffdc5a2ce0` | TX completion: bit 31 set means the hardware is done |
 | `dc5a44c0_gbe_phy_ctrl.txt` | `0xffffffffdc5a44c0` | PHY thread: waits for link on Clause 22 BMSR bit 2; autonegotiation restart |
+| `dc5a2840_mdio_c22_read.txt` | `0xffffffffdc5a2840` | Clause 22 read: `(reg & 0x1f) << 8 \| 0x4000`, no PHY-address field |
+| `dc5a2950_mdio_c22_write.txt` | `0xffffffffdc5a2950` | Clause 22 write: `(reg & 0x1f) << 8 \| 0x2000 \| value << 16` |
+| `dc5a3df0_tx_start.txt` | `0xffffffffdc5a3df0` | Transmit start: descriptor builder per frame, then the doorbell `BAR0+0x34 \|= 4` once |
+| `dc5a5ae0_tx_encap.txt` | `0xffffffffdc5a5ae0` | TX descriptor builder: word layout, bit 31 cleared last |
+| `dc5a2dd0_rx_frame_and_rearm.txt` | `0xffffffffdc5a2dd0` | RX per frame: length `word0 & 0x7ff`, copy out, re-arm with bit 31 cleared |
+| `dc5a2a50_rx_loop.txt` | `0xffffffffdc5a2a50` | RX loop: a frame is `word0 > 0x80000000` |
 
 ## How to reproduce
 

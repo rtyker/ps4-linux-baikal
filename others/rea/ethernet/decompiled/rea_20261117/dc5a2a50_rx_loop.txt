@@ -1,0 +1,80 @@
+Orbis 12.52 kernel, GBE driver function 0xffffffffdc5a2a50 (rx_loop)
+Role (our reading, 2026-11-17): RX loop: a descriptor holds a frame iff word0 > 0x80000000 (unsigned); handles up to 256 per call, advancing softc+0x3064 modulo 256. Called three times by the interrupt handler dc5a1d30.
+
+Source dump: others/rea/dumps/kmem_dump_1252.bin
+  sha256 196e093182e74a6cec5d072c88673af35c3584ebf66f2c092a05a8242769d7a1
+  virtual base 0xffffffffdc350000
+Analyzed slice: VA 0xffffffffdc590000-0xffffffffdc5c0000 (196608 bytes)
+  sha256 99301a318f580f3993b93d504e2b3e80f6f6d76059bab3b808d68b84f27da488
+Tool: REA (rea-agents 6.5.0), provider Ghidra 12.1.2, raw-binary x86_64
+Operation: procedure_pseudo_code   Evidence ID: ev_9eaf9642940d74dbe846cb1ed85518b893aae5b44cd4612ed67413caab318a93
+This is decompiler output (pseudocode), not source. Names FUN_/func_ are Ghidra's.
+-----------------------------------------------------------------------------
+/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+
+void FUN_ffffffffdc5a2a50(long param_1)
+
+{
+  long lVar1;
+  code *pcVar2;
+  int iVar3;
+  long lVar4;
+  long lVar5;
+  long *plVar6;
+  uint uVar7;
+  ulong uVar8;
+  long local_838 [256];
+  long local_38;
+  
+  local_38 = _DAT_ffffffffdeaacea0;
+  lVar1 = **(long **)(param_1 + 0x30a0);
+  if (*(long *)(param_1 + 0x30) != 0) {
+    func_0xffffffffdc3cae20(*(undefined8 *)(param_1 + 0x10),*(long *)(param_1 + 0x30),10);
+  }
+  if (*(long *)(param_1 + 0x32b8) != 0) {
+    func_0xffffffffdc3cae20(*(undefined8 *)(param_1 + 0x20),*(long *)(param_1 + 0x32b8),10);
+  }
+  iVar3 = *(int *)(param_1 + 0x3064);
+  uVar7 = 0;
+  do {
+    if (**(uint **)(param_1 + 0x1868 + (long)iVar3 * 0x18) < 0x80000001) goto LAB_ffffffffdc5a2b23;
+    lVar4 = FUN_ffffffffdc5a2dd0(param_1,param_1 + 0x1858 + (long)iVar3 * 0x18);
+    if (lVar4 != 0) {
+      lVar5 = (long)(int)uVar7;
+      uVar7 = uVar7 + 1;
+      local_838[lVar5] = lVar4;
+    }
+    iVar3 = *(int *)(param_1 + 0x3064) + 1;
+    if (0xff < iVar3) {
+      iVar3 = 0;
+    }
+    *(int *)(param_1 + 0x3064) = iVar3;
+  } while (uVar7 != 0x100);
+  uVar7 = 0x100;
+LAB_ffffffffdc5a2b23:
+  if (*(long *)(param_1 + 0x30) != 0) {
+    func_0xffffffffdc3cae20(*(undefined8 *)(param_1 + 0x10),*(long *)(param_1 + 0x30),5);
+  }
+  if (uVar7 != 0) {
+    func_0xffffffffdc6c85b0(param_1 + 0x30b0,0,0xffffffffdcb0dc47,0x465);
+    if (0 < (int)uVar7) {
+      uVar8 = (ulong)uVar7;
+      plVar6 = local_838;
+      do {
+        *(long *)(lVar1 + 0xd8) = *(long *)(lVar1 + 0xd8) + 1;
+        (**(code **)(lVar1 + 0x170))(lVar1,*plVar6);
+        plVar6 = plVar6 + 1;
+        uVar8 = uVar8 - 1;
+      } while (uVar8 != 0);
+    }
+    func_0xffffffffdc6c8300(param_1 + 0x30b0,0,0xffffffffdcb0dc47,0x46a);
+  }
+  if (_DAT_ffffffffdeaacea0 == local_38) {
+    return;
+  }
+  func_0xffffffffdca17ba0();
+                    /* WARNING: Does not return */
+  pcVar2 = (code *)invalidInstructionException();
+  (*pcVar2)();
+}
+

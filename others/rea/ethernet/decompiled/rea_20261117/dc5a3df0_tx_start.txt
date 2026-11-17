@@ -1,0 +1,164 @@
+Orbis 12.52 kernel, GBE driver function 0xffffffffdc5a3df0 (tx_start)
+Role (our reading, 2026-11-17): Transmit start: drains the send queue calling the descriptor builder dc5a5ae0 for each frame; if at least one frame was submitted, BAR0+0x34 |= 4 once (the TX doorbell).
+
+Source dump: others/rea/dumps/kmem_dump_1252.bin
+  sha256 196e093182e74a6cec5d072c88673af35c3584ebf66f2c092a05a8242769d7a1
+  virtual base 0xffffffffdc350000
+Analyzed slice: VA 0xffffffffdc590000-0xffffffffdc5c0000 (196608 bytes)
+  sha256 99301a318f580f3993b93d504e2b3e80f6f6d76059bab3b808d68b84f27da488
+Tool: REA (rea-agents 6.5.0), provider Ghidra 12.1.2, raw-binary x86_64
+Operation: procedure_pseudo_code   Evidence ID: ev_5bdb273ac705e378f2043a9281239dcfef4216134a7fe3b24cf41951b4cc4ed5
+This is decompiler output (pseudocode), not source. Names FUN_/func_ are Ghidra's.
+-----------------------------------------------------------------------------
+/* WARNING: Control flow encountered bad instruction data */
+/* WARNING: Possible PIC construction at 0xffffffffdc5a4052: Changing call to branch */
+/* WARNING: Removing unreachable block (ram,0xffffffffdc5a4057) */
+/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+
+void FUN_ffffffffdc5a3df0(long *param_1)
+
+{
+  long *plVar1;
+  long *plVar2;
+  long lVar3;
+  long lVar4;
+  long lVar5;
+  code *pcVar6;
+  int iVar7;
+  int iVar8;
+  uint uVar9;
+  long lVar10;
+  long *plVar11;
+  uint *puVar12;
+  long local_40;
+  long local_38;
+  
+  local_38 = _DAT_ffffffffdeaacea0;
+  lVar10 = *param_1;
+  iVar8 = 0;
+  func_0xffffffffdc6c8300(*(long *)(lVar10 + 0x10) + 0x30b0,0,0xffffffffdcb0dc47,0xffd);
+  plVar1 = param_1 + 0x3a;
+  plVar2 = param_1 + 0x42;
+  lVar3 = *(long *)(*param_1 + 0x10);
+  while( true ) {
+    if (((int)param_1[0x44] == 0) && ((int)param_1[0x3c] == 0)) goto LAB_ffffffffdc5a40d9;
+    lVar4 = *plVar2;
+    local_40 = lVar4;
+    if (lVar4 == 0) {
+      func_0xffffffffdc6c8300(param_1 + 0x3e,0,0xffffffffdcb0dc47,0xfe8);
+      if (param_1[0x4d] == 0) {
+        if ((*(byte *)((long)param_1 + 0x22c) & 2) == 0) {
+          local_40 = *plVar1;
+          if (local_40 != 0) {
+            lVar10 = *(long *)(local_40 + 8);
+            *plVar1 = lVar10;
+            if (lVar10 == 0) {
+              param_1[0x3b] = 0;
+            }
+            *(undefined8 *)(local_40 + 8) = 0;
+            *(int *)(param_1 + 0x3c) = (int)param_1[0x3c] + -1;
+          }
+        }
+        else {
+          local_40 = (*(code *)param_1[0x49])(plVar1,1);
+        }
+      }
+      else {
+        local_40 = (*_DAT_ffffffffde51e428)(plVar1,1);
+      }
+      iVar8 = (int)param_1[0x44];
+      goto LAB_ffffffffdc5a3f90;
+    }
+    lVar5 = *(long *)(lVar4 + 8);
+    *plVar2 = lVar5;
+    if (lVar5 == 0) {
+      param_1[0x43] = 0;
+    }
+    *(undefined8 *)(lVar4 + 8) = 0;
+    *(int *)(param_1 + 0x44) = (int)param_1[0x44] + -1;
+    iVar7 = FUN_ffffffffdc5a5ae0(lVar3,&local_40);
+    if (iVar7 != 0) break;
+    lVar5 = param_1[0xd];
+    iVar8 = iVar8 + 1;
+    if (*(long *)(lVar5 + 0x10) != 0) {
+      if ((*(byte *)(lVar4 + 0x1e) & 1) == 0) {
+        func_0xffffffffdc642140(lVar5,lVar4);
+      }
+      else {
+        func_0xffffffffdc772330(lVar5,lVar4,0,0);
+      }
+    }
+  }
+  *(long *)(lVar4 + 8) = param_1[0x42];
+  if (param_1[0x43] == 0) {
+    param_1[0x43] = lVar4;
+  }
+  param_1[0x42] = lVar4;
+  *(int *)(param_1 + 0x44) = (int)param_1[0x44] + 1;
+  *(byte *)((long)param_1 + 0x1c9) = *(byte *)((long)param_1 + 0x1c9) | 4;
+LAB_ffffffffdc5a40d9:
+  if (0 < iVar8) {
+    puVar12 = (uint *)(*(long *)(*(long *)(lVar3 + 0x3068) + 0x10) + 0x34);
+    if (*(long *)(*(long *)(lVar3 + 0x3068) + 8) == 0) {
+      uVar9 = in((short)puVar12);
+      uVar9 = uVar9 | 4;
+      puVar12 = (uint *)(*(long *)(*(long *)(lVar3 + 0x3068) + 0x10) + 0x34);
+      if (*(long *)(*(long *)(lVar3 + 0x3068) + 8) == 0) {
+        out((short)puVar12,uVar9);
+        goto LAB_ffffffffdc5a411c;
+      }
+    }
+    else {
+      uVar9 = *puVar12 | 4;
+    }
+    *puVar12 = uVar9;
+  }
+LAB_ffffffffdc5a411c:
+  if (_DAT_ffffffffdeaacea0 == local_38) {
+                    /* WARNING: Bad instruction - Truncating control flow here */
+    halt_baddata();
+  }
+  func_0xffffffffdca17ba0(*(long *)(lVar10 + 0x10) + 0x30b0);
+                    /* WARNING: Does not return */
+  pcVar6 = (code *)invalidInstructionException();
+  (*pcVar6)();
+LAB_ffffffffdc5a3f90:
+  if (*(int *)((long)param_1 + 0x224) <= iVar8) {
+    halt_baddata();
+  }
+  if (param_1[0x4d] == 0) {
+    if ((*(byte *)((long)param_1 + 0x22c) & 2) != 0) {
+      lVar10 = (*(code *)param_1[0x49])(plVar1,1);
+      goto joined_r0xffffffffdc5a3f84;
+    }
+    lVar10 = *plVar1;
+    if (lVar10 == 0) {
+      halt_baddata();
+    }
+    lVar3 = *(long *)(lVar10 + 8);
+    *plVar1 = lVar3;
+    if (lVar3 == 0) {
+      param_1[0x3b] = 0;
+    }
+    *(undefined8 *)(lVar10 + 8) = 0;
+    *(int *)(param_1 + 0x3c) = (int)param_1[0x3c] + -1;
+  }
+  else {
+    lVar10 = (*_DAT_ffffffffde51e428)(plVar1,1);
+joined_r0xffffffffdc5a3f84:
+    if (lVar10 == 0) {
+      halt_baddata();
+    }
+  }
+  *(undefined8 *)(lVar10 + 8) = 0;
+  plVar11 = (long *)(param_1[0x43] + 8);
+  if (param_1[0x43] == 0) {
+    plVar11 = plVar2;
+  }
+  *plVar11 = lVar10;
+  param_1[0x43] = lVar10;
+  iVar8 = (int)param_1[0x44] + 1;
+  *(int *)(param_1 + 0x44) = iVar8;
+  goto LAB_ffffffffdc5a3f90;
+}
+

@@ -1,6 +1,6 @@
 # Plan: Baikal Gigabit Ethernet (`mts`, `eth0`), reopened on 2026-11-17
 
-**Status (2026-11-17): rewritten. The old conclusion ("the PHY is powered by Sony firmware before the kernel; not fixable from Linux; investigation closed") is withdrawn. The static check against our own firmware dump is done (section 2.2), our own boot log of 2026-11-12 was re-read with what we know now (section 2.3), and the defects of our driver are listed (section 2.4). Nothing in this plan has been run on the console yet.**
+**Status (2026-11-17): front reopened by the user (E1, decision log). The old conclusion ("the PHY is powered by Sony firmware before the kernel; not fixable from Linux; investigation closed") is withdrawn. Phase S (static) is complete: the firmware checks are in section 2.2 (F1-F19), our own boot log of 2026-11-12 was re-read (section 2.3), and the defects of our driver are in section 2.4. Phase 0 host work is done except P0-3: the read-only diagnostic module `others/tools/mts_peek/` compiles, the helper scripts are fixed. Nothing has been run on the console: the user is running the internal-rootfs plan on it, so the console stays untouched until the user says it is free.**
 
 This file replaces `PLANO_ETH0_BAIKAL.md` (same file, renamed; the old text is in git history) and supersedes the "closed" verdict of `kernel/drivers_mts/PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md`. The driver's own reference stays `kernel/drivers_mts/README.md`.
 
@@ -51,7 +51,7 @@ Caveats: Gcsman's console is a Slim and linux-psx does not name the model; **our
 
 ### 2.2 Verified in our own firmware dump (Orbis 12.52) [V]
 
-Dump `others/rea/dumps/kmem_dump_1252.bin`, virtual base `0xffffffffdc350000` (`kernel/drivers_mts/RE_KERNEL_GBE_ATTACH.md`). Pseudocode with REA 6.5.0 (Ghidra 12.1.2) on the slice `0xffffffffdc590000-0xffffffffdc5c0000` (REA timed out on the whole 32 MiB dump); byte searches and disassembly with `objdump -b binary -m i386:x86-64`. The REA pseudocode of F1, F2 and F6-F11, with evidence IDs and how to reproduce it, is in `others/rea/ethernet/decompiled/rea_20261117/`. F3 and F4 were checked with `objdump` (older decompilations: `others/rea/ethernet/decompiled/decompiled_dc5a2840.txt` and `decompiled_dc5a2950.txt`); F5 and F12 come from byte searches and `objdump`.
+Dump `others/rea/dumps/kmem_dump_1252.bin`, virtual base `0xffffffffdc350000` (`kernel/drivers_mts/RE_KERNEL_GBE_ATTACH.md`). Pseudocode with REA 6.5.0 (Ghidra 12.1.2) on the slice `0xffffffffdc590000-0xffffffffdc5c0000` (REA timed out on the whole 32 MiB dump); byte searches and disassembly with `objdump -b binary -m i386:x86-64`. The REA pseudocode of every function named in the table below, with evidence IDs and how to reproduce it, is in `others/rea/ethernet/decompiled/rea_20261117/`. F5, F12, F18 and F19 also rest on byte searches, call-site searches over the whole dump and `objdump`, as stated in their rows.
 
 | # | Fact | Function |
 |---|---|---|
@@ -67,6 +67,13 @@ Dump `others/rea/dumps/kmem_dump_1252.bin`, virtual base `0xffffffffdc350000` (`
 | F10 | TX completion: walks while word0 **bit 31 is set** (back from the hardware); stops at an idle descriptor (word2 `>= 0xffff0000`); frees the buffer; marks word2 idle again; 256 slots | `dc5a2ce0` (`dc5a2d00`, catalogued before, is inside it) |
 | F11 | `gbe_phy_ctrl` thread: on its periodic event it reads `0x00a2.1e` twice with F2; if bit 15 is set it **polls Clause 22 register 1 (BMSR) bit 2 (link status)** every 100 ms, 201 times; on timeout (at most 3 times) it toggles bit 9 of register 9 (1000BASE-T full-duplex advertisement) and does `BMCR \|= 0x1200` (enable and restart autonegotiation). On a link event with `BAR0+0x04` bit 0 clear it sets register 9 bit 9 and register 4 bits 8:7 if missing, then `BMCR \|= 0x1200`. There is no ICC or power call | `dc5a44c0` |
 | F12 | The `+0x1c8` accesses of F6-F9 go through `*(*(softc+0x30a0))`, never through the bus-space handle at `softc+0x3068` that every BAR0 access uses, and only test `0x40` or clear `0x440`. In the whole slice, the 13 instructions with a `0x1c8` displacement test `0x40`, clear `0x440`/`0x40`, set `0x40` (F9) or read the field; none uses the BAR0 handle. Two of the reads (`dc5aa32a`, `dc5ab250`, generic network code) OR the field with `+0x80` next to a 16-bit read of `+0x70`: the shape of FreeBSD's `if_flags \| if_drv_flags` beside `if_index`. [I] It is the FreeBSD `ifnet` driver-flags field (`IFF_DRV_RUNNING = 0x40`, `IFF_DRV_OACTIVE = 0x400`), not a register | REA (F6-F9) and `objdump` over the slice |
+| F13 | TX start: for each queued frame the driver calls the descriptor builder (F14); if at least one frame was submitted it does **`BAR0+0x34 \|= 4`** once (read-modify-write). That is the TX doorbell. The RMU frame sender `dc5a58d0` does the same after each frame | `dc5a3df0`, `dc5a58d0` |
+| F14 | TX descriptor builder: word0 starts at `0x80000000`, then `\| len`, `\| 0x20000000` on the first descriptor of a frame, `\| 0x10000000` on the last, `\| 0x40000000` on index 255 (WRAP); word1 = 32-bit DMA address of a copy of the frame in a contiguous bounce ring (128-byte aligned slots); word2 = 0 (no VLAN) or `vlan \| 0x81000000` with word0 `\| 0x4000000`; word3 = offload parameters (0 without offload). **Bit 31 of the first descriptor is cleared last**, after every other word is in place: that hands the frame to the hardware. It needs at least 64 free slots and runs the reclaim (F10) when fewer than 128 are free | `dc5a5ae0` |
+| F15 | RX, per received frame: length = `word0 & 0x7ff`; the frame is copied out of `rxbuf + index * 0x600` and the descriptor is re-armed: word0 = `0x80000600` (`\| 0x40000000` on index 255), word1 = DMA address of that buffer, then **bit 31 is cleared** (hardware owns it; buffer size `0x600`) | `dc5a2dd0` |
+| F16 | RX loop: a descriptor holds a frame iff **`word0 > 0x80000000` (unsigned)**: bit 31 set and something in the low bits. An idle descriptor is exactly `0x80000000`. Up to 256 per call, RX index modulo 256. The caller is the interrupt handler `dc5a1d30` (3 call sites), which also calls the TX reclaim | `dc5a2a50` |
+| F17 | The operating interrupt mask is **`0x1018`**: `movl $0x1018, softc+0x3098` at attach, written to `0x54` by `mac_enable` (F9). A set bit masks, so bits 3, 4 and 12 are masked and the other sources are on | `dc5a0070` (`dc5a0697`) |
+| F18 | **No GBE hold/pulse at attach.** The only code that writes the glue hold/pulse pairs is the block-reset routine `dc6df850` (entered by a jump from `dc6d7284`, guarded by a check of `dc526e40() == 0x30000`). Per block: `dc6dfb60(mask)`, `dc718710(hold, 1)`, `dc718710(pulse, 1)`, then a read-modify-write that clears bit 0 of `[mask + 0x20]`. For the GBE block it first calls `dc59fe10` (F6: stop + residue write), then `dc6dfb60(0x2000)`, `dc718710(0x20, 1)`, `dc718710(0x74, 1)`. `dc59fe10` has one caller (`dc6df9ce`). No function in `dc5a0000-dc5a6xxx` calls `dc718710` or `dc6dfb60` | `dc6df850` (`objdump` of `dc6df9a0-dc6dfa10`); call sites by search of the whole dump |
+| F19 | `BAR0+0x1c8` **is** a real register in the calibration routine (read-modify-written together with `0x1bc`, `0x1c0`, `0x1c4`, `0x1d0`, `0x1d4` through the BAR0 handle); it is not the `ifnet` flags field of F12 | older decompilation `others/rea/ethernet/decompiled/decompiled_dc5a0ba0_gbe_phy_calib.txt`, lines 353-511 |
 
 Consequences [I]: the residue write is in our firmware, on every stop path, and no init path clears it (bounded by the immediate search of F5). Descriptor ownership: **bit 31 set = the driver owns it (idle or finished), bit 31 clear = the hardware owns it**. IMR: **1 = masked** (the stop paths mask everything with `0x7ffffa`).
 
@@ -115,14 +122,14 @@ Older tests, re-read (`test_history`; notes added on 2026-11-17):
 | D3 | No clearing of `0x0147.1e` bit 4 | F5, F6, F8; [P] 2.1 | The link stays down and TX is inhibited, per both other projects |
 | D4 | The link wait reads Clause 45 devad 1 register 0 and tests bit 2 (`mts.c:1238`; the comment at `mts.c:1218-1229` misreads the decompilation) | Clause 22 BMSR (register 1) bit 2 (F11) | It could never see link |
 | D5 | Writes BMCR = `0x1200` (`mts.c:1211`) | `BMCR \|= 0x1200` (F11; [P] §7.1 step 20) | Clears the other BMCR bits (the PHY's `0x1040` loses bit 6, speed MSB) |
-| D6 | Asserts the GBE block hold/pulse (glue `0x180020`/`0x180074`, `mts.c` ~732 and ~1169) after enabling the MAC, and never reprograms or re-enables it | [P] §7.1 cold init has no block reset; [V] 2.3 items 6 and 10. Our firmware's attach not checked yet (S3) | Erases what Orbis configured and leaves the MAC disabled. [I] It may also explain the "MAC enable is one-shot per power cycle" rule of `AGENTS.md` |
+| D6 | Asserts the GBE block hold/pulse (glue `0x180020`/`0x180074`, `mts.c` ~732 and ~1169) after enabling the MAC, and never reprograms or re-enables it | The GBE driver's attach has no hold/pulse (F18): only the all-blocks reset routine does it, after the stop; [P] the cold init has none either; [V] 2.3 items 6 and 10 | Erases what Orbis configured and leaves the MAC disabled. [I] It may also explain the "MAC enable is one-shot per power cycle" rule of `AGENTS.md` |
 | D7 | The "is the PHY alive" probe reads MMD 1 and MMD 3 (`mts.c:385-`) | The firmware reads Clause 22 and MMD 30/31 (F11; [P] register list) | Zeros there say nothing about the PHY |
-| D8 | RX ring armed with bit 31 **set** (`mts.c:518`) and re-armed the same way (`mts.c:1672`); the comment at `mts.c:497` states the right convention and the code contradicts it | RX handed to the hardware with bit 31 **clear** (F9) | The hardware never owns an RX descriptor: exactly "RX never completes" |
-| D9 | `mts_tx_reclaim()` treats bit 31 **clear** as finished (`mts.c:1554`), and `mts_start_xmit()` calls it right after submitting (`mts.c:1782`) | Finished = bit 31 **set** (F10) | A just-submitted buffer is unmapped and freed while the hardware may read it (DMA use-after-free risk), and its descriptor is taken back |
+| D8 | RX ring armed with bit 31 **set** (`mts.c:518`) and re-armed the same way (`mts.c:1672`); the comment at `mts.c:497` states the right convention and the code contradicts it | RX handed to the hardware with bit 31 **clear**, size `0x600` (F9, F15); a received frame is `word0 > 0x80000000` (F16) | The hardware never owns an RX descriptor: exactly "RX never completes" |
+| D9 | `mts_tx_reclaim()` treats bit 31 **clear** as finished (`mts.c:1554`), and `mts_start_xmit()` calls it right after submitting (`mts.c:1782`) | Finished = bit 31 **set** and word2 no longer the idle pattern `0xffff0000` (F10). On submit the firmware writes word2 = 0 and clears bit 31 last (F14); we write word2 = `0xffff0000` on submit (`mts.c:1766`) | A just-submitted buffer is unmapped and freed while the hardware may read it (DMA use-after-free risk), and its descriptor is taken back |
 | D10 | `irq_mask` documented as "0 = all masked" (`mts.c:107-109`); tests used `0x7d` as "unmasked" | 1 = masked (F6, F7; [P]) | The default `0` unmasks everything; the interrupt tests #50 and #72 are invalid |
-| D11 | Rings the TX "doorbell" by writing the next descriptor address to `0x3c` (`mts.c:1779`) | [P] `0x3c` is the current pointer; the doorbell is `0x34` bit 2. Our firmware's transmit routine not read yet (S1) | [U] |
+| D11 | Rings the TX "doorbell" by writing the next descriptor address to `0x3c` (`mts.c:1779`) | The doorbell is `0x34 \|= 4`, once per batch (F13). `0x3c` is the TX current pointer: the firmware only programs it with the ring base (F9) | We overwrite the pointer the TX engine advances itself, instead of ringing the bell |
 | D12 | TX uses all 256 descriptors | [P] hang after 255 packets | Only matters once TX works |
-| D13 | The stop routine does `BAR0+0x1c8 &= ~0x440` (`mts.c:1337`) | In the firmware `0x1c8` is a software field (F12) | A write to a BAR0 register the firmware's stop never touches. (The calibration-table loop also writes `0x1bc`-`0x1d4`, `0x1c8` included; it is attributed to `dc5a0ba0` and was not re-checked here: S5) |
+| D13 | The stop routine does `BAR0+0x1c8 &= ~0x440` (`mts.c:1337`) | In the firmware's stop, `+0x1c8` is the `ifnet` flags field (F12). `BAR0+0x1c8` is a different thing, a real calibration register (F19) | We clear bits 6 and 10 of a calibration register that the firmware's stop never touches; effect unknown |
 | D14 | Stale material: `kernel/drivers_mts/README.md:227` documents the old Clause 22 encoding (`phy<<9 \| reg<<5 \| op`) although the code uses F3/F4 since 2026-07-29; `others/scripts/build_mts_module.sh` and `deploy_mts.sh` still point to `drivers_mts/` at the repository root; `distro/01-build-image-7.0.sh:329` says auto-load is disabled, but the initramfs still has `MODULES="mts"`, `mts.ko` and `options mts stage=4`, and its `init` runs `modprobe -qab $MODULES` (checked in `initramfs-7.0-20261117-dp-diag2`); `mts.ko` also has a `MODULE_DEVICE_TABLE` for `104d:90d8`, so udev can load it from the rootfs too; `mts` was in the module list of the 2026-11-15 validation (`BACKLOG.md`) | - | The stage-4 driver, with D1-D13, still runs on every boot [I]. Its boot-time cost today is not measured [U] |
 
 ### 2.5 Rules in `AGENTS.md` ("REGRAS CRÍTICAS DO DRIVER mts.ko") that conflict with this evidence
@@ -149,6 +156,11 @@ Keep obeying them until a dedicated experiment shows otherwise. Several were inf
 | The residue bit is set when Linux starts | **Likely**, not measured | F5, F6, F8 + 2.3 [I]; Phase A |
 | The PHY answers on Clause 22 | **Likely**, one sample | 2.3 item 8 [I]; Phase A |
 | "PHY powered off by pre-kernel firmware" | **Not supported** by any evidence we have | 1, 2.3 |
+| The TX doorbell is `BAR0+0x34 \|= 4`, not a write to `0x3c` | **Established** (firmware) | F13 |
+| A descriptor belongs to the hardware when bit 31 is clear, for TX and RX; the driver clears it last | **Established** (firmware) | F9, F14, F15 |
+| A received frame is `word0 > 0x80000000`; its length is `word0 & 0x7ff` | **Established** (firmware's own test) | F15, F16 |
+| The operating IMR is `0x1018`, and a set bit masks | **Established** (firmware) | F17 |
+| Orbis's GBE attach does not reset the block; only the all-blocks reset routine does, after the stop | **Established** (call-site search of the whole dump) | F18 |
 | Our driver can bring up the link as it is | **No**: D1-D7 block the link; D8-D11 block the data path | 2.4 |
 
 ## 4. Hypotheses, ranked, and the measurement that decides each
@@ -176,30 +188,30 @@ Keep obeying them until a dedicated experiment shows otherwise. Several were inf
 |---|---|---|
 | E1 | Reopen the Ethernet front (it was "out of scope by user decision") | Yes: the evidence changed |
 | E2 | Cable: PS4 straight to the host NIC `enp60s0` (`192.168.0.1`), or to the router | Straight to the host for Phases A-C |
-| E3 | Keep the stage-4 `mts` from loading on every boot (D14): `modprobe.blacklist=mts` in the bootargs now, and later remove `mts` from `MODULES` in `distro/01-build-image-7.0.sh` | Yes; it also removes the driver's boot delay [I] |
+| E3 | Keep the stage-4 `mts` from loading on every boot (D14): `module_blacklist=mts` in the bootargs now (a kernel parameter: `load_module()` in `kernel/module/main.c` returns `-EPERM` for a blacklisted name whoever asks, `modprobe` by name, udev alias or `insmod`; checked in the 7.0.8 tree), and later remove `mts` from `MODULES` in `distro/01-build-image-7.0.sh` | Yes; it also removes the driver's boot delay [I] |
 | E4 | Driver strategy after Phase B: fix our `mts.c` (D1-D13), **or** adopt a spec-based driver (linux-psx `psx_mts_net`, closest to our 7.0.8 kernel; or Gcsman `ps4_gbe.c` for 5.4, which needs porting). Both GPL-2.0-only, compatible with our tree; keep authorship and credit | Decide after Phase B, with numbers |
 
 ## 7. Phases
 
-### Phase S - static, no hardware (REA + objdump), partly done
-Done: F1-F12. To do, in the same slice (extend it if a function falls outside):
-- S1. The transmit routine: how the firmware tells the hardware about new descriptors (doorbell bit 2 of `0x34`, a write to `0x3c`, or both) (D11).
-- S2. Where `softc+0x3098` (the IMR value `mac_enable` writes) is set, and its value ([P] `0x1018`).
-- S3. The attach / cold-init path (`dc5a41d0`, `dc5a0ba0` and their callers) compared with Gcsman §7.1; in particular whether Orbis ever asserts the GBE block hold/pulse at attach (D6), `0x200 = 0`, `0x7c`, the BMCR restart.
-- S4. The RX completion routine: confirm that the hardware sets bit 31 when it fills a descriptor, and where the length is.
-- S5. Re-read `dc5a0ba0` (the 66-iteration calibration-table loop on `0x1bc`-`0x1d4`): does the firmware really write BAR0 `0x1c8` there, or did our port copy an `ifnet` offset (D13)?
-- S6. Record each function in `decompiled_functions` (done for F1-F12 on 2026-11-17).
-Acceptance: each item answered with an address and an evidence ID, or explicitly marked unresolved.
+### Phase S - static, no hardware (REA + objdump): done on 2026-11-17
+Results are in section 2.2 (F1-F19). Item by item:
+- S1. Done. The doorbell is `0x34 |= 4`, once per batch of submitted frames (F13); the TX descriptor format is F14 (D11).
+- S2. Done. The operating IMR is `0x1018`, set at attach (F17).
+- S3. Partly done. Answered: Orbis's GBE attach does not assert hold/pulse (F18, D6) and sets the operating IMR (F17). Not done: a step-by-step comparison of `dc5a0ba0` and `dc5a41d0` with Gcsman §7.1. That comparison is only needed if Phase A shows that the baseline is *not* inherited; Phase C keeps the inherited baseline and runs no cold init.
+- S4. Done. A received frame is `word0 > 0x80000000` with the length in `word0 & 0x7ff` (F15, F16). That the hardware is what sets bit 31 and writes the length is [I], from those tests.
+- S5. Done. `BAR0+0x1c8` is a real calibration register in `dc5a0ba0` (F19); the stop's `+0x1c8` is the `ifnet` flags field (F12, D13).
+- S6. Done for F1-F4, F6-F11 and F13-F16 (`decompiled_functions`). The interrupt handler `dc5a1d30` is catalogued as pending: it was not decompiled and is only needed for IRQ mode.
 
 ### Phase 0 - preparation (host)
-- P0-1. Fix D14's helper scripts (`build_mts_module.sh`, `deploy_mts.sh` -> `kernel/drivers_mts/`). Do not use `deploy_mts.sh push` after a MAC enable (it does `rmmod` + `insmod`, against prohibition 3).
-- P0-2. Write the read-only diagnostic module `others/tools/mts_peek/` (out of tree, English comments): a minimal PCI driver for `104d:90d8` **without** `MODULE_DEVICE_TABLE` (nothing autoloads it). On probe: `pci_enable_device_mem`, map BAR0; never `pci_set_master`, no IRQ, no DMA, no glue access. It logs:
+- P0-1. **Done 2026-11-17.** `build_mts_module.sh` and `deploy_mts.sh` now point to `kernel/drivers_mts/`. `deploy_mts.sh push` refuses when `mts` is already loaded on the console unless `MTS_ALLOW_RMMOD=1` (prohibition 3). Syntax-checked only: running `build_mts_module.sh` would produce `kernel/drivers_mts/build/mts.ko`, which `distro/01-build-image-7.0.sh` copies into the next image when it exists, and nobody asked for that.
+- P0-2. **Done 2026-11-17, compiled with `W=1` without warnings, never run.** The read-only diagnostic module `others/tools/mts_peek/` (out of tree, English comments; its README has the gates, the build and the usage). It registers no PCI driver: it finds `104d:90d8` with `pci_get_device`, refuses if another driver is bound, calls `pci_enable_device_mem`, maps BAR0, and has no `MODULE_DEVICE_TABLE` (nothing autoloads it). Never `pci_set_master`, no IRQ, no DMA, no glue access. It logs:
   - BAR0 dwords `0x00 0x04 0x08 0x0c 0x10 0x14 0x18 0x30 0x34 0x38 0x3c 0x40 0x44 0x48 0x50 0x54 0x5c 0x74 0x7c 0xac` (never the counters);
-  - Clause 22 registers 0, 1 (read twice: the link bit latches low), 2, 3, 4, 9 with F3;
+  - Clause 22 registers 0, 1 (read twice: the link bit latches low), 2, 3, 4, 5, 9 with F3;
   - Clause 45 `0x0147.1e`, `0x00a2.1e`, `0x0033.1e`, `0x0037.1e`, `0x0039.1e`, `0x0096.1e`, `0x0107.1f`, `0x0171.1e` with F2;
-  - parameter `clear_residue` (default 0): when 1, one read-modify-write that clears bit 4 of `0x0147.1e` with F1 (opcode `0x60`), then BMSR (twice) and `0x04` again at 10, 50, 100, 500 and 1000 ms.
-  The only register it writes is the MDIO command register `BAR0+0x00`, exactly as the firmware's read routines do (plus the one PHY write when `clear_residue=1`). Compile it isolated against `kernel/kernel_build_7.0`; review the source with the user before the first load.
-- P0-3. A tag whose `bootargs` add `modprobe.blacklist=mts` (E3). [I] Standard kmod behavior is that `modprobe -b` (the initramfs `init`) and udev both honor it; the Phase A preconditions check that it worked. Deploy with `distro/deploy-boot-ftp-7.0.sh <TAG>` (the console boots its kernel from the internal disk). Do not use `mts.stage=0` for this: `/etc/modprobe.d/mts.conf` also sets `stage=4` and which one wins was not checked.
+  - parameter `clear_residue` (default 0): when 1, **four gates** (PHY ID `03a2/9441`, MAC cores stopped, IMR all masked, `0x0147.1e` bit 4 set), then one read-modify-write that clears bit 4 of `0x0147.1e` with F1 (opcode `0x60`), then BMSR (twice) and `0x04` again at 1, 10, 50, 100, 500 and 1000 ms;
+  - parameter `watch_s` (default 0): keeps sampling BMSR and `0x04` and prints only the changes, to catch a cable plugged in later.
+  The only register it writes is the MDIO command register `BAR0+0x00`, exactly as the firmware's read routines do (plus the one PHY write when `clear_residue=1`). Review the source with the user before the first load. The tree and the deployed tag `20261117-dp-diag2` are the same build (`Module.symvers` 08:29:41, `bzImage` 08:29:42), so the module's vermagic `7.0.8-Strawberry-ThinLTO-Baikal-+ SMP preempt mod_unload` should match the running kernel; the kernel has no module versioning or signatures.
+- P0-3. **Pending (needs the user's go and E3).** A tag whose `bootargs` add `module_blacklist=mts` (E3). Deploy with `distro/deploy-boot-ftp-7.0.sh <TAG>` (the console boots its kernel from the internal disk); that touches the console, so it waits for the user. The Phase A preconditions check that it worked. Do not use `mts.stage=0` for this: `/etc/modprobe.d/mts.conf` also sets `stage=4` and which one wins was not checked.
 
 ### Phase A - renewed pre-touch measurements (console, read-only)
 Preconditions: E2 and E3 done; cable plugged to a live link partner; booted with the blacklist tag; `lsmod | grep -w mts` is empty and `dmesg` has no `mts 0000:00:14.1` line.
@@ -214,14 +226,16 @@ Decision table:
 Same boot as Phase A (after the reads) or a fresh one: `insmod mts_peek.ko clear_residue=1`. Expected [P]: `0147.1e 0010 -> 0000`, BMSR `7969 -> 796d` (bit 2 set), `0x04` bit 0 set (Gcsman saw 39 ms), with the cable on a live partner. Record the times. If nothing changes, STOP and report; no other writes.
 
 ### Phase C - data path, polled mode first (console, needs a driver)
-Only after Phase B shows link, and after decision E4. Whichever driver: the residue clear (D3), the verified MDIO encodings (D1, D2), the right link poll and BMCR handling (D4, D5), no block reset (D6), RX handed over with bit 31 clear (D8), TX completion on bit 31 set (D9), IMR with 1 = masked (D10), the doorbell from S1 (D11), 255 TX descriptors (D12), no `0x1c8` write (D13). Start in polled mode (linux-psx polls at 1 ms). Tests on `192.168.0.0/24`: ARP and ping both ways, then hash-checked transfers both ways (`sha256sum` at both ends), counters (`ip -s link`), UART capture during the boot. Acceptance: three cold boots with verified transfers, then a 30-minute transfer, then Orbis networking still healthy afterwards (the user checks).
+Only after Phase B shows link, and after decision E4. Whichever driver: the residue clear (D3), the verified MDIO encodings (D1, D2), the right link poll and BMCR handling (D4, D5), no block reset (D6), RX handed over with bit 31 clear (D8, F15), TX completion on bit 31 set with word2 not idle, and word2 = 0 on submit (D9, F10, F14), IMR with 1 = masked and `0x1018` as the operating value (D10, F17), the doorbell `0x34 |= 4` once per batch (D11, F13), 255 TX descriptors (D12), no `BAR0+0x1c8` write in the stop (D13). Start in polled mode (linux-psx polls at 1 ms), on the inherited baseline: no cold init, no calibration, no hold/pulse.
+
+**Rule for the code.** `mts` loads on every boot today (D14). A change to `kernel/drivers_mts/mts.c` that alters what it writes would reach every boot of the console as soon as a build picks it up. So the corrected behavior goes in behind a module parameter (`fw_bringup`, default 0) and the default stays the legacy path until three cold boots pass; only then the default flips. The pure fixes in the data path (D8, D9, D11) only matter once the MAC is enabled and rings are in use, but the same parameter gates them, so one switch separates "known legacy" from "new". Tests on `192.168.0.0/24`: ARP and ping both ways, then hash-checked transfers both ways (`sha256sum` at both ends), counters (`ip -s link`), UART capture during the boot. Acceptance: three cold boots with verified transfers, then a 30-minute transfer, then Orbis networking still healthy afterwards (the user checks).
 
 ### Phase D - integration and documentation
 Through the official build (patch + `kernel/drivers_mts/` overlay, `--check` + `exit 1`), new tag, deploy, docs (`kernel/drivers_mts/README.md`, the `AGENTS.md` rules revised with evidence, `BACKLOG.md`, `RELEASE_NOTES.md` crediting Gabriel Stewart (Gcsman110) and meerzulee (linux-psx) for the published findings), `test_history`.
 
 ## 8. The experiment loop
 
-- With `modprobe.blacklist=mts`, nothing in Linux touches the GBE; the hardware state is the one Orbis left.
+- With `module_blacklist=mts`, nothing in Linux touches the GBE; the hardware state is the one Orbis left.
 - Diagnostic modules are built on the host, copied with `scp` to `/dev/shm` (RAM) and loaded once per boot. The USB root drive has known I/O errors, so nothing is written to it during experiments.
 - A boot that enabled the MAC (Phase C) is never reused: power off, cold boot into Orbis, payload, next experiment.
 - Boot files are switched over FTP (`distro/deploy-boot-ftp-7.0.sh <TAG>` in Orbis mode); the rootfs stays on the USB drive.
@@ -251,12 +265,17 @@ Through the official build (patch + `kernel/drivers_mts/` overlay, `--check` + `
 | Date | Step | Result |
 |---|---|---|
 | 2026-11-17 | Phase S: F1-F12 in the 12.52 dump (REA + objdump); 2026-11-12 log and tests #50/#61/#62/#70/#72 re-read; D1-D14 | done, static only (`test_history` 123; `decompiled_functions` 94-98 added, 4/7/8/11/13/44 annotated) |
+| 2026-11-17 | E1 answered (reopen) and the console declared off limits (internal-rootfs plan running). Phase S finished: F13-F19, S1-S5 answered; `module_blacklist=` verified in the 7.0.8 tree and replaces the unverified `modprobe.blacklist=` | done, static only (`test_history` 124) |
+| 2026-11-17 | P0-1 helper scripts fixed; P0-2 `others/tools/mts_peek/` written and compiled with `W=1` (no warnings, vermagic matches the tree of tag `20261117-dp-diag2`) | done on the host; never loaded |
+| next | P0-3 (tag with `module_blacklist=mts`) and Phase A, both need the console and the user's go | waiting for the user |
 
 ## 12. Decisions log
 
 | ID | Answer | Date |
 |---|---|---|
-| E1 | | |
+| E1 | **Yes, reopen and start implementing**, with the console untouched meanwhile: "reabra a frente ethernet, inicie a implementação, mas no momento não use o ps4, estou executando o plano rootfs" | 2026-11-17 |
 | E2 | | |
 | E3 | | |
 | E4 | | |
+
+Standing constraint from E1: no SSH, FTP, ping or payload to the console, and no tag deployed, until the user says the internal-rootfs plan is done. Work that needs only the host (static analysis, tools, patches, compile checks) goes on.
