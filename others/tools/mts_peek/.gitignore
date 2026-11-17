@@ -1,0 +1,10 @@
+# kbuild outputs of build.sh
+*.ko
+*.o
+*.mod
+*.mod.c
+.*.cmd
+.module-common.o
+Module.symvers
+modules.order
+.tmp_*

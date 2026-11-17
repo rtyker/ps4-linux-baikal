@@ -1,6 +1,10 @@
 #!/bin/bash
 # Deploy mts.ko to PS4 via SSH
-# Usage: ./kernel/scripts/deploy_mts.sh [push|test]
+# Usage: ./others/scripts/deploy_mts.sh [push|test]
+#
+# push does rmmod + insmod on the console. After a driver instance has enabled the MAC
+# or published DMA rings, unloading it is forbidden (others/docs/PLAN_ETH0_BAIKAL.md,
+# prohibition 3), so push refuses when mts is already loaded unless MTS_ALLOW_RMMOD=1.
 
 set -e
 
@@ -9,7 +13,7 @@ PS4_PORT="22"
 PS4_USER="root"
 PS4_PASS="ps4"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-MTS_KO="$SCRIPT_DIR/../../drivers_mts/build/mts.ko"
+MTS_KO="$SCRIPT_DIR/../../kernel/drivers_mts/build/mts.ko"   # moved from drivers_mts/ on 2026-11-11
 REMOTE_KO="/tmp/mts.ko"
 
 # Check dependencies
@@ -22,6 +26,13 @@ SSH_CMD="sshpass -p $PS4_PASS ssh -o StrictHostKeyChecking=no -o UserKnownHostsF
 SCP_CMD="sshpass -p $PS4_PASS scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 
 push_module() {
+    if [ "${MTS_ALLOW_RMMOD:-0}" != "1" ] && $SSH_CMD "lsmod | grep -q '^mts '"; then
+        echo "ERROR: mts is already loaded on the console; push would rmmod it."
+        echo "       Unloading a driver that enabled the MAC is forbidden (PLAN_ETH0_BAIKAL.md, prohibition 3)."
+        echo "       Reboot instead, or set MTS_ALLOW_RMMOD=1 if you know the MAC was never enabled."
+        exit 1
+    fi
+
     echo "Pushing mts.ko to PS4..."
 
     # Start HTTP server in background

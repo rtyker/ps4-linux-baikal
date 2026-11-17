@@ -7,7 +7,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$SCRIPT_DIR/../.."
 KERNEL_BUILD_DIR="$PROJECT_ROOT/kernel/kernel_build_7.0"
-MTS_SRC_DIR="$PROJECT_ROOT/drivers_mts"
+MTS_SRC_DIR="$PROJECT_ROOT/kernel/drivers_mts"   # moved from drivers_mts/ on 2026-11-11
 MTS_BUILD_DIR="$MTS_SRC_DIR/build"
 
 echo "=== Compilação Isolada do Módulo mts.ko ==="
