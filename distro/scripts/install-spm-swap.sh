@@ -9,7 +9,9 @@
 set -euo pipefail
 
 ROOTFS="${1:-}"
-[ -n "$ROOTFS" ] || { echo "Uso: $0 <ROOTFS_DIR>"; exit 1; }
+ENABLE=1
+[ "${2:-}" = "--no-enable" ] && ENABLE=0
+[ -n "$ROOTFS" ] || { echo "Uso: $0 <ROOTFS_DIR> [--no-enable]"; exit 1; }
 [ -d "$ROOTFS/etc/systemd/system" ] || { echo "ERRO: $ROOTFS nao parece um rootfs systemd (sem etc/systemd/system)"; exit 1; }
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -29,9 +31,16 @@ else
   echo "  OK   /etc/default/baikal-spm-swap criado (PRIORITY=50)"
 fi
 
-mkdir -p "$ROOTFS/etc/systemd/system/multi-user.target.wants"
-ln -sfn ../baikal-spm-swap.service "$ROOTFS/etc/systemd/system/multi-user.target.wants/baikal-spm-swap.service"
-echo "  OK   servico habilitado em multi-user.target"
+WANTS="$ROOTFS/etc/systemd/system/multi-user.target.wants/baikal-spm-swap.service"
+if [ "$ENABLE" = 1 ]; then
+  mkdir -p "$(dirname "$WANTS")"
+  ln -sfn ../baikal-spm-swap.service "$WANTS"
+  echo "  OK   servico habilitado em multi-user.target"
+else
+  # --no-enable: install the unit but do not start it at boot (a module never booted on the console yet).
+  rm -f "$WANTS"
+  echo "  --   servico instalado mas NAO habilitado (--no-enable). Depois de validar no console: systemctl enable --now baikal-spm-swap"
+fi
 
 # The unit needs the module; warn if it is not in the rootfs yet.
 if ls "$ROOTFS"/lib/modules/*/kernel/drivers/block/baikal-spm-blk.ko >/dev/null 2>&1; then
