@@ -260,6 +260,10 @@ Antes de rodar `deploy-boot-7.0.sh <TAG>`:
 3. Confirmar MD5 dos arquivos da tag (script já faz automaticamente origen→destino, mas vale uma checagem prévia).
 4. Em incidente — caiu no rescue shell: NÃO tentar "remediar" comandos ad-hoc pelo shell do initramfs. Desligar, puxar o HD, plugar neste PC, restaurar tag anterior via `deploy-boot-7.0.sh <tag-velha>`, refazer o build corretamente com os scripts oficiais.
 
+### Caminho alternativo de boot: kernel e initramfs pelo disco INTERNO (2026-11-17)
+
+O payload procura `bzImage`, `initramfs.cpio.gz`, `bootargs.txt` e `vram.txt` **um a um**, nesta ordem: `/mnt/usb0`, `/mnt/usb1`, `/data/linux/boot/`, `/user/system/boot/`. Com esses 4 arquivos fora do USB e em `/data/linux/boot/` (enviados por FTP do GoldHEN, porta 2121, no Orbis), o kernel sai do disco interno; o rootfs continua no USB. **Atenção:** `deploy-boot-7.0.sh` recria os 4 arquivos no USB e devolve a prioridade a ele. Procedimento, estado e rollback: `others/docs/BOOT_PELO_DISCO_INTERNO.md` (status: aguardando confirmação do primeiro boot).
+
 ### Referências
 
 - `others/docs/LICOES_APRENDIDAS.md` — lições #7 (label psxitarch), #17/22/23 (boot/stabilidade), #24 (não compilar em NTFS), "REGRA: no HD (sda1) fica APENAS o bzImage ativo", "INCIDENTE: 'testar' um script de deploy destruiu o boot do HD", "Fallback silencioso em ferramenta de debug é armadilha".
