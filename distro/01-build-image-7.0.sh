@@ -313,17 +313,15 @@ cat > "$ROOTFS_DIR/etc/hosts" << 'HOSTSEOF'
 127.0.1.1   ps4-baikal.localdomain ps4-baikal
 HOSTSEOF
 
-# Rede estática (systemd-networkd)
+# eth0 pega IP por DHCP, como um PC comum (systemd-networkd; decisão do usuário, 2026-11-17).
+# O wlan0 continua com o dhcpcd. Antes: 192.168.0.2/24 estático.
 mkdir -p "$ROOTFS_DIR/etc/systemd/network"
 cat > "$ROOTFS_DIR/etc/systemd/network/20-ethernet.network" << 'NETEOF'
 [Match]
 Name=eth0
 
 [Network]
-Address=192.168.0.2/24
-Gateway=192.168.0.1
-DNS=192.168.0.1
-DNS=8.8.8.8
+DHCP=ipv4
 NETEOF
 
 # Driver Ethernet Baikal: `mtsx` é O driver (Fases A-C do PLAN_ETH0_BAIKAL.md).
@@ -574,7 +572,7 @@ ln -sf /usr/lib/systemd/system/wpa_supplicant@.service \
 mkdir -p "$ROOTFS_DIR/etc/systemd/system/multi-user.target.wants"
 ln -sf /usr/lib/systemd/system/dhcpcd.service \
   "$ROOTFS_DIR/etc/systemd/system/multi-user.target.wants/dhcpcd.service"
-# eth0 já é estático via systemd-networkd (20-ethernet.network acima) -
+# eth0 é configurada pelo systemd-networkd (20-ethernet.network acima, DHCP) -
 # dhcpcd só deve gerenciar wlan0, senão os dois disputam a interface eth0
 # Append idempotente: evita linhas duplicadas de denyinterfaces eth0
 # (o modelo antigo fazia echo >> sem checar, gerando duplicatas a cada rebuild).
