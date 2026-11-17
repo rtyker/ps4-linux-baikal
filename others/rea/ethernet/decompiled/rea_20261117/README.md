@@ -1,6 +1,6 @@
 # Orbis 12.52 GBE driver: REA pseudocode of 2026-11-17
 
-Fifteen functions of the Orbis GBE (`mts`) driver, decompiled with REA to re-check the Ethernet plan. The plan that uses them is `others/docs/PLAN_ETH0_BAIKAL.md` (section 2.2). Each file starts with a header naming the function, our reading of its role, the source dump, the analyzed slice and the REA evidence ID.
+Sixteen functions of the Orbis GBE (`mts`) driver, decompiled with REA to re-check the Ethernet plan. The plan that uses them is `others/docs/PLAN_ETH0_BAIKAL.md` (section 2.2). Each file starts with a header naming the function, our reading of its role, the source dump, the analyzed slice and the REA evidence ID.
 
 This is decompiler output, not source code. The names `FUN_*`, `func_*`, `param_*` and `*Var*` are Ghidra's. The role line in each header is our interpretation and can be wrong; the pseudocode under it is what the tool produced.
 
@@ -21,6 +21,7 @@ This is decompiler output, not source code. The names `FUN_*`, `func_*`, `param_
 | `dc5a5ae0_tx_encap.txt` | `0xffffffffdc5a5ae0` | TX descriptor builder: word layout, bit 31 cleared last |
 | `dc5a2dd0_rx_frame_and_rearm.txt` | `0xffffffffdc5a2dd0` | RX per frame: length `word0 & 0x7ff`, copy out, re-arm with bit 31 cleared |
 | `dc5a2a50_rx_loop.txt` | `0xffffffffdc5a2a50` | RX loop: a frame is `word0 > 0x80000000` |
+| `dc5a1d30_interrupt_handler.txt` | `0xffffffffdc5a1d30` | Interrupt handler: status register `0x50` is write-1-to-clear; TX reclaim + TX doorbell, RX loop + RX doorbell `0x38 \|= 4`, fatal bits `0x500000` |
 
 ## How to reproduce
 

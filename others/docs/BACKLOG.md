@@ -266,9 +266,11 @@ Medições reais no PS4 (boot completo, `systemd` `running`, 0 unidades falhadas
 
 > 🔓 **REABERTA em 2026-11-17 por decisão do usuário (E1) — ver `others/docs/PLAN_ETH0_BAIKAL.md`.**
 > **Estado:** fase S (estática) e fase 0 do host concluídas (`test_history` 123 e 124); o módulo de
-> diagnóstico `others/tools/mts_peek/` compila e nunca foi carregado; **o console está proibido até o
-> usuário liberar** (plano do rootfs interno em andamento). **Próximo passo exato:** P0-3 (tag com
-> `module_blacklist=mts`, precisa de E3) e a fase A (leituras com o `mts_peek`), ambos no console.
+> diagnóstico `others/tools/mts_peek/` e o driver da fase C `others/tools/mtsx/` (módulo separado: não
+> mexe no `mts.c` que carrega em todo boot) compilam e passam no teste de host, mas **nunca foram
+> carregados**; **o console está proibido até o usuário liberar** (plano do rootfs interno em
+> andamento). **Próximo passo exato:** P0-3 (tag com `module_blacklist=mts`, precisa de E3), a fase A
+> (leituras com o `mts_peek`), a fase B (limpar o resíduo) e a fase C (`mtsx`), todas no console.
 > Revisão estática
 > (REA no dump 12.52 + releitura do log UART de 2026-11-12, `test_history` 123): o MAC chega ao Linux
 > configurado e parado pelo Orbis, não desligado; todo caminho de stop do Orbis grava `0x0010` em
