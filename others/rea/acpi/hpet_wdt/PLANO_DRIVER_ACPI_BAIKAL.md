@@ -392,4 +392,4 @@ e DuckDuckGo HTML)**
    - nenhum kernel Linux público (5.4, 6.15, 7.0) expõe esse bloco.
 3. **Próximo passo decisivo e de baixo risco**: leitura **pontual** de 8 bytes em
    `BAR2(00:14.4) + 0x109000` (`0xc8909000`), com autorização explícita, conferindo o
-   `vendor ID = 0xA808` do HPET. Sem essa leitura, o driver fica em fase de plano (não se escreve nada).
+   `vendor ID` do HPET (o valor lido ao vivo foi `0x0000`, atípico mas estável; **não usar como validação de presença** — ver §3.2). Sem essa leitura, o driver fica em fase de plano (não se escreve nada).

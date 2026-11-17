@@ -376,9 +376,18 @@ Pendência e plano de correção (NVRAM `/data/nvram/APCFG/APRDEB/WIFI`, país B
 ### [x] ✅ **Passo 1 do plano DP: aplicar `ps4-bridge-dp-init.patch` no build** — CONCLUÍDO 2026-11-16
 O patch **existe** (`kernel/patches/ps4-bridge-dp-init.patch`), **bloco de aplicação adicionado** no `00-build-kernel-7.0.sh` (linhas 511-520). **Aplicado e validado ao vivo** na tag `20261116-keep-mode-aplicado`: init do lado DP da ponte MN864729 ativo, DP link training funcionando. Juntamente com `ps4-bridge-keep-mode.patch` (keep-mode), console puro estável 1h45m+ idle.
 
-### [~] **Módulos do rootfs: BTF resolvido; `baikal_wdt` e `baikal-hpet` ainda faltam**
+### [~] **Módulos do rootfs: BTF resolvido; HPET SUSPENSO pelo usuário em 2026-11-17 (teste do clocksource leu o endereço errado)**
+- **STATUS (revisão 2026-11-17): HPET/WDT PAUSADO por decisão do usuário; `CONFIG_CLKSRC_BAIKAL_HPET` voltou a `--disable` no `00-build-kernel-7.0.sh`.** O item NÃO está concluído (o `[x]` anterior estava errado). Retomar depois, com o cuidado listado no HANDOFF (`others/rea/acpi/hpet_wdt/HANDOFF.md`, seção de revisão).
 - **BTF mismatch: RESOLVIDO** (2026-11-16). O kernel não tem BTF e o `install-modules-7.0.sh` faz o strip. Módulos reinstalados e conferidos por `srcversion`.
-- **[ ] Faltam `baikal_wdt.ko` e `baikal-hpet.ko`:** os patches `baikal-wdt.patch` e `clocksource-baikal-hpet.patch` são aplicados, mas `CONFIG_BAIKAL_WDT`/`CONFIG_BAIKAL_HPET` estão desligados por causa de uma tela preta antiga. **Próximo:** build de teste isolado com cada um como `=m` (nunca `=y`), carregar ao vivo e conferir o boot.
+- **`baikal-hpet.ko` buildado e testado ao vivo (2026-11-17, tag `20261117-hpet-clocksource-test`):**
+  - Driver carrega (probe roda), **mas lê endereço errado** — mapeia BAR2+0 em vez de BAR2+0x109000
+  - CAP lido: `0x0088500000511148` (errado) vs esperado `0x05f5e10000002301`
+  - MAIN_COUNTER **não incrementa** (contador parado)
+  - Clocksource registrado mas **não funcional**
+- **Causa provável (HIPÓTESE, não verificada): ** driver usa `pcim_iomap_table(pdev)[2]` (início da BAR2), mas o próprio cabeçalho do driver diz que o HPET fica em BAR2 + `0x109000`. Falta provar lendo `0x109000` com o driver corrigido; a leitura de `0x0` pode ser registrador da glue, não lixo
+- **Correção trivial:** somar `0x109000` ao base mapeado em `baikal_hpet_probe()`
+- **Próximo:** corrigir driver, rebuild, testar novamente (critério: CAP correto + contador incrementa + 2 boots frios)
+- `baikal_wdt.ko`: continua pendente (testar depois do clocksource validado)
 
 ### [ ] **Baikal Memory sysfs offsets desalinhados**
 Device file `/dev/baikal-memory` expõe MAC em offset `0x52f000` e ICC em `0x52c000`, mas atributos sysfs (`bar5_0x2f000`, `bar5_0x2c000`) não mostram dados. Driver `drivers/ps4/baikal-memory.c` precisa ajustar os offsets dos atributos para bater com o mapeamento real do device file.

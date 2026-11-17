@@ -1057,9 +1057,13 @@ scripts/config --module CONFIG_BAIKAL_SPM_BLK
 # HPET/Clocksource do Baikal (glue 00:14.4, subfunção ICC 22): clocksource
 # baseado no contador principal de 64 bits do HPET. Habilitado como módulo
 # para iteração sem rebuild do kernel.
-# HABILITADO 2026-11-17 (Passo 1 do HANDOFF): testar clocksource SÓ LEITURA isoladamente.
-# WATCHDOG/WATCHDOG_CORE continuam DESLIGADOS (testados separadamente depois).
-scripts/config --module CONFIG_CLKSRC_BAIKAL_HPET
+# DESLIGADO por padrão (2026-11-15): CLKSRC_BAIKAL_HPET faz select de CLKSRC_MMIO=y
+# (embutido), o que altera o layout do bzImage; junto com o core do WATCHDOG
+# coincidiu com 2 boots mortos. Mantém o config idêntico ao do último boot bom
+# até o HPET ser testado isoladamente. O patch continua sendo aplicado.
+# REDESLIGADO 2026-11-17 por decisão do usuário: o teste do clocksource (tag
+# 20261117-hpet-clocksource-test) leu o endereço errado e foi suspenso; ver o HANDOFF do HPET.
+scripts/config --disable CONFIG_CLKSRC_BAIKAL_HPET
 
 # Watchdog do Baikal (Timer 0 do HPET, opcional): requer WATCHDOG_CORE.
 # Habilitado como módulo para iteração sem rebuild do kernel.
