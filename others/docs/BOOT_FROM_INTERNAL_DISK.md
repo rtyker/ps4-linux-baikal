@@ -1,6 +1,6 @@
 # Alternative path: boot the kernel from the PS4's INTERNAL disk
 
-**Status (2026-11-17): prepared, waiting for the first boot to be confirmed.** The files were uploaded and verified by MD5. The boot itself is not confirmed yet (the user saw the boot stop around the `wlan` messages once, with the USB drive as the suspect; a new boot is in progress). This document changes status when `bootsrc=internal` shows up in `/proc/cmdline`.
+**Status (2026-11-17): CONFIRMED.** The boot with tag `20261117-dp-diag2` came from the internal disk: `/proc/cmdline` carries `bootsrc=internal` (which only the internal `bootargs.txt` has), the kernel is the one built for that tag (`#1 ... Nov 17 08:29:07`), and the internal `vram.txt` was honored (it was changed from 4096 to 1024 over FTP, and the next boot showed VRAM 1024 MiB and RAM 6911 MiB). The USB drive had none of the four boot files at that point. Earlier boots with 4096 had read `vram.txt` from the USB drive.
 
 ## Idea
 
