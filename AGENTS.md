@@ -303,7 +303,7 @@ Os dumps brutos/análise textual de varreduras grandes (ex: a janela Glue BAR2) 
   | **Linux 7.0** (pós-`kexec`) | **`192.168.6.128`** | outro (do `wlan0`) |
 
   Consequência: **dois pings resolvem "em que ambiente o console está"** (`ping -c1 192.168.6.130` → Orbis; `ping -c1 192.168.6.128` → Linux). Nunca concluir "PS4 desligado" porque só o `.128` não respondeu. Payload/loader só existem no Orbis (`.130`); SSH só existe no Linux (`.128`).
-- **Rede cabeada (`eth0`, driver `mts.ko`) é a rede sob teste — IP FIXO `192.168.0.2`.** Host do PC no Ethernet: `192.168.0.1` (interface `enp60s0`).
+- **Rede cabeada (`eth0`, driver `mts.ko`) é a rede sob teste — IP FIXO `192.168.0.2`.** Host do PC no Ethernet: `192.168.0.1` (interface `enp60s0`). ⚠️ **2026-11-17:** hoje a `enp60s0` do host é a LAN (`192.168.6.101/24`, rota padrão) e o `192.168.0.1` não está configurado em lugar nenhum; ver E2 em `others/docs/PLAN_ETH0_BAIKAL.md`.
 - **NUNCA testar o `eth0` usando a subnet do WiFi (`192.168.6.x`).** Um ping "funcionando" para `192.168.6.100`/`192.168.6.128` passa pelo `wlan0`, não prova nada sobre o `eth0`.
 - **Todo teste de RX/TX do driver `mts.ko` deve usar a subnet `192.168.0.0/24`**: `ping -c N 192.168.0.2` do lado do host, ou `ping -I eth0 -c N 192.168.0.1` do lado do PS4.
 - SSH (WiFi) e eth0 (cabeada) são canais independentes — pode-se usar ambos simultaneamente.
