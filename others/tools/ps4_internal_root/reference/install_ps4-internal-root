@@ -1,0 +1,14 @@
+#!/bin/bash
+# mkinitcpio install file for the ps4-internal-root hook: puts dmsetup (and its libraries) into the
+# initramfs and registers the runtime hook. Copy it to /etc/initcpio/install/ps4-internal-root.
+build() {
+    add_binary dmsetup
+    add_runscript
+}
+
+help() {
+    cat <<HELPEOF
+Opens the PS4 internal disk (dm-crypt) and maps the root image file with dm-linear when the kernel
+command line has ps4root=internal or ps4root=internal-ro. Falls back to the normal root= on any failure.
+HELPEOF
+}
