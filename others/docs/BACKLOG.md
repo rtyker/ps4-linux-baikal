@@ -183,7 +183,7 @@ O build `20261113-full-rebuild` final saiu SEM `rtc-ps4-icc` e SEM `baikal-memor
 |---|-------|-----------|----------|
 | 1 | **Boot completo + vídeo HDMI** | ✅ **PASS** | Kernel carrega, SSH ativo, vídeo 1080p@60 |
 | 2 | **SSH via WiFi** | ✅ **PASS** | `192.168.6.128`, root/ps4 |
-| 3 | **eth0 cabeada** | ⚠️ **PARCIAL** | mts.ko carrega (após strip BTF), MAC `2c:cc:44:3f:69:5f` correto, **NO-CARRIER**. ~~bloqueador de firmware Sony, não solucionável via driver~~ — **reavaliado em 2026-11-17:** falta limpar o resíduo de shutdown (`0x0147.1e` bit 4) e corrigir defeitos do `mts.c`; ver `others/docs/PLAN_ETH0_BAIKAL.md` |
+| 3 | **eth0 cabeada** | ✅ **RESOLVIDO no driver** (Fase C, 2026-11-17) / ⏳ **pendente no boot** | O driver `mtsx` (link up + 100 MB RX/TX com SHA-256 conferido) agora é artefato do build: `CONFIG_MTSX=m`, `mtsx.ko` via `modules_install`, `/etc/modules-load.d/mtsx.conf` e `blacklist mts` no rootfs (tag `20261117-mtsx`). **Pendente:** deploy por FTP + boot com o rootfs que tenha o `mtsx.ko` novo e validação ao vivo. Ver `others/docs/PLAN_ETH0_BAIKAL.md` |
 | 4 | **RTC via ICC** | ✅ **PASS** (timekeeping) | `/dev/rtc0` existe, `/proc/driver/rtc` mostra hora correta (2026-11-15), system clock semeado no boot. `hwclock -r` timeout (UIE emulation no driver + kernel, **pendente validação ao vivo**) |
 | 5 | **Baikal Memory v0.2** | ⚠️ **PARCIAL** | Módulo carrega, BARs mapeados, MAC lido em **offset 0x52f000** (`2c:cc:44:3f:69:5f`), ICC em 0x52c000. Sysfs não expõe `bar5_0x2f000`/`bar5_0x2c000` (offsets no device file diferem do esperado) |
 | 6 | **Áudio HDMI** | ✅ **PASS** | `plughw:0,3` (HDMI 0) e `plughw:0,7` (HDMI 1) funcionam com `speaker-test`/`aplay` |
