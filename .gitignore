@@ -88,7 +88,9 @@ distro/boot_referencia/
 kernel/extra_firmware/
 kernel/drivers_mts/build/
 outros/rea/tools/ghidra_project/
-outros/tools/ps4_hdd_tools/pkg_pfs_tool/build/
+others/tools/ps4_hdd_tools/pkg_pfs_tool/build/
+# Capturas brutas da UART (centenas de KB cada); os .log ficam fora do git por decisao anterior do usuario
+others/tests/uart_logs/*.bin
 
 # --- Frente 2: distro/ ---
 distro/arch_minimal_v2-7.0.tar

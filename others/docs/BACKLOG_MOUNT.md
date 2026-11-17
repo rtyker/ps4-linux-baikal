@@ -57,9 +57,9 @@ Todos com `chmod +x` e idempotentes.
 
 ### 2.4 Utilitários PFS (opcionais, copiados se existirem)
 
-- `pkg_pfs_tool` (Jaguar `btver2`) + `config.ini` — **binário NÃO está compilado** no clone (ver MOUNT-06)
-- `ps4_pfs_fuse` — **binário NÃO está compilado** no clone (ver MOUNT-06)
-- O build avisa com `AVISO` e pula se não encontrados (não bloqueia o build, mas bloqueia montar PFS).
+- `pkg_pfs_tool` (host, `-march=native`, não vai para o PS4) + `config.ini` — **compilado em 2026-11-17** em `others/tools/ps4_hdd_tools/pkg_pfs_tool/build/pkg_pfs_tool` (540 KB, funcional). O build copia se o binário existir.
+- `ps4_pfs_fuse` — projeto separado (não incluído neste repo); serve para montar containers PFS via FUSE. Não é necessário para montar a partição `sda27` (UFS2 nativo).
+- O build avisa com `AVISO` e pula se não encontrados (não bloqueia o build, mas bloqueia montar/inspecionar containers `app.pkg`/`.pfs`).
 
 ### 2.5 Chave EAP
 
@@ -98,7 +98,7 @@ Todos com `chmod +x` e idempotentes.
 | ID | Tarefa | Status | Detalhe |
 |----|--------|--------|---------|
 | MOUNT-05 | Documentar o fluxo completo de montagem | ✅ | Criado `others/docs/MONTAGEM_HD_INTERNO.md` (chave → cryptsetup → mapper → UFS2/FUSE, modos de tweak, diagnóstico). |
-| MOUNT-06 | Verificar `pkg_pfs_tool` e `ps4_pfs_fuse` na imagem | 📝 | Verificado: os binários **não existem** em `others/tools/ps4_hdd_tools/pkg_pfs_tool/build/` (só fontes e CMake). O build avisa e pula. **Reescopo em 2026-11-13:** o `sda27` monta sem isso (é UFS2). Essas ferramentas servem para abrir os **containers PFS** (`app/<TITLE_ID>/app.pkg`), não a partição — virou melhoria opcional, não bloqueante. |
+| MOUNT-06 | Verificar `pkg_pfs_tool` e `ps4_pfs_fuse` na imagem | ✅ / 📝 | `pkg_pfs_tool` **compilado em 2026-11-17** (x86_64 host, 540 KB, em `others/tools/ps4_hdd_tools/pkg_pfs_tool/build/pkg_pfs_tool`). `ps4_pfs_fuse` é projeto separado não incluído. **Reescopo em 2026-11-13:** o `sda27` monta sem isso (é UFS2). `pkg_pfs_tool` serve para abrir/inspecionar **containers PFS** (`app/<TITLE_ID>/app.pkg`) — melhoria opcional, não bloqueante. |
 | MOUNT-07 | Revisar `ExecStop` do systemd | ✅ | Criado `distro/desmonta_todas.sh` (desmonta tudo em `/mnt/ps4_internal` e remove todos os mappers `ps4_*`, via `dmsetup remove` com fallback `cryptsetup remove`) e `ExecStop` atualizado para chamá-lo. |
 | MOUNT-08 | Provisionamento da chave EAP pelo usuário final | ✅ | `distro/scripts/provisiona-chave.sh` (modos `--ssh root@IP` e `--rootfs DIR`): normaliza 32 B crus / 33 B / 64 hex / `.txt`, valida por sha256, instala em `/etc/ps4-keys/eap_hdd_key.bin` (root, 600) e opcionalmente prova a chave montando o `sda27`. O build cria `/etc/ps4-keys/` (700) + `LEIA-ME.txt`, instala o helper em `/usr/local/bin` e **não** embute segredo. `automount.sh` consulta `monta_particao.sh --check-key` e, sem chave, avisa uma vez e sai com 0. Testado ao vivo em 2026-11-13 (bin, hex, `.txt`, 33 B, ausência de chave). |
 | MOUNT-09 | **Compilar o payload EAPDumper** (obtenção da chave EAP) | ✅ | Fonte clonado em `others/tools/ps4_hdd_tools/EAPDumper/` (commit `d590c3b`, tag `v0.2.0`); SDK `ps4-payload-sdk` v0.9 extraído ao lado (gitignored); build por `others/tools/ps4_hdd_tools/build_eapdumper.sh`. Gera `EAPDumper.bin` + `EAP-Scanner.bin` (83 504 B, sha256 `52e6617e…`, reprodutível). **Concluído ao vivo 2026-11-13:** enviado pelo BinLoader `:9090` em `192.168.6.130` (Orbis) e chave recuperada via FTP `:2121` — sha256 `990c1aa3…c8bf` (a chave em si fica só em `.env.keys`, não versionado). Procedimento em [`ENVIO_DE_PAYLOADS.md`](ENVIO_DE_PAYLOADS.md). |
@@ -173,7 +173,8 @@ sudo /usr/local/bin/desmonta_todas.sh
 - [x] `sda27` monta e permite leitura de arquivos (MOUNT-01 resolvido — **884 GiB, 485 GiB usados**)
 - [x] `sda29` (`eap_user`) e `sda25` (`update`) montam e permitem leitura
 - [x] `sda13` descartado com base técnica (swap antigo, chave versioned — não é UFS2/EAP)
-- [ ] `ps4_pfs_fuse`/`pkg_pfs_tool` compilados (MOUNT-06) — **opcional**: só para abrir containers `app.pkg`/`.pfs`, não para montar a partição
+- [x] `pkg_pfs_tool` compilado (2026-11-17, x86_64 host) — **opcional**: só para abrir containers `app.pkg`/`.pfs`, não para montar a partição
+- [ ] `ps4_pfs_fuse` (projeto separado, não incluído) — FUSE mount de containers PFS
 - [x] Chave EAP provisionada pelo usuário em `/etc/ps4-keys/eap_hdd_key.bin` (MOUNT-08 — `provisiona-chave.sh`, sem segredo no build)
 - [x] Payload `EAPDumper.bin` compilado (MOUNT-09) e executado no Orbis
 - [x] Teste ao vivo no PS4 real executado com sucesso (MOUNT-03)
@@ -241,3 +242,9 @@ sudo /usr/local/bin/desmonta_todas.sh
 - MOUNT-06 📝 — verificado que `pkg_pfs_tool`/`ps4_pfs_fuse` não estão compilados.
 - MOUNT-08 📝 — verificado que a chave não é provisionada pelo build.
 - MOUNT-03 ⏳ — pendente de hardware.
+
+**2026-11-17 — `pkg_pfs_tool` compilado (MOUNT-06 parcial):**
+
+- `cmake` + `make` em `others/tools/ps4_hdd_tools/pkg_pfs_tool/` → binário `build/pkg_pfs_tool` (540 KB, x86_64, funcional).
+- Fix no `CMakeLists.txt`: variáveis de include corrigidas de `${MBEDTLS_INCLUDE_DIRS}`/`${UTHASH_INCLUDE_DIRS}` (plural) para `${MBEDTLS_INCLUDE_DIR}`/`${UTHASH_INCLUDE_DIR}` (singular), conforme o que os `Find*.cmake` definem.
+- `ps4_pfs_fuse` não incluído (projeto separado) — não necessário para montar `sda27` (UFS2 nativo).

@@ -802,19 +802,21 @@ fi
 
 # Diagnóstico do esquema de IV (iv_offset) — o monta_particao.sh já imprime
 # dmsetup table/blkid/magic em caso de falha; não há script de tweak separado.
-if [ -f "$SCRIPT_DIR/../others/tools/ps4_hdd_tools/pkg_pfs_tool/build/pkg_pfs_tool" ]; then
-  cp -v "$SCRIPT_DIR/../others/tools/ps4_hdd_tools/pkg_pfs_tool/build/pkg_pfs_tool" "$ROOTFS_DIR/usr/local/bin/pkg_pfs_tool"
-  cp -v "$SCRIPT_DIR/../others/tools/ps4_hdd_tools/pkg_pfs_tool/config.ini" "$ROOTFS_DIR/usr/local/bin/config.ini"
-  chmod +x "$ROOTFS_DIR/usr/local/bin/pkg_pfs_tool"
-else
-  echo "AVISO: pkg_pfs_tool não encontrado em others/tools/ps4_hdd_tools/pkg_pfs_tool/build/"
-  echo "       (o PFS do HD interno não será acessível via FUSE nesta imagem)."
-fi
+
+# pkg_pfs_tool é ferramenta de HOST para inspecionar PKG/PFS no PC. O binário do build
+# é compilado com -march=native (CPU do PC), então NÃO deve ir para o PS4 (Jaguar/btver2;
+# um build btver2 nunca foi testado). A partição sda27 (UFS2) monta nativamente
+# no kernel do PS4 — não precisa desta ferramenta para montar/ler a partição.
+# Mantido no repo apenas para uso offline no PC; NÃO é copiado para o rootfs.
+
+# ps4_pfs_fuse seria para montar containers PFS via FUSE no PS4 (projeto separado,
+# não incluído). Não é necessário para montar sda27 (UFS2 nativo).
 if [ -f "$SCRIPT_DIR/../others/tools/ps4_hdd_tools/pkg_pfs_tool/build/ps4_pfs_fuse" ]; then
   cp -v "$SCRIPT_DIR/../others/tools/ps4_hdd_tools/pkg_pfs_tool/build/ps4_pfs_fuse" "$ROOTFS_DIR/usr/local/bin/ps4_pfs_fuse"
   chmod +x "$ROOTFS_DIR/usr/local/bin/ps4_pfs_fuse"
 else
-  echo "AVISO: ps4_pfs_fuse não encontrado — montagem FUSE do PFS indisponível nesta imagem."
+  echo "INFO: ps4_pfs_fuse não encontrado — montagem FUSE de containers PFS indisponível (opcional)."
+  echo "      A partição sda27 (UFS2) monta normalmente sem isso."
 fi
 
 # Configurar permissões full NOPASSWD e diretórios de montagem para usuário ps4
