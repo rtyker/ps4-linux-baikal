@@ -37,6 +37,19 @@ O trabalho **ativo no momento** (investigação detalhada, passo a passo) fica n
 
 **RESULTADO DO PASSO 2 NO CONSOLE (2026-11-17, tag `20261117-checkpoint`, `test_history` 110):** o patch está ativo (o driver treina com `clock=270000 lanes=4`), mas o `clock recovery` AINDA FALHA em todo modeset (+6 em 720p, +4 em 1080p, +2 em DPMS por ciclo; 72 falhas em 6 ciclos de `others/tests/dp_stress.sh`, interrompido por ser determinístico). A falha ocorre no encoder (antes da ponte) e de novo no retreino de `ps4_bridge_enable`. A imagem sobe mesmo assim (confirmado pelo usuário no boot). **2,7 Gbps NÃO resolve; o passo 3 (voltage/pre-emphasis adaptativos, hoje fixos em 0,4 V / 0 dB) é o próximo.** O sink anuncia 5,4 Gbps (DPCD `12 14 c4 41`).
 
+**⏸ FRENTE DP PAUSADA (2026-11-17, por decisão do usuário). Estado e possibilidades para quando for retomada:**
+- **Estado:** tag no HD = `20261117-dp-diag2` (config idêntico ao `20261117-checkpoint`; `ps4-dp-diag.patch` só lê DPCD, não altera comportamento). A imagem sobe e fica normal; o `clock recovery` falha em todo modeset (2 treinos de 6 tentativas cada). O `vram.txt` do HD está em **4096** (escolha do usuário para jogos).
+- **Medido (diagnósticos 1 e 2, `test_history` 112 e 113):** sink ligado (D0), `SINK_COUNT=1`, recebeu o pedido de TPS1 (`0x102=01`), taxa/lanes lidas de volta certas (`0a`/`84`), lane status sempre `00` (sem CR_DONE e sem pedido de ajuste). Não é energia, AUX, configuração do sink, taxa (1,62 e 2,7 Gbps falham) nem ordem de subida da ponte.
+- **Descartado:** o passo 3 do plano (voltage/pre-emphasis adaptativos): o sink não pede nada, então não há o que adaptar.
+- **Possibilidades (nenhuma iniciada):**
+  1. **Provar se o treino do host importa para a imagem:** patch que pula o treino ou ignora a falha, e ver se a imagem sobe igual. Risco: tela preta (SSH continua; rollback pronto). Se a imagem sobe igual, as falhas são só ruído e o critério de aceite do plano pode ser reescrito.
+  2. **Olhar o lado da GPU:** ler registros do DIG/UNIPHY durante o treino para ver se o TPS1 é emitido (PLL, transmissor, mapeamento de lanes). Mais lento e mais invasivo; o diagnóstico atual não enxerga esse lado.
+  3. **Testar lanes/taxa diferentes** (1 ou 2 lanes, 1,62 Gbps com o diagnóstico ligado) para ver se o lane status deixa de ser zero; exige build.
+  4. **Aceitar o ruído:** documentar as falhas como benignas e fechar o plano sem o critério de zero falhas. Só depois do item 1.
+  5. **Teste de estresse com Xorg** (`xrandr`), que nunca foi feito; o `dp_stress.sh` roda só no console.
+- **Não resolvido e possivelmente relacionado:** com `vram.txt=4096` houve um boot com a tela piscando e outro com tela preta até um ciclo de DPMS; com 1024 e 2048 não ocorreu. Causa desconhecida; nos boots seguintes com 4096 a tela ficou normal.
+- **Para retomar:** o patch de diagnóstico está em `kernel/patches/ps4-dp-diag.patch` (remover quando a frente fechar); o script de estresse é `others/tests/dp_stress.sh`; os dados brutos estão nos `test_history` 110, 112 e 113.
+
 **Critério de aceite único:** 50 trocas de modo consecutivas (qualquer combinação de `chvt`, `xrandr --off`, `xrandr --mode`, hotplug) com **zero** `clock recovery failed` no `dmesg`. A imagem não some.
 
 **Ordem de execução:** 1 → 2 → 3 → 4 → 5. Cada passo é um patch independente, aplicado pelo `00-build-kernel-7.0.sh` com `--check`, testado em build separado antes do próximo. Não fazer "mega-patch" único.
