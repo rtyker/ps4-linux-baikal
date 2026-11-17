@@ -1,36 +1,36 @@
-# Caminho alternativo: boot do kernel pelo disco INTERNO do PS4
+# Alternative path: boot the kernel from the PS4's INTERNAL disk
 
-**Status (2026-11-17): preparado, aguardando a confirmação do primeiro boot.** Os arquivos foram enviados e conferidos por MD5; o boot em si ainda não foi confirmado (o usuário viu o boot parar na altura do `wlan` uma vez, suspeita do HD USB; novo boot em andamento). Este documento muda de status quando o `bootsrc=internal` aparecer no `/proc/cmdline`.
+**Status (2026-11-17): prepared, waiting for the first boot to be confirmed.** The files were uploaded and verified by MD5. The boot itself is not confirmed yet (the user saw the boot stop around the `wlan` messages once, with the USB drive as the suspect; a new boot is in progress). This document changes status when `bootsrc=internal` shows up in `/proc/cmdline`.
 
-## Ideia
+## Idea
 
-O payload (`ps4-linux-payloads/linux/main-aio.c`) procura cada arquivo de boot, **de forma independente**, nesta ordem:
+The payload (`ps4-linux-payloads/linux/main-aio.c`) looks for each boot file **independently**, in this order:
 
-1. `/mnt/usb0/<arquivo>`
-2. `/mnt/usb1/<arquivo>`
-3. `/data/linux/boot/<arquivo>`  ← **pasta do disco interno usada aqui**
-4. `/user/system/boot/<arquivo>`
+1. `/mnt/usb0/<file>`
+2. `/mnt/usb1/<file>`
+3. `/data/linux/boot/<file>`  ← **the internal-disk folder used here**
+4. `/user/system/boot/<file>`
 
-Se o USB não tiver o arquivo, o payload usa o do disco interno. Assim o kernel e o initramfs saem do HD do PS4 (Orbis), sem depender do USB. **O rootfs continua no USB** (`root=LABEL=psxitarch`): o USB ainda precisa estar plugado.
+If the USB drive does not have a file, the payload uses the one on the internal disk. That way the kernel and the initramfs come from the PS4's own drive (Orbis), without depending on the USB drive. **The rootfs stays on the USB drive** (`root=LABEL=psxitarch`): the USB drive still has to be plugged in.
 
-## Arquivos que o payload lê
+## Files the payload reads
 
-| Arquivo | Obrigatório | Observação |
+| File | Required | Notes |
 |---|---|---|
-| `bzImage` | sim | kernel |
-| `initramfs.cpio.gz` | sim | o nome precisa ser exatamente esse (o `.zip` antigo do interno não casa) |
-| `bootargs.txt` | não | sem ele o payload usa um cmdline padrão **sem** `root=LABEL=psxitarch` |
-| `vram.txt` | não | valor em MB; sem ele o padrão é 1024. Tem prioridade sobre o payload carregado |
+| `bzImage` | yes | the kernel |
+| `initramfs.cpio.gz` | yes | the name must be exactly this (the old `.zip` on the internal disk does not match) |
+| `bootargs.txt` | no | without it the payload uses a default command line **without** `root=LABEL=psxitarch` |
+| `vram.txt` | no | value in MB; the default is 1024. It takes priority over the payload that was loaded |
 
-## Script oficial deste caminho: `distro/deploy-boot-ftp-7.0.sh`
+## Official script for this path: `distro/deploy-boot-ftp-7.0.sh`
 
 ```bash
 ./distro/deploy-boot-ftp-7.0.sh <TAG> [--vram MB] [--no-marker] [--dry-run] [--allow-usb-conflict]
 ```
 
-Não toca no `deploy-boot-7.0.sh` (que continua escrevendo no USB). O que faz: confere que o FTP responde (só existe no Orbis); recusa seguir se o USB tiver arquivos de boot (ele tem prioridade); baixa para `~/ps4-boot-internal-backup-<data>/` o que já está no PS4; sobe tudo como `.part`, confere o MD5 baixando de volta, e só então renomeia para o nome final; confere de novo os nomes finais; grava `active-tag.txt` com a tag; acrescenta `bootsrc=internal` ao `bootargs` (use `--no-marker` para não). O `vram.txt` do PS4 **só é tocado com `--vram MB`** (o `vram.txt` do repositório é 1024 e o do PS4 está em 4096, então não há valor padrão). Testado em 2026-11-17: `--dry-run` e uma execução real com a tag `20261117-dp-diag2` (idempotente, MD5 igual ao já enviado). O FTP do GoldHEN aceita upload, rename (inclusive por cima de arquivo existente) e DELE: testado.
+It does not touch `deploy-boot-7.0.sh` (which keeps writing to the USB drive). What it does: checks that FTP is answering (it only exists in Orbis); refuses to continue if the USB drive has boot files (the USB drive wins); downloads whatever is already on the PS4 to `~/ps4-boot-internal-backup-<date>/`; uploads everything as `.part`, verifies the MD5 by downloading it back, and only then renames to the final name; checks the final names again; writes `active-tag.txt` with the tag; appends `bootsrc=internal` to the bootargs (use `--no-marker` to skip it). The PS4's `vram.txt` is **only touched with `--vram MB`** (the repository's `vram.txt` is 1024 while the PS4's is 4096, so there is no default value). Tested on 2026-11-17: `--dry-run` and one real run with tag `20261117-dp-diag2` (idempotent, same MD5 as what was already uploaded). The GoldHEN FTP server accepts upload, rename (including over an existing file) and DELE: tested.
 
-## Procedimento manual equivalente (FTP do GoldHEN, porta 2121, PS4 em modo Orbis)
+## Equivalent manual procedure (GoldHEN FTP, port 2121, PS4 in Orbis mode)
 
 ```bash
 F=ftp://192.168.6.130:2121/data/linux/boot
@@ -38,25 +38,25 @@ curl --ftp-create-dirs -T bzImage           $F/bzImage
 curl --ftp-create-dirs -T initramfs.cpio.gz $F/initramfs.cpio.gz
 curl --ftp-create-dirs -T bootargs.txt      $F/bootargs.txt
 curl --ftp-create-dirs -T vram.txt          $F/vram.txt
-# conferir: baixar de volta e comparar o md5 com o arquivo local
+# verify: download it back and compare the md5 with the local file
 curl -o /tmp/chk $F/bzImage && md5sum /tmp/chk bzImage
 ```
 
-1. **Mover, não copiar:** para não haver ambiguidade, **remova** esses 4 arquivos da partição BOOT do USB (o USB tem prioridade sobre o interno). Faça isso só depois de conferir o MD5 das cópias internas e de ter backup local.
-2. **Marcador de prova:** coloque `bootsrc=internal` no fim do `bootargs.txt` interno. O kernel ignora o parâmetro e ele aparece em `/proc/cmdline`; se aparecer, o `bootargs` veio do interno.
-3. O `FTP` só existe no Orbis (`192.168.6.130`); depois do `kexec` as portas 9090 e 2121 somem.
+1. **Move, do not copy:** to avoid any ambiguity, **remove** these 4 files from the USB drive's BOOT partition (the USB drive has priority over the internal disk). Do this only after checking the MD5 of the internal copies and keeping a local backup.
+2. **Proof marker:** put `bootsrc=internal` at the end of the internal `bootargs.txt`. The kernel ignores the parameter and it shows up in `/proc/cmdline`; if it does, the bootargs came from the internal disk.
+3. FTP only exists in Orbis (`192.168.6.130`); after the `kexec` ports 9090 and 2121 are gone.
 
-## Estado feito em 2026-11-17
+## What was done on 2026-11-17
 
-- Tag em uso: `20261117-dp-diag2` (kernel com o patch de diagnóstico do DP, `vram.txt=4096`).
-- Enviados e conferidos (MD5 enviado = baixado): `bzImage` `2db126505d26`, `initramfs.cpio.gz` `9ba2bddd3097`, `bootargs.txt` `58a51d785b3f` (com `bootsrc=internal`), `vram.txt` `102e7bda3ff4`.
-- `/data/linux/boot/` estava vazio antes.
-- Os 4 arquivos foram **removidos** do USB (BOOT) e há um `BOOT-MOVIDO.txt` lá. Backup local: `~/ps4-boot-usb-backup-20261117/`.
-- Registro: `test_history` (fase "Boot pelo disco interno").
+- Tag in use: `20261117-dp-diag2` (kernel with the DisplayPort diagnostic patch, `vram.txt=4096`).
+- Uploaded and verified (MD5 sent = MD5 downloaded): `bzImage` `2db126505d26`, `initramfs.cpio.gz` `9ba2bddd3097`, `bootargs.txt` `58a51d785b3f` (with `bootsrc=internal`), `vram.txt` `102e7bda3ff4`.
+- `/data/linux/boot/` was empty beforehand.
+- The 4 files were **removed** from the USB drive (BOOT), and a `BOOT-MOVIDO.txt` note was left there. Local backup: `~/ps4-boot-usb-backup-20261117/`.
+- Record: `test_history` (phase "Boot pelo disco interno").
 
-## Cuidados
+## Caveats
 
-- **`distro/deploy-boot-7.0.sh` conflita com este caminho:** ele grava `bzImage`, `initramfs.cpio.gz`, `bootargs.txt` e `vram.txt` no USB, e o USB volta a ter prioridade. Para trocar de tag com este caminho, envie os arquivos novos por FTP e **não** use o `deploy-boot` (ou remova os 4 do USB depois dele).
-- **Arquivos antigos no interno** em `/user/system/boot/` (`bzImage` de 06/01/2026, `initramfs.cpio.zip`, `psxitarch.tar.xz` de 3,7 GB): só seriam usados se faltasse o arquivo em `/data/linux/boot/`. Marcados para remoção depois (BACKLOG, item 7b); não foram tocados.
-- **Rollback:** copie os 4 arquivos do backup (`~/ps4-boot-usb-backup-20261117/`) de volta para a BOOT do USB, ou rode `deploy-boot-7.0.sh <TAG>` com o HD no PC. Com os arquivos no USB, ele passa a ter prioridade de novo.
-- **O que este caminho NÃO resolve:** o rootfs continua no USB, então as falhas de I/O do HD USB (BACKLOG, item 5) continuam afetando o boot. Para tirar o USB por completo é preciso um rootfs no disco interno, o que hoje não cabe (ver o levantamento em `BACKLOG.md`: o disco interno não tem espaço livre, e a única partição grande é a de dados do Orbis).
+- **`distro/deploy-boot-7.0.sh` conflicts with this path:** it writes `bzImage`, `initramfs.cpio.gz`, `bootargs.txt` and `vram.txt` to the USB drive, which then takes priority again. To switch tags on this path, upload the new files over FTP and do **not** use `deploy-boot` (or remove the 4 files from the USB drive afterwards).
+- **Old files on the internal disk** in `/user/system/boot/` (a `bzImage` from 2026-01-06, `initramfs.cpio.zip`, and a 3.7 GB `psxitarch.tar.xz`): they would only be used if a file were missing from `/data/linux/boot/`. Marked for removal later (BACKLOG, item 7b); they were not touched.
+- **Rollback:** copy the 4 files from the backup (`~/ps4-boot-usb-backup-20261117/`) back to the USB drive's BOOT partition, or run `deploy-boot-7.0.sh <TAG>` with the drive plugged into the PC. Once the files are on the USB drive, it has priority again.
+- **What this path does NOT solve:** the rootfs is still on the USB drive, so the USB drive's I/O failures (BACKLOG, item 5) still affect the boot. Removing the USB drive entirely needs a rootfs on the internal disk, which does not fit today (see the survey in `BACKLOG.md`: the internal disk has no free space, and the only large partition is the Orbis data partition).
