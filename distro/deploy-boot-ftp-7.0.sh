@@ -46,7 +46,7 @@ while [ $# -gt 0 ]; do
     --no-marker) MARKER=0; shift ;;
     --allow-usb-conflict) ALLOW_USB=1; shift ;;
     --dry-run) DRY=1; shift ;;
-    -h|--help) sed -n 2,24p "$0"; exit 0 ;;
+    -h|--help) sed -n 2,23p "$0"; exit 0 ;;
     -*) die "unknown option: $1" ;;
     *) [ -z "$TAG" ] || die "duplicate tag: $1"; TAG="$1"; shift ;;
   esac
