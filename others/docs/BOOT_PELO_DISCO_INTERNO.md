@@ -22,7 +22,15 @@ Se o USB não tiver o arquivo, o payload usa o do disco interno. Assim o kernel 
 | `bootargs.txt` | não | sem ele o payload usa um cmdline padrão **sem** `root=LABEL=psxitarch` |
 | `vram.txt` | não | valor em MB; sem ele o padrão é 1024. Tem prioridade sobre o payload carregado |
 
-## Procedimento (FTP do GoldHEN, porta 2121, PS4 em modo Orbis)
+## Script oficial deste caminho: `distro/deploy-boot-ftp-7.0.sh`
+
+```bash
+./distro/deploy-boot-ftp-7.0.sh <TAG> [--vram MB] [--no-marker] [--dry-run] [--allow-usb-conflict]
+```
+
+Não toca no `deploy-boot-7.0.sh` (que continua escrevendo no USB). O que faz: confere que o FTP responde (só existe no Orbis); recusa seguir se o USB tiver arquivos de boot (ele tem prioridade); baixa para `~/ps4-boot-internal-backup-<data>/` o que já está no PS4; sobe tudo como `.part`, confere o MD5 baixando de volta, e só então renomeia para o nome final; confere de novo os nomes finais; grava `active-tag.txt` com a tag; acrescenta `bootsrc=internal` ao `bootargs` (use `--no-marker` para não). O `vram.txt` do PS4 **só é tocado com `--vram MB`** (o `vram.txt` do repositório é 1024 e o do PS4 está em 4096, então não há valor padrão). Testado em 2026-11-17: `--dry-run` e uma execução real com a tag `20261117-dp-diag2` (idempotente, MD5 igual ao já enviado). O FTP do GoldHEN aceita upload, rename (inclusive por cima de arquivo existente) e DELE: testado.
+
+## Procedimento manual equivalente (FTP do GoldHEN, porta 2121, PS4 em modo Orbis)
 
 ```bash
 F=ftp://192.168.6.130:2121/data/linux/boot
