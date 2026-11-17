@@ -714,9 +714,9 @@ echo "=== Criando initramfs (mkinitcpio) ==="
 # Configurar mkinitcpio para kernel 7.0 (sem autodetect para evitar remover módulos no chroot)
 cat > "$ROOTFS_DIR/etc/mkinitcpio.conf" << 'MKEOF'
 MODULES=(ext4 ahci sd_mod btmtksdio amdgpu snd-hda-intel mts usbhid uas usb_storage)
-BINARIES=()
+BINARIES=(dmsetup)
 FILES=(/lib/firmware/edid/ps4_tv_edid.bin)
-HOOKS=(base udev modconf block filesystems keyboard fsck)
+HOOKS=(base udev modconf block ps4-internal-root filesystems keyboard fsck)
 COMPRESSION="gzip"
 MKEOF
 
@@ -849,6 +849,8 @@ cat > "$ROOTFS_DIR/etc/systemd/system/ps4-automount.service" << 'SERVICEEOF'
 [Unit]
 Description=PS4 Internal HDD Automatic Partition Mapper and FUSE Mount
 After=local-fs.target
+ConditionKernelCommandLine=!ps4root=internal
+ConditionKernelCommandLine=!ps4root=internal-ro
 
 [Service]
 Type=oneshot
@@ -895,6 +897,11 @@ chmod +x "$ROOTFS_DIR/etc/initcpio/hooks/set-time-from-cmdline"
 
 # Adicionar hook no mkinitcpio.conf
 sed -i 's/HOOKS=(base /HOOKS=(base set-time-from-cmdline /' "$ROOTFS_DIR/etc/mkinitcpio.conf"
+
+# Hook ps4-internal-root (internal rootfs via dm-linear on UFS2)
+install -Dm755 "$SCRIPT_DIR/initcpio/hooks/ps4-internal-root"   "$ROOTFS_DIR/etc/initcpio/hooks/ps4-internal-root"
+install -Dm644 "$SCRIPT_DIR/initcpio/install/ps4-internal-root" "$ROOTFS_DIR/etc/initcpio/install/ps4-internal-root"
+# O hook já está no HOOKS via mkinitcpio.conf acima (after block)
 
 # Gerar initramfs
 cp "$BZIMAGE" "$ROOTFS_DIR/boot/vmlinuz-$KVER_FULL"

@@ -7,7 +7,7 @@ Sony software after the handoff.
 > ⚠️ **Requires an already jailbroken PS4 on a compatible firmware.** This project neither teaches
 > nor provides a jailbreak. For educational and research use in reverse engineering and embedded systems.
 
-> **New:** swap on the Baikal SPM/DDR3 moved by DMA, ~20x faster than CPU access — see [RELEASE_NOTES.md](RELEASE_NOTES.md).
+> **New:** the root filesystem now also boots from the PS4's internal disk, with no USB drive attached — see [RELEASE_NOTES.md](RELEASE_NOTES.md).
 
 ## Two tracks
 
@@ -32,7 +32,8 @@ nothing about the rootfs. `PS4_BOOT_REF` lets you point the distro at a differen
 |---|---|---|
 | **Boot** | ✅ | `kexec` → kernel 7.0 → initramfs → Arch rootfs |
 | **Video (HDMI)** | ✅ | 1080p@60, Gladius GPU via `amdgpu` (Mesa patched to recognize the chip). The internal DisplayPort link to the Panasonic MN864729 bridge still logs `clock recovery failed` on every modeset, yet the picture comes up and stays stable (see below) |
-| **Boot from the internal disk** | ✅ | `bzImage`, `initramfs.cpio.gz`, `bootargs.txt` and `vram.txt` can live in `/data/linux/boot/` on the console's drive, uploaded over FTP by `distro/deploy-boot-ftp-7.0.sh`; the USB drive is then only needed for the root filesystem. Confirmed on a real console on 2026-11-17 |
+| **Boot from the internal disk** | ✅ | `bzImage`, `initramfs.cpio.gz`, `bootargs.txt` and `vram.txt` live in `/data/linux/boot/` on the console's drive, uploaded over FTP by `distro/deploy-boot-ftp-7.0.sh`. Confirmed on a real console on 2026-11-17 |
+| **Root filesystem on the internal disk** | ✅ | A 16 GiB ext4 image inside `sda27`, mapped through `dm-crypt` + `dm-linear` by the `ps4-internal-root` initramfs hook; no USB drive needed. Six consecutive cold boots without USB, automatic fallback to the USB root, Orbis data untouched. See below |
 | **VRAM size** | ✅ | Set by a `vram.txt` file (value in MB) in the BOOT partition, which overrides the loaded payload. Measured: 1024 → 6911 MiB RAM, 2048 → 5903 MiB, 4096 → 3893 MiB; the carve-out comes out of the single 8 GiB GDDR5 pool shared by CPU and GPU. The payload caps it at 4096 MB |
 | **Audio (HDMI)** | ⚠️ | `snd_hda_intel` exposes the HDMI devices, but actual sound has not been re-tested since the Display Core was removed from the build |
 | **3D GPU** | ✅ | OpenGL 4.5, Vulkan 1.3 (RADV) |
@@ -53,6 +54,12 @@ nothing about the rootfs. `PS4_BOOT_REF` lets you point the distro at a differen
 | **Full power-off (S5)** | ✅ | `poweroff`, `shutdown -h now` and `reboot` are all confirmed working: the console powers off completely (blue light and fan stop). Closed on 2026-11-16 (tag `20261116-s5-dma`) |
 | **Baikal HPET clocksource / watchdog** | ⏸️ paused | Patches are applied by the build but `CONFIG_CLKSRC_BAIKAL_HPET` and `CONFIG_WATCHDOG` are off: a build with both enabled gave a black screen twice, and a later isolated clocksource test read the wrong register block (the driver maps the start of BAR2 instead of `BAR2 + 0x109000`, unconfirmed). Work is on hold, see `BACKLOG.md` |
 
+### 🌟 Highlight: Linux root filesystem on the internal disk (no USB)
+
+The root filesystem runs from a 16 GiB ext4 image that is a **regular file** inside the Orbis user partition (`sda27`) — no repartitioning and no changes to games or saves. Orbis itself created the file over FTP, with a per-sector index and nonce written into every sector. Linux reads the UFS2 block map with `FIBMAP` (read-only), checks every mapped sector against that pattern once, and then writes only through `dm-crypt` → `dm-linear` (`/dev/mapper/ps4root`). The `ps4-internal-root` initramfs hook re-checks the table checksum and the ext4 UUID at every boot; if anything fails it leaves `root=LABEL=psxitarch` alone and the USB root comes up instead.
+
+Validated on a PS4 Pro (Baikal) with the stock HDD: six consecutive cold boots without USB, a forced fallback with a corrupted checksum, and a clean Orbis check afterwards. 1 GiB writes averaged ~75 MB/s on the internal HDD versus ~279 MB/s on the USB SSD (five runs each). Not the first internal-root boot ever reported on Baikal — the novelty here is the sector-ownership proof, the automatic fallback and the validation on this hardware. Runbook and sources: [`others/docs/PLAN_INTERNAL_ROOTFS.md`](others/docs/PLAN_INTERNAL_ROOTFS.md).
+
 ### 🌟 Reverse Engineering Highlight: Baikal Memory Driver (SPM/DDR3)
 The Baikal southbridge has a dedicated auxiliary DDR3 memory (Scratch Pad Memory, SPM, PCI `00:14.6`) that previously had no Linux support at all. The project built the `baikal-memory` driver from scratch:
 * **Hardware mapping:** BAR0 (4 KiB MMIO), BAR2 (1 GiB advertised, but only the first 188 MiB answer on the tested PS4 Pro; the driver probes this at load time), BAR4 (1 MiB), BAR5 (256 KiB Mailbox/ICC/Bootparams).
@@ -64,8 +71,11 @@ Details, root causes, and what has already been ruled out: [`others/docs/BACKLOG
 
 ## Release Notes
 
+### 2026-11-17 — Root filesystem on the internal disk
+Linux now boots entirely from the console's own drive, without USB. The root is a 16 GiB ext4 image inside `sda27`, mounted through `dm-crypt`/`dm-linear` by an initramfs hook with a USB fallback. See [`RELEASE_NOTES.md`](RELEASE_NOTES.md) and [`others/docs/PLAN_INTERNAL_ROOTFS.md`](others/docs/PLAN_INTERNAL_ROOTFS.md).
+
 ### 2026-11-17 — Boot the kernel from the internal disk
-The kernel and initramfs can now boot from the console's own drive (`/data/linux/boot/`), with a safe FTP deploy script and a boot-source marker; the root filesystem still lives on the USB drive. See [`RELEASE_NOTES.md`](RELEASE_NOTES.md) and [`others/docs/BOOT_FROM_INTERNAL_DISK.md`](others/docs/BOOT_FROM_INTERNAL_DISK.md).
+The kernel and initramfs can now boot from the console's own drive (`/data/linux/boot/`), with a safe FTP deploy script and a boot-source marker; this step was done first, while the root filesystem still lived on USB. See [`RELEASE_NOTES.md`](RELEASE_NOTES.md) and [`others/docs/BOOT_FROM_INTERNAL_DISK.md`](others/docs/BOOT_FROM_INTERNAL_DISK.md).
 
 ### 2026-11-17 — Swap on the SPM/DDR3 by DMA
 The SPM now serves as a fast swap device through the southbridge DMA controller (`baikal-spm-blk`), with before/after numbers and credits in [`RELEASE_NOTES.md`](RELEASE_NOTES.md). The same tag carries the DP link at 2.7 Gbps (`ps4-dp-link-rate-270000.patch`), which is live-tested but does **not** make the DisplayPort `clock recovery` pass: the sink is powered, configured and receives the TPS1 request, but never reports lock. That front is paused; measurements are in `others/docs/BACKLOG.md`.

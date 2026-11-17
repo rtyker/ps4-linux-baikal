@@ -1,6 +1,6 @@
 # Runbook: Linux root filesystem on the PS4's internal disk (no USB drive)
 
-**Status (2026-11-17): the plan and its host-side tools are written and tested. NOTHING in Phases 2-7 has been executed on the console.**
+**Status (2026-11-17): COMPLETE — Phases 0-7 executed on the console. The console now boots its root filesystem from `/dev/mapper/ps4root` on the internal disk with no USB drive attached; 6 consecutive cold boots passed, the automatic USB fallback was demonstrated, and Orbis was checked healthy afterwards.** The final deployment is tag `20261117-ps4root2`. Rollback: deploy `20261117-dp-diag2` without `--internal-root` (plain initramfs, no `ps4root=`) or remove `ps4root=` from `bootargs.txt`. Evidence: `test_history` ids 122 and 126-135; section 14 below.
 
 Audience: another coding agent that will carry this out. **Follow it to the letter. Where it says STOP, stop and report to the user; do not improvise a workaround.** If this document and a measurement disagree, the measurement wins: stop, record it, tell the user.
 
@@ -90,7 +90,7 @@ Each switch between [ORBIS] and Linux costs a power cycle by the user. Group you
 | 21 | That `DM_DISABLE_UDEV=1 dmsetup --noudevsync` creates correct `/dev/mapper` nodes inside our initramfs (no device-mapper udev rules there) | **U** | Phase 6 |
 | 22 | That `rsync` exists on the console's USB rootfs | **U** | step P5-2 |
 | 23 | How Orbis behaves, over weeks, with a big private file in `/data/linux/` (updates, "rebuild database", storage clean-up) | **U** | nobody has reported long-term results |
-| 24 | The speed of the internal 2.5" HDD (TOSHIBA MQ04ABF100), slower than the SSDs of the prior art | **U** | Phase 7 |
+| 24 | The speed of the internal 2.5" HDD (TOSHIBA MQ04ABF100), slower than the SSDs of the prior art | V | Phase 7: 5 runs of 1 GiB `conv=fdatasync` gave 79.7/86.4/75.3/68.8/66.9 MB/s (mean 75.4); the USB SSD gave 277/281/272/279/287 MB/s (mean 279.2) — about 3.7x faster. Cached reads (~3.5-3.8 GB/s) are not disk throughput. `test_history` id 134 |
 
 ## 3. The mechanism
 
@@ -537,18 +537,28 @@ What the prior art reported (not verified here): the root mounted at 14.7 s and 
 
 | ID | Answer | Date | Who answered |
 |---|---|---|---|
-| D1 | | | |
-| D2 | | | |
-| D3 | | | |
-| D4 | | | |
-| D5 | | | |
-| D6 | | | |
+| D1 | 16 GiB (recomendado) | 2026-11-17 | user |
+| D2 | Opção A: anexar chave ao initramfs no upload (recomendado/único viável) | 2026-11-17 | user |
+| D3 | Voltar para o root USB (recomendado) | 2026-11-17 | user |
+| D4 | Upload FTP pelo Orbis do arquivo padronizado (recomendado) | 2026-11-17 | user |
+| D5 | WiFi (Orbis em 192.168.6.130:2121) | 2026-11-17 | user |
+| D6 | NÃO rodar no modo internal-root (recomendado) | 2026-11-17 | user |
 
 ## 14. Progress log (append one line per finished step; never rewrite history)
 
 | Date | Step | Result | test_history id |
 |---|---|---|---|
-| 2026-11-17 | Phase 1: host tools and the reference hook written and tested | OK | see BACKLOG 7c |
+| 2026-11-17 | Phase 1: host tools and the reference hook written and tested | OK | 122 |
+| 2026-11-17 | Phase 2: Orbis cria imagem padronizada 16 GiB via FTP (WiFi, ~12 MB/s, resume OK) | OK | 126 |
+| 2026-11-17 | Phase 3: Block map + verificação completa (2938 extents, 33.5M setores OK, baseline UNCHANGED) | OK | 127 |
+| 2026-11-17 | Phase 4: ext4 criado, 1 GiB escrito/verificado, reverse proof OK, Orbis saudável | OK | 128 |
+| 2026-11-17 | Phase 5: Sistema copiado (rsync exit 0), fstab fixado, fsck clean, Orbis UNCHANGED | OK | 129 |
+| 2026-11-17 | Phase 6: Hook + rebuild + deploy + 4 boot tests (ro, rw, exclusive-open, no-USB) | OK | 130 |
+| 2026-11-17 | Phase 6: fallback com checksum corrompido → USB root | OK | 131 |
+| 2026-11-17 | Phase 6: meta corrigido → internal root restaurado | OK | 132 |
+| 2026-11-17 | Phase 7: 6 cold boots sem USB (user aceitou 6 em vez de 10) + Orbis health check | OK | 133 |
+| 2026-11-17 | Phase 7: benchmark 5x internal (~75 MB/s) vs 5x USB (~279 MB/s) | OK | 134 |
+| 2026-11-17 | Final: redeploy tag 20261117-ps4root2 e boot sem USB confirmado | OK | 135 |
 
 ## 15. Template for a test_history row
 

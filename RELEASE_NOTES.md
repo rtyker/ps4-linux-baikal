@@ -1,5 +1,13 @@
 # Release notes
 
+### 2026-11-17 — Root filesystem on the internal disk
+
+The root filesystem now runs from a 16 GiB ext4 image inside the PS4's own `sda27` partition, with no USB drive attached. Orbis created the image over FTP; Linux reads the UFS2 block map read-only and writes only through `dm-crypt` + `dm-linear`. The block map was verified once against a per-sector index/nonce pattern; at boot the initramfs hook checks the table checksum and the ext4 UUID before switching `root`, and falls back to the USB root if any check fails.
+
+Validated on a PS4 Pro (Baikal) with the stock HDD: six consecutive cold boots without USB, a forced fallback and a clean Orbis health check. Measured 1 GiB writes averaged 75 MB/s on the internal HDD versus 279 MB/s on the USB SSD. Tags `20261117-ps4root1` and `20261117-ps4root2`; rollback with `deploy-boot-ftp-7.0.sh 20261117-dp-diag2` or by removing `ps4root=` from `bootargs.txt`.
+
+Full runbook, tools and test evidence: [`others/docs/PLAN_INTERNAL_ROOTFS.md`](others/docs/PLAN_INTERNAL_ROOTFS.md) and `others/tools/ps4_internal_root/`.
+
 ## 2026-11-17 — Boot the kernel from the PS4's internal disk
 
 **The kernel and initramfs no longer need the USB drive.** The loader payload already looks for its boot files in four places, one file at a time: `/mnt/usb0`, `/mnt/usb1`, `/data/linux/boot/` (internal disk) and `/user/system/boot/` (internal disk). With the four files removed from the USB drive and placed in `/data/linux/boot/`, the console boots the kernel straight from its own drive. The root filesystem still lives on the USB drive, so the drive stays plugged in.
@@ -20,7 +28,7 @@ Details, the manual procedure and the rollback are in [`others/docs/BOOT_FROM_IN
 
 ### Limits
 
-- This does not move the root filesystem. Putting it on the internal disk does not fit today: the disk has no free space, and its only large partition holds the console's own data.
+- ~~This does not move the root filesystem.~~ Written before the rootfs work later the same day: the root filesystem was moved into a 16 GiB image inside `sda27` — see the section at the top of this file. The image is a regular file, not a new partition; Orbis data was not repartitioned.
 - `deploy-boot-7.0.sh` writes to the USB drive and would take priority again; use the FTP script for this path.
 - Old files from an earlier experiment remain in `/user/system/boot/` on the internal disk (including a 3.7 GB tarball). They are only used if a file is missing from `/data/linux/boot/`, and are scheduled for removal.
 

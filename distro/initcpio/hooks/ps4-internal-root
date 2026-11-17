@@ -1,0 +1,114 @@
+#!/usr/bin/ash
+# mkinitcpio runtime hook: boot the root filesystem from an image file on the PS4's internal disk.
+#
+# Installed in the initramfs as /hooks/ps4-internal-root; init sources it and calls run_hook(). The variables
+# of init (root, rootfstype, rwopt, fastboot) are shared, so changing them here changes what init mounts.
+# On ANY failure everything created here is torn down and "root" is left untouched, so the system falls back
+# to the normal root= (the USB drive). Never use "set -e" or "${var:?}" here: init is PID 1 and must not exit.
+#
+# Requested with ps4root=internal (read-write) or ps4root=internal-ro (read-only, no fsck) on the command line.
+# Needs, inside the initramfs: /key/eap_hdd_key.bin (32 raw bytes), /etc/ps4root/rootfs.table, /etc/ps4root/meta
+# (appended as a cpio fragment by append_boot_fragment.py) and the dmsetup binary.
+
+ps4root_log() {
+    echo "ps4-internal-root: $*" > /dev/kmsg 2>/dev/null
+    echo "ps4-internal-root: $*"
+}
+
+ps4root_teardown() {
+    dmsetup remove -f ps4root 2>/dev/null
+    dmsetup remove -f ps4hdd 2>/dev/null
+    rm -rf /key
+}
+
+ps4root_fail() {
+    ps4root_log "FAILED: $1 -> keeping root=$root"
+    ps4root_teardown
+    return 0
+}
+
+run_hook() {
+    local mode ro dev sectors node size magic uuid keyhex v val
+
+    mode="$(getarg ps4root)"
+    ro=""
+    case "$mode" in
+        internal)    ;;
+        internal-ro) ro="-r" ;;
+        *)           return 0 ;;
+    esac
+
+    [ -r /key/eap_hdd_key.bin ]      || { ps4root_fail "no drive key in the initramfs"; return 0; }
+    [ -r /etc/ps4root/rootfs.table ] || { ps4root_fail "no block-map table"; return 0; }
+    [ -r /etc/ps4root/meta ]         || { ps4root_fail "no meta file"; return 0; }
+    command -v dmsetup >/dev/null    || { ps4root_fail "dmsetup is missing"; return 0; }
+
+    # shellcheck disable=SC1091
+    . /etc/ps4root/meta
+    for v in PS4ROOT_PARTUUID PS4ROOT_CRYPT_SECTORS PS4ROOT_IV_OFFSET PS4ROOT_IMAGE_BYTES \
+             PS4ROOT_TABLE_SHA256 PS4ROOT_EXT4_UUID; do
+        eval "val=\${$v}"
+        [ -n "$val" ] || { ps4root_fail "the meta file lacks $v"; return 0; }
+    done
+
+    # 1. the table must be exactly the one that was verified
+    [ "$(sha256sum /etc/ps4root/rootfs.table | cut -c1-64)" = "$PS4ROOT_TABLE_SHA256" ] \
+        || { ps4root_fail "table checksum mismatch"; return 0; }
+
+    # 2. wait for the internal partition by PARTUUID (independent of the sdX order)
+    dev="/dev/disk/by-partuuid/$PS4ROOT_PARTUUID"
+    poll_device "$dev" 30 || { ps4root_fail "internal partition not found ($dev)"; return 0; }
+    sectors="$(cat "/sys/class/block/$(basename "$(readlink -f "$dev")")/size")"
+    [ "$sectors" = "$PS4ROOT_CRYPT_SECTORS" ] \
+        || { ps4root_fail "partition size $sectors != $PS4ROOT_CRYPT_SECTORS"; return 0; }
+
+    # 3. dm-crypt. The table goes in on standard input so the key never appears in a command line.
+    export DM_DISABLE_UDEV=1
+    keyhex="$(xxd -p -c 64 /key/eap_hdd_key.bin)"
+    printf '%s\n' "0 $sectors crypt aes-xts-plain64 $keyhex $PS4ROOT_IV_OFFSET $dev 0" \
+        | dmsetup --noudevsync create $ro ps4hdd \
+        || { keyhex=""; ps4root_fail "the dm-crypt mapping failed"; return 0; }
+    keyhex=""
+    rm -rf /key          # the kernel keeps its own copy of the key; the file is not needed any more
+    [ -b /dev/mapper/ps4hdd ] || dmsetup mknodes ps4hdd
+    [ -b /dev/mapper/ps4hdd ] || { ps4root_fail "no /dev/mapper/ps4hdd node"; return 0; }
+
+    # 4. it must look like UFS2: superblock magic 0x19540119 at byte 0x1055C (little-endian bytes 19 01 54 19)
+    magic="$(dd if=/dev/mapper/ps4hdd bs=1 skip=66908 count=4 2>/dev/null | xxd -p)"
+    [ "$magic" = "19015419" ] || { ps4root_fail "no UFS2 magic ($magic): wrong key or iv_offset"; return 0; }
+
+    # 5. dm-linear over the blocks of the image file
+    dmsetup --noudevsync create $ro ps4root < /etc/ps4root/rootfs.table \
+        || { ps4root_fail "the dm-linear mapping failed"; return 0; }
+    [ -b /dev/mapper/ps4root ] || dmsetup mknodes ps4root
+    [ -b /dev/mapper/ps4root ] || { ps4root_fail "no /dev/mapper/ps4root node"; return 0; }
+    node="$(basename "$(readlink -f /dev/mapper/ps4root)")"
+    size=$(( $(cat "/sys/class/block/$node/size") * 512 ))
+    [ "$size" = "$PS4ROOT_IMAGE_BYTES" ] \
+        || { ps4root_fail "image size $size != $PS4ROOT_IMAGE_BYTES"; return 0; }
+
+    # 6. it must be our ext4: magic 0xEF53 at offset 1080 (bytes 53 ef) and the recorded UUID
+    magic="$(dd if=/dev/mapper/ps4root bs=1 skip=1080 count=2 2>/dev/null | xxd -p)"
+    [ "$magic" = "53ef" ] || { ps4root_fail "no ext4 on the image ($magic)"; return 0; }
+    uuid="$(blkid -s UUID -o value /dev/mapper/ps4root)"
+    [ "$uuid" = "$PS4ROOT_EXT4_UUID" ] \
+        || { ps4root_fail "ext4 UUID $uuid != $PS4ROOT_EXT4_UUID"; return 0; }
+
+    # 7. a trial read-only mount before committing to it
+    mkdir -p /tmp/ps4root_trial
+    mount -t ext4 -o ro /dev/mapper/ps4root /tmp/ps4root_trial \
+        || { ps4root_fail "the trial mount failed"; return 0; }
+    umount /tmp/ps4root_trial
+
+    # 8. commit. init's fsck_root() reads root from the command-line cache, not from the variable,
+    #    so the cache must be rewritten too or init would fsck the USB drive instead.
+    root=/dev/mapper/ps4root
+    rootfstype=ext4
+    sed -i 's|^root=.*|root=/dev/mapper/ps4root|' /tmp/cmdline
+    if [ -n "$ro" ]; then
+        rwopt=ro
+        fastboot=1       # no fsck (it would write) on a read-only test boot
+    fi
+    ps4root_log "OK: root is now /dev/mapper/ps4root ($mode)"
+    return 0
+}

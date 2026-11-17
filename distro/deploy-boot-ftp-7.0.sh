@@ -16,11 +16,14 @@
 #
 # Usage:
 #   ./deploy-boot-ftp-7.0.sh <TAG> [--vram MB] [--ip IP] [--port N] [--no-marker] [--dry-run]
-#                                  [--allow-usb-conflict]
+#                                  [--allow-usb-conflict] [--internal-root DIR]
 #   --vram MB             also writes vram.txt (32..4096). Without it the PS4's vram.txt is left alone
 #   --no-marker           do not append bootsrc=internal to bootargs (it is appended by default)
 #   --allow-usb-conflict  go on even if the USB drive has boot files (the USB drive wins!)
 #   --dry-run             only show what would be done; nothing is written to the PS4
+#   --internal-root DIR   DIR must contain rootfs.table and meta; builds key-bearing initramfs
+#                         (appends /key/eap_hdd_key.bin, /etc/ps4root/rootfs.table, /etc/ps4root/meta)
+#                         and uploads that instead of the tag's initramfs
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -35,6 +38,7 @@ DRY=0
 ALLOW_USB=0
 REMOTE_DIR="/data/linux/boot"
 MARKER_TOKEN="bootsrc=internal"
+INTERNAL_ROOT_DIR=""
 
 die() { echo "ERROR: $*" >&2; exit 1; }
 
@@ -46,12 +50,13 @@ while [ $# -gt 0 ]; do
     --no-marker) MARKER=0; shift ;;
     --allow-usb-conflict) ALLOW_USB=1; shift ;;
     --dry-run) DRY=1; shift ;;
-    -h|--help) sed -n 2,23p "$0"; exit 0 ;;
+    --internal-root) INTERNAL_ROOT_DIR="${2:-}"; shift 2 ;;
+    -h|--help) sed -n 2,24p "$0"; exit 0 ;;
     -*) die "unknown option: $1" ;;
     *) [ -z "$TAG" ] || die "duplicate tag: $1"; TAG="$1"; shift ;;
   esac
 done
-[ -n "$TAG" ] || die "usage: $0 <TAG> [--vram MB] [--ip IP] [--no-marker] [--dry-run]"
+[ -n "$TAG" ] || die "usage: $0 <TAG> [--vram MB] [--ip IP] [--no-marker] [--dry-run] [--internal-root DIR]"
 
 command -v curl >/dev/null || die "curl not found"
 command -v md5sum >/dev/null || die "md5sum not found"
@@ -69,6 +74,29 @@ SRC_INITRD="$BOOT_DIR/initramfs-7.0-$TAG.cpio.gz"
 for f in "$SRC_KERNEL" "$SRC_ARGS" "$SRC_INITRD"; do
   [ -s "$f" ] || die "tag file missing or empty: $f"
 done
+
+# --internal-root: build key-bearing initramfs
+if [ -n "$INTERNAL_ROOT_DIR" ]; then
+  [ -d "$INTERNAL_ROOT_DIR" ] || die "--internal-root: directory not found: $INTERNAL_ROOT_DIR"
+  [ -s "$INTERNAL_ROOT_DIR/rootfs.table" ] || die "--internal-root: rootfs.table missing or empty"
+  [ -s "$INTERNAL_ROOT_DIR/meta" ] || die "--internal-root: meta missing or empty"
+  KEY_FILE="$HOME/ps4-keys/eap_hdd_key.bin"
+  [ -s "$KEY_FILE" ] || die "EAP key not found: $KEY_FILE (32 bytes required)"
+  [ "$(stat -c %s "$KEY_FILE")" -eq 32 ] || die "EAP key must be exactly 32 bytes"
+  echo "--- internal-root: building key-bearing initramfs"
+  TOOLS_DIR="/mnt/hdauxiliar/ps4-linux-baikal/others/tools/ps4_internal_root"
+  IR_WORK="$(mktemp -d --tmpdir=/dev/shm internal-root-XXXXXX)"
+  chmod 700 "$IR_WORK"
+  trap 'rm -rf "$IR_WORK"' EXIT
+  python3 -I "$TOOLS_DIR/append_boot_fragment.py" \
+    --initramfs "$SRC_INITRD" \
+    --out "$IR_WORK/initramfs.cpio.gz" \
+    --key "$KEY_FILE" \
+    --table "$INTERNAL_ROOT_DIR/rootfs.table" \
+    --meta "$INTERNAL_ROOT_DIR/meta"
+  SRC_INITRD="$IR_WORK/initramfs.cpio.gz"
+  echo "    OK   key-bearing initramfs ready"
+fi
 
 FTP="ftp://$IP:$PORT"
 CURL=(curl -s --max-time 120)
@@ -131,7 +159,11 @@ fi
 
 # 5. backup of what is already on the PS4
 BK="$HOME/ps4-boot-internal-backup-$(date +%Y%m%d_%H%M%S)"
-mkdir -p "$BK"
+if [ -n "$INTERNAL_ROOT_DIR" ]; then
+  mkdir -m 700 -p "$BK"
+else
+  mkdir -p "$BK"
+fi
 HAVE_OLD=0
 REMOTE_LIST="$("${CURL[@]}" "$FTP$REMOTE_DIR/" 2>/dev/null || true)"
 for n in "${NAMES[@]}" active-tag.txt; do
