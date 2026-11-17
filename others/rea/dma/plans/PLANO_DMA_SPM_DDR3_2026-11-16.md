@@ -292,4 +292,6 @@ Estado deixado: janela restaurada a zero (conferida), `baikal-memory` de volta a
 
 **Gravação no HD (feita em 2026-11-16):** com o HD plugado no PC, `distro/scripts/install-modules-7.0.sh` (backup dos módulos antes; `rc=0`) e `distro/deploy-boot-7.0.sh 20261116-dma-final` (`md5` conferido, partições desmontadas). `bootargs` e `initramfs` são cópias da `20261116-dma-test`. O aviso do script de build sobre `bzImage` "acima de 10 MB" não se confirma: a tag tem 10,56 MiB, igual ao kernel que rodava, e tags de 15 MiB também subiram.
 
-**Única pendência:** o primeiro boot da tag no console (recolocar o HD no PS4) e a validação final: módulo com `use_dma=Y` e `ativo DMAC1` sem parâmetros, leitura de 1 MiB a ~550 MB/s.
+**Validação final no console (feita, `test_history` 99):** no boot que subiu, módulo carregado sem parâmetros com `use_dma=Y`, `ativo DMAC1` depois da primeira leitura, 1 MiB a 513–642 MB/s, desalinhada `cpu 5 / dma 4092`, lacuna 0 bytes, `dmesg` sem erro.
+
+**Sem pendências do plano.** Ressalvas que ficam registradas (BACKLOG 3d e 3e): o fallback por erro do DMAC nunca foi exercitado ao vivo (fora dos 10 testes do plano), e na 1ª tentativa de boot da tag o console desligou sozinho (causa desconhecida; a 2ª subiu).
