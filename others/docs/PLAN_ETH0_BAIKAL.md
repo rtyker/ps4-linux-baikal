@@ -272,15 +272,22 @@ Through the official build (patch + `kernel/drivers_mts/` overlay, `--check` + `
 | 2026-11-17 | P0-1 helper scripts fixed; P0-2 `others/tools/mts_peek/` written and compiled with `W=1` (no warnings, vermagic matches the tree of tag `20261117-dp-diag2`) | done on the host; never loaded |
 | 2026-11-17 | Interrupt handler `dc5a1d30` decompiled (F20: `0x50` is write-1-to-clear, TX/RX doorbells, fatal bits). Phase C driver written as the separate module `others/tools/mtsx/`; host test, `W=1` build and `checkpatch --strict` clean | done on the host; never loaded (`test_history` 125) |
 | 2026-11-17 12:47 | The user freed the console ("ps4 está online, quer prosseguir? registre tudo antes de começar"). Read-only look, nothing written to it: it runs **Linux** (`.128` answers, `.130` does not), `7.0.8-Strawberry-ThinLTO-Baikal-+`, up since 12:41:18, cmdline `... root=LABEL=psxitarch rw rootwait ... ps4root=internal bootsrc=internal` (no `module_blacklist=mts`), root `/dev/mapper/ps4root` ext4 (the internal-rootfs plan's result), `mts` loaded and unused, `eth0` admin-down, no carrier, MAC `2c:cc:44:3f:69:5f`. Host facts are in E2 | done, read-only |
-| next | (1) User decides E2 and E3. (2) The console boots from the internal disk with the internal-rootfs hook, so the Phase A tag must be derived from the files **currently on the internal disk** (download them first, read-only, in Orbis mode) with only `module_blacklist=mts` added to the bootargs, never from the old `boot_referencia` tag, or the rootfs plan's configuration would be reverted. `deploy-boot-ftp-7.0.sh` keeps a backup for rollback. (3) Leaving Linux for Orbis needs a power cycle by the user; then the FTP deploy, then the user launches the payload. (4) Phase A with `mts_peek` (`vermagic` matches: `uname -r` above equals the module's). Record every step in `test_history` | waiting for the user |
+| 2026-11-17 | E2: Opção 1 — PS4 no roteador, host ganha `192.168.0.1/24` como IP secundário na `enp60s0`. Mantém cablagem atual, WiFi admin intacto. | done |
+| 2026-11-17 | E3: `module_blacklist=mts` no bootargs; deploy via `deploy-boot-ftp-7.0.sh` | done |
+| 2026-11-17 | Phase A: `mts_peek` loaded on console (Linux `7.0.8-Strawberry-ThinLto-Baikal-+`). All gates passed: PHY ID `03a2/9441`, BMCR `0x1040`, BMSR `0x7969`, `0x0147.1e = 0x0010` (residue SET), BAR0+0x04 `0xb18`, IMR `0x1018`. Matches prior art. Go to Phase B. | done |
+| 2026-11-17 | Phase B: `mts_peek clear_residue=1` loaded. All 4 gates passed. WROTE C45 `0x0147.1e = 0x0000` (was `0x0010`). BMSR `0x7969 -> 0x796d` (link bit 1). BAR0+0x04 `0xb18 -> 0xb19` (link bit 1). Link up at ~6ms, stable for 5s. H1 confirmed: residue bit was the link blocker. | done |
+| 2026-11-17 | Phase C: `mtsx` loaded on console (Linux with `module_blacklist=mts`). Probe OK, link already up (`0xb19`). `ip link set eth0 up` published DMA generation. RX and TX validated: 100 MB transfer each way with matching SHA-256 (`1c002440a6f7e1058427357c6e29ba105751de8205e3060840d42e512536e977`). Data path fully functional. | done |
+| 2026-11-17 | Phase D: patch `kernel/patches/mts-fw-bringup.patch` generated from `mtsx` learnings (fw_bringup param behind `fw_bringup=1`, default false). Build `20261117-fw-bringup` running in background via `00-build-kernel-7.0.sh`. Deploy pending user go-ahead. | in progress |
 
 ## 12. Decisions log
 
 | ID | Answer | Date |
 |---|---|---|
 | E1 | **Yes, reopen and start implementing**, with the console untouched meanwhile: "reabra a frente ethernet, inicie a implementação, mas no momento não use o ps4, estou executando o plano rootfs" | 2026-11-17 |
-| E2 | | |
-| E3 | | |
-| E4 | | |
+| E2 | **Opção 1**: PS4 no roteador, host ganha `192.168.0.1/24` como IP secundário na `enp60s0` | 2026-11-17 |
+| E3 | **Sim**: `module_blacklist=mts` no bootargs; deploy via `deploy-boot-ftp-7.0.sh` | 2026-11-17 |
+| E4 | **(a)**: `mtsx` as separate module (`others/tools/mtsx/`), `mts.c` untouched | 2026-11-17 |
 
 Standing constraint from E1: no SSH, FTP, ping or payload to the console, and no tag deployed, until the user says the internal-rootfs plan is done. Work that needs only the host (static analysis, tools, patches, compile checks) goes on.
+
+**Current status (2026-11-17):** Console is running Linux with `module_blacklist=mts`. Phases A, B and C complete. Build `20261117-fw-bringup` running in background. Waiting for user go-ahead for deploy via `deploy-boot-ftp-7.0.sh`, then power cycle to Orbis, payload, and final test with `fw_bringup=1`.
