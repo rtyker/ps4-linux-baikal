@@ -1,0 +1,10 @@
+# Artefatos do kbuild (módulo externo)
+*.ko
+*.o
+*.mod
+*.mod.c
+*.mod.o
+.*.cmd
+.module-common.o
+modules.order
+Module.symvers

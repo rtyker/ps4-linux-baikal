@@ -1,0 +1,6 @@
+# Settings for baikal-spm-swap.service (swap on the Baikal SPM/DDR3, moved by DMA).
+#
+# PRIORITY: swap priority. zram uses 100. Below 100 the SPM only takes what zram cannot hold.
+# Above 100 the SPM is used first, which keeps more RAM free but pages in slower than zram:
+# about 112 MB/s for single 4 KiB pages, against several hundred MB/s on large transfers.
+PRIORITY=50

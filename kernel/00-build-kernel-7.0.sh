@@ -149,6 +149,7 @@ preflight() {
   for p in ahci-baikal-polling-fallback.patch ps4-icc-rtc-wrapper.patch \
            ps4-icc-proc-debug.patch mts-baikal-gbe-driver.patch \
            baikal-memory-fase2.patch baikal-dmac.patch baikal-memory-dma.patch \
+           baikal-spm-blk.patch \
            clocksource-baikal-hpet.patch baikal-wdt.patch \
            ps4-bridge-dp-init.patch ps4-dp-link-rate-270000.patch \
            ps4-bridge-keep-mode.patch ps4-icc-s5-poweroff-prepare.patch; do
@@ -529,6 +530,29 @@ fi
 
 git apply "$PATCH_BAIKAL_MEM_DMA"
 echo "✓ Patch baikal-memory-dma aplicado com sucesso (git apply, validado com --check)"
+
+# Dispositivo de bloco sobre a SPM/DDR3 (swap): /dev/baikal_spm0, movido pelo
+# dmaengine do baikal-dmac. Patch independente (so drivers/block/{Kconfig,Makefile}
+# e um arquivo novo), habilitado como modulo mais abaixo. Mesmo padrao rigoroso:
+# `--check` antes, `exit 1` se falhar.
+PATCH_BAIKAL_SPM_BLK="$SCRIPT_DIR/patches/baikal-spm-blk.patch"
+if [ ! -f "$PATCH_BAIKAL_SPM_BLK" ]; then
+  echo "❌ ERRO FATAL: $PATCH_BAIKAL_SPM_BLK não encontrado"
+  echo "  Sem ele o build perde o dispositivo de bloco/swap sobre a SPM."
+  exit 1
+fi
+
+if ! git apply --check "$PATCH_BAIKAL_SPM_BLK" 2>/tmp/baikal_spm_blk_patch_check.log; then
+  echo "❌ ERRO FATAL: patch baikal-spm-blk não aplica contra o kernel atual:"
+  cat /tmp/baikal_spm_blk_patch_check.log
+  echo ""
+  echo "  Regenere o patch a partir de uma árvore limpa (ver AGENTS.md,"
+  echo "  seção 'Idempotência de Alterações no Kernel') e substitua $PATCH_BAIKAL_SPM_BLK."
+  exit 1
+fi
+
+git apply "$PATCH_BAIKAL_SPM_BLK"
+echo "✓ Patch baikal-spm-blk aplicado com sucesso (git apply, validado com --check)"
 
 # HPET clocksource + watchdog do Baikal: os dois patches existiam em patches/ mas
 # NUNCA eram aplicados por este script — o código só entrava na árvore porque
@@ -1013,6 +1037,8 @@ scripts/config --enable CONFIG_DMA_ENGINE
 scripts/config --enable CONFIG_DMA_VIRTUAL_CHANNELS
 scripts/config --module CONFIG_BAIKAL_DMAC
 scripts/config --module CONFIG_DMATEST
+# Dispositivo de bloco (swap) sobre a SPM; depende de PCI e DMA_ENGINE (acima).
+scripts/config --module CONFIG_BAIKAL_SPM_BLK
 
 # HPET/Clocksource do Baikal (glue 00:14.4, subfunção ICC 22): clocksource
 # baseado no contador principal de 64 bits do HPET. Habilitado como módulo

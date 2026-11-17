@@ -54,6 +54,7 @@ PS4_MODULES=(
     "drivers/clocksource/baikal-hpet.ko"
     "drivers/rtc/rtc-ps4-icc.ko"
     "drivers/misc/baikal-memory.ko"
+    "drivers/block/baikal-spm-blk.ko"
 )
 
 for mod_rel in "${PS4_MODULES[@]}"; do

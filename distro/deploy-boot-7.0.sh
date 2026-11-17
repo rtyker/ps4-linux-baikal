@@ -88,11 +88,11 @@ check_source "$BOOTARGS"  "$MIN_BOOTARGS"  "bootargs.txt"
 # A partição BOOT é pequena (~197 MB) e acumula bzImages antigos. Quando lota,
 # o `cp` do backup trunca silenciosamente (foi o que gerou um backup de 462 KB
 # no lugar de 15.8 MB). Conferir antes é mais barato que descobrir depois.
-NEED=$(( $(stat -c%s "$BZIMAGE") + $(stat -c%s "$INITRAMFS") + $(stat -c%s "$BOOTARGS") ))
+NEED=$(( $(stat -c%s "$BZIMAGE") + $(stat -c%s "$INITRAMFS") + $(stat -c%s "$BOOTARGS") + $(stat -c%s "$CONFIG") ))
 AVAIL=$(( $(df -k --output=avail "$BOOT_MNT" | tail -1) * 1024 ))
 # o espaço dos arquivos ativos atuais será liberado ao sobrescrevê-los, e os
 # bzImages antigos serão removidos logo abaixo — contar ambos como disponíveis
-for f in bzImage initramfs.cpio.gz bootargs.txt; do
+for f in bzImage initramfs.cpio.gz bootargs.txt config; do
   [ -f "$BOOT_MNT/$f" ] && AVAIL=$(( AVAIL + $(stat -c%s "$BOOT_MNT/$f") ))
 done
 for f in "$BOOT_MNT"/bzImage-7.0-*; do
@@ -139,6 +139,8 @@ fi
 cp "$BZIMAGE"   "$BOOT_MNT/bzImage"
 cp "$BOOTARGS"  "$BOOT_MNT/bootargs.txt"
 cp "$INITRAMFS" "$BOOT_MNT/initramfs.cpio.gz"
+# The kernel config of the tag goes along, so the one on the BOOT partition is never from an older tag.
+cp "$CONFIG"    "$BOOT_MNT/config"
 [ -f "$BOOT_MNT/vram.txt" ] || echo "1024" > "$BOOT_MNT/vram.txt"
 : > "$BOOT_MNT/bootlog.txt"
 echo "$TAG" > "$BOOT_MNT/active-tag.txt"
@@ -166,6 +168,7 @@ check_md5() {
 check_md5 "$BZIMAGE"   "$BOOT_MNT/bzImage"           "bzImage"
 check_md5 "$BOOTARGS"  "$BOOT_MNT/bootargs.txt"      "bootargs.txt"
 check_md5 "$INITRAMFS" "$BOOT_MNT/initramfs.cpio.gz" "initramfs.cpio.gz"
+check_md5 "$CONFIG"    "$BOOT_MNT/config"             "config"
 
 if [ "$FAIL" -ne 0 ]; then
   echo

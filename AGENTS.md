@@ -566,6 +566,17 @@ p.write_text(src.replace(old, new), encoding="utf-8")
 
 ---
 
+## 💾 Swap na SPM/DDR3 por DMA (`baikal-spm-blk`) — 2026-11-16
+
+Disco `/dev/baikal_spm0` (módulo `baikal-spm-blk`, `kernel/patches/baikal-spm-blk.patch`, `CONFIG_BAIKAL_SPM_BLK=m`) sobre a SPM, movido pelo `baikal-dmac`. Plano e resultados: `others/rea/spm/plans/PLANO_SWAP_SPM_2026-11-16.md` (`test_history` 104–107).
+
+- **Capacidade medida: 188 MiB**, e **não** 256 MB nem 1 GiB: a SPM devolve zeros de 0 a 188 MiB e `0xFF` depois, vista pela CPU e pelo DMA. Uma medição antiga dava 256 MB; as duas discordam sem explicação, então o driver **confere a memória ao carregar** (`spm_probe_region`) e recusa o disco se ela não responder. Padrão: `offset_mb=4`, `size_mb=180`; recusa passar de 188.
+- **Validado ao vivo** (módulo compilado fora da árvore, mesmo fonte menos o `spm_probe_region`): bloco 8/8, swap real 10/10 com cgroup, 0 blocos corrompidos, 144 MiB para fora e 405 MiB de volta pela SPM, ~20× mais rápido que a cópia pela CPU. **NÃO validado no console:** o módulo do build oficial (tags `20261116-spm-swap` e `-spm-swap2`) e o `spm_probe_region`. **Nada disso está no HD.**
+- **Regra de projeto do driver:** swap precisa progredir sem memória, então **nenhuma alocação no caminho de I/O**; o `baikal-dmac` aloca com `GFP_NOWAIT` e pode falhar, e isso (ou timeout, ou aborto) só manda aquele pedaço para a CPU, sem desligar o DMA. O aborto do DMAC só chega por `callback_result` (mesma lição do `baikal-memory`).
+- **Empacotamento:** `distro/baikal-spm-swap.service` + `distro/baikal-spm-swap.default` + `distro/scripts/install-spm-swap.sh <ROOTFS>` (idempotente; prioridade padrão 50, abaixo do zram em 100). O módulo vem do `install-modules-7.0.sh`.
+- **Roteiros de teste ao vivo:** `others/tests/dma/` (README com uso e armadilhas). Harness de varredura: `others/rea/dma/harness/baikal_spm_scan/` (**só leitura** por padrão; `wtest=1` escreve, limitado a blocos < 188).
+- **Regras que custaram tempo hoje:** (1) **não compile módulo fora da árvore enquanto o build oficial roda** (os dois usam `kernel/kernel_build_7.0`); (2) mudar o `.config` (novo `scripts/config`) invalida o ccache: **7 min 18 s** contra **57 s** com o config igual, então agrupe as mudanças de config num build só; (3) **teste do `deploy-boot-7.0.sh` só em tmpfs** (`/dev/shm`): no fim ele desmonta as partições do mesmo disco do destino, e uma pasta em `/tmp` desmontaria partições do PC.
+
 ## Localização da Documentação
 - **Fonte única de documentação do projeto a partir de 2026-07-19: `others/docs/`.** Ignorar qualquer coisa em `old_project/` para fins de documentação (inclusive `old_project/kernel/consolidado/LICOES_APRENDIDAS.md`, que tinha lições extras #24-27, mas foi descontinuado por decisão do usuário).
 - O arquivo de lições imperativas (REGRA #0, ler antes de qualquer ação) é `others/docs/LICOES_APRENDIDAS.md`.

@@ -1,0 +1,502 @@
+diff --git a/drivers/block/Kconfig b/drivers/block/Kconfig
+index 858320b..24cb3cd 100644
+--- a/drivers/block/Kconfig
++++ b/drivers/block/Kconfig
+@@ -108,6 +108,23 @@ source "drivers/block/mtip32xx/Kconfig"
+ 
+ source "drivers/block/zram/Kconfig"
+ 
++config BAIKAL_SPM_BLK
++	tristate "Block device on the Baikal SPM/DDR3 (for swap)"
++	depends on PCI && DMA_ENGINE
++	help
++	  Exposes the DDR3 memory of the Baikal southbridge (PCI 00:14.6) as
++	  /dev/baikal_spm0, moved by the baikal-dmac DMA engine, so it can be
++	  used as a fast swap device:
++
++	    mkswap /dev/baikal_spm0 && swapon -p 50 /dev/baikal_spm0
++
++	  Only the first 188 MiB of the memory answer on the console this was
++	  measured on, so the device is at most that size. Without a DMA channel
++	  it falls back to CPU copies, which are about 20 times slower.
++
++	  To compile this driver as a module, choose M here: the module will be
++	  called baikal-spm-blk. If unsure, say N.
++
+ config BLK_DEV_UBD
+ 	bool "Virtual block device"
+ 	depends on UML
+diff --git a/drivers/block/Makefile b/drivers/block/Makefile
+index 2d8096e..4a4f2f9 100644
+--- a/drivers/block/Makefile
++++ b/drivers/block/Makefile
+@@ -32,6 +32,7 @@ obj-$(CONFIG_BLK_DEV_RBD)     += rbd.o
+ obj-$(CONFIG_BLK_DEV_PCIESSD_MTIP32XX)	+= mtip32xx/
+ 
+ obj-$(CONFIG_ZRAM) += zram/
++obj-$(CONFIG_BAIKAL_SPM_BLK)	+= baikal-spm-blk.o
+ obj-$(CONFIG_BLK_DEV_RNBD)	+= rnbd/
+ 
+ obj-$(CONFIG_BLK_DEV_NULL_BLK)	+= null_blk/
+diff --git a/drivers/block/baikal-spm-blk.c b/drivers/block/baikal-spm-blk.c
+new file mode 100644
+index 0000000..43547e5
+--- /dev/null
++++ b/drivers/block/baikal-spm-blk.c
+@@ -0,0 +1,456 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * baikal-spm-blk - block device on the Baikal SPM/DDR3 (PCI 00:14.6), moved by the baikal-dmac DMA engine.
++ *
++ * The southbridge has a small DDR3 memory next to it. Reading it with the CPU is slow (about 4 MB/s), but
++ * the baikal-dmac controller moves it at hundreds of MB/s, so it works as a fast swap device:
++ *
++ *     mkswap /dev/baikal_spm0 && swapon -p 10 /dev/baikal_spm0
++ *
++ * Measured on the console (PS4 Pro, Baikal): the memory answers as zeros from 0 up to 188 MiB and as 0xFF
++ * (nothing there) from 188 MiB on, both through the CPU and through the DMAC. That is the most the driver
++ * accepts. The first 4 MiB are left to /dev/baikal-memory by default.
++ *
++ * Swap needs the I/O path to make progress when memory is short, so nothing is allocated while handling a
++ * bio: the staging buffers are allocated at load time. The DMA descriptors are allocated by baikal-dmac with
++ * GFP_NOWAIT and may fail; that, a timeout or an aborted transfer only moves that piece to a CPU copy through
++ * the BAR2. Only repeated hard errors turn the DMA off until the module is reloaded.
++ */
++#include <linux/module.h>
++#include <linux/pci.h>
++#include <linux/blkdev.h>
++#include <linux/bio.h>
++#include <linux/highmem.h>
++#include <linux/dmaengine.h>
++#include <linux/dma-mapping.h>
++#include <linux/completion.h>
++#include <linux/workqueue.h>
++#include <linux/mutex.h>
++#include <linux/vmalloc.h>
++#include <linux/io.h>
++#include <linux/sizes.h>
++
++#define DRV_NAME	"baikal_spm_blk"
++#define SPM_VENDOR	0x104d
++#define SPM_DEVICE	0x90dd
++#define DMAC_DEVICE	0x90dc
++#define SPM_PCI_BAR2	0x80000000UL	/* where the CPU sees the SPM */
++#define SPM_DMA_BASE	0xC0000000UL	/* where the DMAC sees the SPM */
++#define SPM_USABLE_MB	188		/* measured: zeros below, 0xFF above */
++#define STAGE_SIZE	SZ_1M		/* one DMA transfer; also the staging buffer size */
++#define MAX_HARD_ERRORS	8
++
++static unsigned int offset_mb = 4;
++module_param(offset_mb, uint, 0444);
++MODULE_PARM_DESC(offset_mb, "first MiB of the SPM used by the device (default 4: the first 4 MiB belong to /dev/baikal-memory)");
++
++static unsigned int size_mb = 180;
++module_param(size_mb, uint, 0444);
++MODULE_PARM_DESC(size_mb, "device size in MiB (default 180); offset_mb + size_mb must not pass 188");
++
++static bool use_dma = true;
++module_param(use_dma, bool, 0644);
++MODULE_PARM_DESC(use_dma, "move data with the DMA controller (default on); off uses the CPU only");
++
++struct spm_blk {
++	struct gendisk		*disk;
++	struct pci_dev		*spm;
++	void __iomem		*bar2;		/* CPU view of the device region, for the fallback */
++	u64			base;		/* byte offset of the device inside the SPM */
++	u64			size;
++	struct mutex		lock;		/* serializes I/O: there is a single staging buffer */
++
++	void			*cpu_buf;	/* staging when there is no DMA channel */
++	void			*bounce;	/* coherent staging the DMAC can reach */
++	dma_addr_t		bounce_dma;
++	struct dma_chan		*chan;
++	struct delayed_work	chan_work;	/* gets the channel later if baikal-dmac was not up yet */
++	struct completion	done;
++	enum dmaengine_tx_result res;
++	bool			dma_off;	/* too many hard errors */
++
++	atomic64_t		dma_bytes;
++	atomic64_t		cpu_bytes;
++	atomic64_t		dma_fallbacks;	/* pieces that went to the CPU although DMA was on */
++	atomic64_t		dma_errors;	/* aborts and timeouts (not out-of-memory) */
++};
++
++static struct spm_blk *g_dev;
++
++/* ------------------------------------------------------------------------- */
++/* DMA channel                                                               */
++/* ------------------------------------------------------------------------- */
++
++static bool dmac_filter(struct dma_chan *c, void *unused)
++{
++	struct device *dev = c->device->dev;
++	struct pci_dev *pdev;
++
++	if (!dev || !dev_is_pci(dev))
++		return false;
++	pdev = to_pci_dev(dev);
++	return pdev->vendor == SPM_VENDOR && pdev->device == DMAC_DEVICE;
++}
++
++static void spm_chan_work(struct work_struct *w)
++{
++	struct spm_blk *d = container_of(to_delayed_work(w), struct spm_blk, chan_work);
++	struct dma_chan *chan;
++	dma_addr_t dma;
++	void *bounce;
++	dma_cap_mask_t mask;
++
++	if (d->chan)
++		return;
++
++	dma_cap_zero(mask);
++	dma_cap_set(DMA_MEMCPY, mask);
++	chan = dma_request_channel(mask, dmac_filter, NULL);
++	if (!chan)
++		goto again;
++
++	bounce = dma_alloc_coherent(chan->device->dev, STAGE_SIZE, &dma, GFP_KERNEL);
++	if (!bounce || upper_32_bits(dma + STAGE_SIZE - 1)) {
++		pr_warn(DRV_NAME ": no coherent staging buffer below 4 GiB, staying on the CPU\n");
++		if (bounce)
++			dma_free_coherent(chan->device->dev, STAGE_SIZE, bounce, dma);
++		dma_release_channel(chan);
++		return;
++	}
++
++	mutex_lock(&d->lock);
++	d->bounce = bounce;
++	d->bounce_dma = dma;
++	d->chan = chan;
++	mutex_unlock(&d->lock);
++	pr_info(DRV_NAME ": DMA channel %s acquired\n", dma_chan_name(chan));
++	return;
++again:
++	schedule_delayed_work(&d->chan_work, 2 * HZ);
++}
++
++/* ------------------------------------------------------------------------- */
++/* Moving one piece between the staging buffer and the SPM                   */
++/* ------------------------------------------------------------------------- */
++
++static void spm_dma_cb(void *param, const struct dmaengine_result *result)
++{
++	struct spm_blk *d = param;
++
++	d->res = result ? result->result : DMA_TRANS_NOERROR;
++	complete(&d->done);
++}
++
++/* Caller holds d->lock and has a channel. Returns 0, -ENOMEM (transient) or another error. */
++static int spm_xfer_dma(struct spm_blk *d, bool write, u64 off, size_t len)
++{
++	struct dma_async_tx_descriptor *tx;
++	dma_addr_t spm = SPM_DMA_BASE + d->base + off;
++
++	d->res = DMA_TRANS_NOERROR;
++	reinit_completion(&d->done);
++	if (write)
++		tx = dmaengine_prep_dma_memcpy(d->chan, spm, d->bounce_dma, len,
++					       DMA_CTRL_ACK | DMA_PREP_INTERRUPT);
++	else
++		tx = dmaengine_prep_dma_memcpy(d->chan, d->bounce_dma, spm, len,
++					       DMA_CTRL_ACK | DMA_PREP_INTERRUPT);
++	if (!tx)
++		return -ENOMEM;
++
++	tx->callback_result = spm_dma_cb;
++	tx->callback_param = d;
++	if (dma_submit_error(dmaengine_submit(tx)))
++		return -EIO;
++	dma_async_issue_pending(d->chan);
++
++	if (!wait_for_completion_timeout(&d->done, 3 * HZ)) {
++		dmaengine_terminate_sync(d->chan);
++		return -ETIMEDOUT;
++	}
++	/* an aborted descriptor still completes: the outcome is in the result */
++	return d->res == DMA_TRANS_NOERROR ? 0 : -EIO;
++}
++
++static void spm_xfer_cpu(struct spm_blk *d, bool write, u64 off, size_t len, void *stage)
++{
++	if (write)
++		memcpy_toio(d->bar2 + off, stage, len);
++	else
++		memcpy_fromio(stage, d->bar2 + off, len);
++}
++
++/* The staging buffer is already filled for a write; for a read it is filled on return. */
++static void spm_xfer(struct spm_blk *d, bool write, u64 off, size_t len)
++{
++	void *stage = d->bounce ? d->bounce : d->cpu_buf;
++	int ret = -ENODEV;
++
++	if (use_dma && !d->dma_off && d->chan) {
++		ret = spm_xfer_dma(d, write, off, len);
++		if (!ret) {
++			atomic64_add(len, &d->dma_bytes);
++			return;
++		}
++		atomic64_inc(&d->dma_fallbacks);
++		if (ret != -ENOMEM) {
++			pr_warn_ratelimited(DRV_NAME ": DMA %s failed (%d), using the CPU for this piece\n",
++					    write ? "write" : "read", ret);
++			if (atomic64_inc_return(&d->dma_errors) >= MAX_HARD_ERRORS) {
++				d->dma_off = true;
++				pr_err(DRV_NAME ": too many DMA errors, DMA off until the module is reloaded\n");
++			}
++		}
++	}
++	spm_xfer_cpu(d, write, off, len, stage);
++	atomic64_add(len, &d->cpu_bytes);
++}
++
++/*
++ * The amount of SPM that answers is not the same on every boot or on every console: an older measurement
++ * saw 256 MB, 188 MiB was measured later. A swap device on memory that does not hold data would lose
++ * pages and hand back 0xFF, so before the disk is created, 64 bytes at five points of the region are
++ * written with two patterns, read back and restored. Any mismatch refuses the device.
++ */
++static int spm_probe_region(struct spm_blk *d)
++{
++	static const u8 pat[] = { 0xA5, 0x5A };
++	u8 save[64], rb[64];
++	unsigned int i, p;
++
++	for (i = 0; i < 5; i++) {
++		u64 off = ((d->size - SZ_4K) * i / 4) & ~63ULL;
++
++		memcpy_fromio(save, d->bar2 + off, sizeof(save));
++		for (p = 0; p < ARRAY_SIZE(pat); p++) {
++			memset(rb, pat[p], sizeof(rb));
++			memcpy_toio(d->bar2 + off, rb, sizeof(rb));
++			memset(rb, 0, sizeof(rb));
++			memcpy_fromio(rb, d->bar2 + off, sizeof(rb));
++			if (memchr_inv(rb, pat[p], sizeof(rb))) {
++				memcpy_toio(d->bar2 + off, save, sizeof(save));
++				pr_err(DRV_NAME ": SPM does not hold data at MiB %llu of the device (wrote 0x%02x, read 0x%02x): use a smaller size_mb\n",
++				       (unsigned long long)(off >> 20), pat[p], rb[0]);
++				return -ENODEV;
++			}
++		}
++		memcpy_toio(d->bar2 + off, save, sizeof(save));
++	}
++	return 0;
++}
++
++/* ------------------------------------------------------------------------- */
++/* Block layer                                                               */
++/* ------------------------------------------------------------------------- */
++
++static void spm_submit_bio(struct bio *bio)
++{
++	struct spm_blk *d = bio->bi_bdev->bd_disk->private_data;
++	struct bvec_iter it = bio->bi_iter;
++	bool write = op_is_write(bio->bi_opf);
++	u64 off = (u64)it.bi_sector << SECTOR_SHIFT;
++
++	if (!it.bi_size)			/* empty flush */
++		goto done;
++	if (bio_op(bio) != REQ_OP_READ && bio_op(bio) != REQ_OP_WRITE)
++		goto fail;
++	if (off + it.bi_size > d->size)
++		goto fail;
++
++	mutex_lock(&d->lock);
++	{
++		void *stage = d->bounce ? d->bounce : d->cpu_buf;
++
++		while (it.bi_size) {
++			size_t len = min_t(size_t, it.bi_size, STAGE_SIZE), pos = 0;
++
++			if (write) {
++				while (pos < len) {
++					struct bio_vec bv = bio_iter_iovec(bio, it);
++					size_t n = min_t(size_t, bv.bv_len, len - pos);
++
++					memcpy_from_page(stage + pos, bv.bv_page, bv.bv_offset, n);
++					bio_advance_iter_single(bio, &it, n);
++					pos += n;
++				}
++				spm_xfer(d, true, off, len);
++			} else {
++				spm_xfer(d, false, off, len);
++				while (pos < len) {
++					struct bio_vec bv = bio_iter_iovec(bio, it);
++					size_t n = min_t(size_t, bv.bv_len, len - pos);
++
++					memcpy_to_page(bv.bv_page, bv.bv_offset, stage + pos, n);
++					bio_advance_iter_single(bio, &it, n);
++					pos += n;
++				}
++			}
++			off += len;
++		}
++	}
++	mutex_unlock(&d->lock);
++done:
++	bio_endio(bio);
++	return;
++fail:
++	bio_io_error(bio);
++}
++
++static const struct block_device_operations spm_fops = {
++	.owner		= THIS_MODULE,
++	.submit_bio	= spm_submit_bio,
++};
++
++/* ------------------------------------------------------------------------- */
++/* sysfs counters                                                            */
++/* ------------------------------------------------------------------------- */
++
++#define SPM_ATTR(name, expr)							\
++static ssize_t name##_show(struct device *dev, struct device_attribute *a, char *buf)	\
++{										\
++	struct spm_blk *d = dev_to_disk(dev)->private_data;			\
++	return sysfs_emit(buf, "%lld\n", (long long)(expr));			\
++}										\
++static DEVICE_ATTR_RO(name)
++
++SPM_ATTR(dma_bytes, atomic64_read(&d->dma_bytes));
++SPM_ATTR(cpu_bytes, atomic64_read(&d->cpu_bytes));
++SPM_ATTR(dma_fallbacks, atomic64_read(&d->dma_fallbacks));
++SPM_ATTR(dma_errors, atomic64_read(&d->dma_errors));
++
++static ssize_t state_show(struct device *dev, struct device_attribute *a, char *buf)
++{
++	struct spm_blk *d = dev_to_disk(dev)->private_data;
++
++	if (d->dma_off)
++		return sysfs_emit(buf, "dma off: too many errors\n");
++	if (!use_dma)
++		return sysfs_emit(buf, "cpu only (use_dma=0)\n");
++	return sysfs_emit(buf, d->chan ? "dma active\n" : "no dma channel yet (cpu)\n");
++}
++static DEVICE_ATTR_RO(state);
++
++static struct attribute *spm_attrs[] = {
++	&dev_attr_dma_bytes.attr, &dev_attr_cpu_bytes.attr, &dev_attr_dma_fallbacks.attr,
++	&dev_attr_dma_errors.attr, &dev_attr_state.attr, NULL,
++};
++ATTRIBUTE_GROUPS(spm);
++
++/* ------------------------------------------------------------------------- */
++/* Module                                                                    */
++/* ------------------------------------------------------------------------- */
++
++static int __init spm_blk_init(void)
++{
++	struct queue_limits lim = {
++		.logical_block_size	= SECTOR_SIZE,
++		.physical_block_size	= PAGE_SIZE,
++	};
++	struct spm_blk *d;
++	resource_size_t start;
++	int err;
++
++	if (!size_mb || offset_mb + size_mb > SPM_USABLE_MB) {
++		pr_err(DRV_NAME ": offset_mb %u + size_mb %u does not fit in the %u MiB the SPM answers\n",
++		       offset_mb, size_mb, SPM_USABLE_MB);
++		return -EINVAL;
++	}
++
++	d = kzalloc_obj(*d, GFP_KERNEL);
++	if (!d)
++		return -ENOMEM;
++	mutex_init(&d->lock);
++	init_completion(&d->done);
++	INIT_DELAYED_WORK(&d->chan_work, spm_chan_work);
++	d->base = (u64)offset_mb << 20;
++	d->size = (u64)size_mb << 20;
++
++	d->spm = pci_get_device(SPM_VENDOR, SPM_DEVICE, NULL);
++	if (!d->spm) {
++		pr_err(DRV_NAME ": SPM device 104d:90dd not found\n");
++		err = -ENODEV;
++		goto free_d;
++	}
++	start = pci_resource_start(d->spm, 2);
++	if (start != SPM_PCI_BAR2) {
++		pr_err(DRV_NAME ": BAR2 at %pa, expected 0x%lx: the DMA address would be wrong\n",
++		       &start, SPM_PCI_BAR2);
++		err = -ENODEV;
++		goto put_pci;
++	}
++	d->bar2 = ioremap(start + d->base, d->size);
++	if (!d->bar2) {
++		err = -ENOMEM;
++		goto put_pci;
++	}
++	err = spm_probe_region(d);
++	if (err)
++		goto unmap;
++	d->cpu_buf = vmalloc(STAGE_SIZE);
++	if (!d->cpu_buf) {
++		err = -ENOMEM;
++		goto unmap;
++	}
++
++	d->disk = blk_alloc_disk(&lim, NUMA_NO_NODE);
++	if (IS_ERR(d->disk)) {
++		err = PTR_ERR(d->disk);
++		goto free_buf;
++	}
++	/* major, first_minor and minors stay 0: the kernel gives the disk an extended minor */
++	d->disk->flags |= GENHD_FL_NO_PART;
++	d->disk->fops = &spm_fops;
++	d->disk->private_data = d;
++	snprintf(d->disk->disk_name, DISK_NAME_LEN, "baikal_spm0");
++	set_capacity(d->disk, d->size >> SECTOR_SHIFT);
++
++	g_dev = d;
++	/* try for the DMA channel now; if baikal-dmac is not up yet the work retries */
++	spm_chan_work(&d->chan_work.work);
++
++	err = device_add_disk(NULL, d->disk, spm_groups);
++	if (err)
++		goto put_disk;
++
++	pr_info(DRV_NAME ": /dev/baikal_spm0, %u MiB at SPM offset %u MiB, %s\n", size_mb, offset_mb,
++		d->chan ? "DMA" : "CPU for now (waiting for a DMA channel)");
++	return 0;
++
++put_disk:
++	cancel_delayed_work_sync(&d->chan_work);
++	put_disk(d->disk);
++free_buf:
++	vfree(d->cpu_buf);
++unmap:
++	iounmap(d->bar2);
++put_pci:
++	pci_dev_put(d->spm);
++free_d:
++	g_dev = NULL;
++	kfree(d);
++	return err;
++}
++
++static void __exit spm_blk_exit(void)
++{
++	struct spm_blk *d = g_dev;
++
++	if (!d)
++		return;
++	del_gendisk(d->disk);
++	cancel_delayed_work_sync(&d->chan_work);
++	put_disk(d->disk);
++	if (d->chan) {
++		dma_free_coherent(d->chan->device->dev, STAGE_SIZE, d->bounce, d->bounce_dma);
++		dma_release_channel(d->chan);
++	}
++	vfree(d->cpu_buf);
++	iounmap(d->bar2);
++	pci_dev_put(d->spm);
++	kfree(d);
++}
++
++module_init(spm_blk_init);
++module_exit(spm_blk_exit);
++MODULE_LICENSE("GPL");
++MODULE_DESCRIPTION("Block device on the Baikal SPM/DDR3 moved by the baikal-dmac DMA engine");

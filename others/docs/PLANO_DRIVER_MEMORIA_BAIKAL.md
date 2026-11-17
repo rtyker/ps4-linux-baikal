@@ -38,7 +38,7 @@ O dump do repositório DEBARSHI-SARKAR/PS4-BAR-dump é do **Belize** (0x90ce), n
 | BAR4 | 0xd9100000–0xd91fffff | 1 MiB | MMIO adicional |
 | BAR5 | 0xd9000000–0xd903ffff | 256 KiB | MMIO adicional |
 
-> ⚠️ **PS4 Slim (CUH-2xxx) tem 256 MB de SPM** (1 chip DDR3 2Gb), não 1 GB como o Pro. O BAR2 pode ser menor ou mapeado de forma diferente no Baikal Slim.
+> ⚠️ **Corrigido em 2026-11-16:** este aviso dizia que o console era um PS4 Slim com 256 MB de SPM. O console é um **PS4 Pro com Baikal**. Medido em 2026-11-16: o BAR2 anuncia 1 GiB, mas a SPM só responde (zeros) de 0 a 188 MiB e devolve `0xFF` depois, tanto pela CPU quanto pelo DMA. Uma medição antiga dava 256 MB; as duas discordam e a diferença não foi explicada.
 
 ### Conhecimento do projeto (REA)
 - Nenhuma função de memória/SPM/DDR3 foi decompilada (banco vazio para esse dispositivo)

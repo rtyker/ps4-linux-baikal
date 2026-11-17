@@ -1,0 +1,26 @@
+[Unit]
+Description=Swap on the Baikal SPM/DDR3 moved by DMA (/dev/baikal_spm0)
+After=systemd-modules-load.service systemd-udevd.service
+ConditionPathExists=/sys/bus/pci/devices/0000:00:14.6
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# Default priority. /etc/default/baikal-spm-swap overrides it. Lower than zram (100), so the SPM takes the
+# overflow; raise it above 100 to use the SPM first and keep more RAM free.
+Environment=PRIORITY=50
+EnvironmentFile=-/etc/default/baikal-spm-swap
+# Commands run through sh so they are found on PATH: the binaries live in /usr/bin on Arch and
+# in /usr/sbin on Debian, and a wrong fixed path would silently break the unit.
+# The DMA engine first so the device starts on DMA. If it is not there yet the driver
+# starts on the CPU and takes a DMA channel by itself a couple of seconds later.
+ExecStartPre=-/bin/sh -c 'modprobe baikal_dmac'
+ExecStartPre=/bin/sh -c 'modprobe baikal_spm_blk'
+ExecStartPre=/bin/sh -c 'i=0; while [ ! -b /dev/baikal_spm0 ] && [ $$i -lt 50 ]; do sleep 0.1; i=$$((i+1)); done; [ -b /dev/baikal_spm0 ]'
+# The SPM does not keep anything useful across boots, so the swap area is made again every time.
+ExecStart=/bin/sh -c 'mkswap -q -L baikal-spm /dev/baikal_spm0 && exec swapon -p ${PRIORITY} /dev/baikal_spm0'
+ExecStop=-/bin/sh -c 'swapoff /dev/baikal_spm0'
+TimeoutStartSec=30
+
+[Install]
+WantedBy=multi-user.target

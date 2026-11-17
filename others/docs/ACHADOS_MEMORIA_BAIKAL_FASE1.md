@@ -2,7 +2,7 @@
 
 **Data:** 2026-11-12  
 **Dispositivo:** Sony Baikal Memory (DDR3/SPM), PCI 00:14.6, Vendor 0x104d, Device 0x90dd  
-**Hardware:** PS4 Slim (CUH-2xxx, Baikal B1), 256 MB SPM DDR3  
+**Hardware:** PS4 **Pro** com southbridge Baikal. *Correção de 2026-11-16, informada pelo dono do console: este documento dizia "PS4 Slim (CUH-2xxx, Baikal B1), 256 MB SPM DDR3". O modelo "Slim" era suposição. O tamanho "256 MB" veio de uma medição daquela sessão (zeros até 256 MB), mas as medições de 2026-11-16, pela CPU e pelo DMA, dão **188 MiB** de zeros e `0xFF` de 188 MiB em diante; o BAR2 anuncia 1 GiB. As duas medições discordam e a diferença não foi explicada (pode depender do estado em que o Orbis ou o payload deixou a memória naquele boot).*  
 **Status:** Fase 1 concluída — mapeamento ao vivo finalizado
 
 ---
@@ -12,7 +12,7 @@
 | BAR | Endereço Físico | Tamanho | Tipo | Conteúdo |
 |-----|-----------------|---------|------|----------|
 | BAR0 | 0xcc000000–0xcc000fff | 4 KiB | MMIO (64-bit, non-prefetchable) | **Todo 0xFF** — não mapeado/inicializado |
-| BAR2 | 0x80000000–0xbfffffff | 1 GiB | Memória (64-bit, non-prefetchable) | Zeros até 256 MB, depois 0xFF (256 MB real) |
+| BAR2 | 0x80000000–0xbfffffff | 1 GiB | Memória (64-bit, non-prefetchable) | Zeros até **188 MiB**, depois `0xFF` (medido em 2026-11-16 pela CPU e pelo DMA; a medição original dava 256 MB e as duas discordam, sem explicação) |
 | BAR4 | 0xcd000000–0xcd0fffff | 1 MiB | MMIO (32-bit, non-prefetchable) | **Todo 0x00** — vazio |
 | BAR5 | 0xcd400000–0xcd43ffff | 256 KiB | MMIO (32-bit, non-prefetchable) | **Tabela estruturada** com dados |
 
@@ -64,6 +64,8 @@ Toda a região de 4 KiB retorna 0xFF. Isso indica que:
 | 0x10000000–0xBFFFFFFF (768 MB) | 0xFF | Memória não fisicamente presente (Slim tem 256 MB) |
 
 > Conforme PS4 Developer Wiki: "PS4 Fat and Slim Southbridge has access to one 2Gb DDR3 chip, for a total of 256MB of memory."
+>
+> **Atenção (2026-11-16):** essa citação é sobre o Fat e o Slim. O console deste projeto é um PS4 **Pro** com Baikal, então ela **não** fixa o tamanho aqui. Hoje foram medidos 188 MiB respondendo (e uma sessão antiga mediu 256 MB); se o limite é físico ou configuração do payload/Orbis não foi decidido.
 
 ---
 

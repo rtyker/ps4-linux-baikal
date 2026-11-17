@@ -4,7 +4,7 @@
 > `ENVIO_DE_PAYLOADS.md`). Este índice
 > lista apenas os arquivos que existem atualmente em `others/docs/` e `kernel/drivers_mts/`.
 
-> **Projeto:** PS4 Slim/Pro **Baikal** (CUH-2xxx) rodando Linux **7.0.8-Strawberry-ThinLTO-Baikal-+**
+> **Projeto:** PS4 **Pro** com **Baikal** (modelo informado pelo dono do console em 2026-11-16; antes constava "Slim/Pro, CUH-2xxx") rodando Linux **7.0.8-Strawberry-ThinLTO-Baikal-+**
 > carregado por `kexec` a partir de payload de jailbreak. Distribuição: Arch Linux mínima.
 
 ---
