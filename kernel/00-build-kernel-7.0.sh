@@ -152,7 +152,7 @@ preflight() {
            baikal-spm-blk.patch \
            clocksource-baikal-hpet.patch baikal-wdt.patch \
            ps4-bridge-dp-init.patch ps4-dp-link-rate-270000.patch \
-           ps4-bridge-keep-mode.patch ps4-icc-s5-poweroff-prepare.patch; do
+           ps4-bridge-keep-mode.patch ps4-dp-diag.patch ps4-icc-s5-poweroff-prepare.patch; do
     [ -f "$SCRIPT_DIR/patches/$p" ] || die "patch ausente: $SCRIPT_DIR/patches/$p"
   done
 
@@ -624,6 +624,20 @@ fi
 git apply "$PATCH_BRIDGE_KEEP"
 echo "✓ Patch ps4-bridge-keep-mode aplicado com sucesso (git apply, validado com --check)"
 
+# Diagnóstico do link DP: a cada tentativa do clock recovery, imprime (DRM_INFO) os bytes de
+# lane status do sink (DPCD 0x202-0x207) e o que o sink leu de volta (0x100/0x101/0x103-0x106).
+# Só leitura; serve para descobrir por que o sink nunca marca CR_DONE. Remover quando o DP-3 fechar.
+PATCH_DP_DIAG="$SCRIPT_DIR/patches/ps4-dp-diag.patch"
+[ -f "$PATCH_DP_DIAG" ] || { echo "❌ ERRO FATAL: $PATCH_DP_DIAG não encontrado"; exit 1; }
+if ! git apply --check "$PATCH_DP_DIAG" 2>/tmp/dp_diag_patch_check.log; then
+  echo "❌ ERRO FATAL: patch ps4-dp-diag não aplica contra o kernel atual:"
+  cat /tmp/dp_diag_patch_check.log
+  echo "  Regenere o patch a partir de uma árvore limpa (ver AGENTS.md)."
+  exit 1
+fi
+git apply "$PATCH_DP_DIAG"
+echo "✓ Patch ps4-dp-diag aplicado com sucesso (git apply, validado com --check)"
+
 # build.sh (upstream rmuxnet/linux) NÃO é mais usado — em 2026-07-22 seu perfil
 # "General/ThinLTO/Baikal" (--option 3 use=General lto=ThinLTO southbridge=Baikal)
 # foi incorporado diretamente neste script, para haver um único lugar decidindo a
@@ -1043,11 +1057,9 @@ scripts/config --module CONFIG_BAIKAL_SPM_BLK
 # HPET/Clocksource do Baikal (glue 00:14.4, subfunção ICC 22): clocksource
 # baseado no contador principal de 64 bits do HPET. Habilitado como módulo
 # para iteração sem rebuild do kernel.
-# DESLIGADO por padrão (2026-11-15): CLKSRC_BAIKAL_HPET faz select de CLKSRC_MMIO=y
-# (embutido), o que altera o layout do bzImage; junto com o core do WATCHDOG
-# coincidiu com 2 boots mortos. Mantém o config idêntico ao do último boot bom
-# até o HPET ser testado isoladamente. O patch continua sendo aplicado.
-scripts/config --disable CONFIG_CLKSRC_BAIKAL_HPET
+# HABILITADO 2026-11-17 (Passo 1 do HANDOFF): testar clocksource SÓ LEITURA isoladamente.
+# WATCHDOG/WATCHDOG_CORE continuam DESLIGADOS (testados separadamente depois).
+scripts/config --module CONFIG_CLKSRC_BAIKAL_HPET
 
 # Watchdog do Baikal (Timer 0 do HPET, opcional): requer WATCHDOG_CORE.
 # Habilitado como módulo para iteração sem rebuild do kernel.

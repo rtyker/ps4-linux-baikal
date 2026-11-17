@@ -1,0 +1,43 @@
+--- a/drivers/gpu/drm/amd/amdgpu/atombios_dp.c
++++ b/drivers/gpu/drm/amd/amdgpu/atombios_dp.c
+@@ -623,6 +623,31 @@
+ 	return 0;
+ }
+ 
++/*
++ * Diagnostic only: dump what the sink reports during clock recovery.
++ * link_status[0..5] is DPCD 0x202-0x207 (lane status, align status, sink
++ * status, adjust requests); sink_cfg is DPCD 0x100-0x101 and 0x103-0x106
++ * (link BW, lane count, per-lane training set) read back from the sink.
++ */
++static void
++amdgpu_atombios_dp_diag_cr(struct amdgpu_atombios_dp_link_train_info *dp_info)
++{
++	u8 sink_cfg[7] = {};
++
++	if (drm_dp_dpcd_read(dp_info->aux, DP_LINK_BW_SET, sink_cfg, 2) < 0)
++		memset(sink_cfg, 0xee, 2);
++	if (drm_dp_dpcd_read(dp_info->aux, DP_TRAINING_LANE0_SET, &sink_cfg[3], 4) < 0)
++		memset(&sink_cfg[3], 0xee, 4);
++
++	DRM_INFO("ps4 dp diag: try %u clk=%d lanes=%d src_train=%02x sink_bw=%02x sink_lanes=%02x sink_train=%02x %02x %02x %02x lane01=%02x lane23=%02x align=%02x sink_st=%02x adj01=%02x adj23=%02x\n",
++		 dp_info->tries, dp_info->dp_clock, dp_info->dp_lane_count,
++		 dp_info->train_set[0], sink_cfg[0], sink_cfg[1],
++		 sink_cfg[3], sink_cfg[4], sink_cfg[5], sink_cfg[6],
++		 dp_info->link_status[0], dp_info->link_status[1],
++		 dp_info->link_status[2], dp_info->link_status[3],
++		 dp_info->link_status[4], dp_info->link_status[5]);
++}
++
+ static int
+ amdgpu_atombios_dp_link_train_cr(struct amdgpu_atombios_dp_link_train_info *dp_info)
+ {
+@@ -649,6 +674,8 @@
+ 			break;
+ 		}
+ 
++		amdgpu_atombios_dp_diag_cr(dp_info);
++
+ 		if (drm_dp_clock_recovery_ok(dp_info->link_status, dp_info->dp_lane_count)) {
+ 			clock_recovery = true;
+ 			break;
