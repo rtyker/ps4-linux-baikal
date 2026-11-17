@@ -290,4 +290,6 @@ Estado deixado: janela restaurada a zero (conferida), `baikal-memory` de volta a
 
 **Vazão final integrada no `/dev/baikal-memory`** (inclui `dd` e `copy_to_user`; o DMAC puro do harness mede ~1,5 GB/s): leitura de 1 MiB 547 a 624 MB/s, de 4 MiB 887 a 924 MB/s, contra ~4,1 MB/s pela CPU (~130× a ~220×).
 
-**Única pendência:** gravar a tag `20261116-dma-final` no HD (HD plugado no PC: `distro/scripts/install-modules-7.0.sh`, `bootargs`/`initramfs` da tag, `distro/deploy-boot-7.0.sh`). A tag já está completa em `distro/boot_referencia/` (`bootargs` e `initramfs` copiados da `20261116-dma-test`, que é a que o PS4 roda). O aviso do script de build sobre `bzImage` "acima de 10 MB" não se confirma: a tag tem 10,56 MiB, igual ao kernel que já roda, e tags de 15 MiB também subiram. Até lá, o kernel do HD continua com o módulo antigo (com o bug do `len=0`).
+**Gravação no HD (feita em 2026-11-16):** com o HD plugado no PC, `distro/scripts/install-modules-7.0.sh` (backup dos módulos antes; `rc=0`) e `distro/deploy-boot-7.0.sh 20261116-dma-final` (`md5` conferido, partições desmontadas). `bootargs` e `initramfs` são cópias da `20261116-dma-test`. O aviso do script de build sobre `bzImage` "acima de 10 MB" não se confirma: a tag tem 10,56 MiB, igual ao kernel que rodava, e tags de 15 MiB também subiram.
+
+**Única pendência:** o primeiro boot da tag no console (recolocar o HD no PS4) e a validação final: módulo com `use_dma=Y` e `ativo DMAC1` sem parâmetros, leitura de 1 MiB a ~550 MB/s.

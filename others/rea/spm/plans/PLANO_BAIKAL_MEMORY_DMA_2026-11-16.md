@@ -1,6 +1,6 @@
 # Plano — `baikal-memory` lendo e escrevendo a SPM pelo DMAC
 
-**Data:** 2026-11-16 · **Status:** ✅ Implementado e validado ao vivo (testes 1 a 10, `test_history` 94–97). **Falta só gravar no HD** (kernel da tag `20261116-dma-final` + `install-modules` + `bootargs`/`initramfs` + `deploy-boot`), que exige o HD plugado no PC. Resultados na §5.1.
+**Data:** 2026-11-16 · **Status:** ✅ Implementado e validado ao vivo (testes 1 a 10, `test_history` 94–97). Tag `20261116-dma-final` **gravada no HD** (`install-modules` + `deploy-boot`, `md5` conferido). **Falta só o primeiro boot dela no console** para a validação final. Resultados na §5.1.
 **Base provada ao vivo** (`others/rea/dma/plans/PLANO_DMA_SPM_DDR3_2026-11-16.md` §8, `test_history` 87–90): o DMAC do Baikal (`00:14.5`) enxerga a SPM (`00:14.6`) em **`0xC0000000 + off`** (= BAR2 PCI `0x80000000` + `0x40000000`). Por DMA: leitura ~1,5 GB/s, escrita ~0,9 GB/s. Pela CPU, o caminho atual do `baikal-memory`: ~4 MB/s e ~81 MB/s.
 
 **Objetivo:** `read()`/`write()` em `/dev/baikal-memory` na janela do BAR2 passam a usar o DMAC, com fallback automático para a CPU. Fora do BAR2 (BAR0, BAR5) nada muda.
