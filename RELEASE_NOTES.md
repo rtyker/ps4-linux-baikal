@@ -1,5 +1,29 @@
 # Release notes
 
+## 2026-11-17 — Boot the kernel from the PS4's internal disk
+
+**The kernel and initramfs no longer need the USB drive.** The loader payload already looks for its boot files in four places, one file at a time: `/mnt/usb0`, `/mnt/usb1`, `/data/linux/boot/` (internal disk) and `/user/system/boot/` (internal disk). With the four files removed from the USB drive and placed in `/data/linux/boot/`, the console boots the kernel straight from its own drive. The root filesystem still lives on the USB drive, so the drive stays plugged in.
+
+Kernel tag `20261117-dp-diag2`. Confirmed on a real console: the boot carries a `bootsrc=internal` marker that only the internal `bootargs.txt` has, and a `vram.txt` stored on the internal disk was honored (changed from 4096 to 1024 over FTP; the next boot reported 1024 MiB of VRAM and 6911 MiB of RAM).
+
+### New tool: `distro/deploy-boot-ftp-7.0.sh <TAG>`
+
+A safe way to update that boot set over the console's FTP server (GoldHEN, port 2121, Orbis mode), without touching the original `deploy-boot-7.0.sh`:
+
+- uploads each file under a temporary `.part` name, downloads it back and compares the MD5, and only then renames it, so a failed transfer never leaves a half-written kernel in place;
+- backs up whatever is already on the console to the host before overwriting;
+- refuses to run if the USB drive still holds boot files (the USB drive would win and the deploy would be silently ignored);
+- appends a `bootsrc=internal` marker to the boot arguments so the boot source can be proven from `/proc/cmdline`;
+- only touches `vram.txt` when `--vram MB` is given; `--dry-run` writes nothing.
+
+Details, the manual procedure and the rollback are in [`others/docs/BOOT_FROM_INTERNAL_DISK.md`](others/docs/BOOT_FROM_INTERNAL_DISK.md).
+
+### Limits
+
+- This does not move the root filesystem. Putting it on the internal disk does not fit today: the disk has no free space, and its only large partition holds the console's own data.
+- `deploy-boot-7.0.sh` writes to the USB drive and would take priority again; use the FTP script for this path.
+- Old files from an earlier experiment remain in `/user/system/boot/` on the internal disk (including a 3.7 GB tarball). They are only used if a file is missing from `/data/linux/boot/`, and are scheduled for removal.
+
 ## 2026-11-17 — Swap on the Baikal SPM/DDR3, moved by DMA (`baikal-spm-blk`)
 
 **Headline feature:** the PS4 Pro's Baikal southbridge carries a block of DDR3 (the SPM) that the

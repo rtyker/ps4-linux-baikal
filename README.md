@@ -32,6 +32,7 @@ nothing about the rootfs. `PS4_BOOT_REF` lets you point the distro at a differen
 |---|---|---|
 | **Boot** | ✅ | `kexec` → kernel 7.0 → initramfs → Arch rootfs |
 | **Video (HDMI)** | ✅ | 1080p@60, Gladius GPU via `amdgpu` (Mesa patched to recognize the chip). The internal DisplayPort link to the Panasonic MN864729 bridge still logs `clock recovery failed` on every modeset, yet the picture comes up and stays stable (see below) |
+| **Boot from the internal disk** | ✅ | `bzImage`, `initramfs.cpio.gz`, `bootargs.txt` and `vram.txt` can live in `/data/linux/boot/` on the console's drive, uploaded over FTP by `distro/deploy-boot-ftp-7.0.sh`; the USB drive is then only needed for the root filesystem. Confirmed on a real console on 2026-11-17 |
 | **VRAM size** | ✅ | Set by a `vram.txt` file (value in MB) in the BOOT partition, which overrides the loaded payload. Measured: 1024 → 6911 MiB RAM, 2048 → 5903 MiB, 4096 → 3893 MiB; the carve-out comes out of the single 8 GiB GDDR5 pool shared by CPU and GPU. The payload caps it at 4096 MB |
 | **Audio (HDMI)** | ⚠️ | `snd_hda_intel` exposes the HDMI devices, but actual sound has not been re-tested since the Display Core was removed from the build |
 | **3D GPU** | ✅ | OpenGL 4.5, Vulkan 1.3 (RADV) |
@@ -62,6 +63,9 @@ The Baikal southbridge has a dedicated auxiliary DDR3 memory (Scratch Pad Memory
 Details, root causes, and what has already been ruled out: [`others/docs/BACKLOG.md`](others/docs/BACKLOG.md).
 
 ## Release Notes
+
+### 2026-11-17 — Boot the kernel from the internal disk
+The kernel and initramfs can now boot from the console's own drive (`/data/linux/boot/`), with a safe FTP deploy script and a boot-source marker; the root filesystem still lives on the USB drive. See [`RELEASE_NOTES.md`](RELEASE_NOTES.md) and [`others/docs/BOOT_FROM_INTERNAL_DISK.md`](others/docs/BOOT_FROM_INTERNAL_DISK.md).
 
 ### 2026-11-17 — Swap on the SPM/DDR3 by DMA
 The SPM now serves as a fast swap device through the southbridge DMA controller (`baikal-spm-blk`), with before/after numbers and credits in [`RELEASE_NOTES.md`](RELEASE_NOTES.md). The same tag carries the DP link at 2.7 Gbps (`ps4-dp-link-rate-270000.patch`), which is live-tested but does **not** make the DisplayPort `clock recovery` pass: the sink is powered, configured and receives the TPS1 request, but never reports lock. That front is paused; measurements are in `others/docs/BACKLOG.md`.
