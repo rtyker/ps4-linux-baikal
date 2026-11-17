@@ -304,9 +304,9 @@ Os dumps brutos/análise textual de varreduras grandes (ex: a janela Glue BAR2) 
   | **Linux 7.0** (pós-`kexec`) | **`192.168.6.128`** | outro (do `wlan0`) |
 
   Consequência: **dois pings resolvem "em que ambiente o console está"** (`ping -c1 192.168.6.130` → Orbis; `ping -c1 192.168.6.128` → Linux). Nunca concluir "PS4 desligado" porque só o `.128` não respondeu. Payload/loader só existem no Orbis (`.130`); SSH só existe no Linux (`.128`).
-- **Rede cabeada (`eth0`, driver `mts.ko`) é a rede sob teste — IP FIXO `192.168.0.2`.** Host do PC no Ethernet: `192.168.0.1` (interface `enp60s0`). ⚠️ **2026-11-17:** hoje a `enp60s0` do host é a LAN (`192.168.6.101/24`, rota padrão) e o `192.168.0.1` não está configurado em lugar nenhum; ver E2 em `others/docs/PLAN_ETH0_BAIKAL.md`.
-- **NUNCA testar o `eth0` usando a subnet do WiFi (`192.168.6.x`).** Um ping "funcionando" para `192.168.6.100`/`192.168.6.128` passa pelo `wlan0`, não prova nada sobre o `eth0`.
-- **Todo teste de RX/TX do driver `mts.ko` deve usar a subnet `192.168.0.0/24`**: `ping -c N 192.168.0.2` do lado do host, ou `ping -I eth0 -c N 192.168.0.1` do lado do PS4.
+- **Rede cabeada (`eth0`, driver `mtsx`) pega IP por DHCP, como um PC comum (2026-11-17)** — `systemd-networkd`, `DHCP=ipv4`; o `dhcpcd` só cuida do `wlan0`. Na primeira medição recebeu `192.168.6.131` (MAC `2c:cc:44:3f:69:5f`), na mesma LAN do WiFi (`192.168.6.0/24`); a reserva de IP do roteador é por MAC. Antes era `192.168.0.2/24` estático (host `192.168.0.1` na `enp60s0`).
+- **Como a `eth0` e o `wlan0` agora estão na MESMA subnet, um ping "funcionando" não prova que o tráfego passou pela `eth0`** (o Linux responde ARP por qualquer interface). Prove pelos contadores: `ip -s link show eth0` antes e depois da transferência, ou `tcpdump -i eth0`; a rota padrão preferida é a da `eth0` (metric 1024 contra 3003 do `wlan0`).
+- **Ao subir a `eth0`, o `dhcpcd` do `wlan0` pode ver conflito de ARP e trocar o IP do WiFi** (`.128` → `.127`) por até um lease; não é falha, não foi corrigido (decisão do usuário). O IP do console no WiFi pode, portanto, variar: confira com `ping` antes de assumir "console desligado".
 - SSH (WiFi) e eth0 (cabeada) são canais independentes — pode-se usar ambos simultaneamente.
 
 ## Conexão via SSH
