@@ -43,6 +43,7 @@ echo "--- Verificando módulos PS4-specific ---"
 # Lista de módulos que devem existir (compilados como =m no kernel build)
 PS4_MODULES=(
     "drivers/net/ethernet/sony/mts.ko"
+    "drivers/net/ethernet/sony/mtsx.ko"
     "fs/smb/client/cifs.ko"
     "fs/netfs/netfs.ko"
     "fs/smb/common/cifs_md4.ko"
@@ -72,17 +73,10 @@ for mod_rel in "${PS4_MODULES[@]}"; do
     fi
 done
 
-# 4. Sobrescrever mts.ko com o de drivers_mts/build/ se existir (mais recente)
-MTS_LOCAL_KO="$KERNEL_BUILD_DIR/../drivers_mts/build/mts.ko"
-if [ -f "$MTS_LOCAL_KO" ]; then
-    dst="$MODULES_DIR/kernel/drivers/net/ethernet/sony/mts.ko"
-    echo "--- Sobrescrevendo mts.ko com drivers_mts/build/mts.ko ---"
-    mkdir -p "$(dirname "$dst")"
-    cp -v "$MTS_LOCAL_KO" "$dst"
-    if objdump -h "$dst" 2>/dev/null | grep -q '\.BTF'; then
-        objcopy --remove-section=.BTF --remove-section=.BTF.base "$dst" "$dst.strip" && mv "$dst.strip" "$dst"
-    fi
-fi
+# 4. (removido em 2026-11-17) Não sobrescrever mts.ko com drivers_mts/build/mts.ko.
+#    Aquele binário era de um build manual antigo e ia para o rootfs por cima do
+#    módulo que o build oficial acabou de gerar — foi assim que o PS4 subiu com
+#    um mts.ko sem o parâmetro esperado. Fonte única: drivers/net/ethernet/sony/.
 
 # 5. depmod
 echo "--- depmod -a ---"

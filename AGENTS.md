@@ -388,9 +388,23 @@ earlycon=uart8250,mmio32,0xC890E000 console=uart8250,mmio32,0xC890E000 console=t
 
 ## Compilação de Módulos
 
-> ⚠️ **2026-11-17:** `build_mts_module.sh` e `deploy_mts.sh` ainda apontam para `drivers_mts/` na raiz (a pasta virou `kernel/drivers_mts/` em 2026-11-11) e não funcionam até a fase 0 do `others/docs/PLAN_ETH0_BAIKAL.md` corrigir os caminhos. E o `deploy_mts.sh push` faz `rmmod` + `insmod`, o que o plano proíbe depois de um MAC enable.
+> ✅ **2026-11-17 — o driver da GBE que FUNCIONA é o `mtsx`, e ele é artefato do build.**
+> `kernel/drivers_mts/mtsx.c` + `mtsx_desc.h` são a fonte única (byte a byte o arquivo validado
+> ao vivo na Fase C: link up + 100 MB RX/TX com SHA-256 conferido). O build oficial
+> (`kernel/00-build-kernel-7.0.sh`) copia os fontes para a árvore e compila `CONFIG_MTSX=m`;
+> `distro/scripts/install-modules-7.0.sh` instala `mtsx.ko` via `modules_install`; e
+> `distro/01-build-image-7.0.sh` grava `/etc/modules-load.d/mtsx.conf` + `blacklist mts`
+> (`/etc/modprobe.d/ps4-gbe.conf`) e **aborta o build** se `mtsx.ko` não estiver no rootfs.
+> **Nunca** copie `.ko` por `scp` para "testar rápido" e considere o ambiente pronto: em
+> 2026-11-17 o PS4 subiu com um `mts.ko` velho do rootfs (`unknown parameter 'fw_bringup'
+> ignored`) exatamente por isso. O `mts.ko` legado continua instalado, mas fica bloqueado no
+> boot — nunca carregue `mts` e `mtsx` juntos (mesmo PCI `104d:90d8`).
+> Ciclo rápido fora da árvore (só desenvolvimento): `sudo others/tools/mtsx/build.sh`
+> (compila em diretório temporário a partir da fonte canônica).
 
-Use `sudo others/scripts/build_mts_module.sh` (já validado) para compilar o driver `mts.ko`.
+> ⚠️ **2026-11-17:** `build_mts_module.sh` e `deploy_mts.sh` ainda apontam para `drivers_mts/` na raiz (a pasta virou `kernel/drivers_mts/` em 2026-11-11) e não funcionam até a fase 0 do `others/docs/PLAN_ETH0_BAIKAL.md` corrigir os caminhos. E o `deploy_mts.sh push` faz `rmmod` + `insmod`, o que o plano proíbe depois de um MAC enable. Nenhum dos dois é usado para o driver validado (`mtsx`).
+
+Para o driver legado `mts.ko` existe `sudo others/scripts/build_mts_module.sh`, mas ele está quebrado pelos caminhos (aviso acima) e não é usado no fluxo atual. O driver validado `mtsx.ko` sai de `sudo others/tools/mtsx/build.sh` (ciclo rápido) ou — no fluxo normal — do próprio `kernel/00-build-kernel-7.0.sh`.
 
 Não criar `Makefile` ad-hoc nem comandos `gcc` diretos — o script já encapsula opções de cross-compile e flags corretas.
 

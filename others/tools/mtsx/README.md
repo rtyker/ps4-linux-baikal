@@ -1,6 +1,6 @@
 # mtsx: Baikal Ethernet driver for the state Orbis leaves after the kexec
 
-**Status: compiled with `W=1` without warnings, `checkpatch --strict` clean, host-tested. Never run on hardware.** Written on 2026-11-17 while the console was busy with the internal-rootfs plan. This is the driver for Phase C of [`others/docs/PLAN_ETH0_BAIKAL.md`](../../docs/PLAN_ETH0_BAIKAL.md). Do not load it before Phases A and B (`others/tools/mts_peek`) have shown what the console looks like after the kexec.
+**Status: validado ao vivo no PS4 em 2026-11-17 (Fase C): link up e 100 MB transferidos em cada sentido com SHA-256 conferido (`1c002440…36e977`).** Compila com `W=1` sem avisos, `checkpatch --strict` limpo, e o modelo de descritores passa no teste de host. É o driver que o rootfs gerado pelo projeto carrega no boot (ver [Use](#use)). A fonte canônica mora em `kernel/drivers_mts/mtsx.c` + `mtsx_desc.h` — o build oficial (`kernel/00-build-kernel-7.0.sh`) a copia para a árvore e compila `mtsx.ko`; este diretório é só o harness de build/teste rápido.
 
 ## Why a new module and not a fix of `mts.c`
 
@@ -65,19 +65,27 @@ The four gates before the PHY write (as in `mts_peek`): PHY ID `03a2/9441`, both
 
 | File | What |
 |---|---|
-| `mtsx.c` | the driver |
-| `mtsx_desc.h` | descriptor words and ring arithmetic, pure functions shared by the driver and the host test |
+| `kernel/drivers_mts/mtsx.c` | the driver (fonte canônica; o build oficial copia para a árvore e compila `mtsx.ko`) |
+| `kernel/drivers_mts/mtsx_desc.h` | descriptor words and ring arithmetic, pure functions shared by the driver and the host test |
 | `test_desc.c`, `check.sh` | host test: bit patterns pinned to the firmware's values, plus a model of the ownership protocol run over 255, 256 and 192 TX descriptors and the RX ring, including the full-ring path. `./check.sh` (with ASan and UBSan) |
-| `Kbuild`, `build.sh` | out-of-tree build, same mechanism as `others/tools/mts_peek/build.sh` and `others/scripts/build_mts_module.sh` |
+| `build.sh` | out-of-tree build for the fast cycle: copies the canonical sources from `kernel/drivers_mts/` into a temp dir and builds `mtsx.ko` here (nothing is copied into the kernel tree) |
 
 The model in `test_desc.c` is our reading of the firmware, so it checks the driver's bookkeeping, not the hardware.
 
-## Use (Phase C of the plan; only when the user says the console is free)
+## Use
 
-Preconditions: cold boot into Orbis, payload, kernel booted with `module_blacklist=mts`, Phases A and B done, cable on a live partner, host NIC `enp60s0` at `192.168.0.1/24`. One variable per boot.
+**No rootfs gerado, o driver já vem instalado e é carregado no boot**: o build oficial
+compila `CONFIG_MTSX=m` (`kernel/00-build-kernel-7.0.sh`), `distro/scripts/install-modules-7.0.sh`
+instala `mtsx.ko` em `/lib/modules/<ver>/kernel/drivers/net/ethernet/sony/`, e
+`distro/01-build-image-7.0.sh` grava `/etc/modules-load.d/mtsx.conf` (`mtsx`) mais
+`/etc/modprobe.d/ps4-gbe.conf` (`blacklist mts`). Nada de `scp` manual de `.ko`.
+
+Preconditions for a manual/live session: cold boot into Orbis, payload, kernel booted with
+`module_blacklist=mts`, Phases A and B done, cable on a live partner, host NIC `enp60s0` at
+`192.168.0.1/24`. One variable per boot.
 
 ```bash
-sudo others/tools/mtsx/build.sh
+sudo others/tools/mtsx/build.sh                      # fast cycle only (temp dir, fonte canônica)
 scp others/tools/mtsx/mtsx.ko root@192.168.6.128:/dev/shm/
 ssh root@192.168.6.128 'insmod /dev/shm/mtsx.ko; dmesg | grep mtsx'     # probe: reads only
 ssh root@192.168.6.128 'ip addr add 192.168.0.2/24 dev eth0; ip link set eth0 up; dmesg | grep mtsx'

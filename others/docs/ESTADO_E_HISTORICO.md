@@ -166,6 +166,12 @@ do `mts.ko`** (Ethernet) temporariamente — o probe do PHY é o que consome 33 
 `ENABLE_MTS=1`. O módulo continua instalado e carregável à mão (`modprobe mts`, `stage=4`).
 Ver `BACKLOG.md` → "Auditoria de boot/otimização".
 
+**Atualizado em 2026-11-17:** o auto-carregamento voltou, mas do **`mtsx`** (o driver validado na
+Fase C do `PLAN_ETH0_BAIKAL.md`), e não do `mts` legado — que agora é bloqueado por
+`/etc/modprobe.d/ps4-gbe.conf` (`blacklist mts`). `distro/01-build-image-7.0.sh` escreve
+`/etc/modules-load.d/mtsx.conf` por padrão (`ENABLE_MTSX=0` desliga). Ver `AGENTS.md`,
+"Compilação de Módulos".
+
 **OpenCode v2 instalado no PS4 (2026-11-12 09:36):** `opencode v2.2.7` (mesma versão do host),
 build **baseline** (o Jaguar não tem AVX2 — o instalador oficial detecta e escolhe
 `@opencode/cli-linux-x64-baseline`). Instalado pelo script oficial

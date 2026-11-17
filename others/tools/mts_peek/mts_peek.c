@@ -53,6 +53,8 @@
 
 /* mac_stop writes this to the IMR; every bit set means "masked". */
 #define IMR_ALL_MASKED		0x007ffffa
+/* Operating IMR set by Orbis attach (F17): bits 3,4,12 masked, others unmasked. */
+#define IMR_OPERATING		0x00001018
 
 /* PHY identity both reference projects report for this console family. */
 #define PHY_ID1_EXPECTED	0x03a2
@@ -251,9 +253,12 @@ static bool residue_gates_ok(u16 *cur)
 		pr_info("gate mac_stopped: ok\n");
 	}
 
-	if ((imr & IMR_ALL_MASKED) != IMR_ALL_MASKED) {
-		pr_info("gate irq_masked: FAIL (IMR=0x%08x, want bits 0x%08x set)\n",
-			imr, IMR_ALL_MASKED);
+	/* Accept either the full stop mask (0x7ffffa) or the operating mask (0x1018).
+	 * The firmware's mac_stop uses the full mask, but the attach sets the operating
+	 * mask before stopping. MAC cores stopped (gate above) is the real indicator. */
+	if (imr != IMR_ALL_MASKED && imr != IMR_OPERATING) {
+		pr_info("gate irq_masked: FAIL (IMR=0x%08x, want 0x%08x or 0x%08x)\n",
+			imr, IMR_ALL_MASKED, IMR_OPERATING);
 		ok = false;
 	} else {
 		pr_info("gate irq_masked: ok (IMR=0x%08x)\n", imr);

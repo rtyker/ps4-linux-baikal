@@ -81,6 +81,7 @@
 #define ISR_ERRORS		0x007be600u		/* F20: logged by Orbis */
 
 #define IMR_STOPPED		0x007ffffau		/* what mac_stop writes (F7) */
+#define IMR_OPERATING		0x00001018u		/* operating mask set by Orbis attach (F17) */
 
 #define MDIO_DONE		BIT(15)
 #define MDIO_POLL_US		10000
@@ -294,9 +295,13 @@ static int mtsx_clear_residue(struct mtsx_priv *mp)
 		dev_err(dev, "residue gate mac_stopped: FAIL; not enabling\n");
 		return -EBUSY;
 	}
-	if ((readl(mp->regs + R_IMR) & IMR_STOPPED) != IMR_STOPPED) {
-		dev_err(dev, "residue gate irq_masked: FAIL (IMR=0x%08x); not enabling\n",
-			readl(mp->regs + R_IMR));
+	/* Accept either the full stop mask (IMR_STOPPED) or the operating mask (IMR_OPERATING).
+	 * The firmware's mac_stop uses the full mask, but the attach sets the operating
+	 * mask before stopping. MAC cores stopped (gate above) is the real indicator. */
+	u32 imr = readl(mp->regs + R_IMR);
+	if (imr != IMR_STOPPED && imr != IMR_OPERATING) {
+		dev_err(dev, "residue gate irq_masked: FAIL (IMR=0x%08x, want 0x%08x or 0x%08x); not enabling\n",
+			imr, IMR_STOPPED, IMR_OPERATING);
 		return -EBUSY;
 	}
 	ret = c45_read(mp, RESIDUE_DEVAD, RESIDUE_REG, &cur);

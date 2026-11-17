@@ -326,21 +326,31 @@ DNS=192.168.0.1
 DNS=8.8.8.8
 NETEOF
 
-# Driver Ethernet Baikal (mts.ko) — auto-carregamento DESATIVADO temporariamente (2026-11-12).
-# Motivo: o probe do PHY custa ~33 s de `systemd-modules-load` no boot e a Ethernet ainda
-# não tem link (PHY mudo). O módulo continua instalado no rootfs e pode ser carregado à mão
-# (`modprobe mts` usa stage=4 via /etc/modprobe.d/mts.conf).
-# Reativar: ENABLE_MTS=1 sudo ./01-build-image-7.0.sh <TAG>
-# Ver others/docs/BACKLOG.md, item "Auditoria de boot/otimização".
-mkdir -p "$ROOTFS_DIR/etc/modprobe.d"
+# Driver Ethernet Baikal: `mtsx` é O driver (Fases A-C do PLAN_ETH0_BAIKAL.md).
+# Ele adota o MAC/PHY como o firmware Orbis deixou e foi validado ao vivo em
+# 2026-11-17 (link up, 100 MB RX e TX com SHA-256 conferido). NÃO tem
+# MODULE_DEVICE_TABLE de propósito, então o carregamento no boot é explícito via
+# modules-load.d. O driver legado `mts` disputa o mesmo device PCI e precisa
+# ficar bloqueado — sem o blacklist ele ganha o probe e o eth0 sobe sem link.
+#
+# O .ko vem do build oficial (kernel/00-build-kernel-7.0.sh → modules_install).
+# Este script NÃO copia binário pré-compilado nenhum: era exatamente o override
+# de drivers_mts/build/mts.ko que colocava módulo velho no rootfs.
+# ENABLE_MTSX=0 desliga o auto-carregamento (só para depuração).
+mkdir -p "$ROOTFS_DIR/etc/modprobe.d" "$ROOTFS_DIR/etc/modules-load.d"
 echo "options mts stage=4" > "$ROOTFS_DIR/etc/modprobe.d/mts.conf"
-if [ "${ENABLE_MTS:-0}" = "1" ]; then
-    mkdir -p "$ROOTFS_DIR/etc/modules-load.d"
-    echo "mts" > "$ROOTFS_DIR/etc/modules-load.d/mts.conf"
-    echo "[info] mts.ko SERA carregado no boot (ENABLE_MTS=1)."
+cat > "$ROOTFS_DIR/etc/modprobe.d/ps4-gbe.conf" << 'GBEEOF'
+# Gerado por distro/01-build-image-7.0.sh
+# O driver da GBE Baikal é o `mtsx` (adota o estado deixado pelo firmware Orbis).
+# O `mts` legado faz cold init e disputa o mesmo device PCI (104d:90d8).
+blacklist mts
+GBEEOF
+if [ "${ENABLE_MTSX:-1}" = "1" ]; then
+    echo "mtsx" > "$ROOTFS_DIR/etc/modules-load.d/mtsx.conf"
+    echo "[info] mtsx.ko SERA carregado no boot (ENABLE_MTSX=1, padrão)."
 else
-    rm -f "$ROOTFS_DIR/etc/modules-load.d/mts.conf"
-    echo "[info] mts.ko NAO sera carregado no boot (padrao; use ENABLE_MTS=1 para reativar)."
+    rm -f "$ROOTFS_DIR/etc/modules-load.d/mtsx.conf"
+    echo "[info] mtsx.ko NAO sera carregado no boot (ENABLE_MTSX=0)."
 fi
 
 # SPM Baikal & RTC via ICC: auto-carregamento no boot
@@ -597,22 +607,19 @@ else
     fi
 fi
 
-# Copiar opcionalmente o mts.ko compilado separadamente (em drivers_mts/build/mts.ko)
-# Nota: install-modules-7.0.sh já faz isso, mas mantemos aqui como fallback/garantia extra
-MTS_LOCAL_KO="$SCRIPT_DIR/../kernel/drivers_mts/build/mts.ko"
-if [ -f "$MTS_LOCAL_KO" ]; then
-  MTS_DEST_DIR="$MODULES_DIR/kernel/drivers/net/ethernet/sony"
-  echo "=== Sobrescrevendo/Garantindo mts.ko local mais recente de drivers_mts/build/mts.ko ==="
-  mkdir -p "$MTS_DEST_DIR"
-  cp -v "$MTS_LOCAL_KO" "$MTS_DEST_DIR/mts.ko"
-  # Strip BTF se presente
-  if objdump -h "$MTS_DEST_DIR/mts.ko" 2>/dev/null | grep -q '\.BTF'; then
-      objcopy --remove-section=.BTF --remove-section=.BTF.base "$MTS_DEST_DIR/mts.ko" "$MTS_DEST_DIR/mts.ko.strip" && mv "$MTS_DEST_DIR/mts.ko.strip" "$MTS_DEST_DIR/mts.ko"
+# Garantia de que o rootfs tem o mtsx.ko gerado por ESTE build.
+# Falha ALTA de propósito: um rootfs sem o driver validado (ou com um .ko velho)
+# já passou despercebido em 2026-11-17 e custou um power cycle por nada.
+if [ -d "$KERNEL_BUILD_DIR" ]; then
+  MTSX_KO="$MODULES_DIR/kernel/drivers/net/ethernet/sony/mtsx.ko"
+  if [ ! -f "$MTSX_KO" ]; then
+    echo "ERRO FATAL: $MTSX_KO ausente no rootfs." >&2
+    echo "  O kernel build precisa ter CONFIG_MTSX=m (scripts/config --module CONFIG_MTSX" >&2
+    echo "  no kernel/00-build-kernel-7.0.sh) e install-modules-7.0.sh precisa ter rodado." >&2
+    exit 1
   fi
-  echo "Executando depmod para atualizar dependências de módulos..."
-  arch-chroot "$ROOTFS_DIR" depmod -a "$KVER_FULL"
-else
-  echo "Aviso: Módulo local mts.ko não encontrado em $MTS_LOCAL_KO. Mantendo versão padrão."
+  echo "✓ mtsx.ko presente no rootfs: $(stat -c '%s bytes, %y' "$MTSX_KO")"
+  echo "✓ blacklist do mts legado: $(grep -c '^blacklist mts$' "$ROOTFS_DIR/etc/modprobe.d/ps4-gbe.conf" || true) regra(s)"
 fi
 
 # --- Mesa patchado PS4 Gladius/Liverpool (correção de corrupção visual) ----

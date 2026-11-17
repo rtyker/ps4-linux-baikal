@@ -395,16 +395,21 @@ if [ ! -d "drivers/net/ethernet/sony" ]; then
   done
 fi
 
-# drivers_mts/ é a fonte única autoritativa do driver MTS (mts.c, mts.h).
+# drivers_mts/ é a fonte única autoritativa dos drivers de rede Baikal:
+#   mts.c  — driver legado (cold init/calibração de PHY), MTS_GBE
+#   mtsx.c — driver que adota o estado deixado pelo firmware Orbis (Fases A-C
+#            do PLAN_ETH0_BAIKAL.md, validado ao vivo em 2026-11-17), MTSX
 # O patch mts-baikal-kconfig.patch contém apenas Kconfig/Makefile do vendor Sony.
 # Isso elimina ~3.200 linhas duplicadas e evita divergência patch ↔ source.
-echo "Copiando driver MTS autoritativo de drivers_mts/ para a árvore do kernel..."
+echo "Copiando drivers MTS autoritativos de drivers_mts/ para a árvore do kernel..."
 mkdir -p "drivers/net/ethernet/sony"
-cp -f "$SCRIPT_DIR/drivers_mts/mts.c" "drivers/net/ethernet/sony/mts.c"
-cp -f "$SCRIPT_DIR/drivers_mts/mts.h" "drivers/net/ethernet/sony/mts.h"
+for f in mts.c mts.h mtsx.c mtsx_desc.h; do
+  [ -f "$SCRIPT_DIR/drivers_mts/$f" ] || die "fonte ausente: $SCRIPT_DIR/drivers_mts/$f"
+  cp -f "$SCRIPT_DIR/drivers_mts/$f" "drivers/net/ethernet/sony/$f"
+done
 # Kconfig/Makefile do vendor Sony já foram aplicados via patch acima.
 # Se drivers_mts/ tiver Kconfig/Makefile próprios, eles são ignorados (patch já fez).
-echo "✓ Driver MTS copiado de drivers_mts/ (fonte única)"
+echo "✓ drivers MTS copiados de drivers_mts/ (fonte única: mts.c e mtsx.c)"
 
 # RTC via ICC: wrapper ps4_icc_rtc_cmd() com retry loop (100x50ms) em
 # ps4-bpcie-icc.c + declaração em baikal.h/aeolia.h + Kconfig/Makefile +
@@ -677,6 +682,12 @@ scripts/config --disable CONFIG_SKY2_DEBUG
 # estágio ruim não impede o console de subir. Ver o comentário do patch acima.
 scripts/config --enable CONFIG_NET_VENDOR_SONY
 scripts/config --module CONFIG_MTS_GBE
+
+# mtsx — driver que adota o MAC/PHY como o firmware Orbis deixou (sem cold init,
+# sem calibração de PHY, sem glue reset). É o driver validado ao vivo nas Fases
+# A-C do PLAN_ETH0_BAIKAL.md (link up + 100 MB RX/TX com SHA-256 conferido) e o
+# que o rootfs carrega no boot (blacklist de `mts`). Fonte: drivers_mts/mtsx.c.
+scripts/config --module CONFIG_MTSX
 
 # Netconsole embutido (=y) para capturar log de boot via UDP
 scripts/config --enable CONFIG_NETCONSOLE

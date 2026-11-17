@@ -12,6 +12,18 @@
 indexado aqui. Documentos de dados brutos (RE, logs de teste) continuam em
 `../../../others/` e são linkados na seção [Onde está o resto](#onde-está-o-resto).
 
+> 🟢 **2026-11-17 — o driver que FUNCIONA é o `mtsx`, e ele está neste diretório.**
+> `mtsx.c` + `mtsx_desc.h` adotam o MAC/PHY como o firmware Orbis deixou (sem cold init,
+> sem calibração de PHY, sem glue reset) e foram validados ao vivo na Fase C do
+> `PLAN_ETH0_BAIKAL.md`: `link=0x00000b19`, 100 MB transferidos em cada sentido com
+> SHA-256 conferido. Ele é `CONFIG_MTSX=m` → `mtsx.ko`, instalado pelo build oficial
+> (`kernel/00-build-kernel-7.0.sh` → `modules_install`) e carregado no boot pelo rootfs
+> gerado (`/etc/modules-load.d/mtsx.conf`, com `blacklist mts` em
+> `/etc/modprobe.d/ps4-gbe.conf`). O `mts.c` abaixo continua sendo o driver legado de
+> cold init/captura de PHY — os dois disputam o mesmo PCI `104d:90d8`, então **nunca**
+> carregue os dois juntos. Os caminhos de `scp`/`build/mts.ko` que aparecem mais abaixo
+> são históricos: hoje nenhum binário pré-compilado é copiado para o rootfs.
+
 | | |
 |---|---|
 | **Arquivo** | `mts.c` (~2993 linhas) + `mts.h` |

@@ -85,6 +85,9 @@ distro/winesapos/
 # Artefatos de boot por tag (bzImage, config, bootargs, initramfs): a distro os
 # consome via distro/*.sh, mas eles NÃO são versionados (binários por build).
 distro/boot_referencia/
+# Cópia bruta dos 4 arquivos de boot baixados do disco INTERNO do PS4 (Orbis/FTP),
+# usada como base para derivar bootargs sem reverter o plano do rootfs interno.
+others/distro/
 kernel/extra_firmware/
 kernel/drivers_mts/build/
 others/rea/tools/ghidra_project/
