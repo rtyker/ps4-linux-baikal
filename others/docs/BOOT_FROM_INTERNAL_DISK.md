@@ -46,6 +46,10 @@ curl -o /tmp/chk $F/bzImage && md5sum /tmp/chk bzImage
 2. **Proof marker:** put `bootsrc=internal` at the end of the internal `bootargs.txt`. The kernel ignores the parameter and it shows up in `/proc/cmdline`; if it does, the bootargs came from the internal disk.
 3. FTP only exists in Orbis (`192.168.6.130`); after the `kexec` ports 9090 and 2121 are gone.
 
+## Where the files physically are (verified 2026-11-17)
+
+With the internal partitions mounted read-only from Linux, `/mnt/ps4_internal/sda27/data/linux/boot/` holds exactly the four files plus `active-tag.txt` (the `bzImage` MD5 matches the uploaded one), and `/mnt/ps4_internal/sda27/system/boot/` holds the old files. So the console's `/data` is the `data/` folder of partition `sda27` (the encrypted UFS2 "user" partition), and `/user` is the root of `sda27`. All three internal search paths of the payload therefore live in `sda27`; `sda25` (update, FAT32) and `sda29` (eap_user) are not on the payload's list.
+
 ## What was done on 2026-11-17
 
 - Tag in use: `20261117-dp-diag2` (kernel with the DisplayPort diagnostic patch, `vram.txt=4096`).
