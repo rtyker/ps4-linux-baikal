@@ -294,4 +294,4 @@ Estado deixado: janela restaurada a zero (conferida), `baikal-memory` de volta a
 
 **Validação final no console (feita, `test_history` 99):** no boot que subiu, módulo carregado sem parâmetros com `use_dma=Y`, `ativo DMAC1` depois da primeira leitura, 1 MiB a 513–642 MB/s, desalinhada `cpu 5 / dma 4092`, lacuna 0 bytes, `dmesg` sem erro.
 
-**Sem pendências do plano.** Ressalvas que ficam registradas (BACKLOG 3d e 3e): o fallback por erro do DMAC nunca foi exercitado ao vivo (fora dos 10 testes do plano), e na 1ª tentativa de boot da tag o console desligou sozinho (causa desconhecida; a 2ª subiu).
+**Sem pendências do plano.** Ressalvas que ficam registradas (BACKLOG 3d e 3e): na 1ª tentativa de boot da tag o console desligou sozinho (causa desconhecida; a 2ª subiu), e a **correção do tratamento de erro do DMAC** (achada ao exercitar o fallback, `test_history` 101 e 102) está no patch e validada ao vivo com módulo carregado de `/tmp`, mas **ainda não gravada no HD**: a tag `20261116-dma-final` do HD tem o módulo que ignora o aborto.

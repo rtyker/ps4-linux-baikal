@@ -12,7 +12,7 @@ index 816b99d..69ee044 100644
  	  Driver de memória para o Southbridge Baikal (Sony/AMD),
  	  dispositivo PCI 00:14.6 (Vendor 0x104d, Device 0x90dd).
 diff --git a/drivers/misc/baikal-memory.c b/drivers/misc/baikal-memory.c
-index 77bd934..cd3befb 100644
+index 77bd934..c413c23 100644
 --- a/drivers/misc/baikal-memory.c
 +++ b/drivers/misc/baikal-memory.c
 @@ -35,6 +35,9 @@
@@ -25,7 +25,7 @@ index 77bd934..cd3befb 100644
  
  #define DRIVER_NAME		"baikal-memory"
  #define DRIVER_DESC		"Sony Baikal Memory (SPM/DDR3) driver"
-@@ -50,6 +53,22 @@ module_param(allow_write, bool, 0444);
+@@ -50,6 +53,36 @@ module_param(allow_write, bool, 0444);
  MODULE_PARM_DESC(allow_write,
  	"Permitir escrita controlada na janela BAR2 da SPM (padrao: 0/desligado)");
  
@@ -40,6 +40,20 @@ index 77bd934..cd3befb 100644
 +MODULE_PARM_DESC(use_dma,
 +	"Usar DMAC para leitura/escrita na janela BAR2 (padrao: 1/ligado)");
 +
++/*
++ * Fault injection to test the DMA error fallback (one shot, it clears itself).
++ * 1: the next DMA transfer is reported to the driver as aborted, as if the
++ *    DMAC had failed. Exercises the fallback to the CPU and the error accounting.
++ * 2: the next DMA read uses the PCI address of BAR2 as the DMAC source. The DMAC
++ *    rejects it with a real hardware error (INT_FLAG=0x2, test_history 87), so
++ *    the whole chain runs: DMAC error, aborted descriptor, fallback.
++ * Leave it at 0 in normal use.
++ */
++static unsigned int dma_fault_inject;
++module_param(dma_fault_inject, uint, 0644);
++MODULE_PARM_DESC(dma_fault_inject,
++	"Teste: 1 = proxima transferencia dada como abortada; 2 = proxima leitura com endereco que o DMAC rejeita (1 vez, padrao: 0)");
++
 +static unsigned int dma_min = 256;
 +module_param(dma_min, uint, 0644);
 +MODULE_PARM_DESC(dma_min,
@@ -48,7 +62,7 @@ index 77bd934..cd3befb 100644
  #define BAIKAL_VENDOR_ID	0x104d
  #define BAIKAL_DEVICE_ID	0x90dd
  
-@@ -66,10 +85,13 @@ MODULE_PARM_DESC(allow_write,
+@@ -66,10 +99,13 @@ MODULE_PARM_DESC(allow_write,
   * caractere expõe janelas de BARs diferentes em offsets próprios:
   *
   *   0x000000-0x000fff  BAR0 (4 KiB, MMIO de controle)
@@ -63,7 +77,7 @@ index 77bd934..cd3befb 100644
   */
  #define BAIKAL_DEV_BAR0_OFF	0x000000ULL
  #define BAIKAL_DEV_BAR2_OFF	0x001000ULL
-@@ -77,6 +99,19 @@ MODULE_PARM_DESC(allow_write,
+@@ -77,6 +113,19 @@ MODULE_PARM_DESC(allow_write,
  #define BAIKAL_DEV_BAR5_OFF	0x00500000ULL
  #define BAIKAL_DEV_SIZE		(BAIKAL_DEV_BAR5_OFF + BAR5_SIZE)
  
@@ -83,7 +97,7 @@ index 77bd934..cd3befb 100644
  struct baikal_mem_dev {
  	struct pci_dev		*pdev;
  	struct miscdevice	misc;
-@@ -96,6 +131,22 @@ struct baikal_mem_dev {
+@@ -96,6 +145,23 @@ struct baikal_mem_dev {
  	bool			bar2_mapped;
  	bool			bar4_mapped;
  	bool			bar5_mapped;
@@ -97,6 +111,7 @@ index 77bd934..cd3befb 100644
 +	bool			dma_enabled;
 +	bool			dma_disabled_perm;	/* desligado permanentemente após erro */
 +	unsigned long		dma_retry_at;		/* next on-demand channel request (jiffies) */
++	enum dmaengine_tx_result dma_result;		/* outcome of the last DMA transfer */
 +	char			dma_state[64];		/* para sysfs */
 +	u64			dma_bytes_read;
 +	u64			dma_bytes_written;
@@ -106,7 +121,7 @@ index 77bd934..cd3befb 100644
  };
  
  static struct baikal_mem_dev *g_bm_dev;
-@@ -109,6 +160,194 @@ static u32 baikal_mem_read32(void __iomem *addr)
+@@ -109,6 +175,218 @@ static u32 baikal_mem_read32(void __iomem *addr)
  	return ioread32(addr);
  }
  
@@ -199,6 +214,16 @@ index 77bd934..cd3befb 100644
 +	dev_info(&dev->pdev->dev, "[BAIKAL] DMA habilitado sob demanda\n");
 +}
 +
++/* Source address of a DMA read: @spm_dma, or the one the DMAC rejects once if injected */
++static dma_addr_t baikal_dma_read_src(dma_addr_t spm_dma)
++{
++	if (dma_fault_inject != 2)
++		return spm_dma;
++
++	dma_fault_inject = 0;
++	return spm_dma - (SPM_DMA_BASE - BAR2_PCI_EXPECTED);
++}
++
 +static int baikal_dma_alloc_bounce(struct baikal_mem_dev *dev)
 +{
 +	if (dev->dma_bounce_virt)
@@ -235,9 +260,16 @@ index 77bd934..cd3befb 100644
 +	}
 +}
 +
-+static void baikal_dma_callback(void *data)
++/*
++ * baikal-dmac completes an aborted descriptor like a good one: the only place
++ * the failure shows up is the result passed to this callback. tx_status would
++ * report DMA_COMPLETE for it.
++ */
++static void baikal_dma_callback(void *data, const struct dmaengine_result *result)
 +{
 +	struct baikal_mem_dev *dev = data;
++
++	dev->dma_result = result ? result->result : DMA_TRANS_NOERROR;
 +	complete(&dev->dma_comp);
 +}
 +
@@ -262,6 +294,7 @@ index 77bd934..cd3befb 100644
 +	if (!dev->dma_chan)
 +		return -ENODEV;
 +
++	dev->dma_result = DMA_TRANS_NOERROR;
 +	reinit_completion(&dev->dma_comp);
 +
 +	tx = dmaengine_prep_dma_memcpy(dev->dma_chan, dst, src, len, DMA_CTRL_ACK | DMA_PREP_INTERRUPT);
@@ -270,7 +303,7 @@ index 77bd934..cd3befb 100644
 +		return -EIO;
 +	}
 +
-+	tx->callback = baikal_dma_callback;
++	tx->callback_result = baikal_dma_callback;
 +	tx->callback_param = dev;
 +
 +	cookie = dmaengine_submit(tx);
@@ -288,10 +321,16 @@ index 77bd934..cd3befb 100644
 +		return ret;
 +	}
 +
-+	/* Verificar status da transferência */
-+	ret = dmaengine_tx_status(dev->dma_chan, cookie, NULL);
-+	if (ret == DMA_TRANS_ABORTED) {
-+		dev_err(&dev->pdev->dev, "[BAIKAL] Transferência DMA abortada pelo hardware\n");
++	/* Test hook: report this transfer as aborted, once */
++	if (dma_fault_inject == 1) {
++		dma_fault_inject = 0;
++		dev->dma_result = DMA_TRANS_ABORTED;
++	}
++
++	/* The DMAC completes an aborted descriptor too; the outcome is in dma_result */
++	if (dev->dma_result != DMA_TRANS_NOERROR) {
++		dev_err(&dev->pdev->dev, "[BAIKAL] Transferência DMA falhou (resultado %d)\n",
++			dev->dma_result);
 +		return -EIO;
 +	}
 +
@@ -301,7 +340,7 @@ index 77bd934..cd3befb 100644
  /* ------------------------------------------------------------------------- */
  /* Operações de arquivo de caractere                                         */
  /* ------------------------------------------------------------------------- */
-@@ -117,7 +356,7 @@ static u32 baikal_mem_read32(void __iomem *addr)
+@@ -117,7 +395,7 @@ static u32 baikal_mem_read32(void __iomem *addr)
   * Resolve um offset de /dev/baikal-memory para o BAR correspondente.
   * Retorna o ponteiro virtual e, em *avail, quantos bytes ainda são legíveis
   * (ou graváveis, se writable_only) de forma contígua a partir dele.
@@ -310,7 +349,7 @@ index 77bd934..cd3befb 100644
   */
  static void __iomem *baikal_mem_resolve(struct baikal_mem_dev *dev, loff_t pos,
  					size_t *avail, bool writable_only)
-@@ -136,6 +375,11 @@ static void __iomem *baikal_mem_resolve(struct baikal_mem_dev *dev, loff_t pos,
+@@ -136,6 +414,11 @@ static void __iomem *baikal_mem_resolve(struct baikal_mem_dev *dev, loff_t pos,
  		return dev->bar2 + (pos - BAIKAL_DEV_BAR2_OFF);
  	}
  
@@ -322,7 +361,7 @@ index 77bd934..cd3befb 100644
  	if (pos < BAIKAL_DEV_SIZE) {
  		if (writable_only || !dev->bar5_mapped)
  			return NULL;
-@@ -146,6 +390,43 @@ static void __iomem *baikal_mem_resolve(struct baikal_mem_dev *dev, loff_t pos,
+@@ -146,6 +429,43 @@ static void __iomem *baikal_mem_resolve(struct baikal_mem_dev *dev, loff_t pos,
  	return NULL;
  }
  
@@ -366,7 +405,7 @@ index 77bd934..cd3befb 100644
  static ssize_t baikal_memory_read(struct file *filp, char __user *buf,
  				  size_t count, loff_t *ppos)
  {
-@@ -157,21 +438,74 @@ static ssize_t baikal_memory_read(struct file *filp, char __user *buf,
+@@ -157,21 +477,75 @@ static ssize_t baikal_memory_read(struct file *filp, char __user *buf,
  		return -ENODEV;
  
  	mutex_lock(&dev->lock);
@@ -412,7 +451,8 @@ index 77bd934..cd3befb 100644
 +			if (can_dma) {
 +				/* dma_bounce_size is only set once the bounce buffer above is allocated */
 +				dma_chunk = min_t(size_t, dma_len, dev->dma_bounce_size);
-+				ret = baikal_dma_do_transfer(dev, dev->dma_bounce_phys, spm_dma,
++				ret = baikal_dma_do_transfer(dev, dev->dma_bounce_phys,
++							    baikal_dma_read_src(spm_dma),
 +							    dma_chunk, DMA_DEV_TO_MEM);
 +				if (ret == 0) {
 +					/* Copiar do bounce buffer para userspace */
@@ -442,7 +482,7 @@ index 77bd934..cd3befb 100644
  		memcpy_fromio(bounce, src, chunk);
  
  		if (copy_to_user(buf + total_read, bounce, chunk)) {
-@@ -181,6 +515,7 @@ static ssize_t baikal_memory_read(struct file *filp, char __user *buf,
+@@ -181,6 +555,7 @@ static ssize_t baikal_memory_read(struct file *filp, char __user *buf,
  
  		*ppos += chunk;
  		total_read += chunk;
@@ -450,7 +490,7 @@ index 77bd934..cd3befb 100644
  	}
  
  	mutex_unlock(&dev->lock);
-@@ -200,10 +535,12 @@ static ssize_t baikal_memory_write(struct file *filp, const char __user *buf,
+@@ -200,10 +575,12 @@ static ssize_t baikal_memory_write(struct file *filp, const char __user *buf,
  		return -EPERM;
  
  	mutex_lock(&dev->lock);
@@ -463,7 +503,7 @@ index 77bd934..cd3befb 100644
  		void __iomem *dst;
  
  		dst = baikal_mem_resolve(dev, *ppos, &avail, true);
-@@ -213,6 +550,55 @@ static ssize_t baikal_memory_write(struct file *filp, const char __user *buf,
+@@ -213,6 +590,55 @@ static ssize_t baikal_memory_write(struct file *filp, const char __user *buf,
  		}
  
  		chunk = min_t(size_t, count - total_written, avail);
@@ -519,7 +559,7 @@ index 77bd934..cd3befb 100644
  		chunk = min_t(size_t, chunk, sizeof(bounce));
  
  		if (copy_from_user(bounce, buf + total_written, chunk)) {
-@@ -224,6 +610,7 @@ static ssize_t baikal_memory_write(struct file *filp, const char __user *buf,
+@@ -224,6 +650,7 @@ static ssize_t baikal_memory_write(struct file *filp, const char __user *buf,
  
  		*ppos += chunk;
  		total_written += chunk;
@@ -527,7 +567,7 @@ index 77bd934..cd3befb 100644
  	}
  
  	mutex_unlock(&dev->lock);
-@@ -433,6 +820,164 @@ static const struct attribute_group baikal_memory_attr_group = {
+@@ -433,6 +860,164 @@ static const struct attribute_group baikal_memory_attr_group = {
  	.attrs = baikal_memory_attrs,
  };
  
@@ -692,7 +732,7 @@ index 77bd934..cd3befb 100644
  /* ------------------------------------------------------------------------- */
  /* Probe e Remove                                                            */
  /* ------------------------------------------------------------------------- */
-@@ -586,6 +1131,29 @@ static int baikal_memory_probe(struct pci_dev *pdev,
+@@ -586,6 +1171,29 @@ static int baikal_memory_probe(struct pci_dev *pdev,
  		}
  	}
  
@@ -722,7 +762,7 @@ index 77bd934..cd3befb 100644
  	/* Registrar dispositivo de caractere */
  	dev_info(&pdev->dev, "[BAIKAL] Registrando misc device...\n");
  	ret = misc_register(&baikal_memory_miscdev);
-@@ -596,7 +1164,7 @@ static int baikal_memory_probe(struct pci_dev *pdev,
+@@ -596,7 +1204,7 @@ static int baikal_memory_probe(struct pci_dev *pdev,
  	}
  	dev_info(&pdev->dev, "[BAIKAL] misc device OK: /dev/%s\n", DRIVER_NAME);
  
@@ -731,7 +771,7 @@ index 77bd934..cd3befb 100644
  	dev_info(&pdev->dev, "[BAIKAL] Criando sysfs group...\n");
  	ret = sysfs_create_group(&pdev->dev.kobj, &baikal_memory_attr_group);
  	if (ret) {
-@@ -607,6 +1175,14 @@ static int baikal_memory_probe(struct pci_dev *pdev,
+@@ -607,6 +1215,14 @@ static int baikal_memory_probe(struct pci_dev *pdev,
  	}
  	dev_info(&pdev->dev, "[BAIKAL] sysfs group OK\n");
  
@@ -746,7 +786,7 @@ index 77bd934..cd3befb 100644
  	pci_set_drvdata(pdev, dev);
  	g_bm_dev = dev;
  
-@@ -626,8 +1202,13 @@ static void baikal_memory_remove(struct pci_dev *pdev)
+@@ -626,8 +1242,13 @@ static void baikal_memory_remove(struct pci_dev *pdev)
  
  	dev_info(&pdev->dev, "[BAIKAL] Removendo driver...\n");
  
@@ -760,7 +800,7 @@ index 77bd934..cd3befb 100644
  	pci_disable_device(pdev);
  
  	g_bm_dev = NULL;
-@@ -679,4 +1260,4 @@ module_exit(baikal_memory_exit);
+@@ -679,4 +1300,4 @@ module_exit(baikal_memory_exit);
  MODULE_LICENSE("GPL v2");
  MODULE_AUTHOR("Projeto PS4 Linux Baikal");
  MODULE_DESCRIPTION(DRIVER_DESC);
