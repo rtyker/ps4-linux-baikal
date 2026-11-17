@@ -28,11 +28,11 @@ dummy_mem.bin
 fake_mem
 
 # --- Dumps de firmware proprietário (kernel Orbis/Ghidra) ---
-outros/rea/dumps/
-outros/consolidado/memoriateste.bin
+others/rea/dumps/
+others/consolidado/memoriateste.bin
 
 # --- Logs de hardware/capturas UART (grandes e efêmeros) ---
-outros/tests/
+others/tests/
 dmesg_output/
 netconsole_ps4_captures/
 
@@ -47,8 +47,8 @@ opencode.json
 *.swo
 
 # --- Roteiros/auxiliares de teste locais (não versionar) ---
-outros/scripts/host/ROTEIRO_VM_WINDOWS_10.md
-outros/scripts/host/99-ps4-hd-noautomount.rules
+others/scripts/host/ROTEIRO_VM_WINDOWS_10.md
+others/scripts/host/99-ps4-hd-noautomount.rules
 
 # --- VM Windows 10 via NBD (local apenas) ---
 vm/
@@ -87,7 +87,7 @@ distro/winesapos/
 distro/boot_referencia/
 kernel/extra_firmware/
 kernel/drivers_mts/build/
-outros/rea/tools/ghidra_project/
+others/rea/tools/ghidra_project/
 others/tools/ps4_hdd_tools/pkg_pfs_tool/build/
 # Capturas brutas da UART (centenas de KB cada); os .log ficam fora do git por decisao anterior do usuario
 others/tests/uart_logs/*.bin
