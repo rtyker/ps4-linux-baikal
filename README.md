@@ -7,6 +7,8 @@ Sony software after the handoff.
 > ⚠️ **Requires an already jailbroken PS4 on a compatible firmware.** This project neither teaches
 > nor provides a jailbreak. For educational and research use in reverse engineering and embedded systems.
 
+> **New:** swap on the Baikal SPM/DDR3 moved by DMA, ~20x faster than CPU access — see [RELEASE_NOTES.md](RELEASE_NOTES.md).
+
 ## Two tracks
 
 The repository is split into two independent tracks with a single explicit dependency:
