@@ -1,0 +1,70 @@
+COMPARATIVO DE MEMORIA DO PS4 PRO (Baikal): vram.txt 1024 contra 4096
+Kernel 7.0.8-Strawberry-ThinLTO-Baikal-+ (tag 20261117-checkpoint)
+Gerado no PC em: 2026-11-17 07:39:35 -0300
+
+CONTEXTO
+- O tamanho da VRAM e controlado pelo arquivo vram.txt na particao BOOT (valor em MB). O vram.txt
+  TEM PRIORIDADE sobre o payload carregado (ps4-linux-payloads/README.md e linux/main-aio.c).
+- Medicao 1 (07:18 e 07:23 de 17/11): vram.txt = 1024. Na de 07:23 o usuario carregou o payload de
+  4096 MB, mas o vram.txt de 1024 venceu: resultado identico a de 07:18.
+- Medicao 2 (apos trocar o vram.txt para 4096, backup em vram.txt.bak-1024 na BOOT): dados abaixo.
+- O relogio do PS4 na medicao 2 mostrava 2026-11-05 (RTC fora de hora); o horario confiavel e o do PC.
+
+QUADRO COMPARATIVO
+Item                              vram.txt=1024            vram.txt=4096          Diferenca
+VRAM total                        1024 MiB                 4096 MiB               +3072 MiB
+VRAM em uso                       9 MiB                    9 MiB                  igual
+GTT total                         3454 MiB                 1945 MiB               -1509 MiB
+RAM total (free -m)               6911 MiB                 3893 MiB               -3018 MiB
+MemTotal (/proc/meminfo)          7077680 kB               3987248 kB             -3090432 kB
+RAM disponivel                    ~6465-6495 MiB           3496 MiB               ~-2980 MiB
+Swap total                        3635 MiB                 2306 MiB               -1329 MiB
+  zram (prio 100)                 3,4 GiB                  1,9 GiB
+  baikal_spm0 (prio 50)           180 MiB                  180 MiB                igual
+BAR2 do SPM (PCI)                 1 GiB                    1 GiB                  igual
+SPM que responde (zero)           188 MiB (blocos 0-187)   188 MiB (blocos 0-187) igual
+Alem de 188 MiB                   ruido: ~22-26% de 0xFF   ~99,6% de 0xFF         mudou
+E820 "device reserved"            0x80000000-0xfbffffff    igual                  igual
+clock recovery failed no boot     2                        2                      igual
+
+LEITURAS
+- A VRAM maior sai da RAM do sistema: +3072 MiB de VRAM, -3018 MiB de RAM total (praticamente o mesmo
+  valor). zram e GTT diminuem por consequencia (sao calculados a partir da RAM).
+- O limite do SPM (188 MiB) NAO depende do vram.txt: igual em 5 medicoes em boots diferentes.
+- O conteudo alem dos 188 MiB mudou: com VRAM 1024 ficou em ruido (~22-26% de 0xFF); com 4096, ~99,6%
+  de 0xFF, como na medicao de 2026-11-16. Hipotese (NAO testada): ruido de barramento sem nada
+  conectado. Nao se sabe qual vram.txt valia em 16/11.
+- Nao foi investigado por que o RAM total do Linux e 6911 MiB e nao 8 GiB.
+
+DADOS BRUTOS DA MEDICAO 2 (vram.txt=4096)
+== free -m
+               total        used        free      shared  buff/cache   available
+Mem:            3893         385        3546           1         165        3508
+Swap:           2126           0        2126
+== meminfo
+MemTotal:        3987248 kB
+MemAvailable:    3592176 kB
+SwapTotal:       2177528 kB
+== amdgpu mem_info (MiB)
+mem_info_gtt_total 1945
+mem_info_gtt_used 5
+mem_info_preempt_used 0
+mem_info_vis_vram_total 4096
+mem_info_vis_vram_used 9
+mem_info_vram_total 4096
+mem_info_vram_used 9
+== dmesg
+[    2.000542] amdgpu 0000:00:01.0: VRAM: 4096M 0x0000000F00000000 - 0x0000000FFFFFFFFF (4096M used)
+[    2.000564] amdgpu 0000:00:01.0: [drm] Detected VRAM RAM=4096M, BAR=4096M
+[    2.000761] amdgpu 0000:00:01.0:  4096M of VRAM memory ready
+[    2.000783] amdgpu 0000:00:01.0:  1945M of GTT memory ready.
+== swap
+NAME             TYPE      SIZE USED PRIO
+/dev/zram0       partition 1.9G   0B  100
+/dev/baikal_spm0 partition 180M   0B   50
+
+VARREDURA DO SPM (baikal_spm_scan, so leitura, medicao 2)
+ 0-3 MiB ZERO | 4 MiB DATA (cabecalho do swap) | 5-187 MiB ZERO | 188-1023 MiB DATA (nao responde)
+ summary ZERO=187 FF=0 DATA=837 ERROR=0 NOWRITE=0 TIMEOUT=0
+ bloco 188: ff=1044471 de 1048576 bytes; bloco 512: ff=1047070; bloco 1023: ff=1046102
+ CPU e DMA concordam nos blocos 0, 187 (zero) e 188, 512 (dado/FF).

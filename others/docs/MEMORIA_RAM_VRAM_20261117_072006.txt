@@ -1,0 +1,38 @@
+Medicao de memoria do PS4 (Linux 7.0.8, tag 20261117-checkpoint)
+Data/hora no PC: 2026-11-17 07:20:06 -0300
+Data/hora no PS4: 2026-11-17 07:18:18 -0300 (o relogio do PS4 pode divergir do PC)
+Uptime: up 7 minutes
+
+== free -m
+               total        used        free      shared  buff/cache   available
+Mem:            6911         445        6516           1         165        6465
+Swap:           3635           0        3635
+
+== /proc/meminfo (selecao)
+MemTotal:        7077680 kB
+MemFree:         6672428 kB
+MemAvailable:    6621092 kB
+Buffers:           15208 kB
+Cached:           140352 kB
+SwapTotal:       3722744 kB
+SwapFree:        3722744 kB
+
+== swap
+NAME             TYPE      SIZE USED PRIO
+/dev/zram0       partition 3.4G   0B  100
+/dev/baikal_spm0 partition 180M   0B   50
+
+== VRAM/GTT (amdgpu, em MiB)
+mem_info_gtt_total 3454
+mem_info_gtt_used 5
+mem_info_preempt_used 0
+mem_info_vis_vram_total 1024
+mem_info_vis_vram_used 9
+mem_info_vram_total 1024
+mem_info_vram_used 9
+
+== dmesg amdgpu
+[    2.015222] amdgpu 0000:00:01.0: VRAM: 1024M 0x0000000F00000000 - 0x0000000F3FFFFFFF (1024M used)
+[    2.015246] amdgpu 0000:00:01.0: [drm] Detected VRAM RAM=1024M, BAR=1024M
+[    2.015435] amdgpu 0000:00:01.0:  1024M of VRAM memory ready
+[    2.015444] amdgpu 0000:00:01.0:  3454M of GTT memory ready.
