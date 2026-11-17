@@ -40,7 +40,7 @@ echo "⚡ Montando Partições do HD Interno do PS4 (read-only) ⚡"
 echo "========================================================="
 
 # Descobre o device do HD interno sem assumir /dev/sda: com o HD USB de boot
-# plugado, o USB costuma ser sda e o interno sdb (e vice-versa em others setups).
+# plugado, o USB costuma ser sda e o interno sdb (e vice-versa em outros setups).
 INTERNAL_DEV=""
 for cand in sdb sda; do
     if [ -b "/dev/${cand}27" ]; then
