@@ -37,9 +37,11 @@ do Orbis, sem cold init) limpou o resíduo e subiu o link: `BMSR 0x7969 → 0x79
 instalado, mas barrado (`module_blacklist=mts`). Tag `20261117-mtsx`, promovida para
 `distro/RELEASE/20261117-mtsx/` em 2026-11-18.
 
-**O que falta:** aceite de boot frio ×3 com autoload sem intervenção, transferência de 30 min
-provada por contadores, e um `01-build-image` para o rootfs de fábrica já nascer com o `mtsx`
-(hoje o `.ko` e os dois `.conf` foram instalados à mão no rootfs interno do console). Lista em
+**O que falta:** transferência de 30 min provada por contadores e um `01-build-image` para o rootfs
+de fábrica já nascer com o `mtsx` (hoje o `.ko` e os dois `.conf` foram instalados à mão no rootfs
+interno do console). O **aceite de boot frio ×3 fechou em 2026-11-18** (`test_history` 140-142):
+autoload sem intervenção, `mts` fora, resíduo limpo, `link up 0xb19`, DHCP e 0 erros nos três boots —
+o terceiro repetiu também o caminho de dados (100 MB em cada sentido com SHA-256). Lista em
 `others/docs/BACKLOG.md` → "Pendências abertas em 2026-11-18".
 
 **Consequência operacional:** `eth0` e `wlan0` estão na **mesma** LAN (`192.168.6.0/24`), então

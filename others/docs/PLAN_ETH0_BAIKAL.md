@@ -1,6 +1,14 @@
 # Plan: Baikal Gigabit Ethernet (`mts`, `eth0`), reopened on 2026-11-17
 
-**Status (2026-11-17): front reopened by the user (E1, decision log). The old conclusion ("the PHY is powered by Sony firmware before the kernel; not fixable from Linux; investigation closed") is withdrawn. Phase S (static) is complete: the firmware checks are in section 2.2 (F1-F19), our own boot log of 2026-11-12 was re-read (section 2.3), and the defects of our driver are in section 2.4. Phase 0 host work is done except P0-3: the read-only diagnostic module `others/tools/mts_peek/` compiles, the helper scripts are fixed. The Phase C driver exists as a separate module, `others/tools/mtsx/` (compiled, host-tested, never run). Nothing has been run on the console: the user is running the internal-rootfs plan on it, so the console stays untouched until the user says it is free.**
+**Status (2026-11-18): the front is closed on the driver side.** Phases A-E are done and validated live:
+the residue bit in C45 `0x0147.1e` was the blocker, `mtsx` brings the link up and moves data, and the
+module now comes from the official build and the rootfs (`CONFIG_MTSX=m`, `modules-load.d/mtsx.conf`,
+`blacklist mts` for the legacy `mts`). The **cold-boot acceptance is complete (3 of 3 on 2026-11-18,
+`test_history` 140-142)**, including 100 MB each way with matching SHA-256 over the cable. What is still
+open is listed in `BACKLOG.md` ("Pendências abertas em 2026-11-18"): the 30-minute transfer proven by
+counters, the Orbis with a working network after Linux, and a `01-build-image` so the factory rootfs is
+born with `mtsx`. The history below (status as of 2026-11-17, when nothing had been run yet) is kept for
+the reasoning.
 
 This file replaces `PLANO_ETH0_BAIKAL.md` (same file, renamed; the old text is in git history) and supersedes the "closed" verdict of `kernel/drivers_mts/PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md`. The driver's own reference stays `kernel/drivers_mts/README.md`.
 
@@ -284,7 +292,8 @@ Through the official build, new tag, deploy, docs (`kernel/drivers_mts/README.md
 | 2026-11-17 ~16:00 | Phase D validated on the console: `mtsx.ko` from the official build (sha256 `21ff0748…`) into the internal rootfs + `depmod -a`; `modprobe mtsx` probe with the real MAC, `ip link set eth0 up` cleared the residue and published the DMA generation; 100 MB each way with matching SHA-256 (`52776ede…5909`), 0 errors. Then `eth0` switched to DHCP (`.131`), default route through the cable, `wlan0` as fallback. | done (`test_history` 136-139) |
 | 2026-11-18 | Tag `20261117-mtsx` promoted to `distro/RELEASE/20261117-mtsx/` (`--no-tar`; the distro tarball predates `mtsx`) and the acceptance list written down (`BACKLOG.md` → "Pendências abertas em 2026-11-18"). Cold-boot acceptance (×3), a 30-minute transfer proven by counters, and a `01-build-image` so the factory rootfs ships `mtsx` are still open. | done on the host |
 | 2026-11-18 | Cold boot #1 of the acceptance run (`test_history` 140): `modules-load` inserted `mtsx` with no manual step, `mts` stayed out, probe `link=0xb18`, residue `0x0147.1e 0x0010 → 0x0000`, `link up 0xb19` (speed code 2, full duplex, BMSR `796d`), `eth0` on `192.168.6.131` by DHCP with the default route, `wlan0` kept `.128`, 0 errors/0 dropped, ping `-I eth0` 3/3 at 0.9 ms, real Firefox traffic sourced from `192.168.6.131`, boot 24.4 s, 0 failed units. | done |
-| 2026-11-18 | Cold boot #2 of the acceptance run (`test_history` 141): `mtsx` autoloaded by `modules-load`, `mts` out, probe at 9.97 s, residue cleared at 13.06 s, `link up 0xb19`, `eth0` `192.168.6.131` by DHCP with the default route, 0 errors/0 dropped, ping `-I eth0` 3/3 at 1.1 ms, boot 20.5 s, 0 failed units. `wlan0` answered a few seconds after `eth0` and stayed at `.128`. | done; boot #3 pending |
+| 2026-11-18 | Cold boot #2 of the acceptance run (`test_history` 141): `mtsx` autoloaded by `modules-load`, `mts` out, probe at 9.97 s, residue cleared at 13.06 s, `link up 0xb19`, `eth0` `192.168.6.131` by DHCP with the default route, 0 errors/0 dropped, ping `-I eth0` 3/3 at 1.1 ms, boot 20.5 s, 0 failed units. `wlan0` answered a few seconds after `eth0` and stayed at `.128`. | done |
+| 2026-11-18 | Cold boot #3 of the acceptance run (`test_history` 142) and the end of the acceptance: `mtsx` autoloaded, `mts` out, probe 10.15 s, residue cleared 13.38 s, `link up 0xb19`, `eth0` `192.168.6.131` by DHCP with the default route, `wlan0` at `.128`. Data path again over the cable: 100 MB host->PS4 random sha256 `190d89ed…4387` equal at both ends (2.83 s, ~37 MB/s) and 100 MB PS4->host zeros sha256 `20492a4d…9e0e` equal to the expected digest (1.91 s, ~55 MB/s); counters RX 111314157 / TX 110242156 bytes, 0 errors / 0 dropped; ping `-I eth0` 3/3 at 0.93 ms; boot 21.0 s, 0 failed units. | done; **cold-boot acceptance 3/3 complete** |
 
 ## 12. Decisions log
 
@@ -305,4 +314,13 @@ Standing constraint from E1: no SSH, FTP, ping or payload to the console, and no
 - **Validado ao vivo (2026-11-17 ~16:00, kernel `#1 … 15:47:07` da tag `20261117-mtsx`, rootfs interno `ps4root`):** `mtsx.ko` do build oficial enviado ao rootfs (sha256 `21ff0748…b045` idêntico ao do staging) + `/etc/modules-load.d/mtsx.conf` + `/etc/modprobe.d/ps4-gbe.conf` + `depmod -a`. `modprobe mtsx`: probe com o MAC real `2c:cc:44:3f:69:5f`, `link=0x…b18`; `ip link set eth0 up` limpou o resíduo (`0x0147.1e 0x0010 -> 0x0000`) e publicou a geração DMA, `link=0x…b19`, BMSR `796d`. Ping host↔PS4 em `192.168.0.0/24` ~1 ms. 100 MB em cada sentido por SSH sobre a `eth0` com SHA-256 idêntico (`52776ede…5909`), 0 erros nos contadores.
 - **Efeito colateral conhecido, sem correção (decisão do usuário):** `eth0` e `wlan0` estão na mesma rede do roteador; ao subir a `eth0`, ela responde ARP pelo IP do WiFi (`.128`), o `dhcpcd` vê conflito e o `wlan0` passa para `.127` até o próximo lease. O IP do WiFi não é problema (a reserva do roteador é por MAC); um sysctl de `arp_ignore` foi aplicado e desfeito, nada foi mantido.
 - **eth0 por DHCP (decisão do usuário, 2026-11-17 ~16:20):** `/etc/systemd/network/20-ethernet.network` passou a `DHCP=ipv4` (backup do estático em `/root/20-ethernet.network.static.bak` no console); `networkctl reconfigure eth0` → `192.168.6.131/24`, rota padrão pela `eth0` (metric 1024) e `wlan0` como reserva (3003), DNS ok, 8.8.8.8 a ~10 ms pela cabeada. O `01-build-image-7.0.sh` foi atualizado para gerar o mesmo arquivo (`bash -n` ok); o `denyinterfaces eth0` do `dhcpcd` continua. Como a `eth0` e o `wlan0` agora dividem a subnet, o teste de RX/TX passa a ser provado pelos contadores (`ip -s link`), não pelo ping (ver `AGENTS.md`).
-- **Ainda pendente:** boot frio com o autoload (`mtsx.conf`) sem intervenção manual (×3), transferência de 30 min, e conferir o Orbis com rede depois.
+- **Ainda pendente:** transferência de 30 min provada por contadores, e conferir o Orbis com rede depois.
+- **Aceite de boot frio FECHADO (2026-11-18, `test_history` 140-142):** três boots frios seguidos com o
+  autoload do `mtsx` (sem `modprobe` manual) e o `mts` barrado. Nos três: probe `link=0xb18`, resíduo
+  `0x0147.1e 0x0010 → 0x0000` entre 13,1 e 16,9 s, `link up` `0xb19` (speed code 2, full duplex, BMSR
+  `796d`), `eth0` `192.168.6.131/24` por DHCP como rota padrão e `wlan0` em `.128`, 0 erros / 0 dropped,
+  0 failed units; boot entre 20,5 s e 24,4 s. O boot #3 refez o caminho de dados: 100 MB host→PS4
+  (sha256 `190d89ed…4387` igual nas duas pontas) e 100 MB PS4→host (sha256 `20492a4d…9e0e` igual ao
+  digest esperado), contadores RX 111 314 157 B / TX 110 242 156 B, 0 erros. Achado colateral: o
+  `ps4-rtc-icc` semeia `2026-11-05T13:36:33Z` em todo boot frio (valor parado, NTP corrige; item novo
+  no `BACKLOG.md`).

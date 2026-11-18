@@ -1,6 +1,6 @@
 # Backlog do Projeto — Fonte Única de Pendências
 
-**Última atualização:** 2026-11-18 (reconciliação após a sessão de 2026-11-17: **Ethernet `eth0` funcionando** pelo driver `mtsx` validado ao vivo e já no build/rootfs; `eth0` passou a pegar IP por DHCP. O antigo "bloqueador de firmware do PHY" está **refutado**. Pendências de aceite de boot frio na seção "Pendências abertas em 2026-11-18".)
+**Última atualização:** 2026-11-18 (reconciliação após a sessão de 2026-11-17: **Ethernet `eth0` funcionando** pelo driver `mtsx` validado ao vivo e já no build/rootfs; `eth0` passou a pegar IP por DHCP. O antigo "bloqueador de firmware do PHY" está **refutado**. O **aceite de boot frio ×3 fechou em 2026-11-18**; pendências restantes na seção "Pendências abertas em 2026-11-18".)
 
 > ℹ️ **Como ler este arquivo:** itens `[x]` fechados guardam o histórico da solução; itens dentro de
 > `<details>` com o título "Histórico da investigação" são **registro do que foi refutado**, não
@@ -271,8 +271,9 @@ Medições reais no PS4 (boot completo, `systemd` `running`, 0 unidades falhadas
 > **100 MB em cada sentido com SHA-256 idêntico** (`test_history` 136-139). Ele é hoje
 > `CONFIG_MTSX=m` no build oficial e vem no rootfs por `/etc/modules-load.d/mtsx.conf`
 > (`blacklist mts` no `mts.ko` legado). Plano, fases A-E e decisões: `others/docs/PLAN_ETH0_BAIKAL.md`.
-> `eth0` também passou a pegar IP por DHCP e é a rota padrão (metric 1024). **Resta só o aceite de
-> boot frio** ("Pendências abertas em 2026-11-18").
+> `eth0` também passou a pegar IP por DHCP e é a rota padrão (metric 1024). **O aceite de boot frio
+> fechou em 2026-11-18 (3/3, `test_history` 140-142)**; o que resta está em "Pendências abertas em
+> 2026-11-18" (transferência de 30 min por contadores, Orbis com rede, `01-build-image`).
 >
 > ⚠️ O bloco abaixo, de 2026-11-17, é o estado **antes** da validação ao vivo. O "FECHAMENTO FORMAL"
 > de 2026-07-30 mais abaixo é **histórico refutado**: não havia nada de especial no power-on do PHY
@@ -587,7 +588,7 @@ vivo (`test_history` 136-139). O que falta é o aceite de repetibilidade. **Nota
 as linhas 136-139 foram criadas hoje a partir de `others/docs/PLAN_ETH0_BAIKAL.md` — daqui para frente,
 registrar cada teste ao vivo no ato.
 
-1. [~] **Boot frio ×3 com o autoload do `mtsx`, sem intervenção manual** — power-off completo, Orbis,
+1. [x] **Boot frio ×3 com o autoload do `mtsx`, sem intervenção manual** — power-off completo, Orbis,
    payload, e conferir em cada boot: `lsmod | grep mtsx` (e **nenhum** `mts`), `dmesg | grep -i mtsx`
    com `link=0x…b19` e resíduo limpo, `ip -br link show eth0` `UP`, IP por DHCP na mesma LAN do WiFi,
    `ip -s link show eth0` sem `dropped`/`errors`. Se falhar em qualquer boot: o `mtsx.ko` não está no
@@ -602,7 +603,15 @@ registrar cada teste ao vivo no ato.
      em 13,06 s, `link up 0xb19`; `eth0` `192.168.6.131` por DHCP, rota padrão pela cabeada; 0 erros/0
      dropped; ping `-I eth0` 3/3 a 1,1 ms; boot 6,05 s + 14,49 s = **20,5 s**, 0 failed. O `wlan0`
      respondeu alguns segundos depois da `eth0` (o primeiro ping só achou `.131`) e ficou em `.128`.
-     **Falta o boot #3.**
+   - ✅ **Boot #3 (2026-11-18, `test_history` 142): PASSOU — aceite FECHADO (3/3).** Probe em 10,15 s
+     (`0xb18`), resíduo limpo em 13,38 s, `link up 0xb19` (speed code 2, full duplex, BMSR `796d`);
+     `eth0` `192.168.6.131` por DHCP, rota padrão pela cabeada, `wlan0` em `.128`. Além do boot, o
+     caminho de dados foi refeito: **100 MB host→PS4** (aleatório, sha256 `190d89ed…4387` igual nas
+     duas pontas, 2,83 s ≈ 37 MB/s) e **100 MB PS4→host** (zeros, sha256 `20492a4d…9e0e` igual ao
+     digest esperado, 1,91 s ≈ 55 MB/s); contadores depois do teste: RX 111 314 157 B / TX 110 242 156 B,
+     **0 erros / 0 dropped**; ping `-I eth0` 3/3 a 0,93 ms; boot 6,21 s + 14,82 s = **21,0 s**, 0 failed;
+     `mtsx.ko` sha256 `21ff0748…b045` inalterado. Resumo dos três: `link=0xb18` no probe, resíduo limpo
+     entre 13,1–16,9 s, `0xb19` e DHCP em todos.
 2. [ ] **Transferência longa (30 min) pela `eth0`** com `ping -f`/`iperf3` ou `dd | ssh`, provando por
    **contadores** (`ip -s link show eth0`) — não por ping, porque `eth0` e `wlan0` estão na mesma
    subnet e o Linux responde ARP por qualquer interface (`AGENTS.md`, topologia).
