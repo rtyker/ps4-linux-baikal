@@ -615,8 +615,13 @@ registrar cada teste ao vivo no ato.
 2. [ ] **Transferência longa (30 min) pela `eth0`** com `ping -f`/`iperf3` ou `dd | ssh`, provando por
    **contadores** (`ip -s link show eth0`) — não por ping, porque `eth0` e `wlan0` estão na mesma
    subnet e o Linux responde ARP por qualquer interface (`AGENTS.md`, topologia).
-3. [ ] **Conferir o Orbis com rede depois do Linux** (link down limpo / Orbis volta a linkar) — é o
+3. [x] **Conferir o Orbis com rede depois do Linux** (link down limpo / Orbis volta a linkar) — é o
    único caminho de stop do nosso lado que ainda não foi exercitado com o `mtsx`.
+   - ✅ **Confirmado pelo usuário em 2026-11-18 (`test_history` 143).** A verificação do meu lado é
+     indireta: os três boots frios de hoje só aconteceram porque, depois de cada sessão de Linux, o
+     console voltou ao Orbis com rede (payload pelo BinLoader) e o `kexec` funcionou. O usuário
+     confirmou explicitamente o teste do caminho inteiro Orbis → Linux → Orbis com a rede funcionando.
+     Não houve medição de registrador desse caminho (o link do Orbis não é visível do lado do Linux).
 4. [ ] **`01-build-image` para o rootfs de fábrica ter o `mtsx` por construção** — hoje o `mtsx.ko` e os
    dois `.conf` foram instalados à mão no rootfs interno do console. **O `BUILD_ROOT` padrão
    (`/mnt/hdauxiliar/temp/arch_build_7.0`) não existe**, mas há um rootfs válido em
