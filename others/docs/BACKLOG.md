@@ -72,7 +72,7 @@ O trabalho **ativo no momento** (investigação detalhada, passo a passo) fica n
 > O incidente de 2026-11-15 (tela preta com sessão viva, ~1h30 de uptime) é provavelmente o mesmo
 > defeito por outro gatilho (queda de sinal em idle).
 
-### Sintoma (medido ao vivo em 2026-11-18, tag `20261117-mtsx`, `test_history` 145)
+### Sintoma (medido ao vivo em 2026-11-18, tag `20261117-mtsx`, `test_history` 145 e 146)
 
 1. Usuário desplugou o cabo HDMI do monitor e replugou: **a imagem não volta** (nem pisca).
 2. O Linux **não vê** o evento: `card0-HDMI-A-1` continua `connected` / `enabled` / `dpms On` o tempo
@@ -91,6 +91,22 @@ O trabalho **ativo no momento** (investigação detalhada, passo a passo) fica n
    (conhecida, `test_history` 110/112/113) **não discrimina** o estado bom do estado ruim — não é a
    explicação da tela preta.
 
+### ✅ **H1 CONFIRMADA (2026-11-18, `test_history` 146)** — **E1 executado com sucesso**
+
+**Experimento:** com a imagem boa em boot novo, rodou **só** `xrandr --off` + `--auto`, **sem tocar
+no cabo**. Resultado: **a tela morreu** (continua preta). O dmesg mostrou o caminho completo rodando:
+`pre_enable` (init lado DP) → `enable` (Belize attempt 1/3 **SUCESSO**, `post-enable DPCD ret=0`,
+retreino) — mas o monitor **não acendeu**.
+
+**Conclusão:** `enable_mn864729_video` **não é um init de frio**. No boot a ponte chega **já
+inicializada pelo Orbis/payload** e o driver só sobrepõe a programação de vídeo; depois do `TSRST`
+do `post_disable`, reescrever os mesmos registradores **não devolve o estado inicial**. A predição
+da H1 se confirmou: um ciclo de DPMS numa tela **boa** também a apaga.
+
+**Correção imediata:** implementar o **passo 4** do plano DP (`ps4-bridge-keep-state.patch`):
+no `post_disable`, **não** fazer o `TSRST` completo — só mutar (`VMUTECNT | MUTE`, `INFENA=0`) e
+manter o estado, como o `disable` já faz.
+
 ### Mapa do código
 
 `kernel/kernel_build_7.0/drivers/gpu/drm/amd/amdgpu/ps4_bridge.c`:
@@ -105,13 +121,13 @@ O trabalho **ativo no momento** (investigação detalhada, passo a passo) fica n
 
 ### Hipóteses (ordem de probabilidade)
 
-- **H1 (principal): `enable_mn864729_video` não é um init de frio.** No boot a ponte chega
+- ✅ **H1 CONFIRMADA (2026-11-18, `test_history` 146): `enable_mn864729_video` não é um init de frio.** No boot a ponte chega
   **já inicializada pelo Orbis/payload** e o driver só sobrepõe a programação de vídeo; depois do
-  `TSRST` do `post_disable` (ou de a própria ponte reagir à perda do sink HDMI), reescrever os mesmos
-  registradores não devolve o estado inicial. **Predição falsificável:** um ciclo de DPMS numa tela
-  **boa** também a apaga.
-- **H2:** a ponte **muta/gateia a saída HDMI** ao perder o sink e precisa de uma sequência de
-  re-arme do estágio de saída que o driver não escreve (o `cq_exec` "sucede" mesmo com a saída off).
+  `TSRST` do `post_disable`, reescrever os mesmos registradores **não devolve o estado inicial**.
+  **Predição falsificável confirmada:** um ciclo de DPMS numa tela **boa** também a apaga.
+- **H2 (agora secundária):** a ponte **muta/gateia a saída HDMI** ao perder o sink e precisa de uma
+  sequência de re-arme do estágio de saída que o driver não escreve (o `cq_exec` "sucede" mesmo com
+  a saída off). Testar se o keep-state resolve também o replug do cabo.
 - **H3:** o lado da **APU** (DIG/UNIPHY do `dce_v8_0`) precisa de power-cycle para religar por baixo
   de uma ponte que mudou de estado; um re-init completo do `amdgpu` resolveria.
 - **H4 (descartada):** cabo/monitor. O DDC lê o EDID e um reboot com o mesmo cabo/monitor traz a
@@ -130,13 +146,15 @@ O trabalho **ativo no momento** (investigação detalhada, passo a passo) fica n
 4. **E4 — lado do Orbis:** procurar no payload/RE o init da ponte antes do `kexec` e escrever o que
    falta em `pre_enable`.
 
-### Direções de correção
+### Direções de correção (atualizadas após H1 confirmada)
 
-- **Barata e já prevista:** implementar o **passo 4** do plano DP (`ps4-bridge-keep-state.patch`):
+- **🔴 PRIORIDADE MÁXIMA — Barata e já prevista:** implementar o **passo 4** do plano DP
+  (`ps4-bridge-keep-state.patch`):
   no `post_disable`, **não** fazer o `TSRST` completo — só mutar (`VMUTECNT | MUTE`, `INFENA=0`) e
-  manter o estado, como o `disable` já faz. Se a H1 estiver certa, isso sozinho salva os ciclos de
-  DPMS e provavelmente o replug.
-- **Se não bastar:** completar o init de frio com o que o E2/E4 revelarem.
+  manter o estado (`mn_bridge->mode` vivo via flag `idle`, como o `keep-mode` já faz). **H1 confirmada:
+  isso sozinho deve salvar os ciclos de DPMS e provavelmente o replug do cabo.**
+- **Se não bastar (testar depois do keep-state):** completar o init de frio com o que o E2/E4 revelarem
+  (debugfs dump + userspace reinit, ou RE do payload Orbis).
 - **Ganho colateral barato:** alinhar o nome do EDID (`edid/ps4_tv_edid.bin` vs `edid/my_edid.bin`)
   ou remover o caminho morto — mas isso **não** é a causa e não deve ser vendido como correção.
 
