@@ -587,11 +587,17 @@ vivo (`test_history` 136-139). O que falta é o aceite de repetibilidade. **Nota
 as linhas 136-139 foram criadas hoje a partir de `others/docs/PLAN_ETH0_BAIKAL.md` — daqui para frente,
 registrar cada teste ao vivo no ato.
 
-1. [ ] **Boot frio ×3 com o autoload do `mtsx`, sem intervenção manual** — power-off completo, Orbis,
+1. [~] **Boot frio ×3 com o autoload do `mtsx`, sem intervenção manual** — power-off completo, Orbis,
    payload, e conferir em cada boot: `lsmod | grep mtsx` (e **nenhum** `mts`), `dmesg | grep -i mtsx`
    com `link=0x…b19` e resíduo limpo, `ip -br link show eth0` `UP`, IP por DHCP na mesma LAN do WiFi,
    `ip -s link show eth0` sem `dropped`/`errors`. Se falhar em qualquer boot: o `mtsx.ko` não está no
    rootfs, ou o `mtsx.conf` não foi lido, ou o `blacklist` do `mts` não pegou.
+   - ✅ **Boot #1 (2026-11-18, `test_history` 140): PASSOU.** `modules-load` inseriu o `mtsx` sozinho,
+     `mts` não carregou; probe em 13,8 s (`link=0xb18`), resíduo `0x0147.1e 0x0010 → 0x0000` em 16,9 s,
+     `link up` (`0xb19`, speed code 2, full duplex, BMSR `796d`); `eth0` `192.168.6.131` por DHCP, rota
+     padrão pela cabeada; `wlan0` ficou em `.128` neste boot; 0 erros/0 dropped; ping `-I eth0` no
+     roteador 3/3 a 0,9 ms; tráfego real (Firefox) saindo com `src 192.168.6.131`; boot 24,4 s, 0
+     failed; `mtsx.ko` sha256 `21ff0748…b045` idêntico ao build. **Faltam os boots #2 e #3.**
 2. [ ] **Transferência longa (30 min) pela `eth0`** com `ping -f`/`iperf3` ou `dd | ssh`, provando por
    **contadores** (`ip -s link show eth0`) — não por ping, porque `eth0` e `wlan0` estão na mesma
    subnet e o Linux responde ARP por qualquer interface (`AGENTS.md`, topologia).
