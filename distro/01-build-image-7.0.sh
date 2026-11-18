@@ -718,7 +718,7 @@ done
 echo "=== Criando initramfs (mkinitcpio) ==="
 # Configurar mkinitcpio para kernel 7.0 (sem autodetect para evitar remover módulos no chroot)
 cat > "$ROOTFS_DIR/etc/mkinitcpio.conf" << 'MKEOF'
-MODULES=(ext4 ahci sd_mod btmtksdio amdgpu snd-hda-intel mts usbhid uas usb_storage)
+MODULES=(ext4 ahci sd_mod btmtksdio amdgpu snd-hda-intel usbhid uas usb_storage)
 BINARIES=(dmsetup)
 FILES=(/lib/firmware/edid/ps4_tv_edid.bin)
 HOOKS=(base udev modconf block ps4-internal-root filesystems keyboard fsck)

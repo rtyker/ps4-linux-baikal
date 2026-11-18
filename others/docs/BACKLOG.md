@@ -713,17 +713,21 @@ registrar cada teste ao vivo no ato.
      console voltou ao Orbis com rede (payload pelo BinLoader) e o `kexec` funcionou. O usuário
      confirmou explicitamente o teste do caminho inteiro Orbis → Linux → Orbis com a rede funcionando.
      Não houve medição de registrador desse caminho (o link do Orbis não é visível do lado do Linux).
-4. [ ] **`01-build-image` para o rootfs de fábrica ter o `mtsx` por construção** — hoje o `mtsx.ko` e os
-   dois `.conf` foram instalados à mão no rootfs interno do console. **O `BUILD_ROOT` padrão
-   (`/mnt/hdauxiliar/temp/arch_build_7.0`) não existe**, mas há um rootfs válido em
-   `arch_build_7.0/rootfs` no repo (gitignored, de 2026-11-17 07:30, ainda com o `mts.ko` antigo) —
-   então `PS4_BUILD_ROOT="$PWD/arch_build_7.0" sudo ./distro/01-build-image-7.0.sh <TAG-NOVA> --incremental`
-   deve funcionar (usar **tag nova**, não a `20261117-mtsx`, para não reescrever os artefatos que estão
-   no console). Isso também faz o `arch_minimal_v2-7.0.tar` refletir a tag (o atual é de 2026-11-17
-   07:30, anterior ao `mtsx`).
-5. [ ] **Tirar `mts` de `MODULES=(...)` em `distro/01-build-image-7.0.sh`** (~linha 716) — com o
-   `mtsx` autoload, o `mts` legado não tem por que entrar no initramfs. Hoje o `module_blacklist=mts`
-   do bootargs já o barra em `load_module()`; esta é a correção definitiva (exige `01-build-image`).
+4. [x] ✅ **`01-build-image` para o rootfs de fábrica ter o `mtsx` por construção** — **CONCLUÍDA
+   2026-11-18** com a tag `20261118-mtsx-builtin`. Rodado via Docker wrapper:
+   `PS4_BUILD_ROOT="$PWD/arch_build_7.0" ./distro/scripts/build-image-docker.sh 20261118-mtsx-builtin --incremental`.
+   O rootfs em `arch_build_7.0/rootfs` foi reutilizado (incremental), o novo initramfs foi gerado
+   **sem `mts` no `MODULES`** (item 5 abaixo), e os módulos `mtsx.ko` + blacklist do `mts` + `mtsx.conf`
+   foram instalados por construção. Artefatos em `distro/boot_referencia/*-20261118-mtsx-builtin*`
+   e sentinela `.build-complete-20261118-mtsx-builtin`. O `arch_minimal_v2-7.0.tar` agora reflete
+   esta tag.
+5. [x] ✅ **Tirar `mts` de `MODULES=(...)` em `distro/01-build-image-7.0.sh`** — **CONCLUÍDA
+   2026-11-18** (commit local). A linha 721 do script foi alterada de
+   `MODULES=(ext4 ahci sd_mod btmtksdio amdgpu snd-hda-intel mts usbhid uas usb_storage)` para
+   `MODULES=(ext4 ahci sd_mod btmtksdio amdgpu snd-hda-intel usbhid uas usb_storage)`. O initramfs
+   da tag `20261118-mtsx-builtin` foi gerado sem o `mts`; o `mtsx` é carregado via
+   `/etc/modules-load.d/mtsx.conf` (já no script) e o `mts` legado é bloqueado pelo
+   `module_blacklist=mts` no bootargs.
 6. [x] ✅ **Tag `20261117-mtsx` promovida** para `distro/RELEASE/20261117-mtsx/` (2026-11-18,
    `promote-release.sh … --no-tar`: 4 artefatos + `sha256sums.txt`; sem link para o tar da distro
    porque ele é anterior ao `mtsx` — ver item 4). A pasta é gitignored.
