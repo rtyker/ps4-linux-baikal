@@ -128,6 +128,15 @@ verdade (`xrandr --off/--auto` sem tocar no cabo; usuário diz se a imagem volta
 e recolocar o cabo → dump **C**. O `diff A C` é a lista de registradores que o evento do cabo muda;
 regravar os valores de **A** um a um (só valores de origem conhecida) acha o que falta no `enable`.
 
+### ⚠️ Reboot travou o console depois dos testes 147/148 (`test_history` 149)
+
+Depois das escritas na ponte, um `reboot` pelo Linux deixou o console sem imagem, sem rede, com teclado
+morto e com ventoinha e luz ligadas. Um boot frio recuperou. O journal termina limpo (`systemd-shutdown`
+sincronizou), então o travamento foi **no reinício**, não no boot. Os arquivos de `/data/linux/boot/`
+foram conferidos por FTP e estão íntegros. **Não se sabe** se as escritas na ponte contribuíram: o
+único `reboot` testado antes (93) passou uma vez. Refazer o `reboot` sozinho, num boot limpo, antes de
+concluir. Até lá, depois de escrever na ponte por ICC, preferir desligar e ligar a reiniciar.
+
 ### Mapa do código
 
 `kernel/kernel_build_7.0/drivers/gpu/drm/amd/amdgpu/ps4_bridge.c`:
