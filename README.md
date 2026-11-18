@@ -120,6 +120,44 @@ sudo ./deploy-boot-7.0.sh <TAG>       # or just swap the boot files, keeping the
 ./scripts/promote-release.sh <TAG>    # promotes a live-tested tag
 ```
 
+### Configuração do ambiente de desenvolvimento (opcional)
+
+Para builds locais com seu usuário não-root, chave SSH e chave EAP do HD interno,
+use a pasta **`.localdev/`** (não versionada, no `.gitignore`):
+
+```bash
+# 1) Copie o modelo de configuração
+cp .localdev/user_config.env.example .localdev/user_config.env
+
+# 2) Edite com seus valores
+vim .localdev/user_config.env
+#   - LOCAL_USER="seu_usuario"        (ex: "dev", "ps4dev")
+#   - LOCAL_UID="1001"
+#   - LOCAL_SSH_PUBKEY_FILE="$HOME/.ssh/id_ed25519.pub"
+#   - LOCAL_EAP_KEY_FILE=".localdev/ps4-keys/eap_hdd_key.bin"
+
+# 3) Gere/obtenha as chaves necessárias
+#    SSH (se não tem):
+#      ssh-keygen -t ed25519 -C "seu_email@exemplo.com"
+#    EAP key do HD interno (OBRIGATÓRIA para --internal-root):
+#      • No Orbis + GoldHEN: execute payload EAPDumper (porta 9090)
+#      • Puxe via FTP (porta 2121) → salva como .localdev/ps4-keys/eap_hdd_key.bin
+#      • Verifique: stat -c %s .localdev/ps4-keys/eap_hdd_key.bin  # deve dar 32
+
+# 4) Source as variáveis e rode o build
+source .localdev/user_config.env
+sudo -E ./distro/01-build-image-7.0.sh <TAG> --incremental
+
+# 5) Deploy com internal-root (rootfs no HD interno):
+LOCAL_EAP_KEY_FILE=.localdev/ps4-keys/eap_hdd_key.bin \
+  ./distro/deploy-boot-ftp-7.0.sh <TAG> --internal-root
+```
+
+> **Detalhes completos:**
+> - `.localdev/user_config.env.example` — modelo comentado com todas as variáveis
+> - `.localdev/ps4-keys/README.md` — como obter a chave EAP, formato, verificação
+> - `.localdev/README.md` — visão geral da pasta
+
 Full rules (patch idempotency, mandatory snapshots, `bootargs` conventions,
 deploy procedure, SSH, UART, RE database): [`AGENTS.md`](AGENTS.md) — the single source of truth;
 `CLAUDE.md` only imports that file.
