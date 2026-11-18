@@ -65,6 +65,95 @@ O trabalho **ativo no momento** (investigação detalhada, passo a passo) fica n
 
 ---
 
+## 🔴 Tela preta depois de perder o sinal HDMI (desplugado/replugado ou DPMS) — aberto em 2026-11-18
+
+> **Status:** aberto. **Não é regressão do `eth0`/`mtsx`** e não bloqueia nada: o console sobe com
+> imagem e funciona até o HDMI ser desplugado. O que se perde é a capacidade de **voltar** sem reboot.
+> O incidente de 2026-11-15 (tela preta com sessão viva, ~1h30 de uptime) é provavelmente o mesmo
+> defeito por outro gatilho (queda de sinal em idle).
+
+### Sintoma (medido ao vivo em 2026-11-18, tag `20261117-mtsx`, `test_history` 145)
+
+1. Usuário desplugou o cabo HDMI do monitor e replugou: **a imagem não volta** (nem pisca).
+2. O Linux **não vê** o evento: `card0-HDMI-A-1` continua `connected` / `enabled` / `dpms On` o tempo
+   todo. O `status` do conector vem do DPCD da ponte (`ps4_bridge_detect`), e a ponte continua
+   respondendo — não existe HPD do lado HDMI chegando à APU. Logo, nada no kernel reage ao cabo.
+3. Ciclo de DPMS por cima do Xorg (`xrandr --off` + `--auto`): `disable`/`post_disable` rodam **7×**
+   (o primeiro faz o `TSRST` completo, os outros 6 saem pelo flag `idle`), depois `mode_set` (VIC 16)
+   → `pre_enable` → treino do link → `enable` com `Belize attempt 1/3` **bem-sucedido** → retreino.
+   Ou seja: **todo o caminho de software roda e termina sem erro** — e a tela continua preta.
+4. `echo detect > /sys/class/drm/card0-HDMI-A-1/status` (reprobe forçado) → o **EDID volta** (256 B,
+   `md5 3e28ef42…f891`, idêntico ao `distro/ps4_tv_edid.bin`). O DDC/AUX através da ponte está vivo,
+   o monitor está conectado e o EDID é o mesmo de sempre.
+5. DPCD no sink, em 24 tentativas (boot e pós-evento): `sink_bw=0a sink_lanes=84 sink_tp=01
+   sink_pwr=01 sink_cnt=01 sink_st=00`, lane status todo `00`, sem pedido de ajuste. **É exatamente o
+   mesmo valor do boot em 2,08 s, quando a imagem subia.** Conclusão: a falha de `clock recovery`
+   (conhecida, `test_history` 110/112/113) **não discrimina** o estado bom do estado ruim — não é a
+   explicação da tela preta.
+
+### Mapa do código
+
+`kernel/kernel_build_7.0/drivers/gpu/drm/amd/amdgpu/ps4_bridge.c`:
+
+| Função | O que faz hoje | Lacuna |
+|---|---|---|
+| `ps4_bridge_detect` | só age com `force`; devolve `connected` se o DPCD responde | não trata HPD do HDMI; o cabo é invisível |
+| `ps4_bridge_pre_enable` | reescreve ~45 registradores do lado **DP** da ponte (bloco antes em `#if 0`) | é um **subconjunto** do init de frio, não um init completo |
+| `ps4_bridge_enable` | `enable_mn864729_video` (programa o lado HDMI/vídeo) + áudio; 3 tentativas | as tentativas só cobrem a programação; `ps4_bridge_retrain_dp` retorna `void` (falha de treino é ignorada) |
+| `ps4_bridge_post_disable` | **`TSRST` completo** (AVC/ENC/FIFO/CC/HDCP/AUD/VIF) e `idle=true` | reseta a ponte que o Orbis deixou inicializada |
+| `ps4_bridge_get_modes` | tenta `request_firmware("edid/my_edid.bin")`, depois DDC, depois modos fixos | o arquivo pedido **não existe** (a distro instala `edid/ps4_tv_edid.bin`) — caminho morto, sem efeito hoje |
+
+### Hipóteses (ordem de probabilidade)
+
+- **H1 (principal): `enable_mn864729_video` não é um init de frio.** No boot a ponte chega
+  **já inicializada pelo Orbis/payload** e o driver só sobrepõe a programação de vídeo; depois do
+  `TSRST` do `post_disable` (ou de a própria ponte reagir à perda do sink HDMI), reescrever os mesmos
+  registradores não devolve o estado inicial. **Predição falsificável:** um ciclo de DPMS numa tela
+  **boa** também a apaga.
+- **H2:** a ponte **muta/gateia a saída HDMI** ao perder o sink e precisa de uma sequência de
+  re-arme do estágio de saída que o driver não escreve (o `cq_exec` "sucede" mesmo com a saída off).
+- **H3:** o lado da **APU** (DIG/UNIPHY do `dce_v8_0`) precisa de power-cycle para religar por baixo
+  de uma ponte que mudou de estado; um re-init completo do `amdgpu` resolveria.
+- **H4 (descartada):** cabo/monitor. O DDC lê o EDID e um reboot com o mesmo cabo/monitor traz a
+  imagem de volta.
+
+### Experimento que decide (em ordem de custo)
+
+1. **E1 — sem build, 1 reboot (decide H1):** com a imagem boa em boot novo, rodar **só**
+   `xrandr --off` + `--auto`, **sem tocar no cabo**. Se a tela morrer, a ponte não sobrevive a um
+   re-init e o cabo é só um dos gatilhos (H1); se sobreviver, o evento do cabo tem algo próprio (H2/H3).
+2. **E2 — build de diagnóstico (decide H1 vs H2 e vira ferramenta de recuperação):** `debugfs`
+   `ps4_bridge/dump` que **lê de volta** os registradores que o driver escreve, e `ps4_bridge/reinit`
+   que reexecuta `pre_enable` + `enable` + áudio a partir do userspace. Com a tela preta, comparar o
+   dump com o de um boot bom: o conjunto de registradores diferente é o init que falta.
+3. **E3 — lado da GPU (H3):** ler DIG/UNIPHY durante um treino que falha e comparar com o boot.
+4. **E4 — lado do Orbis:** procurar no payload/RE o init da ponte antes do `kexec` e escrever o que
+   falta em `pre_enable`.
+
+### Direções de correção
+
+- **Barata e já prevista:** implementar o **passo 4** do plano DP (`ps4-bridge-keep-state.patch`):
+  no `post_disable`, **não** fazer o `TSRST` completo — só mutar (`VMUTECNT | MUTE`, `INFENA=0`) e
+  manter o estado, como o `disable` já faz. Se a H1 estiver certa, isso sozinho salva os ciclos de
+  DPMS e provavelmente o replug.
+- **Se não bastar:** completar o init de frio com o que o E2/E4 revelarem.
+- **Ganho colateral barato:** alinhar o nome do EDID (`edid/ps4_tv_edid.bin` vs `edid/my_edid.bin`)
+  ou remover o caminho morto — mas isso **não** é a causa e não deve ser vendido como correção.
+
+### Critério de aceite
+
+- Boot frio com imagem → **10×** `xrandr --off/--auto` e **10×** desplugar/replugar o cabo HDMI, com a
+  imagem voltando **em todas**, sem reboot; `test_history` com a contagem e a hora de cada ciclo.
+- Nada muda no caminho do `eth0`/`mtsx`, na SPM ou no RTC.
+
+### Rollback
+
+- Nenhum build novo foi para o HD por causa deste item. Quando houver tag nova:
+  `distro/deploy-boot-ftp-7.0.sh 20261117-mtsx`. **Não** usar `deploy-boot-7.0.sh` (USB): o console
+  está com `ps4root=internal`/`bootsrc=internal` e o deploy por USB devolveria a prioridade ao USB.
+
+---
+
 ## 🔴 Incidente 2026-11-15 ~19:56 — sem vídeo com teclado vivo (NumLock responde)
 
 Sessão Cinnamon ativa em `tty7` (lightdm + Xorg `:0` no `vt7`), `card0-HDMI-A-1` `connected`/`enabled`/`dpms On`. O log mostra falha de treinamento de link DP (`clock recovery tried 5 times` / `failed`) quatro vezes em 0,5 s em `5852 s` de uptime, sem nova tentativa depois. Hipóteses: monitor/cabo HDMI perdeu sinal ou o link caiu durante o período ocioso (mesmo horário do teste de ociosidade). Pendente: confirmar no monitor (cabo, entrada, ligado) e, se persistir, reiniciar o lightdm (derruba a sessão do usuário).
