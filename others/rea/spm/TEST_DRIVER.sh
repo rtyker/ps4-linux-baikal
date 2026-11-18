@@ -3,11 +3,11 @@
 # Script de Teste - Driver Baikal Memory (SPM/DDR3, 00:14.6)
 # =============================================================================
 # Uso: ./TEST_DRIVER.sh [usuario] [senha] [ip]
-# Padrão: anderson / anderson / 192.168.6.128
+# Padrão: usuario_dev / usuario_dev / 192.168.6.128
 # =============================================================================
 
-USER="${1:-anderson}"
-PASS="${2:-anderson}"
+USER="${1:-usuario_dev}"
+PASS="${2:-usuario_dev}"
 IP="${3:-192.168.6.128}"
 REMOTE_PATH="/mnt/hdauxiliar/ps4-linux-baikal/others/rea/spm/dumps/baikal-memory.ko"
 

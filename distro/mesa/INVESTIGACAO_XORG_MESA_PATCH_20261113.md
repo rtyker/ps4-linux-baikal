@@ -5,8 +5,8 @@
 ## O que está comprovado (medido ao vivo)
 
 1. O `libgbm` do patch procura o backend em `/usr/local/lib/gbm/dri_gbm.so`, que não existe. O `dri_gbm.so` está em `/opt/mesa-ps4-patched/lib/gbm/`. Mensagem do Mesa: `MESA-LOADER: failed to open dri: /usr/local/lib/gbm/dri_gbm.so … (search paths /usr/local/lib/gbm, suffix _gbm)`.
-2. Nos logs do X de `anderson` (`Xorg.3.log`, `Xorg.4.log`): `AMDGPU(0): gbm_create_device returned NULL, using ShadowFB`, depois `DRI3 disabled`, `AIGLX: Screen 0 is not DRI2 capable` e `GLX: Initialized DRISWRAST`.
-3. `glxinfo` como `anderson` no `:4`: `glx: failed to create drisw screen` e `BadValue` em `X_GLXCreateNewContext`.
+2. Nos logs do X do **usuário de desenvolvimento** (`Xorg.3.log`, `Xorg.4.log`): `AMDGPU(0): gbm_create_device returned NULL, using ShadowFB`, depois `DRI3 disabled`, `AIGLX: Screen 0 is not DRI2 capable` e `GLX: Initialized DRISWRAST`.
+3. `glxinfo` como **usuário de desenvolvimento** no `:4`: `glx: failed to create drisw screen` e `BadValue` em `X_GLXCreateNewContext`.
 4. **A variável `GBM_BACKENDS_PATH=/opt/mesa-ps4-patched/lib/gbm` resolve o GBM.** Teste via `ctypes` no PS4, sem link simbólico: `gbm_create_device` retornou um dispositivo válido. `GBM_DRIVERS_PATH` não tem efeito (nome errado, é o que eu havia testado antes).
 
 ## Validação com o X reiniciado (2026-11-13, 11:5x)
@@ -15,7 +15,7 @@ Com `GBM_BACKENDS_PATH=/opt/mesa-ps4-patched/lib/gbm` no ambiente do servidor X 
 - `AMDGPU(0): glamor X acceleration enabled on AMD DG1501SML87LB (radeonsi, gladius, ACO, DRM 3.64, …)` e `glamor: Using OpenGL 4.5 context`
 - `[DRI2] DRI driver: radeonsi`, `DRI3 enabled`, `AIGLX: Loaded and initialized radeonsi`
 
-`glxinfo -B` como `anderson`: `direct rendering: Yes`, `OpenGL renderer: AMD DG1501SML87LB (radeonsi, gladius, ACO …) (0x9924)`, `OpenGL version: 4.5 (Compatibility Profile) Mesa 26.2.7`. **O Mesa patcheado funciona e reconhece o Gladius.**
+`glxinfo -B` como **usuário de desenvolvimento**: `direct rendering: Yes`, `OpenGL renderer: AMD DG1501SML87LB (radeonsi, gladius, ACO …) (0x9924)`, `OpenGL version: 4.5 (Compatibility Profile) Mesa 26.2.7`. **O Mesa patcheado funciona e reconhece o Gladius.**
 
 ## O que NÃO foi comprovado
 
@@ -46,8 +46,8 @@ O usuário rodou `startx` na `tty2` com a variável no ambiente e **o Cinnamon s
 
 ## Estado do PS4 (alterações feitas, todas reversíveis)
 
-- `GBM_BACKENDS_PATH=/opt/mesa-ps4-patched/lib/gbm` acrescentado em `/etc/environment`, em `/home/anderson/.bash_profile` e em `/home/anderson/.xinitrc` (antes do `exec cinnamon-session`). Backup de cada um com sufixo `.bak-gbm`. Para desfazer: restaurar os `.bak-gbm`.
-- A sessão `startx` antiga na `tty2` foi **encerrada** e o X de teste também. O console está no prompt da `tty2`. **O desktop não está de pé**: para subir, fazer login em `anderson` na `tty2` (para ler o `.bash_profile` novo) e rodar `startx`.
+- `GBM_BACKENDS_PATH=/opt/mesa-ps4-patched/lib/gbm` acrescentado em `/etc/environment`, em `/home/usuario_dev/.bash_profile` e em `/home/usuario_dev/.xinitrc` (antes do `exec cinnamon-session`). Backup de cada um com sufixo `.bak-gbm`. Para desfazer: restaurar os `.bak-gbm`.
+- A sessão `startx` antiga na `tty2` foi **encerrada** e o X de teste também. O console está no prompt da `tty2`. **O desktop não está de pé**: para subir, fazer login em `usuario_dev` na `tty2` (para ler o `.bash_profile` novo) e rodar `startx`.
 - O link `/usr/local/lib/gbm` usado nos testes foi removido.
 
 ## Opções de correção (nenhuma aplicada)

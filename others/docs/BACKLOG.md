@@ -292,7 +292,7 @@ d6a85464494c735654cb3d31de22f900  initramfs-7.0-20261113-full-rebuild.cpio.gz
 
 ### Rollback (se necessário)
 ```bash
-sudo ./deploy-boot-7.0.sh 20261113-dmaengine /media/anderson/BOOT
+sudo ./deploy-boot-7.0.sh 20261113-dmaengine /media/$(whoami)/BOOT
 ```
 
 ---
@@ -309,7 +309,7 @@ Medições reais no PS4 (boot completo, `systemd` `running`, 0 unidades falhadas
 - [x] `mitigations=off` no cmdline era inócuo — removido do heredoc de bootargs em `distro/01-build-image-7.0.sh` (herdados `drm.debug`, `loglevel`, `keep_bootcon`, `earlyprintk`, `audit`, `netconsole` também removidos).
 - [x] `netconsole` nunca ativa (`eth0` só nasce aos ~44 s) — removido do cmdline do bootargs.
 - [x] `/etc/dhcpcd.conf` tem `denyinterfaces eth0` **duplicado** — corrigido para append idempotente (`grep -q` antes do `echo >>`) em `distro/01-build-image-7.0.sh` (linhas ~416-420).
-- [ ] **Persistir o acesso do usuário `anderson` no build** (hoje é tudo alteração viva no PS4, some num rebuild do rootfs): criar o usuário (uid 1001), `/etc/sudoers.d/zz-anderson` (`NOPASSWD`, nome com `zz-` porque o sudo aplica a última regra que casa e `%wheel` ordena depois), `/home/anderson/.bashrc` com `PATH` do OpenCode e as chaves autorizadas. Decidir se a chave pública do host vai no build (aceitável) e **não** embutir chave privada. O `opencode` em si (247 MB) deve continuar sendo instalado em runtime, não no rootfs.
+- [ ] **Persistir o acesso do usuário de desenvolvimento no build** (hoje é tudo alteração viva no PS4, some num rebuild do rootfs): criar o usuário (uid 1001), `/etc/sudoers.d/zz-usuario_dev` (`NOPASSWD`, nome com `zz-` porque o sudo aplica a última regra que casa e `%wheel` ordena depois), `/home/usuario_dev/.bashrc` com `PATH` do OpenCode e as chaves autorizadas. Decidir se a chave pública do host vai no build (aceitável) e **não** embutir chave privada. O `opencode` em si (247 MB) deve continuar sendo instalado em runtime, não no rootfs. Ver `.localdev/user_config.env` para configuração local.
 - [x] `PermitEmptyPasswords yes` no `sshd_config` (em duplicidade): cada conexão SSH gerava uma falha no `pam_faillock` e travava a conta em 3 logins. Corrigido em 2026-11-12 — `PermitEmptyPasswords no` no PS4 e o build agora usa o drop-in `/etc/ssh/sshd_config.d/00-ps4-baikal.conf` (idempotente) em vez de reescrever o `sshd_config`.
 - [x] `pam_faillock` × `audit=0`: o cmdline tem `audit=0`, mas o kernel tem `CONFIG_AUDIT=y` e o `pam_faillock.so` está no `system-auth`; cada login SSH gerava `pam_faillock(sshd:auth): Error sending audit message: Protocol not supported`. Removido `audit=0` do bootargs (`distro/01-build-image-7.0.sh`) — o `journald` já tem `Audit=no`, então o ruído não volta.
 - [x] ✅ **BTF mismatch dos módulos** — OBSOLETO desde 2026-11-16: o BTF está **desligado** no kernel e o `distro/scripts/install-modules-7.0.sh` ainda faz o strip. Os módulos do rootfs foram reinstalados por ele (todos com `srcversion` igual ao do build `20261116-s5-dma`).
@@ -420,12 +420,12 @@ Medições reais no PS4 (boot completo, `systemd` `running`, 0 unidades falhadas
 **Resultados:**
 1. [x] Config adicionada ao `kernel/00-build-kernel-7.0.sh`: `CONFIG_CIFS=m`, `CONFIG_CIFS_XATTR=y`, `CONFIG_CIFS_POSIX=y`.
 2. [x] Compilado no `adsv2` com TAG `20261112-cifs` em **41m11s**, sem erros. Snapshot salvo.
-3. [x] Teste ao vivo **sem reboot** (2026-11-12 ~12:00): mount OK, `stat` reporta `1001:1001 anderson:anderson`, escrita sem `sudo` em dirs 775/777.
+3. [x] Teste ao vivo **sem reboot** (2026-11-12 ~12:00): mount OK, `stat` reporta `1001:1001 usuario_dev:usuario_dev`, escrita sem `sudo` em dirs 775/777.
 4. [x] Rootfs rebuildado em container Arch (`distro/scripts/build-image-docker.sh 20261112-cifs --incremental`): módulos no rootfs, initramfs + bootargs em `distro/boot_referencia/`.
 5. [x] Persistido no `/etc/fstab` do PS4 **e na receita de build** `distro/01-build-image-7.0.sh` (geração de `/etc/fstab` + `mkdir -p /mnt/hdauxiliar`).
-6. [x] Autenticação Samba real implementada: `smbpasswd -a anderson` no `adsv2`, removidas `guest ok = Yes` + `guest only = Yes` da share `[dados_aux]`; mount com `credentials=/etc/samba/credentials` no PS4. Escrita em dirs 755 (incl. `downloads`) funciona como `anderson` **sem `sudo`**.
+6. [x] Autenticação Samba real implementada: `smbpasswd -a usuario_dev` no `adsv2`, removidas `guest ok = Yes` + `guest only = Yes` da share `[dados_aux]`; mount com `credentials=/etc/samba/credentials` no PS4. Escrita em dirs 755 (incl. `downloads`) funciona como `usuario_dev` **sem `sudo`**.
 
-**Critério de aceite ATENDIDO:** `findmnt /mnt/hdauxiliar` mostra `FSTYPE cifs`; `stat` reporta `1001:1001`; `anderson` cria/apaga arquivos sem `sudo` em dirs 775/777 **e 755**; montagem sobrevive a reboot via `x-systemd.automount`.
+**Critério de aceite ATENDIDO:** `findmnt /mnt/hdauxiliar` mostra `FSTYPE cifs`; `stat` reporta `1001:1001`; `usuario_dev` cria/apaga arquivos sem `sudo` em dirs 775/777 **e 755**; montagem sobrevive a reboot via `x-systemd.automount`.
 
 ---
 

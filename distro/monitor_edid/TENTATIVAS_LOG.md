@@ -98,7 +98,7 @@ Em `ps4_bridge.c:709` (`ps4_bridge_get_modes`):
 ---
 
 ## Como testar cada tentativa
-1. Editar `/run/media/anderson/BOOT/bootargs.txt` no PC
+1. Editar `/run/media/$(whoami)/BOOT/bootargs.txt` no PC (ou o ponto de montagem da partição BOOT do HD USB)
 2. `sync` e eject HD
 3. Conectar HD no PS4
 4. Payload ≥ 3GB

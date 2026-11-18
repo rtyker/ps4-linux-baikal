@@ -217,52 +217,52 @@ com `date -u -s @<epoch do host>` e o `systemd-timesyncd` foi **habilitado** (`d
 para manter a hora certa. Novo item de correção para a auditoria: RTC não persiste
 (`RTC time: n/a`) e NTP vinha desligado de fábrica no rootfs.
 
-**Acesso SSH do PS4 (2026-11-12 09:40):** criado o usuário `anderson` (uid 1001, `/home/anderson`,
+**Acesso SSH do PS4 (2026-11-12 09:40):** criado o usuário **`usuario_dev`** (uid 1001, `/home/usuario_dev`,
 `/bin/bash`) no PS4. Dois sentidos validados por chave:
 - **host → PS4**: `~/.ssh/id_ed25519.pub` do host instalada em
-  `/home/anderson/.ssh/authorized_keys` → `ssh anderson@192.168.6.128` funciona sem senha.
+  `/home/usuario_dev/.ssh/authorized_keys` → `ssh usuario_dev@192.168.6.128` funciona sem senha.
 - **PS4 → host (`192.168.6.101`)**: par de chaves gerado **no PS4**
-  (`/home/anderson/.ssh/id_ed25519`, comentário `anderson@ps4-baikal`) e a pública autorizada no
-  `~/.ssh/authorized_keys` do host (junto de `anderson@delphi7-mcp`, `anderson@androidserver`).
-  O teste `anderson@192.168.6.101` retorna `adsv2` / uid 1000 — ou seja, o PS4 entra no host sem
+  (`/home/usuario_dev/.ssh/id_ed25519`, comentário `usuario_dev@ps4-baikal`) e a pública autorizada no
+  `~/.ssh/authorized_keys` do host (junto de `usuario_dev@delphi7-mcp`, `usuario_dev@androidserver`).
+  O teste `usuario_dev@192.168.6.101` retorna `adsv2` / uid 1000 — ou seja, o PS4 entra no host sem
   senha, e a chave privada nunca saiu do PS4.
 - Nota: o rootfs não tem o utilitário `hostname` (`bash: hostname: command not found`); usar
   `uname -n` ou `ip -br a`.
 
-**Sudo e root sem senha (2026-11-12 09:50):** `anderson` adicionado ao grupo `wheel` (gid 998) e
-criado `/etc/sudoers.d/zz-anderson` com `anderson ALL=(ALL:ALL) NOPASSWD: ALL` (modo `440`,
+**Sudo e root sem senha (2026-11-12 09:50):** **`usuario_dev`** adicionado ao grupo `wheel` (gid 998) e
+criado `/etc/sudoers.d/zz-usuario_dev` com `usuario_dev ALL=(ALL:ALL) NOPASSWD: ALL` (modo `440`,
 `visudo -c` OK). Detalhe não óbvio: **o sudo aplica a última regra que casa**, e
-`/etc/sudoers.d/wheel` (`%wheel ALL=(ALL:ALL) ALL`) ordena depois de `anderson` alfabeticamente —
-por isso o fragmento precisa se chamar `zz-anderson` (antes era `anderson` e o `sudo -n` continuava
+`/etc/sudoers.d/wheel` (`%wheel ALL=(ALL:ALL) ALL`) ordena depois de `usuario_dev` alfabeticamente —
+por isso o fragmento precisa se chamar `zz-usuario_dev` (antes era `usuario_dev` e o `sudo -n` continuava
 pedindo senha, mesmo com `sudo -l` mostrando o NOPASSWD). Estado validado:
 `sudo -n whoami` → `root`; `sudo -n -l` lista `(ALL : ALL) NOPASSWD: ALL` por último; `sudo` sem
 `-n` também não pede senha. root continua com hash de senha em `/etc/shadow` (`root P`) **e** entra
 por chave SSH (`/root/.ssh/authorized_keys`, chave `rtyker@gmail.com`) — não foi usado
-`passwd -d root` (senha vazia), por decisão do usuário. A senha do `anderson` está bloqueada
-(`anderson L`, `!` em `/etc/shadow`): login só por chave, o que é o desejado.
+`passwd -d root` (senha vazia), por decisão do usuário. A senha do **`usuario_dev`** está bloqueada
+(`usuario_dev L`, `!` em `/etc/shadow`): login só por chave, o que é o desejado.
 
 ⚠️ **BUG CORRIGIDO — `PermitEmptyPasswords yes` travava a conta a cada 3 logins (2026-11-12):**
 o `sshd_config` gerado pelo build tinha `PermitEmptyPasswords yes` (e em **duplicidade** — o build
 fazia `mv` + prepend do bloco, então cada rebuild empilhava outra cópia). Com isso o sshd tenta
 autenticar com **senha vazia em toda conexão**, o `pam_unix` falha e o `pam_faillock` conta uma
 falha por conexão. Medido: 1 login por chave = +1 falha para o usuário; após 3 conexões a conta
-trava (`pam_faillock(sshd:auth): User anderson is temporarily locked out`, banner "The account is
+trava (`pam_faillock(sshd:auth): User usuario_dev is temporarily locked out`, banner "The account is
 locked due to 3 failed logins"). O login por chave e o `sudo -n` continuavam funcionando (pubkey
 não passa pelo `pam_unix`), mas era um **furo de segurança** e um gerador de ruído.
 Correção aplicada: `PermitEmptyPasswords no` no PS4 (bloco duplicado removido, `sshd -t` OK,
 `sshd` reiniciado) e o `distro/01-build-image-7.0.sh` agora escreve um **drop-in**
 `/etc/ssh/sshd_config.d/00-ps4-baikal.conf` (idempotente, sem duplicar) e remove qualquer bloco
 legado do topo do `sshd_config`. Validado: 5 logins seguidos por chave → **zero** entradas em
-`faillock --user anderson`, sem banner. Contadores antigos zerados com
+`faillock --user usuario_dev`, sem banner. Contadores antigos zerados com
 `faillock --user <user> --reset`.
 
-**OpenCode no PS4 — instância do `anderson` (2026-11-12 09:56):** a instalação original era só do
-root (`/root/.opencode`, modo 700), então `opencode` não existia para o `anderson` (o symlink
+**OpenCode no PS4 — instância do `usuario_dev` (2026-11-12 09:56):** a instalação original era só do
+root (`/root/.opencode`, modo 700), então `opencode` não existia para o `usuario_dev` (o symlink
 global `/usr/local/bin/opencode` → `/root/.opencode/bin/opencode` é inacessível para ele). Instalada
-uma cópia própria com o instalador oficial como `anderson`:
-`runuser -l anderson -c "curl -fsSL https://opencode.ai/v2/install | bash -s -- --no-modify-path"`
-→ `/home/anderson/.opencode/bin/opencode` (`v2.2.7`, build `baseline`, dono `anderson`).
-`PATH` adicionado no **topo** de `/home/anderson/.bashrc` (`export PATH="$HOME/.opencode/bin:$PATH"`,
+uma cópia própria com o instalador oficial como `usuario_dev`:
+`runuser -l usuario_dev -c "curl -fsSL https://opencode.ai/v2/install | bash -s -- --no-modify-path"`
+→ `/home/usuario_dev/.opencode/bin/opencode` (`v2.2.7`, build `baseline`, dono `usuario_dev`).
+`PATH` adicionado no **topo** de `/home/usuario_dev/.bashrc` (`export PATH="$HOME/.opencode/bin:$PATH"`,
 antes do `[[ $- != *i* ]] && return`) — vale em shell de login; `ssh host 'cmd'` não-interativo do
 Arch não lê `.bashrc`, então nesse caso usar `bash -l -c` ou o caminho completo.
 
@@ -307,18 +307,18 @@ initramfs + bootargs em `distro/boot_referencia/`.
 **Mount ao vivo (sem reboot):** 4 módulos instalados em
 `/lib/modules/7.0.8-Strawberry-ThinLTO-Baikal-+/`, `depmod -a`, `modprobe cifs` OK,
 `/proc/filesystems` lista `cifs`. `/mnt/hdauxiliar` trocado de NFSv3 → CIFS ao vivo;
-`findmnt` mostra `FSTYPE cifs`, `stat` reporta `1001:1001 anderson:anderson`,
-escrita sem `sudo` OK em dirs 775/777 (`touch`, `echo > arquivo`, `rm` como `anderson`).
+`findmnt` mostra `FSTYPE cifs`, `stat` reporta `1001:1001 usuario_dev:usuario_dev`,
+escrita sem `sudo` OK em dirs 775/777 (`touch`, `echo > arquivo`, `rm` como `usuario_dev`).
 `/etc/fstab` do PS4 criado (backup em `/tmp/fstab.bak-*`) com raiz
 `noatime,errors=remount-ro` + CIFS (`nofail,x-systemd.automount`); mesma entrada gerada pela
 receita `distro/01-build-image-7.0.sh` antes de "Copiando vram.txt".
 
-**Conclusão — opção (b) implementada (2026-11-12):** `smbpasswd -a anderson` executado no
+**Conclusão — opção (b) implementada (2026-11-12):** `smbpasswd -a usuario_dev` executado no
 `adsv2` (adicionado ao banco Samba) e removidas `guest ok = Yes` + `guest only = Yes` da share
 `[dados_aux]` em `/etc/samba/smb.conf`; `smbd` recarregado. No PS4, mount com
 `credentials=/etc/samba/credentials` (arquivo modo 600, root-only) em vez de `guest`;
 `/etc/fstab` e a receita `distro/01-build-image-7.0.sh` atualizados. Resultado: escrita em dirs
-755 do servidor (incl. `downloads`) funciona como `anderson` **sem `sudo`** (sessão autenticada
+755 do servidor (incl. `downloads`) funciona como `usuario_dev` **sem `sudo`** (sessão autenticada
 roda como uid 1000 no servidor, dono dos arquivos). Item CIFS do BACKLOG passa a `[x]` — todos
 os passos concluídos.
 

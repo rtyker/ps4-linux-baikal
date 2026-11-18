@@ -537,18 +537,18 @@ Durante diagnóstico e testes de serviços no microcontrolador Syscon/EMC do PS4
 
 ## Lição Aprendida #75 (2026-11-12) — CIFS: sessão guest só recebe classe "grupo"; git sobre CIFS exige flags
 
-**Contexto:** montar o share `[dados_aux]` do `adsv2` (`/mnt/hdauxiliar`) no PS4 via CIFS com `guest,uid=1001,gid=1001,forceuid,forcegid`, substituindo NFSv3 (que não mapeia UID e trava o `anderson` local em pastas 755).
+**Contexto:** montar o share `[dados_aux]` do `adsv2` (`/mnt/hdauxiliar`) no PS4 via CIFS com `guest,uid=1001,gid=1001,forceuid,forcegid`, substituindo NFSv3 (que não mapeia UID e trava o `usuario_dev` local em pastas 755).
 
 ### 1. Escrita em pastas 755 é negada no servidor — independentemente do UID do cliente
-Sessão CIFS com `guest ok=Yes` + `force user=anderson`: o `smbd` mostra o cliente como `anderson` (1000:1000) e escreve localmente como tal, **mas a checagem de permissão SMB honra só a classe "grupo"** (others/dono são ignorados na prática):
-- `drwxr-xr-x` (755, dono `anderson`) → `touch` NEGADO, inclusive para uid 1000/root/1001;
-- `drwxrwx---` (770, grupo `anderson`) → `touch` OK;
+Sessão CIFS com `guest ok=Yes` + `force user=usuario_dev`: o `smbd` mostra o cliente como `usuario_dev` (1000:1000) e escreve localmente como tal, **mas a checagem de permissão SMB honra só a classe "grupo"** (others/dono são ignorados na prática):
+- `drwxr-xr-x` (755, dono `usuario_dev`) → `touch` NEGADO, inclusive para uid 1000/root/1001;
+- `drwxrwx---` (770, grupo `usuario_dev`) → `touch` OK;
 - `drwxrwxrwx` (777) → `touch` OK.
 `noperm` no cliente **não** resolve (a negação é do servidor). SMB1 não é suportado (`mount error(95)`).
 
 **Consequência:** CIFS guest grava em pastas 775/777 do share (15 no nível 1) mas **não em 755** (14, incl. `downloads`). Opções em aberto (decidir com o usuário):
 - (a) `chmod g+w`/`setfacl` nos 14 dirs 755 do servidor;
-- (b) autenticação Samba real (`smbpasswd -a anderson` + remover `guest only = Yes` de `[dados_aux]`);
+- (b) autenticação Samba real (`smbpasswd -a usuario_dev` + remover `guest only = Yes` de `[dados_aux]`);
 - (c) manter CIFS no que é 775/777 e sshfs no resto (zero mudança no servidor).
 
 ### 2. `mount.cifs` regride modos no cliente (arquivos 644, pastas 755)
@@ -564,10 +564,10 @@ git -c core.fileMode=false status --ignore-submodules=all   # ~1,5 s
 **Estado final (2026-11-12):** kernel 7.0 com `CONFIG_CIFS=m` compilado (tag `20261112-cifs`, 41m11s), módulos instalados no rootfs e no kernel em execução, `/etc/fstab` do PS4 e da receita `distro/01-build-image-7.0.sh` gerados com raiz + CIFS, mount ao vivo NFSv3→CIFS OK, escrita sem `sudo` OK em dirs 775/777. Pendente: dirs 755 (item 1 acima) e `deploy-boot-7.0.sh` para sobrevivência a reboot (opcional; o módulo já carrega hoje).
 
 **Resolução dos dirs 755 — opção (b) implementada (2026-11-12):** autenticação Samba real
-(`smbpasswd -a anderson` no servidor + remoção de `guest ok/only = Yes` de `[dados_aux]`;
+(`smbpasswd -a usuario_dev` no servidor + remoção de `guest ok/only = Yes` de `[dados_aux]`;
 mount do PS4 com `credentials=/etc/samba/credentials`). Sessão autenticada roda como uid 1000
 no servidor (dono dos arquivos), então escrita em dirs 755 (incl. `downloads`) funciona como
-`anderson` sem `sudo`. Pendente apenas: `deploy-boot-7.0.sh 20261112-cifs` para implantar a
+`usuario_dev` sem `sudo`. Pendente apenas: `deploy-boot-7.0.sh 20261112-cifs` para implantar a
 tag no boot do PS4 (opcional — o módulo já carrega no kernel atual).
 
 

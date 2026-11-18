@@ -3,7 +3,7 @@
 # Uso: ./02_preparar_teste.sh "720p" ou "1080p" ou "1080p_noforce" ou "1080p_poll"
 set -euo pipefail
 
-BOOT_MNT="${BOOT_MNT:-/run/media/anderson/BOOT}"
+BOOT_MNT="${BOOT_MNT:-/run/media/$(whoami)/BOOT}"
 PC_IP="${PC_IP:-192.168.0.1}"
 PS4_IP="${PS4_IP:-192.168.0.2}"
 PC_MAC="${PC_MAC:-b4:45:06:6c:f6:4f}"

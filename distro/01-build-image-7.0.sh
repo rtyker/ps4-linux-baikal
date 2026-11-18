@@ -424,40 +424,45 @@ echo "root:ps4" | arch-chroot "$ROOTFS_DIR" chpasswd
 arch-chroot "$ROOTFS_DIR" useradd -m -G wheel -s /bin/bash ps4 2>/dev/null || true
 echo "ps4:ps4" | arch-chroot "$ROOTFS_DIR" chpasswd
 
-# Usuario anderson (uid 1001) — persistir acesso no build
-# Chave SSH: prioridade 1) env ANDERSON_SSH_PUBKEY, 2) arquivo local keys/anderson.pub (gitignored), 3) vazio
-arch-chroot "$ROOTFS_DIR" useradd -m -u 1001 -G wheel -s /bin/bash anderson 2>/dev/null || true
-echo "anderson:$(openssl rand -base64 32)" | arch-chroot "$ROOTFS_DIR" chpasswd  # senha aleatória, login só por chave
-mkdir -p "$ROOTFS_DIR/home/anderson/.ssh"
-chmod 700 "$ROOTFS_DIR/home/anderson/.ssh"
+# --- Usuário adicional de desenvolvimento (opcional, via .localdev) ---
+# Para persistir um usuário não-root no build, use a pasta .localdev/ (gitignored):
+#   cp .localdev/user_config.env.example .localdev/user_config.env
+#   edite .localdev/user_config.env e depois rode o build com:
+#   source .localdev/user_config.env && sudo -E ./distro/01-build-image-7.0.sh <TAG>
+#
+# O script abaixo só roda se LOCAL_USER estiver definido (não-versionado).
+if [ -n "${LOCAL_USER:-}" ] && [ -n "${LOCAL_UID:-}" ]; then
+  echo "[info] Criando usuário de desenvolvimento local: $LOCAL_USER (uid $LOCAL_UID)"
+  arch-chroot "$ROOTFS_DIR" useradd -m -u "$LOCAL_UID" -G wheel -s /bin/bash "$LOCAL_USER" 2>/dev/null || true
+  echo "$LOCAL_USER:$(openssl rand -base64 32)" | arch-chroot "$ROOTFS_DIR" chpasswd  # senha aleatória, login só por chave
+  mkdir -p "$ROOTFS_DIR/home/$LOCAL_USER/.ssh"
+  chmod 700 "$ROOTFS_DIR/home/$LOCAL_USER/.ssh"
 
-ANDERSON_KEY=""
-if [ -n "${ANDERSON_SSH_PUBKEY:-}" ]; then
-  ANDERSON_KEY="$ANDERSON_SSH_PUBKEY"
-  echo "[info] Usando chave SSH da variável de ambiente ANDERSON_SSH_PUBKEY"
-elif [ -f "$SCRIPT_DIR/../../keys/anderson.pub" ]; then
-  ANDERSON_KEY="$(cat "$SCRIPT_DIR/../../keys/anderson.pub")"
-  echo "[info] Usando chave SSH de keys/anderson.pub (arquivo local, não versionado)"
-fi
+  LOCAL_KEY=""
+  if [ -n "${LOCAL_SSH_PUBKEY:-}" ]; then
+    LOCAL_KEY="$LOCAL_SSH_PUBKEY"
+    echo "[info] Usando chave SSH da variável de ambiente LOCAL_SSH_PUBKEY"
+  elif [ -n "${LOCAL_SSH_PUBKEY_FILE:-}" ] && [ -f "$LOCAL_SSH_PUBKEY_FILE" ]; then
+    LOCAL_KEY="$(cat "$LOCAL_SSH_PUBKEY_FILE")"
+    echo "[info] Usando chave SSH de $LOCAL_SSH_PUBKEY_FILE"
+  fi
 
-if [ -n "$ANDERSON_KEY" ]; then
-  echo "$ANDERSON_KEY" > "$ROOTFS_DIR/home/anderson/.ssh/authorized_keys"
-  echo "[info] Chave pública instalada para anderson"
-else
-  touch "$ROOTFS_DIR/home/anderson/.ssh/authorized_keys"
-  echo "[aviso] Nenhuma chave SSH fornecida — authorized_keys vazio"
-  echo "       Para adicionar: ssh-copy-id anderson@192.168.6.128  (após deploy + boot)"
-  echo "       Ou defina ANDERSON_SSH_PUBKEY='ssh-ed25519 AAAA...' antes do build"
-fi
-chmod 600 "$ROOTFS_DIR/home/anderson/.ssh/authorized_keys"
-arch-chroot "$ROOTFS_DIR" chown -R anderson:anderson /home/anderson/.ssh
+  if [ -n "$LOCAL_KEY" ]; then
+    echo "$LOCAL_KEY" > "$ROOTFS_DIR/home/$LOCAL_USER/.ssh/authorized_keys"
+    echo "[info] Chave pública instalada para $LOCAL_USER"
+  else
+    touch "$ROOTFS_DIR/home/$LOCAL_USER/.ssh/authorized_keys"
+    echo "[aviso] Nenhuma chave SSH fornecida — authorized_keys vazio para $LOCAL_USER"
+  fi
+  chmod 600 "$ROOTFS_DIR/home/$LOCAL_USER/.ssh/authorized_keys"
+  arch-chroot "$ROOTFS_DIR" chown -R "$LOCAL_USER:$LOCAL_USER" "/home/$LOCAL_USER/.ssh"
 
-# Sudo NOPASSWD para anderson (zz-anderson para ordenar depois de wheel)
-echo "anderson ALL=(ALL:ALL) NOPASSWD: ALL" > "$ROOTFS_DIR/etc/sudoers.d/zz-anderson"
-chmod 440 "$ROOTFS_DIR/etc/sudoers.d/zz-anderson"
+  # Sudo NOPASSWD para o usuário local
+  echo "$LOCAL_USER ALL=(ALL:ALL) NOPASSWD: ALL" > "$ROOTFS_DIR/etc/sudoers.d/zz-$LOCAL_USER"
+  chmod 440 "$ROOTFS_DIR/etc/sudoers.d/zz-$LOCAL_USER"
 
-# .bashrc com PATH do OpenCode
-cat > "$ROOTFS_DIR/home/anderson/.bashrc" << 'BASHRC_EOF'
+  # .bashrc com PATH do OpenCode
+  cat > "$ROOTFS_DIR/home/$LOCAL_USER/.bashrc" << 'BASHRC_EOF'
 # ~/.bashrc
 [[ $- != *i* ]] && return
 
@@ -477,9 +482,9 @@ HISTSIZE=10000
 HISTFILESIZE=20000
 BASHRC_EOF
 
-# .xinitrc do anderson: inicia Cinnamon com Mesa patcheado quando --desktop
-if [ "$DESKTOP" = "1" ]; then
-  cat > "$ROOTFS_DIR/home/anderson/.xinitrc" << 'XINITEOF'
+  # .xinitrc: inicia Cinnamon com Mesa patcheado quando --desktop
+  if [ "$DESKTOP" = "1" ]; then
+    cat > "$ROOTFS_DIR/home/$LOCAL_USER/.xinitrc" << 'XINITEOF'
 #!/bin/sh
 export XDG_CURRENT_DESKTOP=X-Cinnamon
 export XDG_MENU_PREFIX=cinnamon-
@@ -489,9 +494,10 @@ export LIBGL_DRIVERS_PATH="/opt/mesa-ps4-patched/lib/dri:${LIBGL_DRIVERS_PATH:-}
 export GBM_BACKENDS_PATH="/opt/mesa-ps4-patched/lib/gbm"
 exec cinnamon-session
 XINITEOF
-  chmod +x "$ROOTFS_DIR/home/anderson/.xinitrc"
-  arch-chroot "$ROOTFS_DIR" chown anderson:anderson /home/anderson/.xinitrc
-  echo "=== .xinitrc do anderson configurado para iniciar Cinnamon (--desktop) ==="
+    chmod +x "$ROOTFS_DIR/home/$LOCAL_USER/.xinitrc"
+    arch-chroot "$ROOTFS_DIR" chown "$LOCAL_USER:$LOCAL_USER" "/home/$LOCAL_USER/.xinitrc"
+    echo "=== .xinitrc de $LOCAL_USER configurado para iniciar Cinnamon (--desktop) ==="
+  fi
 fi
 
 # Sudo sem senha para root
@@ -936,7 +942,7 @@ echo "=== Gerando /etc/fstab (raiz + share CIFS do adsv2) ==="
 # entradas abaixo tiram a configuracao da maquina viva:
 #  - raiz: noatime (menos escrita no SSD via bridge USB) e errors=remount-ro (o SSD
 #    do PS4 esta falhando; ver BACKLOG, P0);
-#  - CIFS: share [dados_aux] do adsv2 com uid/gid 1001 (usuario local anderson).
+#  - CIFS: share [dados_aux] do adsv2 com uid/gid 1001 (usuario local usuario_dev).
 #    nofail + x-systemd.automount: sem rede o boot nao trava, monta no 1o acesso.
 #    Ver others/docs/BACKLOG.md, item "Habilitar o cliente CIFS/SMB".
 cat > "$ROOTFS_DIR/etc/fstab" << 'FSTABEOF'

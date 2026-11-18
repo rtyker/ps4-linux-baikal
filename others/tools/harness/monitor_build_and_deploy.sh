@@ -6,7 +6,7 @@ set -euo pipefail
 KERNEL_DIR="$(cd "$(dirname "$0")/../../.." && pwd)"
 DISTRO_DIR="$(cd "$KERNEL_DIR/../distro" && pwd)"
 BOOT_REF="${PS4_BOOT_REF:-$KERNEL_DIR/../distro/boot_referencia}"
-NOTIFICA_SCRIPT="/home/anderson/scripts/notifica-projeto/notifica.sh"
+NOTIFICA_SCRIPT="${NOTIFICA_SCRIPT:-$HOME/scripts/notifica-projeto/notifica.sh}"
 
 echo "=== Monitor de Build & Deploy iniciado ==="
 
