@@ -265,6 +265,18 @@ no driver (re-arme com troca de VIC, ou `enable` duplo). Depois, detectar o repl
   `LOCAL_EAP_KEY_FILE`. O `--dry-run` com `--internal-root` validou a montagem do fragmento
   (original 15 338 344 B + 1176 B de padding + 141 424 B de fragmento) antes de parar no FTP.
   **Nunca reutilizar bootargs com `ps4root=` sem gerar o initramfs com a chave.**
+- **Resultado ao vivo do poll HPD (2026-11-18 14:02, `test_history` 160): FALHOU, e a causa é um bug
+  do patch, não da hipótese.** Boot frio OK (root `/dev/mapper/ps4root`, símbolos
+  `ps4_bridge_hpd_work`/`ps4_bridge_read_hpd` vivos), `drm.debug=4`, monitor *read-only* de `0x10f4`
+  a cada 265 ms (722 amostras). O cabo fora/replug gerou **uma única transição `a1→a0` às
+  14:02:08.330**, sem volta a `a1` — confirma 158/159. Estado final idêntico a C/D/E
+  (`1e00=66`, `1e02=88`, `705f=90`, `7a8b=05`). **O `dmesg` ficou em exatamente 946 linhas (zero
+  novas)**: nenhum `HPD state changed` / `HPD rising`. Causa: `ps4_bridge_read_hpd()` lê
+  `reply.databuf[8]`, que é a constante `0x0f`; o layout correto é `[5 bytes header] + [3 bytes eco
+  count/addr_hi/addr_lo] + dados`, então o valor de `0x10f4` está em **`databuf[3]`**. O poll via
+  `1` para sempre e nunca detecta nada. **Mesmo corrigindo o índice, bit0 só cai e não sobe**, logo
+  o gatilho `0→1` não dispara. Próximo passo (a decidir): trocar o gatilho para a queda `1→0` ou para
+  a assinatura de estado ruim (`705f=90`/`1e02=88`) e disparar a recuperação ali.
 
 ### Rollback
 
