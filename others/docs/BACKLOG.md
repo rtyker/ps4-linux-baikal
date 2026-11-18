@@ -160,8 +160,17 @@ concluir. Até lá, depois de escrever na ponte por ICC, preferir desligar e lig
   ímpares não (MCU `06 10`). Mapa completo do estado ruim em
   `others/rea/scans/bridge_mn864729_20261118_full_ruim_raw.txt`.
 
-**Próximo:** mapa completo do estado bom depois de desligar e ligar (mesmas 3 regiões) para o diff
-completo, e descobrir o que liga o bit 0 do `0x10f4` (PHY do TX HDMI, sequência do Orbis no hotplug).
+**Atualização (`test_history` 154): trocar de modo RECUPERA a imagem.** No estado ruim,
+`xrandr --mode 1280x720` seguido de `xrandr --mode 1920x1080` trouxe a imagem de volta, estável, com
+`0x1e00=67`, `0x1e02=f8`, `0x705f=10`. O DPMS no mesmo modo (teste 146) não recuperava. O `0x10f4`
+ficou em `a0` **com imagem**, então a hipótese do `0x10f4` está **refutada**.
+
+**Contorno para o usuário hoje:** depois de replugar o cabo, rodar
+`xrandr --output HDMI-A-0 --mode 1280x720; xrandr --output HDMI-A-0 --mode 1920x1080`.
+
+**Em aberto:** (a) se a imagem já voltou em 720p (os registradores diziam que não) ou só no segundo
+modeset; (b) se o que importa é a troca de VIC ou só dois `enable` seguidos. Isso decide a correção
+no driver (re-arme com troca de VIC, ou `enable` duplo). Depois, detectar o replug (sem HPD hoje).
 
 ### Mapa do código
 
