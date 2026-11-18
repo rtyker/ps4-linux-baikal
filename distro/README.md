@@ -90,7 +90,7 @@ Os artefatos saem direto no disco do host (owner root), em
 
 | Caminho | O que é |
 |---|---|
-| `01-build-image-7.0.sh` | Gera rootfs Arch (`pkglist.x86_64.txt`), firmware, Mesa patchado, `mts.ko`, scripts de montagem, initramfs |
+| `01-build-image-7.0.sh` | Gera rootfs Arch (`pkglist.x86_64.txt`), firmware, Mesa patchado, `mts.ko` + `mtsx.ko` (com `/etc/modules-load.d/mtsx.conf` e `blacklist mts`), `20-ethernet.network` com DHCP, scripts de montagem, initramfs |
 | `02-burn-image-7.0.sh` | Particiona o HD (`sda1` FAT32 + `sda2` ext4 label **`psxitarch`**) e grava tudo |
 | `deploy-boot-7.0.sh` | Reescreve só a partição BOOT a partir dos artefatos da tag (com MD5 origem→destino) |
 | `rebuild-initramfs-7.0.sh` | Reconstrói o initramfs num rootfs já montado em `/mnt/ps4_rootfs_7.0` |

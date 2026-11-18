@@ -10,12 +10,42 @@
 > | Você quer | Vá para |
 > |-----------|---------|
 > | Regras de conduta e procedimentos (build, deploy, SSH, UART, banco de hardware) | `AGENTS.md` (auto-carregado via `CLAUDE.md`) |
-> | O que está pendente / próximos passos | `consolidado/BACKLOG.md` |
-> | Lições imperativas (REGRA #0) | `consolidado/LICOES_APRENDIDAS.md` |
-> | Memórias curtas e indexadas do assistente | `memory/MEMORY.md` |
+> | O que está pendente / próximos passos | `others/docs/BACKLOG.md` |
+> | Lições imperativas (REGRA #0) | `others/docs/LICOES_APRENDIDAS.md` |
+> | Memórias curtas e indexadas do assistente | removidas em 2026-11-11 (o que valia foi consolidado em `others/docs/`) |
 > | **Histórico narrativo e estado detalhado (payloads, dumper, sagas)** | **este arquivo** |
 >
 > Conteúdo migrado do `CLAUDE.md` em 2026-07-28, sem alteração de texto.
+> Caminhos atualizados em 2026-11-18 (o layout antigo `consolidado/` e `memory/` não existe mais).
+
+---
+
+## 🆕 Estado 2026-11-18 — 🏆 `eth0` CABEADA FUNCIONANDO (driver `mtsx`) e com IP por DHCP
+
+**O que mudou em 2026-11-17 (resumo):** a Ethernet Baikal deixou de ser um bloqueador. O PHY
+**sempre** respondeu a Clause 22 (`03a2/9441`); o link não subia porque o stop do Orbis deixa
+`0x0147.1e = 0x0010` e o `mts.c` legado nunca limpava isso. O driver novo **`mtsx`** (adota o estado
+do Orbis, sem cold init) limpou o resíduo e subiu o link: `BMSR 0x7969 → 0x796d`,
+`BAR0+0x04 0xb18 → 0xb19`, **100 MB em cada sentido com SHA-256 idêntico** e 0 erros. Depois a
+`eth0` passou a pegar **IP por DHCP** (`.131`), com a rota padrão pela cabeada (metric 1024) e o
+`wlan0` de reserva (3003).
+
+**Estado do driver:** `mtsx.c` + `mtsx_desc.h` são a fonte canônica em `kernel/drivers_mts/`
+(byte a byte o arquivo validado ao vivo) e **artefato do build**: `CONFIG_MTSX=m`, `.ko` pelo
+`modules_install`, `/etc/modules-load.d/mtsx.conf` e `blacklist mts` no rootfs
+(`distro/01-build-image-7.0.sh`, que aborta se o `mtsx.ko` faltar). O `mts.ko` legado continua
+instalado, mas barrado (`module_blacklist=mts`). Tag `20261117-mtsx`, promovida para
+`distro/RELEASE/20261117-mtsx/` em 2026-11-18.
+
+**O que falta:** aceite de boot frio ×3 com autoload sem intervenção, transferência de 30 min
+provada por contadores, e um `01-build-image` para o rootfs de fábrica já nascer com o `mtsx`
+(hoje o `.ko` e os dois `.conf` foram instalados à mão no rootfs interno do console). Lista em
+`others/docs/BACKLOG.md` → "Pendências abertas em 2026-11-18".
+
+**Consequência operacional:** `eth0` e `wlan0` estão na **mesma** LAN (`192.168.6.0/24`), então
+ping não prova por qual interface o tráfego passou — use `ip -s link`/`tcpdump -i eth0`. Ao subir
+a `eth0`, o `dhcpcd` do `wlan0` pode trocar o IP do WiFi (`.128` → `.127`) por um lease (decisão
+do usuário: não corrigir). Regras completas em `AGENTS.md` (Topologia de Rede).
 
 ---
 

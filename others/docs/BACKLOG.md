@@ -1,6 +1,6 @@
 # Backlog do Projeto — Fonte Única de Pendências
 
-**Última atualização:** 2026-11-16 (noite — reconciliação após a sessão da tag `20261116-s5-dma`: S5 resolvido, DMA→SPM provado, build otimizado. Itens obsoletos fechados, novos acrescentados na seção "Pendências abertas em 2026-11-16".)
+**Última atualização:** 2026-11-18 (reconciliação após a sessão de 2026-11-17: **Ethernet `eth0` funcionando** pelo driver `mtsx` validado ao vivo e já no build/rootfs; `eth0` passou a pegar IP por DHCP. O antigo "bloqueador de firmware do PHY" está **refutado**. Pendências de aceite de boot frio na seção "Pendências abertas em 2026-11-18".)
 
 > ℹ️ **Como ler este arquivo:** itens `[x]` fechados guardam o histórico da solução; itens dentro de
 > `<details>` com o título "Histórico da investigação" são **registro do que foi refutado**, não
@@ -183,7 +183,7 @@ O build `20261113-full-rebuild` final saiu SEM `rtc-ps4-icc` e SEM `baikal-memor
 |---|-------|-----------|----------|
 | 1 | **Boot completo + vídeo HDMI** | ✅ **PASS** | Kernel carrega, SSH ativo, vídeo 1080p@60 |
 | 2 | **SSH via WiFi** | ✅ **PASS** | `192.168.6.128`, root/ps4 |
-| 3 | **eth0 cabeada** | ✅ **RESOLVIDO no driver** (Fase C, 2026-11-17) / ⏳ **pendente no boot** | O driver `mtsx` (link up + 100 MB RX/TX com SHA-256 conferido) agora é artefato do build: `CONFIG_MTSX=m`, `mtsx.ko` via `modules_install`, `/etc/modules-load.d/mtsx.conf` e `blacklist mts` no rootfs (tag `20261117-mtsx`). **Pendente:** deploy por FTP + boot com o rootfs que tenha o `mtsx.ko` novo e validação ao vivo. Ver `others/docs/PLAN_ETH0_BAIKAL.md` |
+| 3 | **eth0 cabeada** | ✅ **PASS — validado ao vivo em 2026-11-17** (era PARCIAL em 2026-11-15) | Driver `mtsx` (não o `mts` legado): `modprobe mtsx` com o `.ko` do build oficial, link up (`0xb19`, resíduo `0x0147.1e` limpo) e 100 MB em cada sentido com SHA-256 idêntico, 0 erros. Depois, `eth0` passou a pegar IP por **DHCP** (`.131`), rota padrão pela cabeada. **Pendente só o aceite de boot frio** (autoload sem intervenção) — ver "Pendências abertas em 2026-11-18". |
 | 4 | **RTC via ICC** | ✅ **PASS** (timekeeping) | `/dev/rtc0` existe, `/proc/driver/rtc` mostra hora correta (2026-11-15), system clock semeado no boot. `hwclock -r` timeout (UIE emulation no driver + kernel, **pendente validação ao vivo**) |
 | 5 | **Baikal Memory v0.2** | ⚠️ **PARCIAL** | Módulo carrega, BARs mapeados, MAC lido em **offset 0x52f000** (`2c:cc:44:3f:69:5f`), ICC em 0x52c000. Sysfs não expõe `bar5_0x2f000`/`bar5_0x2c000` (offsets no device file diferem do esperado) |
 | 6 | **Áudio HDMI** | ✅ **PASS** | `plughw:0,3` (HDMI 0) e `plughw:0,7` (HDMI 1) funcionam com `speaker-test`/`aplay` |
@@ -228,7 +228,7 @@ Medições reais no PS4 (boot completo, `systemd` `running`, 0 unidades falhadas
 
 **P2 — otimização de boot (44 s → meta ~15-20 s):**
 - [x] **33 s** de `systemd-modules-load` eram o `mts.ko` — auto-carregamento DESATIVADO em 2026-11-12 (decisão do usuário: Ethernet fica para o futuro): `distro/01-build-image-7.0.sh` agora só cria `/etc/modules-load.d/mts.conf` quando `ENABLE_MTS=1`; no PS4 o arquivo foi renomeado para `mts.conf.disabled`. O `mts.ko` continua instalado e pode ser carregado à mão (`modprobe mts`, usa `stage=4` do `modprobe.d`). **Reativar:** `ENABLE_MTS=1 sudo ./01-build-image-7.0.sh <TAG>`, ou no rootfs vivo `mv /etc/modules-load.d/mts.conf{.disabled,}`. Quando retomar o trabalho de Ethernet: mover o carregamento para uma unit própria depois de `multi-user`/`network-pre`, em vez de `modules-load` (para não bloquear o boot).
-- [ ] **O `mts.ko` ainda carrega em todo boot (achado de 2026-11-17, sem medição ao vivo):** o item acima tirou só o `modules-load.d`. O initramfs `20261117-dp-diag2` ainda tem `MODULES="mts"`, o `mts.ko` e `options mts stage=4`, e o `init` dele roda `modprobe -qab $MODULES`; o módulo tem `MODULE_DEVICE_TABLE`, então o udev também pode carregá-lo do rootfs; e o `mts` aparece na lista de módulos da validação de 2026-11-15. Origem: `MODULES=(... mts ...)` em `distro/01-build-image-7.0.sh:716`. O custo no boot de hoje não foi medido. Correção imediata sem rebuild: `module_blacklist=mts` no bootargs (parâmetro do kernel, checado em `load_module()` na árvore 7.0.8: devolve `-EPERM` seja qual for o caminho; decisão E3 do `others/docs/PLAN_ETH0_BAIKAL.md`); a definitiva é tirar `mts` do `MODULES` (precisa de `01-build-image`).
+- [x] ✅ **O `mts.ko` ainda carrega em todo boot — RESOLVIDO em 2026-11-17** (era `[ ]` em 2026-11-17): o bootargs da tag `20261117-mtsx` tem `module_blacklist=mts` (barra qualquer caminho em `load_module()`, inclusive o `MODULES="mts"` do initramfs) e o rootfs carrega o **`mtsx`** por `/etc/modules-load.d/mtsx.conf`, com `blacklist mts` em `/etc/modprobe.d/ps4-gbe.conf`. **Falta a correção definitiva no build:** tirar `mts` de `MODULES=(...)` em `distro/01-build-image-7.0.sh` (~linha 716), o que exige um `01-build-image`. Ver `others/docs/PLAN_ETH0_BAIKAL.md` (E3).
 - [x] `drm.debug=0x06` + `loglevel=8`: 257 das 1321 linhas do dmesg eram `drm`. Removidos do bootargs de produção (mantém `drm.debug=0` implícito e `loglevel` padrão).
 - [x] `keep_bootcon earlyprintk=efi,keep` — removido do bootargs de produção.
 - [x] `ldconfig.service` gasta 1,0 s; com `ld.so.cache` já pronto — mantido como `static` (condition-based), só roda quando necessário. Funciona corretamente, não requer ação.
@@ -262,16 +262,28 @@ Medições reais no PS4 (boot completo, `systemd` `running`, 0 unidades falhadas
 
 ---
 
-### [x] 🔒 GBE Ethernet — PHY nunca sai de power-down — INVESTIGAÇÃO ENCERRADA 2026-07-30 (bloqueador de firmware, não solucionável via driver Linux)
+### [x] 🏆 GBE Ethernet — **RESOLVIDO em 2026-11-17** (driver `mtsx`, link up + 100 MB RX/TX): a tese de 2026-07-30 ("PHY em power-down pelo firmware, não solucionável via driver") estava **errada**
 
-> 🔓 **REABERTA em 2026-11-17 por decisão do usuário (E1) — ver `others/docs/PLAN_ETH0_BAIKAL.md`.**
-> **Estado:** fase S (estática) e fase 0 do host concluídas (`test_history` 123 e 124); o módulo de
-> diagnóstico `others/tools/mts_peek/` e o driver da fase C `others/tools/mtsx/` (módulo separado: não
+> 🟢 **RESULTADO (2026-11-17):** o bloqueio era o **resíduo de shutdown**: todo caminho de stop do
+> Orbis grava `0x0010` no registrador C45 `0x0147.1e` e o PHY fica com o link travado; limpar esse
+> bit (`clear_residue`) trouxe `BMSR 0x7969 → 0x796d` e `BAR0+0x04 0xb18 → 0xb19` em ~6 ms. Com isso o
+> driver **`mtsx`** (adota o MAC/PHY como o Orbis deixou, sem cold init) subiu `eth0` e transferiu
+> **100 MB em cada sentido com SHA-256 idêntico** (`test_history` 136-139). Ele é hoje
+> `CONFIG_MTSX=m` no build oficial e vem no rootfs por `/etc/modules-load.d/mtsx.conf`
+> (`blacklist mts` no `mts.ko` legado). Plano, fases A-E e decisões: `others/docs/PLAN_ETH0_BAIKAL.md`.
+> `eth0` também passou a pegar IP por DHCP e é a rota padrão (metric 1024). **Resta só o aceite de
+> boot frio** ("Pendências abertas em 2026-11-18").
+>
+> ⚠️ O bloco abaixo, de 2026-11-17, é o estado **antes** da validação ao vivo. O "FECHAMENTO FORMAL"
+> de 2026-07-30 mais abaixo é **histórico refutado**: não havia nada de especial no power-on do PHY
+> feito pelo firmware — o `mts.c` é que não limpava o resíduo e esperava o link no registrador errado.
+>
+> 🔓 **REABERTA em 2026-11-17 por decisão do usuário (E1).** **Estado naquele momento:** fase S
+> (estática) e fase 0 do host concluídas (`test_history` 123 e 124); o módulo de
+> diagnóstico `others/tools/mts_peek/` e o driver da fase C `kernel/drivers_mts/mtsx.c` (módulo separado: não
 > mexe no `mts.c` que carrega em todo boot) compilam e passam no teste de host, mas **nunca foram
 > carregados**; **o console está proibido até o usuário liberar** (plano do rootfs interno em
-> andamento). **Próximo passo exato:** P0-3 (tag com `module_blacklist=mts`, precisa de E3), a fase A
-> (leituras com o `mts_peek`), a fase B (limpar o resíduo) e a fase C (`mtsx`), todas no console.
-> Revisão estática
+> andamento). Revisão estática
 > (REA no dump 12.52 + releitura do log UART de 2026-11-12, `test_history` 123): o MAC chega ao Linux
 > configurado e parado pelo Orbis, não desligado; todo caminho de stop do Orbis grava `0x0010` em
 > `0x0147.1e` (resíduo que dois projetos externos limpam para ter link); o `mts.c` tem 14 defeitos
@@ -284,7 +296,7 @@ Medições reais no PS4 (boot completo, `systemd` `running`, 0 unidades falhadas
 
 **Já descartado:** `MTS_MAC_EN2` como causa; hipótese de IRQ real (`IMR=0x7d`) reproduzindo full-duplex; correção do efuse (BAR4 em vez de BAR2) foi necessária mas insuficiente sozinha.
 
-**🔒 FECHAMENTO FORMAL 2026-07-30 — RE completa da thread `gbe_phy_ctrl` (`dc5a44c0`):** 11 funções extraídas via Ghidra Java headless (Docker), árvore de chamada inteira analisada. **Nenhuma chamada ICC ou SAMU encontrada** — a thread só monitora o PHY via MDIO packed reads e dorme esperando eventos. Varredura binária do `kmem_dump_1252.bin` confirma: 0 cross-refs para `dc5a44c0`, 0 referências a ICC major=5 (SAMU) no range GBE, 0 referências a MMIO de mailbox SAMU no range GBE. **Conclusão: o power-on físico do PHY é feito pelo firmware/bootloader Sony antes do kernel Orbis assumir — não há sequência replicável via MDIO, ICC, SAMU ou RMU que um driver Linux possa executar.** Esta via de investigação está **esgotada com os dados disponíveis** — não reabrir sem fonte de dados nova (ex: vazamento de firmware, dump de SAMU, documentação de terceiros sobre o PHY Baikal). Detalhes em `PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md` e `memory/sessao-ghidra-java-passo1-2026-07-30.md`. Prioridade do projeto redirecionada para as frentes já ativas (S5 shutdown, KVM).
+**🔒 FECHAMENTO FORMAL 2026-07-30 (❌ REFUTADO em 2026-11-17) — RE completa da thread `gbe_phy_ctrl` (`dc5a44c0`):** 11 funções extraídas via Ghidra Java headless (Docker), árvore de chamada inteira analisada. **Nenhuma chamada ICC ou SAMU encontrada** — a thread só monitora o PHY via MDIO packed reads e dorme esperando eventos. Varredura binária do `kmem_dump_1252.bin` confirma: 0 cross-refs para `dc5a44c0`, 0 referências a ICC major=5 (SAMU) no range GBE, 0 referências a MMIO de mailbox SAMU no range GBE. **Conclusão: o power-on físico do PHY é feito pelo firmware/bootloader Sony antes do kernel Orbis assumir — não há sequência replicável via MDIO, ICC, SAMU ou RMU que um driver Linux possa executar.** Esta via de investigação está **esgotada com os dados disponíveis** — não reabrir sem fonte de dados nova (ex: vazamento de firmware, dump de SAMU, documentação de terceiros sobre o PHY Baikal). Detalhes em `PLANO_GBE_ETH0_CONSOLIDADO_2026-07-30.md` e `memory/sessao-ghidra-java-passo1-2026-07-30.md`. Prioridade do projeto redirecionada para as frentes já ativas (S5 shutdown, KVM).
 
 ---
 
@@ -469,8 +481,8 @@ O `baikal_pcie_neighborhood.txt` continha a função `dc718b40`, equivalente Orb
 
 ## Hardware — pendentes (re-verificação 2026-11-12/15)
 
-### [x] ⚡ Ethernet GBE eth0 (00:14.1) — **MAC FUNCIONAL, PHY NÃO LINKA** (bloqueador de firmware) — validado 2026-11-15
-Driver `mts` carrega e registra `eth0` com MAC correto `2c:cc:44:3f:69:5f` (lido da SPM). Anéis DMA programados, TX por software funcional. **NO-CARRIER** — PHY não responde a MDIO, link não sobe. Ping 100% perda (esperado sem link físico). **Módulo no rootfs tem BTF mismatch** — strip BTF via `objcopy` no `01-build-image-7.0.sh` resolve. **Causa raiz confirmada:** power-on físico do PHY é feito pelo firmware/bootloader Sony **antes** do kernel assumir. Não há sequência replicável via MDIO, ICC, SAMU ou RMU. Status: Driver funcional, MAC correto, TX pronto. **PHY não linka** — bloqueador de firmware, não solucionável via driver Linux. Reabrir só com nova fonte de dados.
+### [x] 🏆 Ethernet GBE eth0 (00:14.1) — **FUNCIONAL** (driver `mtsx`, 2026-11-17; o "PHY não linka" de 2026-11-15 está refutado)
+Driver `mts` legado carregava e registrava `eth0` com MAC correto `2c:cc:44:3f:69:5f` (lido da SPM), mas ficava em **NO-CARRIER** porque nunca limpava o resíduo `0x0147.1e = 0x0010` deixado pelo stop do Orbis. O driver novo **`mtsx`** (mesmo MAC, sem cold init, adota o estado do Orbis) limpa o resíduo, sobe o link (`0xb19`) e transfere 100 MB em cada sentido com SHA-256 idêntico. É artefato do build (`CONFIG_MTSX=m` → `mtsx.ko`, autoload pelo rootfs, `blacklist mts`). A conclusão de 2026-11-15 ("power-on do PHY é do firmware Sony, não replicável") **não se sustenta**: o PHY sempre respondeu a Clause 22 (`03a2/9441`) e o bloqueio era software. Detalhes em `others/docs/PLAN_ETH0_BAIKAL.md`; aceite de boot frio nas "Pendências abertas em 2026-11-18".
 
 ### [x] 📶 Bluetooth — **FUNCIONANDO** (validado 2026-11-13)
 Driver `btmtksdio` (MT7668) carregado e bound ao SDIO function 2. Controlador `hci0` detectado (MAC: `E8:D8:19:93:CC:AE`). Bluetooth daemon rodando, descoberta funcionando ("L3250 Series" detectado). **Teste do usuário:** Bluetooth, **áudio via Bluetooth em caixa de som** e **joystick** testados e funcionando. Pendente: parear DualShock 4 (testar se funciona com profile HIDP já habilitado).
@@ -559,10 +571,48 @@ Implementado no build: `zram-generator` no `PKGS`; `/etc/systemd/zram-generator.
 9. [x] ✅ **Congelar o config do kernel — MEDIDO em 2026-11-16:** o ccache só acerta com o mesmo config (`OTIMIZACAO_BUILD_2026-11-16.md`). Com o config igual o build oficial leva **57 s** (tag `20261116-spm-swap2`, e 54–91 s nas tags `dma-*` do mesmo dia); quando uma tag **muda o `.config`** (aqui, habilitar `CONFIG_BAIKAL_SPM_BLK=m`) leva **7 min 18 s** (tag `20261116-spm-swap`), porque o `autoconf.h` novo invalida o cache de quase todos os objetos. Regra prática: agrupar as mudanças de `scripts/config` em um único build e iterar só o código depois.
 10. [ ] **Segunda rodada de enxugamento** (ver item "Enxugar o kernel").
 
-Fora desta lista, por decisão do usuário: **`eth0`/GBE** (PHY mudo, bloqueador de firmware).
+Fora desta lista, por decisão do usuário: nada além dos itens acima. (O antigo "`eth0`/GBE fora da lista, PHY mudo" caiu em 2026-11-17: a Ethernet está funcional com o `mtsx`.)
 
 ---
 
+
+## 🆕 Pendências abertas em 2026-11-18 (sessão `eth0`/`mtsx`)
+
+Contexto: o driver que funciona é o **`mtsx`**, e ele já é artefato do build (`CONFIG_MTSX=m` →
+`modules_install`) e do rootfs (`/etc/modules-load.d/mtsx.conf` + `blacklist mts`). O `.ko` do build
+oficial e os dois arquivos de configuração foram instalados **à mão** no rootfs interno do console
+(`depmod -a`) em 2026-11-17; o boot da tag `20261117-mtsx` e as transferências de 100 MB passaram ao
+vivo (`test_history` 136-139). O que falta é o aceite de repetibilidade. **Nota de organização
+(2026-11-18):** esses quatro testes ao vivo (fases A-D) não tinham sido registrados no banco na hora;
+as linhas 136-139 foram criadas hoje a partir de `others/docs/PLAN_ETH0_BAIKAL.md` — daqui para frente,
+registrar cada teste ao vivo no ato.
+
+1. [ ] **Boot frio ×3 com o autoload do `mtsx`, sem intervenção manual** — power-off completo, Orbis,
+   payload, e conferir em cada boot: `lsmod | grep mtsx` (e **nenhum** `mts`), `dmesg | grep -i mtsx`
+   com `link=0x…b19` e resíduo limpo, `ip -br link show eth0` `UP`, IP por DHCP na mesma LAN do WiFi,
+   `ip -s link show eth0` sem `dropped`/`errors`. Se falhar em qualquer boot: o `mtsx.ko` não está no
+   rootfs, ou o `mtsx.conf` não foi lido, ou o `blacklist` do `mts` não pegou.
+2. [ ] **Transferência longa (30 min) pela `eth0`** com `ping -f`/`iperf3` ou `dd | ssh`, provando por
+   **contadores** (`ip -s link show eth0`) — não por ping, porque `eth0` e `wlan0` estão na mesma
+   subnet e o Linux responde ARP por qualquer interface (`AGENTS.md`, topologia).
+3. [ ] **Conferir o Orbis com rede depois do Linux** (link down limpo / Orbis volta a linkar) — é o
+   único caminho de stop do nosso lado que ainda não foi exercitado com o `mtsx`.
+4. [ ] **`01-build-image` para o rootfs de fábrica ter o `mtsx` por construção** — hoje o `BUILD_ROOT`
+   não tem `lib/modules`, então o `mtsx.ko` e os dois `.conf` foram instalados à mão no rootfs interno.
+   Rodar o build da distro (host Arch ou `distro/scripts/build-image-docker.sh <TAG>`) fecha essa
+   lacuna e faz o `arch_minimal_v2-7.0.tar` refletir a tag `20261117-mtsx` (o tar atual é de 2026-11-17
+   07:30, anterior ao `mtsx`).
+5. [ ] **Tirar `mts` de `MODULES=(...)` em `distro/01-build-image-7.0.sh`** (~linha 716) — com o
+   `mtsx` autoload, o `mts` legado não tem por que entrar no initramfs. Hoje o `module_blacklist=mts`
+   do bootargs já o barra em `load_module()`; esta é a correção definitiva (exige `01-build-image`).
+6. [x] ✅ **Tag `20261117-mtsx` promovida** para `distro/RELEASE/20261117-mtsx/` (2026-11-18,
+   `promote-release.sh … --no-tar`: 4 artefatos + `sha256sums.txt`; sem link para o tar da distro
+   porque ele é anterior ao `mtsx` — ver item 4). A pasta é gitignored.
+7. **Comportamento conhecido, sem correção (decisão do usuário em 2026-11-17):** ao subir a `eth0`,
+   o `dhcpcd` do `wlan0` vê conflito de ARP e pode trocar o IP do WiFi (`.128` → `.127`) até o próximo
+   lease. Antes de concluir "console desligado", pingar as duas pontas; a reserva do roteador é por MAC.
+
+---
 
 ## Critério de aceite geral (hardware)
 - Cada item `[ ]` acima só fecha quando o driver está carregado **e** o dispositivo é utilizável ao vivo no PS4 (não apenas "compila").

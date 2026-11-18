@@ -24,11 +24,16 @@ O script:
    no branch `baikal/7.0.8-Stable`; se a árvore não existe, **aborta** e instrui
    a restaurar do snapshot (o upstream não publica mais esse branch — ver seção
    abaixo);
-2. aplica os patches em uso — `ahci-baikal-polling-fallback`, `ps4-icc-rtc-wrapper`,
-   `mts-baikal-gbe-driver`, `ps4-icc-proc-debug` e `baikal-memory-fase2` — com `git apply --check` +
-   aborto em caso de falha (sem fallback silencioso). Os demais arquivos em
+2. aplica os patches em uso — `ahci-baikal-polling-fallback` (SATA), `ps4-icc-rtc-wrapper` (RTC),
+   `ps4-icc-s5-poweroff-prepare` (S5), `ps4-icc-proc-debug`, `mts-baikal-gbe-driver` +
+   `mts-baikal-kconfig` (Kconfig/Makefile do vendor Sony, inclui `CONFIG_MTSX`), `baikal-memory-fase2`,
+   `baikal-dmac`, `baikal-memory-dma`, `baikal-spm-blk`, `clocksource-baikal-hpet`, `baikal-wdt` e os do
+   DP (`ps4-bridge-dp-init`, `ps4-dp-link-rate-270000`, `ps4-bridge-keep-mode`, `ps4-dp-diag`) — com
+   `git apply --check` + aborto em caso de falha (sem fallback silencioso). Os demais arquivos em
    `patches/` são **legado não aplicado** (ver abaixo);
-3. copia `drivers_mts/{mts.c,mts.h}` para `drivers/net/ethernet/sony/`;
+3. copia `drivers_mts/{mts.c,mts.h,mtsx.c,mtsx_desc.h}` para `drivers/net/ethernet/sony/` — `mts` é o
+   driver legado de cold init e `mtsx` é o driver **validado ao vivo** que adota o estado deixado pelo
+   Orbis (`CONFIG_MTSX=m`);
 4. confere que **todos** os firmwares de `CONFIG_EXTRA_FIRMWARE` existem em
    `extra_firmware/` — falha cedo, antes do `make`, listando o que falta;
 5. compila com ThinLTO (`LLVM=1`, `JOBS=2`) e faz `make modules`;
@@ -79,12 +84,12 @@ make -j2 LLVM=1 CC="ccache clang" ARCH=x86_64 prepare                       # ~2
 |---|---|
 | `00-build-kernel-7.0.sh` | Único script de build do kernel (nunca rodar `make` direto) |
 | `patches/` | Fonte única dos patches. **Aplicados pelo build:** `ahci-baikal-polling-fallback` (SATA polling), `ps4-icc-rtc-wrapper` (RTC via ICC), `mts-baikal-gbe-driver` + `ps4-icc-proc-debug` (driver GBE e `/proc/ps4_icc`, só quando `mts.c` ainda não está na árvore). **Legado, NÃO aplicado:** `sky2-baikal-gbe` (congelava o PCIe/vídeo — ver AGENTS.md), `stmmac-baikal-fixedlink` e `sky2-fake-chipid` (sem referência no script; só histórico da época em que o driver errado era tentado) |
-| `drivers_mts/` | Driver Ethernet GBE do Baikal (`mts.ko`), escrito do zero — e **toda a documentação do MTS** (`README.md`, RE, testes) |
+| `drivers_mts/` | Fonte autoritativa dos drivers de rede do Baikal: `mts.c`/`mts.h` (legado, cold init, `CONFIG_MTS_GBE`) e **`mtsx.c`/`mtsx_desc.h` (o driver que funciona, `CONFIG_MTSX`)**, além de toda a documentação do MTS (`README.md`, RE, testes) |
 | `../distro/boot_referencia/` | Artefatos de boot por tag (gitignored, gerado por este build) |
 | `kernel_build_7.0/` | Árvore fonte do kernel + ccache (gitignored — criado localmente, não vem no clone) |
 | `.ccache/` | Cache do compilador (gitignored) |
 | `snapshots/` | Snapshots de segurança da árvore fonte (gitignored) |
-| `../others/` | **Fora do build** (separado para revisão): `rea/` (acervo de RE: dumps Orbis, decompilado, scans, scripts Ghidra, SQLite), `consolidado/` (documentação técnica), `docs/` (planos), `tools/` (harnesses ao vivo, `ps4_hdd_tools`), `scripts/` (diagnóstico) e `tests/` |
+| `../others/` | **Fora do build** (separado para revisão): `rea/` (acervo de RE: dumps Orbis, decompilado, scans, scripts Ghidra, SQLite), `docs/` (documentação técnica, BACKLOG, lições), `tools/` (harnesses ao vivo, `mtsx`, `ps4_hdd_tools`), `scripts/` (diagnóstico, UART, payload) e `tests/` |
 
 ## Regras que valem para esta frente
 
