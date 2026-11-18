@@ -277,6 +277,17 @@ no driver (re-arme com troca de VIC, ou `enable` duplo). Depois, detectar o repl
   `1` para sempre e nunca detecta nada. **Mesmo corrigindo o índice, bit0 só cai e não sobe**, logo
   o gatilho `0→1` não dispara. Próximo passo (a decidir): trocar o gatilho para a queda `1→0` ou para
   a assinatura de estado ruim (`705f=90`/`1e02=88`) e disparar a recuperação ali.
+- **Patch reescrito e buildado: tag `20261118-hpd-fix3` (build EXIT=0, commit `5f3ea40`).** Dois bugs
+  reais além do índice: (a) **faltava `INIT_DELAYED_WORK`** — o `schedule_delayed_work` operava sobre
+  memória zerada com `func == NULL` (por isso nada quebrava visivelmente: nada rodava);
+  (b) o `git diff` contra `HEAD` capturava também as mudanças do `ps4-bridge-keep-mode.patch`
+  (`bool idle`), porque os patches base vivem só no working tree. Procedimento correto adotado:
+  aplicar os patches base na **ordem exata do `00-build-kernel-7.0.sh`**, commitar a base, editar, e
+  só então `git diff` (patch isolado de 6 hunks). Confirmado no build: `ps4_bridge_hpd_work` e
+  `ps4_bridge_read_hpd` em `/proc/kallsyms`, e `ps4_bridge.o` compila **sem nenhum warning**.
+- **Recuperação validada ao vivo (teste 161):** o `xrandr --mode 1280x720` + `--mode 1920x1080` por SSH
+  trouxe a imagem de volta e devolveu a ponte ao estado bom (`1e00=67`, `1e02=f8`, `705f=10`,
+  `7a8b=00`) — os mesmos registradores que o kernel agora vigia. É o caminho que o patch dispara.
 
 ### Rollback
 
