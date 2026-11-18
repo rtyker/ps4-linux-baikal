@@ -94,7 +94,7 @@ Boot completo (UART mostrou kernel até o `console [tty0]`, tty1 subiu, SSH OK).
 | `baikal-memory` + sysfs | ✅ `bar5_0x2f000` = `2c:cc:44:3f:69:5f`; `bar5_0x2c000` com dados; `/dev/baikal-memory` 0600 |
 | `rtc-ps4-icc` | ✅ `/dev/rtc0` registra; `hwclock -w` OK e `/sys/class/rtc/rtc0/time` segue a hora do sistema |
 | `hwclock -r` | ✅ **FUNCIONA** na tag `20261115-hwclock-min` — retorna `2026-11-15 18:20:34.848988-03:00`; fix `clear_bit(RTC_FEATURE_UPDATE_INTERRUPT)` confirmado ao vivo |
-| Hora no boot | ❌ sobe em 2026-11-05 (hora da imagem; RTC é semeado pelo relógio do sistema, **não há fonte de tempo real**) |
+| Hora no boot | ❌ sobe em 2026-11-05 (RTC é semeado pelo relógio do sistema, **não há fonte de tempo real** no driver). A origem do valor de 2026-11-05 foi investigada em 2026-11-18: ver a seção `## 🔴 RTC via ICC — a semente do boot vem de 2026-11-05` |
 | NTP | ❌ `timedatectl set-ntp` ativa o serviço mas `systemd-timesyncd` envia 0 pacotes (DNS e internet OK); contornado com `date -s` do host + `hwclock -w` |
 | `smartd` | ❌ falha (`/dev/sdb` precisa de `-d removable`) |
 | KVM | ✅ `/dev/kvm`, SVM/NPT |
@@ -639,14 +639,117 @@ registrar cada teste ao vivo no ato.
 7. **Comportamento conhecido, sem correção (decisão do usuário em 2026-11-17):** ao subir a `eth0`,
    o `dhcpcd` do `wlan0` vê conflito de ARP e pode trocar o IP do WiFi (`.128` → `.127`) até o próximo
    lease. Antes de concluir "console desligado", pingar as duas pontas; a reserva do roteador é por MAC.
-8. [ ] **Semente do RTC está velha em todo boot frio (achado em 2026-11-18, boots #1 e #2):** o
-   `ps4-rtc-icc` lê **`2026-11-05T13:36:34Z`** em todo boot e seta o relógio do sistema para isso
-   (`dmesg`: `setting system clock to 2026-11-05T13:36:34 UTC`); o `journalctl --list-boots` mostra
-   todos os boots começando em 2026-11-05 10:36:33. O RTC **não avança** com o console desligado e o
-   valor não é reescrito pelo NTP (o próximo boot volta ao mesmo instante). Impacto prático: os
-   primeiros segundos do boot têm hora errada até o NTP sincronizar (`timedatectl`: synchronized: yes);
-   nada quebra. Investigar se o ICC/RTC do Baikal tem bateria/registrador que só o Orbis atualiza, e se
-   vale escrever o RTC no shutdown do Linux.
+8. [~] **Semente do RTC vem errada em todo boot frio — aberto e pré-explicado na seção
+   `## 🔴 RTC via ICC — a semente do boot vem de 2026-11-05`, logo abaixo** (medições de 2026-11-18, o
+   que já foi descartado, o mapa do código e o experimento que decide). Resumo: o relógio do sistema já
+   está em **`2026-11-05T13:36:33Z`** quando o `ps4-rtc-icc` carrega, então o `hctosys` "seta" o
+   relógio para esse valor; o `chronyd` corrige em seguida (`System clock wrong by 1112415.98 s` →
+   step). Impacto: ~30-40 s de hora errada em cada boot; nada quebra.
+
+---
+
+## 🔴 RTC via ICC — a semente do boot vem de 2026-11-05 (aberto em 2026-11-18)
+
+> **Status:** aberto. Não é regressão do `eth0`/`mtsx` e não bloqueia nada: o `chronyd` corrige a hora
+> logo depois do boot. O que está errado é a **janela de ~30-40 s** com data de 13 dias atrás, e o fato
+> de não sabermos **quem** escreve esse valor antes do driver de RTC carregar.
+
+### Sintoma (medido ao vivo em 2026-11-18, tag `20261117-mtsx`, `test_history` 140-143)
+
+| Boot | `dmesg` | valor |
+|---|---|---|
+| #1 (07:0x) | `[   10.093778] ps4-rtc-icc: setting system clock to 2026-11-05T13:36:34 UTC` | `1793885794` |
+| #2 (07:1x) | idem, `...13:36:33 UTC` | `1793885793` |
+| #3 (07:3x) | idem, `...13:36:33 UTC` | `1793885793` |
+
+- O valor é **praticamente constante** (difere 1 s entre boots separados por horas) → não é um relógio
+  andando; é um carimbo congelado.
+- `chronyd` (é ele o cliente NTP do rootfs, `systemd-timesyncd` está desabilitado) loga
+  `System clock wrong by 1112415.983855 seconds` e faz o step para a hora certa: são **12,87 dias** de
+  erro, ~30-40 s depois do boot (boot de 21 s + seleção de fonte NTP).
+- Depois do step, `/sys/class/rtc/rtc0/since_epoch` acompanha a hora certa — por causa de
+  **`CONFIG_RTC_SYSTOHC`** (o kernel reescreve o RTC a partir do relógio do sistema), não porque o
+  hardware tenha guardado a hora.
+- `grep btime /proc/stat` = `1794998200` (hora de hoje) — **não** é evidência da semente: o `btime` é
+  recalculado depois do step do NTP. O `journalctl --list-boots` mostrando "2026-11-05 10:36:33" para
+  todos os boots é consequência da semente, não uma segunda medida.
+
+### O que já foi descartado (medido/checado hoje)
+
+1. **Não é o driver lendo um RTC de hardware.** O driver é **puramente de software**:
+   `ps4_rtc_probe()` faz `sc->base_time = ktime_get_real_seconds()` e `read_time` devolve
+   `base_time + (jiffies - base_jiffies)/HZ`; `set_time` só grava `base_time` e manda o ICC `2/0x0b`
+   ("save context"). Nenhum registrador de tempo é lido. Logo, o driver **copia** um valor que já
+   estava no relógio do sistema — ele é vítima, não causa.
+2. **`time=` no cmdline?** Não existe. `/proc/cmdline` do boot (tag `20261117-mtsx`) é:
+   `panic=0 clocksource=tsc consoleblank=0 net.ifnames=0 radeon.dpm=0 amdgpu.dpm=0 earlycon=… console=…
+   root=LABEL=psxitarch rw rootwait amdgpu.audio=1 usbcore.autosuspend=-1 video=HDMI-A-1:1920x1080@60
+   log_buf_len=4M ps4root=internal bootsrc=internal module_blacklist=mts`.
+3. **O hook `set-time-from-cmdline` do initramfs?** Ele existe no `HOOKS` (`base set-time-from-cmdline
+   udev …`), mas só age com `time=<epoch>` no cmdline e aborta com `|| true` se não houver — e não há.
+4. **`rtc_cmos`?** `[0.753] platform rtc_cmos: registered … (no PNP device found)` e
+   `[1.977] rtc_cmos rtc_cmos: broken or not accessible`: não leu hora nem emitiu
+   "setting system clock".
+5. **`chronyd` no start?** Não: ele só loga `Frequency … read from /var/lib/chrony/drift`, depois
+   `Selected source` e só então o step. Não há `-s` setando a hora de arquivo.
+6. **Bateria/registrador que sobrevive ao power-off?** Não há evidência: o valor não anda com o console
+   desligado e `ps4-rtc-icc` não lê hardware. O ICC `2/0x0c` ("load context") devolve `02 02 00…`
+   (não devolve tempo) — anotado desde 2026-11-12.
+
+### O que sobra (é o objeto do item)
+
+O relógio do sistema **já está em 1793885793 quando o `ps4-rtc-icc` carrega (~10 s)**. Só há dois
+lugares capazes de fazer isso: (a) algo no **initramfs** antes do `switch_root` (o único script do
+projeto com `date -s` é o hook acima, mas pode haver outro caminho, ex. o hook `ps4-internal-root`,
+um serviço do rootfs ou um arquivo com carimbo); (b) o **payload/loader** do Orbis gravando um
+`time=`/`settimeofday` que o `/proc/cmdline` não mostra. Não há, no kernel, nenhum
+`do_settimeofday64` no caminho do PS4 (só o `rtc_hctosys` genérico e o Hyper-V).
+
+### Experimento que decide (um boot, uma variável)
+
+1. **Initramfs instrumentado (decide a):** hook temporário que loga `date -u +%s` na primeira linha do
+   `run_hook` e imediatamente antes do `switch_root` (grava em `/run/ps4-clock-probe` e/ou no
+   `earlycon`). Se o valor já for `1793885793` antes do `switch_root`, a origem é o initramfs/kernel;
+   se for `0`/1970 e só vira depois, é userspace.
+2. **Driver instrumentado (confirma e fecha o resto):** no `ps4_rtc_probe`, `dev_info` com
+   `ktime_get_real_seconds()` **antes** de atribuir, e com o que `read_persistent_clock64()` devolve
+   (se a arquitetura expuser). Se o `ktime` no probe já é `1793885793`, o valor foi escrito antes do
+   módulo — e a linha do tempo do initramfs (item 1) diz por quem.
+3. **Payload:** conferir (no código do loader do Orbis usado aqui) se ele injeta `time=` ou chama
+   `settimeofday`; se injetar, o `/proc/cmdline` deveria mostrar — hoje não mostra, o que já é meta de
+   teste (um `time=` no `bootargs.txt` é suficiente para provar o caminho do hook, mas não para provar
+   a origem atual).
+
+### Direções de correção (ordem de custo)
+
+- **Barata e imediata:** fazer o loader passar `time=<epoch do Orbis>` (o hook `set-time-from-cmdline`
+  já existe para isso, e o Orbis normalmente está com a hora certa). Não muda driver nem kernel.
+- **Barata, sem depender do loader:** se o experimento mostrar que a semente vem de um carimbo de
+  arquivo/imagem, parar de usá-lo (não semear o RTC com valor implausível) e deixar o `chronyd`
+  fazer o step — mas isso **piora** os logs do boot (1970), então só vale se a origem for feia.
+- **Cara, se houver hardware:** reabrir a leitura do **RTC Marvell na SPM** (`others/rea/spm/decompiled/
+  baikal_rtc_mvl.txt`: `STATUS +0x100`, `TIME 0x130..0x13c`), que em 2026-11-12 deu zeros pelo `mmap`
+  da BAR5. Agora existe caminho **DMA** (`baikal-memory` + `baikal-dmac`), e a leitura pode ser
+  repetida com offset/segmento corretos e comparada com o dump do Orbis. **Somente leitura**; qualquer
+  escrita continua proibida pela regra da SPM.
+- **Descartada por ora:** escrever a hora no shutdown do Linux. Não há para onde escrever (o driver
+  não tem armazenamento) — sem fonte persistente, isso só grava no RAM.
+
+### Critério de aceite
+
+- Boot frio com `date -u` plausível **antes** do NTP (ou o item é fechado como "não há fonte de tempo
+  persistente no Baikal; documentado"), e `test_history` com o número medido nos três boots seguintes.
+- Nada de escrita em SPM/ICC fora do já validado (`allow_write=0`) e nenhuma mudança no caminho do
+  `eth0`/`mtsx`.
+
+### Arquivos e referências
+
+`kernel/patches/ps4-icc-rtc-wrapper.patch` (driver + wrapper ICC + Kconfig/Makefile),
+`kernel/kernel_build_7.0/drivers/rtc/rtc-ps4-icc.c` (comentário do topo explica o porquê de semear),
+`kernel/kernel_build_7.0/drivers/ps4/ps4-bpcie-icc.c` (`ps4_icc_rtc_cmd`),
+`kernel/kernel_build_7.0/arch/x86/platform/ps4/ps4.c` (`dummy_get_wallclock` → 0),
+`distro/01-build-image-7.0.sh` (hook `set-time-from-cmdline`, `chrony` + `rtcsync`),
+`others/rea/spm/decompiled/baikal_rtc_mvl.txt`, e este item no `BACKLOG.md`.
 
 ---
 
