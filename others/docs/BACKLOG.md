@@ -230,6 +230,30 @@ no driver (re-arme com troca de VIC, ou `enable` duplo). Depois, detectar o repl
   imagem voltando **em todas**, sem reboot; `test_history` com a contagem e a hora de cada ciclo.
 - Nada muda no caminho do `eth0`/`mtsx`, na SPM ou no RTC.
 
+### Tentativa kernel-side: poll de HPD na ponte (2026-11-18) — em validação
+
+- Patch `kernel/patches/ps4-bridge-hpd-poll.patch` (commits locais `fef53c8`, `c610639`, `f53756b`)
+  acrescenta um `delayed_work` em `ps4_bridge` que lê o bit 0 de `0x10f4` a cada 500 ms e, na
+  transição `0→1`, força um reprobe do conector.
+- **Duas correções obrigatórias antes do build** (o build original abortou sem artefatos):
+  1. A versão commitada adicionava `bool idle`, que o `ps4-bridge-keep-mode.patch` (aplicado antes
+     no `00-build-kernel-7.0.sh`) já adiciona → `git apply --check` falhava. Patch regenerado via
+     `git diff` a partir da base com todos os patches anteriores aplicados, sem o `idle`.
+  2. A API `drm_connector_force_reprobe()` **não existe** no kernel 7.0.8. Substituída por
+     `drm_helper_probe_detect(connector, NULL, true)` + `drm_kms_helper_connector_hotplug_event()`.
+     Compilação isolada de `ps4_bridge.o` (ccache clang/LLVM) passou sem avisos.
+- **Hipótese em teste, não fato:** o bit 0 de `0x10f4` cai com o cabo fora (`a1→a0`, teste 158) mas
+  **não subiu** no replug ruim (teste 159: continua `a0`). Se o bit não subir, o gatilho nunca dispara
+  e este build só servirá para refutar a via. Validação ao vivo ainda pendente.
+- Tag em build: `20261118-hpd-poll` (após o deploy, confirmar `active-tag.txt`, `dmesg` com
+  `HPD state changed`/`HPD rising`, e o comportamento do cabo; registrar em `test_history`).
+- **Incidente de build:** um script de regeneração de patch usou `git add -A` seguido de
+  `git reset --hard HEAD`, o que removeu o firmware não rastreado
+  `extra_firmware/mrvl/sd8797_uapsta.bin` (o build abortou no preflight). Restaurado do backup
+  `/tmp/kernel-pre-reset-20261118-122904/untracked.tar.gz` e copiado também para
+  `kernel/extra_firmware/mrvl/` (fallback que o próprio `00-build-kernel-7.0.sh` usa). **Nunca**
+  rodar `git add -A` na árvore do kernel fora do fluxo oficial.
+
 ### Rollback
 
 - Nenhum build novo foi para o HD por causa deste item. Quando houver tag nova:
