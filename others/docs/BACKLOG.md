@@ -597,7 +597,12 @@ registrar cada teste ao vivo no ato.
      `link up` (`0xb19`, speed code 2, full duplex, BMSR `796d`); `eth0` `192.168.6.131` por DHCP, rota
      padrão pela cabeada; `wlan0` ficou em `.128` neste boot; 0 erros/0 dropped; ping `-I eth0` no
      roteador 3/3 a 0,9 ms; tráfego real (Firefox) saindo com `src 192.168.6.131`; boot 24,4 s, 0
-     failed; `mtsx.ko` sha256 `21ff0748…b045` idêntico ao build. **Faltam os boots #2 e #3.**
+     failed; `mtsx.ko` sha256 `21ff0748…b045` idêntico ao build.
+   - ✅ **Boot #2 (2026-11-18, `test_history` 141): PASSOU.** Probe em 9,97 s (`0xb18`), resíduo limpo
+     em 13,06 s, `link up 0xb19`; `eth0` `192.168.6.131` por DHCP, rota padrão pela cabeada; 0 erros/0
+     dropped; ping `-I eth0` 3/3 a 1,1 ms; boot 6,05 s + 14,49 s = **20,5 s**, 0 failed. O `wlan0`
+     respondeu alguns segundos depois da `eth0` (o primeiro ping só achou `.131`) e ficou em `.128`.
+     **Falta o boot #3.**
 2. [ ] **Transferência longa (30 min) pela `eth0`** com `ping -f`/`iperf3` ou `dd | ssh`, provando por
    **contadores** (`ip -s link show eth0`) — não por ping, porque `eth0` e `wlan0` estão na mesma
    subnet e o Linux responde ARP por qualquer interface (`AGENTS.md`, topologia).
@@ -620,6 +625,14 @@ registrar cada teste ao vivo no ato.
 7. **Comportamento conhecido, sem correção (decisão do usuário em 2026-11-17):** ao subir a `eth0`,
    o `dhcpcd` do `wlan0` vê conflito de ARP e pode trocar o IP do WiFi (`.128` → `.127`) até o próximo
    lease. Antes de concluir "console desligado", pingar as duas pontas; a reserva do roteador é por MAC.
+8. [ ] **Semente do RTC está velha em todo boot frio (achado em 2026-11-18, boots #1 e #2):** o
+   `ps4-rtc-icc` lê **`2026-11-05T13:36:34Z`** em todo boot e seta o relógio do sistema para isso
+   (`dmesg`: `setting system clock to 2026-11-05T13:36:34 UTC`); o `journalctl --list-boots` mostra
+   todos os boots começando em 2026-11-05 10:36:33. O RTC **não avança** com o console desligado e o
+   valor não é reescrito pelo NTP (o próximo boot volta ao mesmo instante). Impacto prático: os
+   primeiros segundos do boot têm hora errada até o NTP sincronizar (`timedatectl`: synchronized: yes);
+   nada quebra. Investigar se o ICC/RTC do Baikal tem bateria/registrador que só o Orbis atualiza, e se
+   vale escrever o RTC no shutdown do Linux.
 
 ---
 
