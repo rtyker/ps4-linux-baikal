@@ -597,10 +597,13 @@ registrar cada teste ao vivo no ato.
    subnet e o Linux responde ARP por qualquer interface (`AGENTS.md`, topologia).
 3. [ ] **Conferir o Orbis com rede depois do Linux** (link down limpo / Orbis volta a linkar) — é o
    único caminho de stop do nosso lado que ainda não foi exercitado com o `mtsx`.
-4. [ ] **`01-build-image` para o rootfs de fábrica ter o `mtsx` por construção** — hoje o `BUILD_ROOT`
-   não tem `lib/modules`, então o `mtsx.ko` e os dois `.conf` foram instalados à mão no rootfs interno.
-   Rodar o build da distro (host Arch ou `distro/scripts/build-image-docker.sh <TAG>`) fecha essa
-   lacuna e faz o `arch_minimal_v2-7.0.tar` refletir a tag `20261117-mtsx` (o tar atual é de 2026-11-17
+4. [ ] **`01-build-image` para o rootfs de fábrica ter o `mtsx` por construção** — hoje o `mtsx.ko` e os
+   dois `.conf` foram instalados à mão no rootfs interno do console. **O `BUILD_ROOT` padrão
+   (`/mnt/hdauxiliar/temp/arch_build_7.0`) não existe**, mas há um rootfs válido em
+   `arch_build_7.0/rootfs` no repo (gitignored, de 2026-11-17 07:30, ainda com o `mts.ko` antigo) —
+   então `PS4_BUILD_ROOT="$PWD/arch_build_7.0" sudo ./distro/01-build-image-7.0.sh <TAG-NOVA> --incremental`
+   deve funcionar (usar **tag nova**, não a `20261117-mtsx`, para não reescrever os artefatos que estão
+   no console). Isso também faz o `arch_minimal_v2-7.0.tar` refletir a tag (o atual é de 2026-11-17
    07:30, anterior ao `mtsx`).
 5. [ ] **Tirar `mts` de `MODULES=(...)` em `distro/01-build-image-7.0.sh`** (~linha 716) — com o
    `mtsx` autoload, o `mts` legado não tem por que entrar no initramfs. Hoje o `module_blacklist=mts`
