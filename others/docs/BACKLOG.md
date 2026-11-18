@@ -165,8 +165,11 @@ concluir. Até lá, depois de escrever na ponte por ICC, preferir desligar e lig
 `0x1e00=67`, `0x1e02=f8`, `0x705f=10`. O DPMS no mesmo modo (teste 146) não recuperava. O `0x10f4`
 ficou em `a0` **com imagem**, então a hipótese do `0x10f4` está **refutada**.
 
-**Contorno para o usuário hoje:** depois de replugar o cabo, rodar
-`xrandr --output HDMI-A-0 --mode 1280x720; xrandr --output HDMI-A-0 --mode 1920x1080`.
+**⚠️ NÃO reproduziu (`test_history` 155):** num segundo replug, sem escritas diretas antes, a mesma
+sequência 720p→1080p deixou a tela preta e os registradores iguais. No 154, antes do modeset, tinham
+sido feitas escritas diretas (`0x1e00=0x67` sozinho, que ficou, e a fila do final do `enable`) e o
+`0x705f` lia `12`, não `90`. A recuperação dependeu desse estado anterior. **Não há contorno
+confirmado.**
 
 **Confirmado pelo usuário:** em 720p a tela continuou preta; a imagem só voltou no **segundo** modeset
 (1080p). **Em aberto:** (b) se o que importa é a troca de VIC ou só dois `enable` seguidos. Isso decide a correção
