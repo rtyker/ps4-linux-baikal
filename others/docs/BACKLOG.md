@@ -1,6 +1,6 @@
 # Backlog do Projeto — Fonte Única de Pendências
 
-**Última atualização:** 2026-11-18 (reconciliação após a sessão de 2026-11-17: **Ethernet `eth0` funcionando** pelo driver `mtsx` validado ao vivo e já no build/rootfs; `eth0` passou a pegar IP por DHCP. O antigo "bloqueador de firmware do PHY" está **refutado**. O **aceite de boot frio ×3 fechou em 2026-11-18**; pendências restantes na seção "Pendências abertas em 2026-11-18".)
+**Última atualização:** 2026-11-18 (reconciliação após a sessão de 2026-11-17: **Ethernet `eth0` funcionando** pelo driver `mtsx` validado ao vivo e já no build/rootfs; `eth0` passou a pegar IP por DHCP. O antigo "bloqueador de firmware do PHY" está **refutado**. O **aceite de boot frio ×3 fechou em 2026-11-18**; **soak de 30 min na `eth0` fechado em 2026-11-18**; pendências restantes na seção "Pendências abertas em 2026-11-18".)
 
 > ℹ️ **Como ler este arquivo:** itens `[x]` fechados guardam o histórico da solução; itens dentro de
 > `<details>` com o título "Histórico da investigação" são **registro do que foi refutado**, não
@@ -701,9 +701,11 @@ registrar cada teste ao vivo no ato.
      **0 erros / 0 dropped**; ping `-I eth0` 3/3 a 0,93 ms; boot 6,21 s + 14,82 s = **21,0 s**, 0 failed;
      `mtsx.ko` sha256 `21ff0748…b045` inalterado. Resumo dos três: `link=0xb18` no probe, resíduo limpo
      entre 13,1–16,9 s, `0xb19` e DHCP em todos.
-2. [ ] **Transferência longa (30 min) pela `eth0`** com `ping -f`/`iperf3` ou `dd | ssh`, provando por
-   **contadores** (`ip -s link show eth0`) — não por ping, porque `eth0` e `wlan0` estão na mesma
-   subnet e o Linux responde ARP por qualquer interface (`AGENTS.md`, topologia).
+2. [x] ✅ **Transferência longa (30 min) pela `eth0`** — **CONCLUÍDA 2026-11-18 (`test_history` 145)**.
+   Rodado `soak30.sh` (streams bidirecionais `dd | ssh` ~4 MB/s por sentido, amostras a cada 60 s).
+   Resultado: **PS4 eth0 RX 7.35 GB / TX 7.28 GB**, host enp60s0 RX 7.50 GB / TX 7.36 GB;
+   **ZERO erros / ZERO dropped** nas duas pontas; link `operstate=up carrier=1` durante os 30 min;
+   ping `-I eth0` 5/5 ao final (0.85 ms médio). O `eth0` carrega o tráfego e é estável em janela longa.
 3. [x] **Conferir o Orbis com rede depois do Linux** (link down limpo / Orbis volta a linkar) — é o
    único caminho de stop do nosso lado que ainda não foi exercitado com o `mtsx`.
    - ✅ **Confirmado pelo usuário em 2026-11-18 (`test_history` 143).** A verificação do meu lado é
