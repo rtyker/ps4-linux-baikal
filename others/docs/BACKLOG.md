@@ -168,8 +168,8 @@ ficou em `a0` **com imagem**, então a hipótese do `0x10f4` está **refutada**.
 **Contorno para o usuário hoje:** depois de replugar o cabo, rodar
 `xrandr --output HDMI-A-0 --mode 1280x720; xrandr --output HDMI-A-0 --mode 1920x1080`.
 
-**Em aberto:** (a) se a imagem já voltou em 720p (os registradores diziam que não) ou só no segundo
-modeset; (b) se o que importa é a troca de VIC ou só dois `enable` seguidos. Isso decide a correção
+**Confirmado pelo usuário:** em 720p a tela continuou preta; a imagem só voltou no **segundo** modeset
+(1080p). **Em aberto:** (b) se o que importa é a troca de VIC ou só dois `enable` seguidos. Isso decide a correção
 no driver (re-arme com troca de VIC, ou `enable` duplo). Depois, detectar o replug (sem HPD hoje).
 
 ### Mapa do código
