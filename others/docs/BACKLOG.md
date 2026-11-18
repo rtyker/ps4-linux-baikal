@@ -82,9 +82,10 @@ O trabalho **ativo no momento** (investigação detalhada, passo a passo) fica n
    (o primeiro faz o `TSRST` completo, os outros 6 saem pelo flag `idle`), depois `mode_set` (VIC 16)
    → `pre_enable` → treino do link → `enable` com `Belize attempt 1/3` **bem-sucedido** → retreino.
    Ou seja: **todo o caminho de software roda e termina sem erro** — e a tela continua preta.
-4. `echo detect > /sys/class/drm/card0-HDMI-A-1/status` (reprobe forçado) → o **EDID volta** (256 B,
-   `md5 3e28ef42…f891`, idêntico ao `distro/ps4_tv_edid.bin`). O DDC/AUX através da ponte está vivo,
-   o monitor está conectado e o EDID é o mesmo de sempre.
+4. `echo detect > /sys/class/drm/card0-HDMI-A-1/status` (reprobe forçado) → o EDID volta (256 B,
+   `md5 3e28ef42…f891`, idêntico ao `distro/ps4_tv_edid.bin`). **Correção (2026-11-18):** esse EDID é o
+   **da própria ponte** (fabricante `MEI`, nome `MN864729`), não o do monitor. Ele prova só que o AUX
+   até a ponte está vivo; **não** diz nada sobre o monitor.
 5. DPCD no sink, em 24 tentativas (boot e pós-evento): `sink_bw=0a sink_lanes=84 sink_tp=01
    sink_pwr=01 sink_cnt=01 sink_st=00`, lane status todo `00`, sem pedido de ajuste. **É exatamente o
    mesmo valor do boot em 2,08 s, quando a imagem subia.** Conclusão: a falha de `clock recovery`
@@ -136,6 +137,31 @@ sincronizou), então o travamento foi **no reinício**, não no boot. Os arquivo
 foram conferidos por FTP e estão íntegros. **Não se sabe** se as escritas na ponte contribuíram: o
 único `reboot` testado antes (93) passou uma vez. Refazer o `reboot` sozinho, num boot limpo, antes de
 concluir. Até lá, depois de escrever na ponte por ICC, preferir desligar e ligar a reiniciar.
+
+### Resultado da investigação de 2026-11-18 (`test_history` 150-153)
+
+| Retrato | Imagem | `0x10f4` | `0x1e00` | `0x1e02` | `0x705f` | `0x7a8b` (HDCP) |
+|---|---|---|---|---|---|---|
+| A — boot frio | sim | `a1` | `67` | `f8` | `10` | `03` |
+| B — depois de `xrandr --off/--auto` | sim | `a1` | `67` | `f8` | `10` | `00` |
+| ruim — cabo + DPMS | não | `a0` | `66` | `88` | `90` | `05` |
+| C — só o cabo | não | `a0` | `66` | `88` | `90` | `05` |
+
+- **H1 refutada** (B): o DPMS com `TSRST` recupera a imagem. **HDCP não é necessário** (B tem imagem
+  com HDCP desligado).
+- **O cabo sozinho** (C) faz a ponte apagar a saída (`1e02`/`1e00`), mutar o vídeo e mexer no HDCP,
+  sem nenhum evento no kernel.
+- **Re-arme falha:** regravar o final do `enable` na ordem do driver (`1e02 |= 70`, `1034 |= 02`,
+  `1e00 |= 01`, `705f = 10`, numa fila só) é aceito, mas **a ponte reverte tudo** em menos de 1 s.
+- **Discriminador:** o bit 0 do `0x10f4` é `1` nos dois estados com imagem e `0` nos dois sem imagem.
+  Melhor candidato a "sink HDMI detectado" (RxSense/HPD interno) que a ponte exige para ligar a saída;
+  ele não volta depois do replug.
+- Mapa da ponte: só `0x1000-0x1fff`, `0x6000-0x6fff`, `0x7000-0x7fff` respondem, e as páginas `0x100`
+  ímpares não (MCU `06 10`). Mapa completo do estado ruim em
+  `others/rea/scans/bridge_mn864729_20261118_full_ruim_raw.txt`.
+
+**Próximo:** mapa completo do estado bom depois de desligar e ligar (mesmas 3 regiões) para o diff
+completo, e descobrir o que liga o bit 0 do `0x10f4` (PHY do TX HDMI, sequência do Orbis no hotplug).
 
 ### Mapa do código
 
