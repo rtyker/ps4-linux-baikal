@@ -72,7 +72,7 @@ O trabalho **ativo no momento** (investigação detalhada, passo a passo) fica n
 > O incidente de 2026-11-15 (tela preta com sessão viva, ~1h30 de uptime) é provavelmente o mesmo
 > defeito por outro gatilho (queda de sinal em idle).
 
-### Sintoma (medido ao vivo em 2026-11-18, tag `20261117-mtsx`, `test_history` 145 e 146)
+### Sintoma (medido ao vivo em 2026-11-18, tag `20261117-mtsx`, `test_history` 146-148)
 
 1. Usuário desplugou o cabo HDMI do monitor e replugou: **a imagem não volta** (nem pisca).
 2. O Linux **não vê** o evento: `card0-HDMI-A-1` continua `connected` / `enabled` / `dpms On` o tempo
@@ -91,21 +91,42 @@ O trabalho **ativo no momento** (investigação detalhada, passo a passo) fica n
    (conhecida, `test_history` 110/112/113) **não discrimina** o estado bom do estado ruim — não é a
    explicação da tela preta.
 
-### ✅ **H1 CONFIRMADA (2026-11-18, `test_history` 146)** — **E1 executado com sucesso**
+### ⚠️ Correção (2026-11-18): a H1 **NÃO** foi confirmada — `test_history` 146 refeito como inconclusivo
 
-**Experimento:** com a imagem boa em boot novo, rodou **só** `xrandr --off` + `--auto`, **sem tocar
-no cabo**. Resultado: **a tela morreu** (continua preta). O dmesg mostrou o caminho completo rodando:
-`pre_enable` (init lado DP) → `enable` (Belize attempt 1/3 **SUCESSO**, `post-enable DPCD ret=0`,
-retreino) — mas o monitor **não acendeu**.
+O teste 146 (`xrandr --off/--auto` sem tocar no cabo) rodou com a tela **já preta**: o estado antes
+era `disabled/Off`, porque o usuário tinha puxado e recolocado o cabo com o monitor ligado. Ele só
+mostra que **o ciclo de DPMS não recupera o estado pós-cabo**. Não testa a H1 (DPMS apagar uma tela
+boa). E o `test_history` 114 (2026-11-17) a **contradiz**: com tela preta de boot, um ciclo de DPMS
+(`fb0 blank 1/0`, o mesmo `post_disable` com `TSRST`) **trouxe a imagem de volta**. Logo, o
+`TSRST` + `enable` consegue restaurar a imagem em pelo menos um caso, e o patch "keep-state" (tirar o
+`TSRST`) **não tem base**. Pode até quebrar o caso do teste 114. Não implementar sem dado novo.
 
-**Conclusão:** `enable_mn864729_video` **não é um init de frio**. No boot a ponte chega **já
-inicializada pelo Orbis/payload** e o driver só sobrepõe a programação de vídeo; depois do `TSRST`
-do `post_disable`, reescrever os mesmos registradores **não devolve o estado inicial**. A predição
-da H1 se confirmou: um ciclo de DPMS numa tela **boa** também a apaga.
+### Retrato da ponte por ICC, sem build (2026-11-18, `test_history` 147 e 148)
 
-**Correção imediata:** implementar o **passo 4** do plano DP (`ps4-bridge-keep-state.patch`):
-no `post_disable`, **não** fazer o `TSRST` completo — só mutar (`VMUTECNT | MUTE`, `INFENA=0`) e
-manter o estado, como o `disable` já faz.
+Ferramenta nova: `others/tools/bridge_icc/` (usa o `icc_cmd` e o mesmo comando ICC `0x10/0` do
+`cq_exec`, só `CMD_READ`). Retrato bruto do estado **ruim** (pós-cabo):
+`others/rea/scans/bridge_mn864729_20261118_pos_cabo_raw.txt`.
+
+- **`0x60f8 = ff`, `0x60f9 = 1b`**: os bits de lane/lock do lado DP que o `enable` espera
+  (`wait_set 0x60f8 ff`, `0x60f9 01`/`1a`) estão todos ligados. **Para a ponte, a entrada DP está
+  travada**, apesar do `clock recovery failed` do host. Reforça que a falha de CR não é a causa.
+- **`0x705f` (`VMUTECNT`) = `0x90`**: bit 7 (`CCVMUTE`) ligado, embora o `enable` termine gravando
+  `0x10`. A ponte mutou o vídeo por conta própria depois do `enable`.
+- **`0x7008`**: bit 3 sempre ligado (provável HPD do HDMI); bits 1-2 oscilam (`18`/`1a`/`1c`).
+- **`0x7096 = f7`**: status pendente (o driver o limpa com `0xff`).
+- Quase todo o bloco `0x76xx` (init do lado DP do `pre_enable`) lê `00`: ou são registradores só de
+  escrita, ou foram resetados. Sem retrato bom não dá para saber.
+
+**Teste de desmute (148):** com autorização do usuário, `0x705f ← 0x10` (o valor do próprio driver).
+A escrita foi aceita e o registrador ficou em `0x10`, **mas a tela continuou preta**. O `CCVMUTE`
+sozinho não é a causa. (Antes disso, por erro meu, foi enviada uma fila truncada — payload em dois
+argumentos; a MCU a rejeitou com `res1=06 res2=10` e nada mudou. A regra está no README da
+ferramenta: payload num argumento só, 24 hex.)
+
+**Próximo passo (sem build): retrato do estado bom.** Boot novo com imagem → dump **A** → E1 de
+verdade (`xrandr --off/--auto` sem tocar no cabo; usuário diz se a imagem volta) → dump **B** → puxar
+e recolocar o cabo → dump **C**. O `diff A C` é a lista de registradores que o evento do cabo muda;
+regravar os valores de **A** um a um (só valores de origem conhecida) acha o que falta no `enable`.
 
 ### Mapa do código
 
@@ -121,13 +142,12 @@ manter o estado, como o `disable` já faz.
 
 ### Hipóteses (ordem de probabilidade)
 
-- ✅ **H1 CONFIRMADA (2026-11-18, `test_history` 146): `enable_mn864729_video` não é um init de frio.** No boot a ponte chega
-  **já inicializada pelo Orbis/payload** e o driver só sobrepõe a programação de vídeo; depois do
-  `TSRST` do `post_disable`, reescrever os mesmos registradores **não devolve o estado inicial**.
-  **Predição falsificável confirmada:** um ciclo de DPMS numa tela **boa** também a apaga.
-- **H2 (agora secundária):** a ponte **muta/gateia a saída HDMI** ao perder o sink e precisa de uma
-  sequência de re-arme do estágio de saída que o driver não escreve (o `cq_exec` "sucede" mesmo com
-  a saída off). Testar se o keep-state resolve também o replug do cabo.
+- **H1 (enfraquecida):** `enable_mn864729_video` não é um init de frio e não sobrevive ao `TSRST`.
+  Contra: o `test_history` 114 (DPMS recuperou tela preta de boot). Ainda não testada com tela boa
+  (o 146 não vale como teste).
+- **H2 (principal agora):** o evento do cabo (perda/volta de HPD/RxSense do lado HDMI) deixa o estágio
+  de saída HDMI da ponte num estado que o `enable` não re-arma. A entrada DP está travada
+  (`0x60f8/60f9`) e o `cq_exec` "sucede", mas a saída não volta. O desmute (`CCVMUTE`) não bastou.
 - **H3:** o lado da **APU** (DIG/UNIPHY do `dce_v8_0`) precisa de power-cycle para religar por baixo
   de uma ponte que mudou de estado; um re-init completo do `amdgpu` resolveria.
 - **H4 (descartada):** cabo/monitor. O DDC lê o EDID e um reboot com o mesmo cabo/monitor traz a
@@ -146,15 +166,14 @@ manter o estado, como o `disable` já faz.
 4. **E4 — lado do Orbis:** procurar no payload/RE o init da ponte antes do `kexec` e escrever o que
    falta em `pre_enable`.
 
-### Direções de correção (atualizadas após H1 confirmada)
+### Direções de correção
 
-- **🔴 PRIORIDADE MÁXIMA — Barata e já prevista:** implementar o **passo 4** do plano DP
-  (`ps4-bridge-keep-state.patch`):
-  no `post_disable`, **não** fazer o `TSRST` completo — só mutar (`VMUTECNT | MUTE`, `INFENA=0`) e
-  manter o estado (`mn_bridge->mode` vivo via flag `idle`, como o `keep-mode` já faz). **H1 confirmada:
-  isso sozinho deve salvar os ciclos de DPMS e provavelmente o replug do cabo.**
-- **Se não bastar (testar depois do keep-state):** completar o init de frio com o que o E2/E4 revelarem
-  (debugfs dump + userspace reinit, ou RE do payload Orbis).
+- **Primeiro, medir:** retratos A/B/C acima (sem build). Só depois escolher patch.
+- **Se o diff A/C apontar registradores do lado HDMI:** acrescentá-los ao `enable` (ou a um caminho de
+  re-arme), em patch próprio, com `git apply --check` no `00-build-kernel-7.0.sh`.
+- **HPD do HDMI no kernel:** o cabo é invisível ao Linux. Se o bit 3 do `0x7008` for mesmo HPD,
+  um poll barato (ou IRQ, se existir) em `ps4_bridge_detect` permitiria re-arm automático no replug.
+- **Keep-state (tirar o `TSRST`):** suspenso — contraditado pelo `test_history` 114.
 - **Ganho colateral barato:** alinhar o nome do EDID (`edid/ps4_tv_edid.bin` vs `edid/my_edid.bin`)
   ou remover o caminho morto — mas isso **não** é a causa e não deve ser vendido como correção.
 
