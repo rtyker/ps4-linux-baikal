@@ -253,6 +253,18 @@ no driver (re-arme com troca de VIC, ou `enable` duplo). Depois, detectar o repl
   `/tmp/kernel-pre-reset-20261118-122904/untracked.tar.gz` e copiado também para
   `kernel/extra_firmware/mrvl/` (fallback que o próprio `00-build-kernel-7.0.sh` usa). **Nunca**
   rodar `git add -A` na árvore do kernel fora do fluxo oficial.
+- **🔴 INCIDENTE DE DEPLOY (2026-11-18, corrigido em preparação):** o primeiro deploy da tag
+  `20261118-hpd-poll` foi feito **sem `--internal-root`**. O bootargs (`20261117-mtsx`) tem
+  `ps4root=internal`, mas o initramfs enviado ficou sem o fragmento com a chave EAP +
+  `rootfs.table` + `meta`; o hook `ps4-internal-root` caiu no fallback `root=LABEL=psxitarch` e,
+  sem USB, o console entrou no **shell de emergência** ("não acha /dev/disk/by-label"). Lição:
+  **todo deploy FTP com `ps4root=internal` no bootargs EXIGE**
+  `deploy-boot-ftp-7.0.sh <TAG> --internal-root ~/ps4-internal-root/20261117 --vram 1024`.
+  A chave não está em `~/ps4-keys/`; ela vem de `.env.keys` (`EAP_HDD_KEY`, hex entre aspas) e
+  foi convertida para 32 bytes crus em `/dev/shm/opencode-eap-key.bin` (modo 600) via
+  `LOCAL_EAP_KEY_FILE`. O `--dry-run` com `--internal-root` validou a montagem do fragmento
+  (original 15 338 344 B + 1176 B de padding + 141 424 B de fragmento) antes de parar no FTP.
+  **Nunca reutilizar bootargs com `ps4root=` sem gerar o initramfs com a chave.**
 
 ### Rollback
 
