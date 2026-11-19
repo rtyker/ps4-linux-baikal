@@ -40,16 +40,28 @@ def read_reg(icc_cmd, reg):
         )
     except subprocess.CalledProcessError:
         return None
+    # parse multi-line reply: collect all hex bytes after "reply (NN bytes):"
+    in_reply = False
+    vals = []
     for line in out.splitlines():
         if line.startswith("reply"):
+            in_reply = True
+            continue
+        if in_reply:
             parts = line.split()
-            if len(parts) < 10 or parts[1] != "00" or parts[2] != "00":
-                return None
-            vals = parts[8:24]
-            if len(vals) < 16:
-                return None
-            return int(vals[0], 16)  # first byte of the 16
-    return None
+            if not parts:
+                break
+            vals.extend(parts)
+    if not vals or len(vals) < 16:
+        return None
+    # reply format: res1 res2 unk1 unk2 count echo_count echo_addr_hi echo_addr_lo data...
+    # data starts at index 8 (after the 8 header bytes)
+    if len(vals) < 8:
+        return None
+    data = vals[8:24]
+    if len(data) < 16:
+        return None
+    return int(data[0], 16)  # first byte of the 16 data bytes
 
 def write_reg(icc_cmd, reg, val):
     """Write one byte at reg via ICC 0x10/0 CMD_WRITE (one byte)."""
