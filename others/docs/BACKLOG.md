@@ -316,6 +316,17 @@ no driver (re-arme com troca de VIC, ou `enable` duplo). Depois, detectar o repl
   `handle_event`, e disparar `hotplug_event` + force de modeset. Persistência da ativação até o reboot
   não verificada. `0x7008` bit 3 é o "monitor presente" (`TMONREG`) e fica como checagem de apoio.
 
+### ✅ MARCO — imagem volta sozinha após replug do HDMI, só com o kernel (2026-11-18)
+
+- Tag `20261118-hdmi-events` (patch `ps4-bridge-hdmi-events.patch`, ainda **fora do git**). Um
+  desplugue/plugue sem nenhuma ação do usuário trouxe a imagem de volta. dmesg (`test_history`):
+  `hdmi unplug` → `hdmi plug` (+500 ms) → `drm_helper_resume_force_mode` → `link_train`.
+- Como: handler de evento ICC (`0x10:8001`) registrado no `ps4-bpcie-icc.c`, eventos ativados no probe
+  da ponte (cmd `5/4`), `detect` reflete o cabo e o PLUG dispara `hotplug_event` + modeset forçado.
+- **Pendente antes de promover:** build limpo SEM a instrumentação `PS4HPD`; vários ciclos de
+  desplugue/plugue e cold boots (soak); UART parou de gravar em 0,9 s neste boot (investigar cabo/porta);
+  decidir o que entra no git (patch + script de build).
+
 ### Rollback
 
 - Nenhum build novo foi para o HD por causa deste item. Quando houver tag nova:
