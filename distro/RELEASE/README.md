@@ -61,3 +61,8 @@ sudo ./distro/deploy-boot-7.0.sh <NOVA_TAG>         # frente 2 — testou no PS4
 ```
 
 Nunca promover tag não testada ao vivo no PS4.
+
+## Notas de versão
+
+- `20261119-hdmi-events-clean` — a imagem do HDMI volta sozinha ao religar o cabo:
+  [`others/docs/NOTA_DE_VERSAO_HDMI_2026-11-19.md`](../../others/docs/NOTA_DE_VERSAO_HDMI_2026-11-19.md)
