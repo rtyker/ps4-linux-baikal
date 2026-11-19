@@ -339,7 +339,7 @@ plug/unplug OK no mesmo boot (`test_history` 168 e 169). O console está com a t
   commitado já aplica só o patch dos eventos). Montar bootargs/initramfs/vram de `20261117-mtsx` e fazer o
   deploy com `--internal-root` (a chave EAP vai em `/dev/shm/opencode-eap-key.bin`, gerada de `.env.keys`;
   some quando o PC reinicia).
-- [~] **2. Repetir os ciclos de plug/unplug nesse build** (3 de 5 feitos, todos OK, `test_history` 170) (pelo menos 5), sem `xrandr`.
+- [x] **2. Repetir os ciclos de plug/unplug nesse build** — FEITO: 5 de 5 OK (`test_history` 170 e 171) (pelo menos 5), sem `xrandr`.
 - [ ] **3. Cold boots repetidos** (≥3): no boot a ponte já manda `unplug` (≈2,4 s) e `plug` (≈3,2 s); a
   imagem tem de terminar sempre boa.
 - [ ] **4. Casos de borda:** desplugar por muito tempo; desplugar com o Xorg em outra resolução; plugar o
