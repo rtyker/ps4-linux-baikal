@@ -335,16 +335,16 @@ plug/unplug OK no mesmo boot (`test_history` 168 e 169). O console está com a t
 `hpd-poll` ficam só locais, fora do git por decisão do usuário). Rollback conhecido bom:
 `distro/deploy-boot-ftp-7.0.sh 20261117-mtsx --internal-root ~/ps4-internal-root/20261117 --vram 1024`.
 
-- [ ] **1. Build limpo sem `PS4HPD`:** `sudo ./kernel/00-build-kernel-7.0.sh 20261118-hdmi-events2` (o script
+- [x] **1. Build limpo sem `PS4HPD`:** FEITO em 2026-11-19, tag `20261119-hdmi-events-clean` (deploy FTP ok). ** `sudo ./kernel/00-build-kernel-7.0.sh 20261118-hdmi-events2` (o script
   commitado já aplica só o patch dos eventos). Montar bootargs/initramfs/vram de `20261117-mtsx` e fazer o
   deploy com `--internal-root` (a chave EAP vai em `/dev/shm/opencode-eap-key.bin`, gerada de `.env.keys`;
   some quando o PC reinicia).
-- [ ] **2. Repetir os ciclos de plug/unplug nesse build** (pelo menos 5), sem `xrandr`.
+- [~] **2. Repetir os ciclos de plug/unplug nesse build** (3 de 5 feitos, todos OK, `test_history` 170) (pelo menos 5), sem `xrandr`.
 - [ ] **3. Cold boots repetidos** (≥3): no boot a ponte já manda `unplug` (≈2,4 s) e `plug` (≈3,2 s); a
   imagem tem de terminar sempre boa.
 - [ ] **4. Casos de borda:** desplugar por muito tempo; desplugar com o Xorg em outra resolução; plugar o
   cabo com o console ainda no Orbis antes do kexec; monitor desligado/ligado pelo botão.
-- [ ] **5. UART:** parou de gravar em 0,9 s de boot em `hdmi-events` (cabo/porta/adaptador); sem ela não
+- [ ] **5. UART:** para sempre em ≈0,64 s de boot (também no build limpo; não é o cabo): provável troca do `earlycon` para o console 8250 real; sem ela não
   há log se o Linux não subir.
 - [ ] **6. Promover:** commitar o resultado final, `distro/scripts/promote-release.sh`, atualizar este
   documento e o `AGENTS.md`. Decidir se o `ps4-hdmi-hotplug.py` (userspace, antigo) pode ser aposentado.
