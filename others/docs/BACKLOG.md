@@ -304,6 +304,18 @@ no driver (re-arme com troca de VIC, ou `enable` duplo). Depois, detectar o repl
   conserto no kernel precisa disparar o modeset do CRTC. O `hpd-fix3` não subiu o Linux; causa não
   isolada, mas o kernel instrumentado sobe, então a falha estava no patch de poll.
 
+### Mecanismo de plug/unplug ENCONTRADO (2026-11-18, `test_history` 167)
+
+- A ponte envia eventos ICC (major `0x10`, minor `0x8001`) a cada plug/unplug, **mas só depois do comando
+  de ativação** `5/4` (`icc_cmd raw 0x10 0 040900010505040101`). Dados: `[0]=0x10`, `[1]` código
+  (1 = UNPLUG, 2 = PLUG com EDID), `[2..3]` tamanho do EDID. Referência: `HackSucks/caramel` commit
+  `75c77e3`. O `ps4-bpcie-icc.c` já recebe o evento e só loga `not yet supported`.
+- Recuperação no kernel (referência `striker91n/ps4-linux-7.3` `5029a2f`): após o evento, forçar um
+  modeset completo com `drm_helper_resume_force_mode()`; confere com o que medimos (o `xrandr` recupera).
+- Próximo passo (não implementado): ativar os eventos no probe da ponte, tratar `0x10:8001` no
+  `handle_event`, e disparar `hotplug_event` + force de modeset. Persistência da ativação até o reboot
+  não verificada. `0x7008` bit 3 é o "monitor presente" (`TMONREG`) e fica como checagem de apoio.
+
 ### Rollback
 
 - Nenhum build novo foi para o HD por causa deste item. Quando houver tag nova:
