@@ -327,6 +327,31 @@ no driver (re-arme com troca de VIC, ou `enable` duplo). Depois, detectar o repl
   desplugue/plugue e cold boots (soak); UART parou de gravar em 0,9 s neste boot (investigar cabo/porta);
   decidir o que entra no git (patch + script de build).
 
+### 📌 TAREFA ABERTA — fechar a correção do HDMI (parado em 2026-11-18, retomar daqui)
+
+Estado: **WIP commitado** (`ps4-bridge-hdmi-events.patch` + linha no `00-build-kernel-7.0.sh`). 4/4 ciclos de
+plug/unplug OK no mesmo boot (`test_history` 168 e 169). O console está com a tag
+`20261118-hdmi-events` **que ainda tem a instrumentação `PS4HPD` por cima** (o patch de instrumentação e o
+`hpd-poll` ficam só locais, fora do git por decisão do usuário). Rollback conhecido bom:
+`distro/deploy-boot-ftp-7.0.sh 20261117-mtsx --internal-root ~/ps4-internal-root/20261117 --vram 1024`.
+
+- [ ] **1. Build limpo sem `PS4HPD`:** `sudo ./kernel/00-build-kernel-7.0.sh 20261118-hdmi-events2` (o script
+  commitado já aplica só o patch dos eventos). Montar bootargs/initramfs/vram de `20261117-mtsx` e fazer o
+  deploy com `--internal-root` (a chave EAP vai em `/dev/shm/opencode-eap-key.bin`, gerada de `.env.keys`;
+  some quando o PC reinicia).
+- [ ] **2. Repetir os ciclos de plug/unplug nesse build** (pelo menos 5), sem `xrandr`.
+- [ ] **3. Cold boots repetidos** (≥3): no boot a ponte já manda `unplug` (≈2,4 s) e `plug` (≈3,2 s); a
+  imagem tem de terminar sempre boa.
+- [ ] **4. Casos de borda:** desplugar por muito tempo; desplugar com o Xorg em outra resolução; plugar o
+  cabo com o console ainda no Orbis antes do kexec; monitor desligado/ligado pelo botão.
+- [ ] **5. UART:** parou de gravar em 0,9 s de boot em `hdmi-events` (cabo/porta/adaptador); sem ela não
+  há log se o Linux não subir.
+- [ ] **6. Promover:** commitar o resultado final, `distro/scripts/promote-release.sh`, atualizar este
+  documento e o `AGENTS.md`. Decidir se o `ps4-hdmi-hotplug.py` (userspace, antigo) pode ser aposentado.
+- Riscos conhecidos: `detect` devolve `disconnected` depois de um UNPLUG (se o ambiente gráfico reagir mal
+  com monitor único, avaliar); só um slot de handler ICC (`major` 0x10); persistência da ativação `5/4`
+  além do reboot não verificada (o patch reativa a cada boot).
+
 ### Rollback
 
 - Nenhum build novo foi para o HD por causa deste item. Quando houver tag nova:

@@ -152,7 +152,8 @@ preflight() {
            baikal-spm-blk.patch \
            clocksource-baikal-hpet.patch baikal-wdt.patch \
            ps4-bridge-dp-init.patch ps4-dp-link-rate-270000.patch \
-           ps4-bridge-keep-mode.patch ps4-dp-diag.patch ps4-icc-s5-poweroff-prepare.patch; do
+           ps4-bridge-keep-mode.patch ps4-dp-diag.patch ps4-icc-s5-poweroff-prepare.patch \
+           ps4-bridge-hdmi-events.patch; do
     [ -f "$SCRIPT_DIR/patches/$p" ] || die "patch ausente: $SCRIPT_DIR/patches/$p"
   done
 
@@ -642,6 +643,20 @@ if ! git apply --check "$PATCH_DP_DIAG" 2>/tmp/dp_diag_patch_check.log; then
 fi
 git apply "$PATCH_DP_DIAG"
 echo "✓ Patch ps4-dp-diag aplicado com sucesso (git apply, validado com --check)"
+
+# Eventos ICC de plug/unplug do HDMI da ponte MN864729 (gancho no ps4-bpcie-icc.c,
+# handler + ativação 5/4 + recuperação por modeset no ps4_bridge.c).
+PATCH_HDMI_EV="$SCRIPT_DIR/patches/ps4-bridge-hdmi-events.patch"
+[ -f "$PATCH_HDMI_EV" ] || { echo "❌ ERRO FATAL: $PATCH_HDMI_EV não encontrado"; exit 1; }
+if ! git apply --check "$PATCH_HDMI_EV" 2>/tmp/hdmi_ev_patch_check.log; then
+  echo "❌ ERRO FATAL: patch ps4-bridge-hdmi-events não aplica contra o kernel atual:"
+  cat /tmp/hdmi_ev_patch_check.log
+  echo "  Regenere o patch a partir de uma árvore limpa (ver AGENTS.md)."
+  exit 1
+fi
+git apply "$PATCH_HDMI_EV"
+echo "✓ Patch ps4-bridge-hdmi-events aplicado com sucesso (git apply, validado com --check)"
+
 
 # build.sh (upstream rmuxnet/linux) NÃO é mais usado — em 2026-07-22 seu perfil
 # "General/ThinLTO/Baikal" (--option 3 use=General lto=ThinLTO southbridge=Baikal)

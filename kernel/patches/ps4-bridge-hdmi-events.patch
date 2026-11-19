@@ -1,0 +1,314 @@
+diff --git a/arch/x86/include/asm/ps4.h b/arch/x86/include/asm/ps4.h
+index 6d0f5177c..8721609f5 100644
+--- a/arch/x86/include/asm/ps4.h
++++ b/arch/x86/include/asm/ps4.h
+@@ -43,6 +43,17 @@ extern void bpcie_free_irqs(unsigned int virq, unsigned int nr_irqs);
+ extern int bpcie_status(void);
+ extern int bpcie_icc_cmd(u8 major, u16 minor, const void *data,
+ 			 u16 length, void *reply, u16 reply_length);
++/*
++ * ICC events (messages the southbridge firmware sends on its own). One
++ * handler per major. fn runs in hard-IRQ context: it must not sleep. data
++ * holds the first bytes of the payload (at most BPCIE_ICC_EVENT_DATA_MAX).
++ */
++#define BPCIE_ICC_EVENT_DATA_MAX 8
++typedef void (*bpcie_icc_event_fn)(void *ctx, u16 minor, const u8 *data,
++				   u16 length);
++extern int bpcie_icc_register_event_handler(u8 major, bpcie_icc_event_fn fn,
++					    void *ctx);
++extern void bpcie_icc_unregister_event_handler(u8 major);
+ #else
+ static inline int bpcie_assign_irqs(struct pci_dev *dev, int nvec)
+ {
+@@ -60,6 +71,18 @@ static inline int bpcie_icc_cmd(u8 major, u16 minor, const void *data,
+ {
+ 	return -ENODEV;
+ }
++#define BPCIE_ICC_EVENT_DATA_MAX 8
++typedef void (*bpcie_icc_event_fn)(void *ctx, u16 minor, const u8 *data,
++				   u16 length);
++static inline int bpcie_icc_register_event_handler(u8 major,
++						   bpcie_icc_event_fn fn,
++						   void *ctx)
++{
++	return -ENODEV;
++}
++static inline void bpcie_icc_unregister_event_handler(u8 major)
++{
++}
+ #endif
+ 
+ 
+@@ -97,6 +120,18 @@ static inline int bpcie_icc_cmd(u8 major, u16 minor, const void *data,
+ {
+ 	return -ENODEV;
+ }
++#define BPCIE_ICC_EVENT_DATA_MAX 8
++typedef void (*bpcie_icc_event_fn)(void *ctx, u16 minor, const u8 *data,
++				   u16 length);
++static inline int bpcie_icc_register_event_handler(u8 major,
++						   bpcie_icc_event_fn fn,
++						   void *ctx)
++{
++	return -ENODEV;
++}
++static inline void bpcie_icc_unregister_event_handler(u8 major)
++{
++}
+ 
+ #endif
+ #endif
+diff --git a/drivers/gpu/drm/amd/amdgpu/ps4_bridge.c b/drivers/gpu/drm/amd/amdgpu/ps4_bridge.c
+index 88815def0..f91dcc1fd 100644
+--- a/drivers/gpu/drm/amd/amdgpu/ps4_bridge.c
++++ b/drivers/gpu/drm/amd/amdgpu/ps4_bridge.c
+@@ -45,6 +45,7 @@
+ #include <linux/i2c.h>
+ #include <linux/i2c-algo-bit.h>
+ #include <linux/firmware.h>
++#include <linux/workqueue.h>
+ 
+ 
+ #include "amdgpu.h"
+@@ -130,6 +131,14 @@
+ #define PCI_DEVICE_ID_CUH_2XXX 0x9923
+ #define PCI_DEVICE_ID_CUH_7XXX 0x9924
+ 
++/* HDMI plug/unplug events the bridge firmware sends over ICC (Baikal only) */
++#define PS4_BRIDGE_ICC_SERVICE 0x10
++#define PS4_BRIDGE_EVENT_HEADER_SIZE 4
++#define PS4_BRIDGE_EVENT_UNPLUG 1
++#define PS4_BRIDGE_EVENT_PLUG 2
++/* a plug event is acted on only after the cable stopped bouncing */
++#define PS4_BRIDGE_PLUG_SETTLE_MS 500
++
+ #define PS4_BRIDGE_BELIZE_ENABLE_ATTEMPTS 3
+ #define PS4_BRIDGE_BELIZE_RETRY_DELAY_MS 120
+ 
+@@ -173,6 +182,11 @@ struct ps4_bridge {
+ 	bool enabling;
+ 	/* ponte ja resetada pelo post_disable; limpo no proximo enable */
+ 	bool idle;
++
++	/* HDMI plug/unplug events (ICC service 0x10) */
++	bool hdmi_events;
++	int hdmi_status;	/* enum drm_connector_status; unknown until an event */
++	struct delayed_work hdmi_work;
+ };
+ 
+ /* this should really be taken care of by the connector, but that is currently
+@@ -1109,6 +1123,10 @@ enum drm_connector_status ps4_bridge_detect(struct drm_connector *connector,
+ 	if (!mn_bridge)
+ 		return connector_status_disconnected;
+ 
++	/* the bridge firmware told us the HDMI cable is out */
++	if (READ_ONCE(mn_bridge->hdmi_status) == connector_status_disconnected)
++		return connector_status_disconnected;
++
+ 	/*
+ 	 * Userspace can force a fresh probe through the standard DRM connector
+ 	 * sysfs status attribute. Keep background detect calls cheap and only
+@@ -1171,6 +1189,97 @@ static struct drm_bridge_funcs ps4_bridge_funcs = {
+ 	.mode_set = ps4_bridge_mode_set,
+ };
+ 
++/* Process context: tell userspace and, if the cable is back, re-program the pipe. */
++static void ps4_bridge_hdmi_work(struct work_struct *work)
++{
++	struct ps4_bridge *mn_bridge =
++		container_of(work, struct ps4_bridge, hdmi_work.work);
++	struct drm_connector *connector = mn_bridge->connector;
++	int status = READ_ONCE(mn_bridge->hdmi_status);
++
++	pr_info("ps4_bridge: hdmi %s\n",
++		status == connector_status_connected ? "plug" : "unplug");
++
++	drm_kms_helper_connector_hotplug_event(connector);
++
++	/*
++	 * After a replug the EDID and the mode are unchanged, so the next
++	 * setcrtc from userspace is taken for a plain page flip and never
++	 * re-runs the bridge enable sequence: black screen. A full modeset of
++	 * the enabled CRTCs does (same fix as striker91n/ps4-linux-7.3).
++	 */
++	if (status == connector_status_connected)
++		drm_helper_resume_force_mode(connector->dev);
++}
++
++/* Hard-IRQ context (called from the ICC interrupt): no sleeping here. */
++static void ps4_bridge_hdmi_event(void *ctx, u16 minor, const u8 *data,
++				  u16 length)
++{
++	struct ps4_bridge *mn_bridge = ctx;
++
++	if (length < PS4_BRIDGE_EVENT_HEADER_SIZE ||
++	    data[0] != PS4_BRIDGE_ICC_SERVICE)
++		return;
++
++	switch (data[1]) {
++	case PS4_BRIDGE_EVENT_UNPLUG:
++		WRITE_ONCE(mn_bridge->hdmi_status, connector_status_disconnected);
++		mod_delayed_work(system_wq, &mn_bridge->hdmi_work, 0);
++		break;
++	case PS4_BRIDGE_EVENT_PLUG:
++		WRITE_ONCE(mn_bridge->hdmi_status, connector_status_connected);
++		mod_delayed_work(system_wq, &mn_bridge->hdmi_work,
++				 msecs_to_jiffies(PS4_BRIDGE_PLUG_SETTLE_MS));
++		break;
++	}
++}
++
++/* ICC queue command major 5 / minor 4: turn the bridge's HDMI events on/off. */
++static int ps4_bridge_set_event_control(struct ps4_bridge *mn_bridge, u8 enable)
++{
++	int ret;
++
++	mutex_lock(&mn_bridge->mutex);
++	cq_init(&mn_bridge->cq, 4);
++	cq_cmd(&mn_bridge->cq, 5, 4);
++	*mn_bridge->cq.p++ = enable;
++	ret = cq_exec(&mn_bridge->cq);
++	mutex_unlock(&mn_bridge->mutex);
++
++	return ret < 0 ? ret : 0;
++}
++
++static void ps4_bridge_events_stop(void *data)
++{
++	struct ps4_bridge *mn_bridge = data;
++
++	if (!mn_bridge->hdmi_events)
++		return;
++
++	bpcie_icc_unregister_event_handler(PS4_BRIDGE_ICC_SERVICE);
++	cancel_delayed_work_sync(&mn_bridge->hdmi_work);
++	mn_bridge->hdmi_events = false;
++}
++
++static void ps4_bridge_events_start(struct device *dev,
++				    struct ps4_bridge *mn_bridge)
++{
++	if (bpcie_status() != 1)
++		return;
++
++	if (bpcie_icc_register_event_handler(PS4_BRIDGE_ICC_SERVICE,
++					     ps4_bridge_hdmi_event, mn_bridge))
++		return;
++
++	mn_bridge->hdmi_events = true;
++	if (devm_add_action_or_reset(dev, ps4_bridge_events_stop, mn_bridge))
++		return;
++
++	if (ps4_bridge_set_event_control(mn_bridge, 1))
++		DRM_ERROR("ps4_bridge: failed to enable hdmi events\n");
++}
++
+ int ps4_bridge_register(struct drm_connector *connector,
+ 			     struct drm_encoder *encoder)
+ {
+@@ -1196,6 +1305,8 @@ int ps4_bridge_register(struct drm_connector *connector,
+ 		return ret;
+ 
+ 	mutex_init(&mn_bridge->mutex);
++	INIT_DELAYED_WORK(&mn_bridge->hdmi_work, ps4_bridge_hdmi_work);
++	mn_bridge->hdmi_status = connector_status_unknown;
+ 
+ 	mn_bridge->encoder = encoder;
+ 	mn_bridge->connector = connector;
+@@ -1219,5 +1330,7 @@ int ps4_bridge_register(struct drm_connector *connector,
+ 
+ 	g_bridge = mn_bridge;
+ 
++	ps4_bridge_events_start(dev, mn_bridge);
++
+ 	return 0;
+ }
+diff --git a/drivers/ps4/ps4-bpcie-icc.c b/drivers/ps4/ps4-bpcie-icc.c
+index a00c940c2..a979c2063 100644
+--- a/drivers/ps4/ps4-bpcie-icc.c
++++ b/drivers/ps4/ps4-bpcie-icc.c
+@@ -53,6 +53,75 @@ static void dump_message(struct bpcie_dev *sc, int offset)
+ 	}
+ }
+ 
++/* One consumer for ICC events of a given major (e.g. the HDMI bridge, 0x10). */
++static struct {
++	spinlock_t lock;
++	bool used;
++	u8 major;
++	bpcie_icc_event_fn fn;
++	void *ctx;
++} icc_event_slot = { .lock = __SPIN_LOCK_UNLOCKED(icc_event_slot.lock) };
++
++int bpcie_icc_register_event_handler(u8 major, bpcie_icc_event_fn fn, void *ctx)
++{
++	unsigned long flags;
++	int ret = 0;
++
++	if (!fn)
++		return -EINVAL;
++
++	spin_lock_irqsave(&icc_event_slot.lock, flags);
++	if (icc_event_slot.used) {
++		ret = -EBUSY;
++	} else {
++		icc_event_slot.used = true;
++		icc_event_slot.major = major;
++		icc_event_slot.fn = fn;
++		icc_event_slot.ctx = ctx;
++	}
++	spin_unlock_irqrestore(&icc_event_slot.lock, flags);
++	return ret;
++}
++EXPORT_SYMBOL_GPL(bpcie_icc_register_event_handler);
++
++void bpcie_icc_unregister_event_handler(u8 major)
++{
++	unsigned long flags;
++
++	spin_lock_irqsave(&icc_event_slot.lock, flags);
++	if (icc_event_slot.used && icc_event_slot.major == major) {
++		icc_event_slot.used = false;
++		icc_event_slot.fn = NULL;
++		icc_event_slot.ctx = NULL;
++	}
++	spin_unlock_irqrestore(&icc_event_slot.lock, flags);
++}
++EXPORT_SYMBOL_GPL(bpcie_icc_unregister_event_handler);
++
++/* Hard-IRQ context. Returns true if a registered handler took the event. */
++static bool icc_event_dispatch(struct bpcie_dev *sc, struct icc_message_hdr *msg)
++{
++	u8 data[BPCIE_ICC_EVENT_DATA_MAX];
++	unsigned long flags;
++	int len;
++	bool handled = false;
++
++	len = (int)msg->length - (int)ICC_HDR_SIZE;
++	if (len < 0)
++		len = 0;
++	if (len > BPCIE_ICC_EVENT_DATA_MAX)
++		len = BPCIE_ICC_EVENT_DATA_MAX;
++
++	spin_lock_irqsave(&icc_event_slot.lock, flags);
++	if (icc_event_slot.used && icc_event_slot.major == msg->major) {
++		memcpy_fromio(data, REPLY + ICC_HDR_SIZE, len);
++		icc_event_slot.fn(icc_event_slot.ctx, msg->minor, data, len);
++		handled = true;
++	}
++	spin_unlock_irqrestore(&icc_event_slot.lock, flags);
++	return handled;
++}
++
+ static void handle_event(struct bpcie_dev *sc, struct icc_message_hdr *msg)
+ {
+ 	switch ((msg->major << 16) | msg->minor) {
+@@ -63,6 +132,8 @@ static void handle_event(struct bpcie_dev *sc, struct icc_message_hdr *msg)
+ 			icc_pwrbutton_trigger(sc, 0);
+ 			break;
+ 		default:
++			if (icc_event_dispatch(sc, msg))
++				break;
+ 			sc_err("icc: event arrived, not yet supported.\n");
+ 			dump_message(sc, BPCIE_SPM_ICC_REPLY);
+ 			break;
