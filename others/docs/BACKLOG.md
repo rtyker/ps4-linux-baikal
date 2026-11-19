@@ -289,6 +289,21 @@ no driver (re-arme com troca de VIC, ou `enable` duplo). Depois, detectar o repl
   trouxe a imagem de volta e devolveu a ponte ao estado bom (`1e00=67`, `1e02=f8`, `705f=10`,
   `7a8b=00`) — os mesmos registradores que o kernel agora vigia. É o caminho que o patch dispara.
 
+### Diagnóstico por instrumentação (2026-11-18, `test_history` 163)
+
+- Instrumentação `PS4HPD` (pr_info) e `dump_stack` no `link_train` **só local, fora do git** (decisão do
+  usuário; o `hpd-poll` também). Tags de teste `20261118-hpd-instr`/`-instr2`, ambas sobem normal.
+- **Desplugar e replugar gera zero linhas no kernel:** nem `hpd_irq`, `hotplug_work_func`,
+  `connector_hotplug`, `hpd_sense`, `detect` ou `get_modes`. Nenhum mecanismo de plug/unplug reage a
+  esta ponte; o `connected` vale sempre o do boot (`polled=POLL_HPD`, `hpd_pin=0`).
+- **O que recupera a imagem é um modeset completo do CRTC**, não um reprobe: o `xrandr` 720p→1080p
+  passa por `drm_mode_setcrtc → drm_crtc_helper_set_mode → dce_v8_0_encoder_commit →
+  amdgpu_atombios_dp_link_train`, sem tocar em `detect`/`get_modes`. O `clock recovery failed` aparece
+  8x e a imagem volta mesmo assim.
+- Implicação: o `hpd-poll` antigo (`probe_detect` + `hotplug_event`) só avisaria o userspace; um
+  conserto no kernel precisa disparar o modeset do CRTC. O `hpd-fix3` não subiu o Linux; causa não
+  isolada, mas o kernel instrumentado sobe, então a falha estava no patch de poll.
+
 ### Rollback
 
 - Nenhum build novo foi para o HD por causa deste item. Quando houver tag nova:
