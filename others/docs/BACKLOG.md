@@ -289,7 +289,7 @@ no driver (re-arme com troca de VIC, ou `enable` duplo). Depois, detectar o repl
   trouxe a imagem de volta e devolveu a ponte ao estado bom (`1e00=67`, `1e02=f8`, `705f=10`,
   `7a8b=00`) — os mesmos registradores que o kernel agora vigia. É o caminho que o patch dispara.
 
-### Diagnóstico por instrumentação (2026-11-18, `test_history` 163)
+### Diagnóstico por instrumentação (2026-11-18, `test_history` 166)
 
 - Instrumentação `PS4HPD` (pr_info) e `dump_stack` no `link_train` **só local, fora do git** (decisão do
   usuário; o `hpd-poll` também). Tags de teste `20261118-hpd-instr`/`-instr2`, ambas sobem normal.
