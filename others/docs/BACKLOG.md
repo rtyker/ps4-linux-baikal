@@ -232,7 +232,7 @@ no driver (re-arme com troca de VIC, ou `enable` duplo). Depois, detectar o repl
 
 ### Tentativa kernel-side: poll de HPD na ponte (2026-11-18) — em validação
 
-- Patch `kernel/patches/ps4-bridge-hpd-poll.patch` (commits locais `fef53c8`, `c610639`, `f53756b`)
+- Patch `ps4-bridge-hpd-poll.patch` (**descartado e removido do histórico em 2026-11-19; só existe localmente, fora do git**)
   acrescenta um `delayed_work` em `ps4_bridge` que lê o bit 0 de `0x10f4` a cada 500 ms e, na
   transição `0→1`, força um reprobe do conector.
 - **Duas correções obrigatórias antes do build** (o build original abortou sem artefatos):
@@ -277,7 +277,7 @@ no driver (re-arme com troca de VIC, ou `enable` duplo). Depois, detectar o repl
   `1` para sempre e nunca detecta nada. **Mesmo corrigindo o índice, bit0 só cai e não sobe**, logo
   o gatilho `0→1` não dispara. Próximo passo (a decidir): trocar o gatilho para a queda `1→0` ou para
   a assinatura de estado ruim (`705f=90`/`1e02=88`) e disparar a recuperação ali.
-- **Patch reescrito e buildado: tag `20261118-hpd-fix3` (build EXIT=0, commit `5f3ea40`).** Dois bugs
+- **Patch reescrito e buildado: tag `20261118-hpd-fix3` (build EXIT=0; patch descartado, ver acima).** Dois bugs
   reais além do índice: (a) **faltava `INIT_DELAYED_WORK`** — o `schedule_delayed_work` operava sobre
   memória zerada com `func == NULL` (por isso nada quebrava visivelmente: nada rodava);
   (b) o `git diff` contra `HEAD` capturava também as mudanças do `ps4-bridge-keep-mode.patch`
