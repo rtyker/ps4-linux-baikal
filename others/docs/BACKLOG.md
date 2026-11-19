@@ -340,13 +340,13 @@ plug/unplug OK no mesmo boot (`test_history` 168 e 169). O console está com a t
   deploy com `--internal-root` (a chave EAP vai em `/dev/shm/opencode-eap-key.bin`, gerada de `.env.keys`;
   some quando o PC reinicia).
 - [x] **2. Repetir os ciclos de plug/unplug nesse build** — FEITO: 5 de 5 OK (`test_history` 170 e 171) (pelo menos 5), sem `xrandr`.
-- [ ] **3. Cold boots repetidos** (≥3): no boot a ponte já manda `unplug` (≈2,4 s) e `plug` (≈3,2 s); a
+- [~] **3. Cold boots repetidos** (≥3) — 2 feitos e OK; decisão do usuário (2026-11-19): promover já e manter este item como verificação pós-promoção: no boot a ponte já manda `unplug` (≈2,4 s) e `plug` (≈3,2 s); a
   imagem tem de terminar sempre boa.
 - [ ] **4. Casos de borda:** desplugar por muito tempo; desplugar com o Xorg em outra resolução; plugar o
   cabo com o console ainda no Orbis antes do kexec; monitor desligado/ligado pelo botão.
 - [ ] **5. UART:** para sempre em ≈0,64 s de boot (também no build limpo; não é o cabo): provável troca do `earlycon` para o console 8250 real; sem ela não
   há log se o Linux não subir.
-- [ ] **6. Promover:** commitar o resultado final, `distro/scripts/promote-release.sh`, atualizar este
+- [x] **6. Promover:** FEITO em 2026-11-19 (`distro/RELEASE/20261119-hdmi-events-clean/`, sha256 conferido, marco no `AGENTS.md`). Faltou decidir sobre o `ps4-hdmi-hotplug.py`. Texto original: commitar o resultado final, `distro/scripts/promote-release.sh`, atualizar este
   documento e o `AGENTS.md`. Decidir se o `ps4-hdmi-hotplug.py` (userspace, antigo) pode ser aposentado.
 - Riscos conhecidos: `detect` devolve `disconnected` depois de um UNPLUG (se o ambiente gráfico reagir mal
   com monitor único, avaliar); só um slot de handler ICC (`major` 0x10); persistência da ativação `5/4`
